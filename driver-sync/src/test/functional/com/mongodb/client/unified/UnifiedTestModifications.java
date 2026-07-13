@@ -17,10 +17,17 @@
 package com.mongodb.client.unified;
 
 import com.mongodb.ClusterFixture;
+import com.mongodb.lang.Nullable;
+import org.bson.BsonArray;
+import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonValue;
+import org.bson.diagnostics.Logger;
+import org.bson.diagnostics.Loggers;
 import org.opentest4j.AssertionFailedError;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -37,8 +44,11 @@ import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SLEEP
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SLEEP_AFTER_CURSOR_OPEN;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.WAIT_FOR_BATCH_CURSOR_CREATION;
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 
 public final class UnifiedTestModifications {
+    private static final Logger LOGGER = Loggers.getLogger("UnifiedTestModifications");
+
     public static void applyCustomizations(final TestDef def) {
 
         // change-streams
@@ -47,8 +57,6 @@ public final class UnifiedTestModifications {
         def.skipNoncompliantReactive("event sensitive tests. We can't guarantee the amount of GetMore commands sent in the reactive driver")
                 .test("change-streams", "change-streams", "Test that comment is set on getMore")
                 .test("change-streams", "change-streams", "Test that comment is not set on getMore - pre 4.4");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-6181 temp disabling as failing on latest, while specs are updated")
-                .test("change-streams", "change-streams-nsType", "nsType is present when creating timeseries");
         def.modify(IGNORE_EXTRA_EVENTS)
                 .test("change-streams", "change-streams", "Test with document comment")
                 .test("change-streams", "change-streams", "Test with string comment");
@@ -65,6 +73,13 @@ public final class UnifiedTestModifications {
                 .file("client-side-encryption/tests/unified", "client bulkWrite with queryable encryption");
 
         // client-side-operation-timeout (CSOT)
+        // The expected change stream timeout-refresh behaviour is unspecified on server 9.0+ (DRIVERS-3006), so the
+        // CSOT suite fails there (most visibly on sharded clusters, where extra mongos round-trips exceed the tight
+        // timeoutMS). Skip the suite on 9.0+ until the spec is clarified.
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-6078 change stream timeout-refresh behaviour is "
+                        + "unspecified on server 9.0+ (DRIVERS-3006)")
+                .when(() -> !serverVersionLessThan(9, 0))
+                .directory("client-side-operations-timeout");
         def.retry("Unified CSOT tests do not account for RTT which varies in TLS vs non-TLS runs")
                 .whenFailureContains("timeout")
                 .test("client-side-operations-timeout",
@@ -103,10 +118,6 @@ public final class UnifiedTestModifications {
         def.skipNoncompliantReactive("No good way to fulfill tryNext() requirement with a Publisher<T>")
                 .test("client-side-operations-timeout", "timeoutMS behaves correctly for tailable awaitData cursors",
                         "apply maxAwaitTimeMS if less than remaining timeout");
-
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5839")
-                .test("client-side-operations-timeout", "timeoutMS behaves correctly for GridFS download operations",
-                        "timeoutMS applied to entire download, not individual parts");
 
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5491")
                 .when(() -> !serverVersionLessThan(8, 3))
@@ -320,6 +331,15 @@ public final class UnifiedTestModifications {
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5689")
                 .file("gridfs", "gridfs-deleteByName")
                 .file("gridfs", "gridfs-renameByName");
+        def.transform("JAVA-5839: Bump blocking/timeout to avoid CI latency failures",
+                (entitiesArray, definition) -> {
+                    findAndSetInt(entitiesArray, "client.uriOptions.timeoutMS", 75, 250);
+                    findAndSetInt(definition.getArray("operations"),
+                            "arguments.failPoint.data.blockTimeMS", 50, 200);
+                })
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for GridFS download operations",
+                        "timeoutMS applied to entire download, not individual parts");
 
         // Skip all rawData based tests
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5830 rawData support only added to Go and Node")
@@ -473,6 +493,14 @@ public final class UnifiedTestModifications {
                 .file("transactions", "backpressure-retryable-commit");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
                 .file("transactions", "backpressure-retryable-abort");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-6179")
+                .test("transactions", "retryable-writes", "increment txnNumber")
+                .test("transactions", "commit", "reset session state commit")
+                .test("transactions", "commit", "reset session state abort")
+                .test("transactions-convenient-api", "callback-commits",
+                        "withTransaction still succeeds if callback commits and runs extra op")
+                .test("transactions-convenient-api", "callback-aborts",
+                        "withTransaction still succeeds if callback aborts and runs extra op");
 
         // valid-pass
 
@@ -505,30 +533,89 @@ public final class UnifiedTestModifications {
                 .file("unified-test-format/tests/valid-fail", "operator-matchAsDocument");
     }
 
+    /**
+     * Searches each document in {@code array} for a nested numeric field specified
+     * by a dot-separated {@code path}, asserts its current value equals {@code expectedValue},
+     * and replaces it with {@code newValue}. Logs each replacement.
+     * Skips documents where the path does not exist or intermediate keys are absent.
+     * Fails if no replacement is made (path typo or spec change) or if any matched
+     * value differs from {@code expectedValue} (spec value changed).
+     *
+     * <p>This method searches only top-level array elements, not recursively into nested
+     * arrays (e.g. {@code loop} operations).</p>
+     *
+     * <p>Example: {@code findAndSetInt(entitiesArray, "client.uriOptions.timeoutMS", 75, 250)}
+     * walks each element looking for {@code element.client.uriOptions.timeoutMS}.</p>
+     *
+     * @param array         the array to search
+     * @param path          dot-separated path to a numeric field
+     * @param expectedValue the value expected to be found (assertion guard against spec changes)
+     * @param newValue      the replacement value
+     */
+    static void findAndSetInt(final BsonArray array, final String path,
+            final int expectedValue, final int newValue) {
+        String[] segments = path.split("\\.");
+        int replacements = 0;
+        for (BsonValue element : array) {
+            if (!element.isDocument()) {
+                continue;
+            }
+            BsonDocument current = element.asDocument();
+            boolean found = true;
+            for (int i = 0; i < segments.length - 1; i++) {
+                if (current.containsKey(segments[i]) && current.get(segments[i]).isDocument()) {
+                    current = current.getDocument(segments[i]);
+                } else {
+                    found = false;
+                    break;
+                }
+            }
+            String leafKey = segments[segments.length - 1];
+            if (found && current.containsKey(leafKey) && current.get(leafKey).isNumber()) {
+                int oldValue = current.get(leafKey).asNumber().intValue();
+                if (oldValue != expectedValue) {
+                    throw new AssertionFailedError(format(
+                            "findAndSetInt: expected '%s' to be %d but was %d."
+                                    + " Spec may have changed; update the transformation.",
+                            path, expectedValue, oldValue));
+                }
+                LOGGER.info(format("  %s: %d -> %d", path, oldValue, newValue));
+                current.put(leafKey, new BsonInt32(newValue));
+                replacements++;
+            }
+        }
+        if (replacements == 0) {
+            throw new AssertionFailedError(format(
+                    "findAndSetInt: no value found at path '%s'. Spec may have changed or path is incorrect.",
+                    path));
+        }
+    }
+
     private UnifiedTestModifications() {
     }
 
-    public static TestDef testDef(final String dir, final String file, final String test, final boolean reactive,
-                                  final UnifiedTest.Language language) {
-        return new TestDef(dir, file, test, reactive, language);
+    public static TestDef testDef(final String directory, final String fileDescription, final String testDescription,
+                                  final boolean reactive, final UnifiedTest.Language language) {
+        return new TestDef(directory, fileDescription, testDescription, reactive, language);
     }
 
     public static final class TestDef {
 
-        private final String dir;
-        private final String file;
-        private final String test;
+        private final String directory;
+        private final String fileDescription;
+        private final String testDescription;
         private final boolean reactive;
         private final UnifiedTest.Language language;
 
         private final List<Modifier> modifiers = new ArrayList<>();
+        private final List<TestTransformer> transformers = new ArrayList<>();
         private Function<Throwable, Boolean> matchesThrowable;
 
-        private TestDef(final String dir, final String file, final String test, final boolean reactive,
-                        final UnifiedTest.Language language) {
-            this.dir = assertNotNull(dir);
-            this.file = assertNotNull(file);
-            this.test = assertNotNull(test);
+        private TestDef(final String directory, final String fileDescription, final String testDescription,
+                        final boolean reactive, final UnifiedTest.Language language) {
+            this.directory = assertNotNull(directory);
+            this.fileDescription = assertNotNull(fileDescription);
+            this.testDescription = assertNotNull(testDescription);
             this.reactive = reactive;
             this.language = assertNotNull(language);
         }
@@ -538,9 +625,9 @@ public final class UnifiedTestModifications {
             return "TestDef{"
                     + "modifiers=" + modifiers
                     + ", reactive=" + reactive
-                    + ", test='" + test + '\''
-                    + ", file='" + file + '\''
-                    + ", dir='" + dir + '\''
+                    + ", testDescription='" + testDescription + '\''
+                    + ", fileDescription='" + fileDescription + '\''
+                    + ", directory='" + directory + '\''
                     + '}';
         }
 
@@ -614,6 +701,34 @@ public final class UnifiedTestModifications {
                     .when(this::isReactive);
         }
 
+        /**
+         * Registers a transformation that mutates the test's entity and
+         * definition data before execution. The reason is logged when the
+         * transformation is registered for a matching test.
+         *
+         * @param reason      why the transformation is needed
+         * @param transformer the transformation to apply
+         */
+        public TestApplicator transform(final String reason, final TestTransformer transformer) {
+            return new TestApplicator(this, reason, transformer);
+        }
+
+        /**
+         * Applies all registered transformations to the test data.
+         */
+        public void applyTransformations(final BsonArray entitiesArray, final BsonDocument definition) {
+            for (TestTransformer transformer : transformers) {
+                transformer.transform(entitiesArray, definition);
+            }
+        }
+
+        /**
+         * Returns true if any transformations have been registered.
+         */
+        public boolean hasTransformations() {
+            return !transformers.isEmpty();
+        }
+
         public TestApplicator modify(final Modifier... modifiers) {
             return new TestApplicator(this, null, modifiers);
         }
@@ -648,16 +763,32 @@ public final class UnifiedTestModifications {
 
         private final List<Modifier> modifiersToApply;
         private Function<Throwable, Boolean> matchesThrowable;
+        @Nullable
+        private final TestTransformer transformer;
+        @Nullable
+        private final String reason;
+
+        private TestApplicator(
+                final TestDef testDef,
+                @Nullable final String reason,
+                final Modifier... oriModifiersToApply) {
+            this.testDef = testDef;
+            this.reason = reason;
+            this.modifiersToApply = asList(oriModifiersToApply);
+            this.transformer = null;
+            if (modifiersToApply.contains(SKIP) || modifiersToApply.contains(RETRY)) {
+                assertNotNull(reason);
+            }
+        }
 
         private TestApplicator(
                 final TestDef testDef,
                 final String reason,
-                final Modifier... modifiersToApply) {
+                final TestTransformer transformer) {
             this.testDef = testDef;
-            this.modifiersToApply = Arrays.asList(modifiersToApply);
-            if (this.modifiersToApply.contains(SKIP) || this.modifiersToApply.contains(RETRY)) {
-                assertNotNull(reason);
-            }
+            this.reason = assertNotNull(reason);
+            this.modifiersToApply = Collections.emptyList();
+            this.transformer = assertNotNull(transformer);
         }
 
         private TestApplicator onMatch(final boolean match) {
@@ -666,8 +797,21 @@ public final class UnifiedTestModifications {
                 return this;
             }
             if (match) {
-                this.testDef.modifiers.addAll(this.modifiersToApply);
-                this.testDef.matchesThrowable = this.matchesThrowable;
+                testDef.modifiers.addAll(modifiersToApply);
+                if (matchesThrowable != null) {
+                    testDef.matchesThrowable = matchesThrowable;
+                }
+                if (transformer != null) {
+                    LOGGER.info("Registered transformation for test ["
+                            + testDef.testDescription + "]: " + reason);
+                    testDef.transformers.add((entitiesArray, definition) -> {
+                        try {
+                            transformer.transform(entitiesArray, definition);
+                        } catch (AssertionError | RuntimeException e) {
+                            throw new AssertionFailedError(reason + ": " + e.getMessage(), e);
+                        }
+                    });
+                }
             }
             return this;
         }
@@ -675,59 +819,59 @@ public final class UnifiedTestModifications {
         /**
          * Applies to all tests in directory.
          *
-         * @param dir the directory name
+         * @param directory the directory name
          * @return this
          */
-        public TestApplicator directory(final String dir) {
-            boolean match = (dir).equals(testDef.dir);
+        public TestApplicator directory(final String directory) {
+            boolean match = (directory).equals(testDef.directory);
             return onMatch(match);
         }
 
         /**
          * Applies to all tests in file under the directory.
          *
-         * @param dir  the directory name
-         * @param file the test file's "description" field
+         * @param directory       the directory name
+         * @param fileDescription the test file's "description" field
          * @return this
          */
-        public TestApplicator file(final String dir, final String file) {
-            boolean match = (dir).equals(testDef.dir)
-                    && file.equals(testDef.file);
+        public TestApplicator file(final String directory, final String fileDescription) {
+            boolean match = (directory).equals(testDef.directory)
+                    && fileDescription.equals(testDef.fileDescription);
             return onMatch(match);
         }
 
         /**
-         * Applies to the test where dir, file, and test match.
+         * Applies to the test where directory, fileDescription, and testDescription match.
          *
-         * @param dir  the directory name
-         * @param file the test file's "description" field
-         * @param test the individual test's "description" field
+         * @param directory       the directory name
+         * @param fileDescription the test file's "description" field
+         * @param testDescription the individual test's "description" field
          * @return this
          */
-        public TestApplicator test(final String dir, final String file, final String test) {
-            boolean match = testDef.dir.equals(dir)
-                    && testDef.file.equals(file)
-                    && testDef.test.equals(test);
+        public TestApplicator test(final String directory, final String fileDescription, final String testDescription) {
+            boolean match = testDef.directory.equals(directory)
+                    && testDef.fileDescription.equals(fileDescription)
+                    && testDef.testDescription.equals(testDescription);
             return onMatch(match);
         }
 
         /**
          * Utility method: emit replacement to standard out.
          *
-         * @param dir      the directory name
-         * @param fragment the substring to check in the test "description" field
+         * @param directory the directory name
+         * @param fragment  the substring to check in the test "description" field
          * @return this
          */
-        public TestApplicator testContains(final String dir, final String fragment) {
-            boolean match = (dir).equals(testDef.dir)
-                    && testDef.test.contains(fragment);
+        public TestApplicator testContains(final String directory, final String fragment) {
+            boolean match = (directory).equals(testDef.directory)
+                    && testDef.testDescription.contains(fragment);
             if (match) {
                 System.out.printf(
                         "!!! REPLACE %s WITH: .test(\"%s\", \"%s\", \"%s\")%n",
                         fragment,
-                        testDef.dir,
-                        testDef.file,
-                        testDef.test);
+                        testDef.directory,
+                        testDef.fileDescription,
+                        testDef.testDescription);
             }
             return this;
         }
@@ -735,16 +879,15 @@ public final class UnifiedTestModifications {
         /**
          * Utility method: emit file info to standard out
          *
-         * @param dir  the directory name
-         * @param test the individual test's "description" field
+         * @param testDescription the individual test's "description" field
          * @return this
          */
-        public TestApplicator debug(final String dir, final String test) {
-            boolean match = testDef.test.equals(test);
+        public TestApplicator debug(final String testDescription) {
+            boolean match = testDef.testDescription.equals(testDescription);
             if (match) {
                 System.out.printf(
                         "!!! ADD: \"%s\", \"%s\", \"%s\"%n",
-                        testDef.dir, testDef.file, test);
+                        testDef.directory, testDef.fileDescription, testDescription);
             }
             return this;
         }
@@ -786,6 +929,16 @@ public final class UnifiedTestModifications {
             return this;
         }
 
+    }
+
+    /**
+     * A transformation that mutates the test's entity array and/or definition
+     * before execution. Used to adjust spec test values (e.g., timeouts) that
+     * are too tight for CI environments.
+     */
+    @FunctionalInterface
+    public interface TestTransformer {
+        void transform(BsonArray entitiesArray, BsonDocument definition);
     }
 
     public enum Modifier {
