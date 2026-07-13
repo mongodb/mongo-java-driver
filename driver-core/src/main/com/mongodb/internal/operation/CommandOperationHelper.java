@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoClientException;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.MongoException;
@@ -42,6 +43,11 @@ import static java.util.Arrays.asList;
 
 @SuppressWarnings("overloads")
 public final class CommandOperationHelper {
+    /**
+     * The value used when {@link MongoClientSettings#getMaxAdaptiveRetries()} is {@code null}.
+     */
+    public static final int DEFAULT_MAX_ADAPTIVE_RETRIES = 2;
+
     static WriteConcern validateAndGetEffectiveWriteConcern(final WriteConcern writeConcernSetting, final SessionContext sessionContext)
             throws MongoClientException {
         boolean activeTransaction = sessionContext.hasActiveTransaction();
@@ -71,14 +77,12 @@ public final class CommandOperationHelper {
 
     static RetryControl<SpecRetryPolicy> createSpecRetryControl(
             final SpecRetryPolicy.IndividualPolicies policies,
-            @Nullable final Integer maxAdaptiveRetriesSetting,
             final OperationContext operationContext) {
         ExplicitMaxRetries explicitMaxRetries = operationContext.getTimeoutContext().hasTimeoutMS()
                 ? NO_RETRIES_LIMIT
                 : RETRIES_LIMITED_BY_INDIVIDUAL_POLICIES;
         return new RetryControl<>(new SpecRetryPolicy(
                 policies,
-                maxAdaptiveRetriesSetting,
                 explicitMaxRetries,
                 operationContext.getServerDeprioritization()));
     }

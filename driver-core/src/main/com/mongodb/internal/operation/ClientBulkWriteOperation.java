@@ -284,8 +284,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         assertFalse(unexecutedModels.isEmpty());
         SessionContext sessionContext = operationContext.getSessionContext();
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
-                new SpecRetryPolicy.IndividualPolicies(retryWritesSetting).includeWrite(),
-                maxAdaptiveRetriesSetting,
+                new SpecRetryPolicy.IndividualPolicies(retryWritesSetting).includeWrite().includeOverload(maxAdaptiveRetriesSetting),
                 operationContext);
         BatchEncoder batchEncoder = new BatchEncoder();
 
@@ -339,8 +338,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             assertFalse(unexecutedModels.isEmpty());
             SessionContext sessionContext = operationContext.getSessionContext();
             RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
-                    new SpecRetryPolicy.IndividualPolicies(retryWritesSetting).includeWrite(),
-                    maxAdaptiveRetriesSetting,
+                    new SpecRetryPolicy.IndividualPolicies(retryWritesSetting).includeWrite().includeOverload(maxAdaptiveRetriesSetting),
                     operationContext);
             BatchEncoder batchEncoder = new BatchEncoder();
 

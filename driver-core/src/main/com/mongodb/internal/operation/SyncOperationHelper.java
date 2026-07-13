@@ -204,8 +204,7 @@ final class SyncOperationHelper {
             @Nullable
             final Integer maxAdaptiveRetriesSetting) {
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
-                new SpecRetryPolicy.IndividualPolicies(retryReadsSetting).includeRead(operationContext),
-                maxAdaptiveRetriesSetting,
+                new SpecRetryPolicy.IndividualPolicies(retryReadsSetting).includeRead(operationContext).includeOverload(maxAdaptiveRetriesSetting),
                 operationContext);
 
         Supplier<T> read = decorateWithRetries(retryControl, operationContext, () ->
@@ -270,8 +269,7 @@ final class SyncOperationHelper {
             @Nullable final Integer maxAdaptiveRetriesSetting) {
         MutableValue<BsonDocument> command = new MutableValue<>();
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
-                new SpecRetryPolicy.IndividualPolicies(effectiveRetryWritesSetting).includeWrite(),
-                maxAdaptiveRetriesSetting,
+                new SpecRetryPolicy.IndividualPolicies(effectiveRetryWritesSetting).includeWrite().includeOverload(maxAdaptiveRetriesSetting),
                 operationContext);
         Supplier<R> retryingWrite = decorateWithRetries(retryControl, operationContext, () -> {
             boolean firstAttempt = retryControl.isFirstAttempt();

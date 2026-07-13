@@ -305,8 +305,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
 
         OperationContext findOperationContext = getFindOperationContext(operationContext);
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
-                new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(findOperationContext),
-                maxAdaptiveRetriesSetting,
+                new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(findOperationContext).includeOverload(maxAdaptiveRetriesSetting),
                 findOperationContext);
         Supplier<BatchCursor<T>> read = decorateWithRetries(retryControl, findOperationContext, () ->
                 withSourceAndConnection(binding::getReadConnectionSource, false, findOperationContext,
@@ -334,8 +333,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
 
         OperationContext findOperationContext = getFindOperationContext(operationContext);
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
-                new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(findOperationContext),
-                maxAdaptiveRetriesSetting,
+                new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(findOperationContext).includeOverload(maxAdaptiveRetriesSetting),
                 findOperationContext);
         binding.retain();
         AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = decorateWithRetriesAsync(

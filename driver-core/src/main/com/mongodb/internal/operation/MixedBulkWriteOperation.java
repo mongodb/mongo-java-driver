@@ -243,8 +243,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
         MutableValue<BulkWriteBatch> batch = new MutableValue<>(maybeBatch);
         MutableValue<SourceAndConnection> sourceAndConnection = new MutableValue<>(maybeSourceAndConnection);
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
-                new SpecRetryPolicy.IndividualPolicies(retryWrites).includeWrite(),
-                maxAdaptiveRetriesSetting,
+                new SpecRetryPolicy.IndividualPolicies(retryWrites).includeWrite().includeOverload(maxAdaptiveRetriesSetting),
                 operationContext);
         Supplier<BatchWithSourceAndConnection<SourceAndConnection>> retryingBatchExecutor = decorateWithRetries(
                 retryControl,
@@ -297,8 +296,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             MutableValue<BulkWriteBatch> batch = new MutableValue<>(maybeBatch);
             MutableValue<AsyncSourceAndConnection> sourceAndConnection = new MutableValue<>(maybeSourceAndConnection);
             RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
-                    new SpecRetryPolicy.IndividualPolicies(retryWrites).includeWrite(),
-                    maxAdaptiveRetriesSetting,
+                    new SpecRetryPolicy.IndividualPolicies(retryWrites).includeWrite().includeOverload(maxAdaptiveRetriesSetting),
                     operationContext);
             AsyncCallbackSupplier<BatchWithSourceAndConnection<AsyncSourceAndConnection>> retryingBatchExecutor = decorateWithRetriesAsync(
                     retryControl,

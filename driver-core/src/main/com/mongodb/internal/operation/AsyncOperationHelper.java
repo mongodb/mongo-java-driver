@@ -194,8 +194,7 @@ final class AsyncOperationHelper {
             @Nullable final Integer maxAdaptiveRetriesSetting,
             final SingleResultCallback<T> callback) {
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
-                new SpecRetryPolicy.IndividualPolicies(retryReadsSetting).includeRead(operationContext),
-                maxAdaptiveRetriesSetting,
+                new SpecRetryPolicy.IndividualPolicies(retryReadsSetting).includeRead(operationContext).includeOverload(maxAdaptiveRetriesSetting),
                 operationContext);
         binding.retain();
         AsyncCallbackSupplier<T> asyncRead = decorateWithRetriesAsync(retryControl, operationContext,
@@ -266,8 +265,7 @@ final class AsyncOperationHelper {
             binding.retain();
             MutableValue<BsonDocument> command = new MutableValue<>();
             RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
-                    new SpecRetryPolicy.IndividualPolicies(effectiveRetryWritesSetting).includeWrite(),
-                    maxAdaptiveRetriesSetting,
+                    new SpecRetryPolicy.IndividualPolicies(effectiveRetryWritesSetting).includeWrite().includeOverload(maxAdaptiveRetriesSetting),
                     operationContext);
             AsyncCallbackSupplier<R> retryingWrite = decorateWithRetriesAsync(retryControl, operationContext, supplierCallback -> {
                 beginAsync().<R>thenSupply(withSourceAndConnectionCallback -> {

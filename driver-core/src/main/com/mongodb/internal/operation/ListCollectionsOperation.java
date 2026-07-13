@@ -181,8 +181,7 @@ public class ListCollectionsOperation<T> implements ReadOperationCursor<T> {
         OperationContext listCollectionsOperationContext = applyTimeoutModeToOperationContext(timeoutMode, operationContext);
 
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
-                new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(listCollectionsOperationContext),
-                maxAdaptiveRetriesSetting,
+                new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(listCollectionsOperationContext).includeOverload(maxAdaptiveRetriesSetting),
                 listCollectionsOperationContext);
         Supplier<BatchCursor<T>> read = decorateWithRetries(retryControl, listCollectionsOperationContext, () ->
             withSourceAndConnection(binding::getReadConnectionSource, false, listCollectionsOperationContext, (source, connection, operationContextWithMinRTT) -> {
@@ -204,8 +203,7 @@ public class ListCollectionsOperation<T> implements ReadOperationCursor<T> {
         OperationContext listCollectionsOperationContext = applyTimeoutModeToOperationContext(timeoutMode, operationContext);
 
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
-                new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(listCollectionsOperationContext),
-                maxAdaptiveRetriesSetting,
+                new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(listCollectionsOperationContext).includeOverload(maxAdaptiveRetriesSetting),
                 listCollectionsOperationContext);
         binding.retain();
         AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = decorateWithRetriesAsync(

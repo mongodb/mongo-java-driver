@@ -32,6 +32,7 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.TransportSettings;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.operation.CommandOperationHelper;
 import com.mongodb.lang.Nullable;
 import com.mongodb.observability.ObservabilitySettings;
 import com.mongodb.spi.dns.DnsClient;
@@ -503,9 +504,11 @@ public final class MongoClientSettings {
          * the {@value MongoException#SYSTEM_OVERLOADED_ERROR_LABEL} and {@value MongoException#RETRYABLE_ERROR_LABEL} labels.
          * Such errors are referred to as retryable overload errors.
          * <p>
-         * Default is {@code null}, implies the value 2 and the above retry behavior. The implied value and behavior may change in
+         * Default is {@code null}, implies the value {@value CommandOperationHelper#DEFAULT_MAX_ADAPTIVE_RETRIES} and the above retry behavior.
+         * The implied value and behavior may change in
          * the future in a <a href="https://semver.org/spec/v2.0.0.html#summary">minor version</a>.
-         * This means, there is no guarantee that not setting a value is equivalent to setting the value 2.
+         * This means, there is no guarantee that not setting a value is equivalent to setting the value
+         * {@value CommandOperationHelper#DEFAULT_MAX_ADAPTIVE_RETRIES}.
          * The value 0 results in not retrying the attempts failed due to retryable overload errors.
          *
          * <table>
@@ -961,7 +964,6 @@ public final class MongoClientSettings {
      */
     @Beta(Reason.CLIENT)
     @Nullable
-    // TODO-BACKPRESSURE Valentin Use the `maxAdaptiveRetries` setting when retrying.
     public Integer getMaxAdaptiveRetries() {
         return maxAdaptiveRetries;
     }
