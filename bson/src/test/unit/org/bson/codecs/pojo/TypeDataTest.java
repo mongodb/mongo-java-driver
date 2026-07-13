@@ -182,13 +182,12 @@ public final class TypeDataTest {
     }
 
     private static class Holder<T> {
-        T scalar;
-        List<T> list;
-        List<String> concrete;
-        Map<String, T> nestedMap;
+        private List<T> list;
+        private List<String> concrete;
+        private Map<String, T> nestedMap;
     }
 
     private static class NonGeneric {
-        String s;
+        private String s;
     }
 }
