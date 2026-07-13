@@ -30,6 +30,10 @@ import org.bson.codecs.pojo.entities.ContainsAlternativeMapAndCollectionModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
 import org.bson.codecs.pojo.entities.DuplicateAnnotationAllowedModel;
 import org.bson.codecs.pojo.entities.FieldAndPropertyTypeMismatchModel;
+import org.bson.codecs.pojo.entities.ForwardingDeepModel;
+import org.bson.codecs.pojo.entities.ForwardingInterfaceModel;
+import org.bson.codecs.pojo.entities.ForwardingModel;
+import org.bson.codecs.pojo.entities.ForwardingNestedModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
 import org.bson.codecs.pojo.entities.InterfaceBasedModel;
@@ -525,6 +529,26 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 new BsonExtraElementsMapModel(42, "myString", stringMap),
                 getPojoCodecProviderBuilder(BsonExtraElementsMapModel.class),
                 "{'integerField': 42, 'stringField': 'myString', 'a': 'a', 'b': 'b'}"));
+
+        data.add(new TestData("Forwarding class chain resolves to String",
+                new ForwardingModel("hello"),
+                getPojoCodecProviderBuilder(ForwardingModel.class),
+                "{'value': 'hello'}"));
+
+        data.add(new TestData("Forwarding deep class chain resolves to Long",
+                new ForwardingDeepModel(42L),
+                getPojoCodecProviderBuilder(ForwardingDeepModel.class),
+                "{'value': {'$numberLong': '42'}}"));
+
+        data.add(new TestData("Forwarding interface chain resolves to Integer",
+                new ForwardingInterfaceModel(7),
+                getPojoCodecProviderBuilder(ForwardingInterfaceModel.class),
+                "{'value': 7}"));
+
+        data.add(new TestData("Forwarding nested generic chain resolves to List<String>",
+                new ForwardingNestedModel(asList("a", "b", "c")),
+                getPojoCodecProviderBuilder(ForwardingNestedModel.class),
+                "{'value': ['a', 'b', 'c']}"));
 
         return data;
     }

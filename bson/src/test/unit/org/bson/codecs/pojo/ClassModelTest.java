@@ -20,7 +20,12 @@ import java.util.SortedSet;
 
 import org.bson.codecs.pojo.entities.CollectionNestedPojoModel;
 import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
+import org.bson.codecs.pojo.entities.ForwardingDeepModel;
+import org.bson.codecs.pojo.entities.ForwardingInterfaceModel;
+import org.bson.codecs.pojo.entities.ForwardingModel;
+import org.bson.codecs.pojo.entities.ForwardingNestedModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
+import org.bson.codecs.pojo.entities.HolderConcreteMapModel;
 import org.bson.codecs.pojo.entities.InterfaceBasedModel;
 import org.bson.codecs.pojo.entities.ListGenericExtendedModel;
 import org.bson.codecs.pojo.entities.ListListGenericExtendedModel;
@@ -264,6 +269,46 @@ public final class ClassModelTest {
         assertEquals(createTypeData(Integer.class), classModel.getPropertyModel("integerField").getTypeData());
         assertEquals(createTypeData(String.class), classModel.getPropertyModel("stringField").getTypeData());
 
+    }
+
+    @Test
+    public void testForwardingClassChain() {
+        ClassModel<?> classModel = ClassModel.builder(ForwardingModel.class).build();
+
+        assertEquals(1, classModel.getPropertyModels().size());
+        assertEquals(createTypeData(String.class), classModel.getPropertyModel("value").getTypeData());
+    }
+
+    @Test
+    public void testForwardingDeepChain() {
+        ClassModel<?> classModel = ClassModel.builder(ForwardingDeepModel.class).build();
+
+        assertEquals(1, classModel.getPropertyModels().size());
+        assertEquals(createTypeData(Long.class), classModel.getPropertyModel("value").getTypeData());
+    }
+
+    @Test
+    public void testForwardingInterfaceChain() {
+        ClassModel<?> classModel = ClassModel.builder(ForwardingInterfaceModel.class).build();
+
+        assertEquals(1, classModel.getPropertyModels().size());
+        assertEquals(createTypeData(Integer.class), classModel.getPropertyModel("value").getTypeData());
+    }
+
+    @Test
+    public void testForwardingNested() {
+        ClassModel<?> classModel = ClassModel.builder(ForwardingNestedModel.class).build();
+
+        assertEquals(1, classModel.getPropertyModels().size());
+        assertEquals(createTypeData(List.class, String.class), classModel.getPropertyModel("value").getTypeData());
+    }
+
+    @Test
+    public void testHolderConcreteMap() {
+        ClassModel<?> classModel = ClassModel.builder(HolderConcreteMapModel.class).build();
+
+        assertEquals(1, classModel.getPropertyModels().size());
+        assertEquals(createTypeData(Map.class, String.class, Object.class), classModel.getPropertyModel("value").getTypeData());
     }
 
     <T> TypeData.Builder<T> createBuilder(final Class<T> clazz, final Class<?>... types) {

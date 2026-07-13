@@ -71,6 +71,53 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
         return builder.build();
     }
 
+    static <T> TypeData<T> newInstance(final Type genericParentType, final Class<T> parentClass,
+                                       final List<TypeVariable<?>> currentClassTypeParameters,
+                                       final TypeData<?> currentClassTypeData) {
+        TypeData.Builder<T> builder = TypeData.builder(parentClass);
+        if (genericParentType instanceof ParameterizedType) {
+            ParameterizedType pType = (ParameterizedType) genericParentType;
+            for (Type argType : pType.getActualTypeArguments()) {
+                builder.addTypeParameter(resolveTypeArgument(argType, currentClassTypeParameters, currentClassTypeData));
+            }
+        }
+        return builder.build();
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private static TypeData<?> resolveTypeArgument(final Type type,
+                                          final List<TypeVariable<?>> currentClassTypeParameters,
+                                          final TypeData<?> currentClassTypeData) {
+        if (type instanceof ParameterizedType) {
+            ParameterizedType pType = (ParameterizedType) type;
+            TypeData.Builder paramBuilder = TypeData.builder((Class) pType.getRawType());
+            for (Type argType : pType.getActualTypeArguments()) {
+                paramBuilder.addTypeParameter(resolveTypeArgument(argType, currentClassTypeParameters, currentClassTypeData));
+            }
+            return paramBuilder.build();
+        } else if (type instanceof TypeVariable) {
+            // JLS §4.4: a type variable is declared once and referenced by the same instance
+            // everywhere it appears in scope, so reference equality is sufficient.
+            TypeVariable<?> tv = (TypeVariable<?>) type;
+            for (int i = 0; i < currentClassTypeParameters.size(); i++) {
+                if (currentClassTypeParameters.get(i) == tv) {
+                    if (currentClassTypeData != null && i < currentClassTypeData.getTypeParameters().size()) {
+                        return currentClassTypeData.getTypeParameters().get(i);
+                    }
+                    break;
+                }
+            }
+            return TypeData.builder(Object.class).build();
+        } else if (type instanceof Class) {
+            return TypeData.builder((Class) type).build();
+        } else {
+            // WildcardType is intentionally not handled: wildcards cannot appear as type arguments
+            // in superclass or interface declarations (JLS §8.1.4, §8.1.5), so this method is
+            // never called with a WildcardType from getClassHierarchy. Falls through to Object below.
+            return TypeData.builder(Object.class).build();
+        }
+    }
+
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static <T> void getNestedTypeData(final TypeData.Builder<T> builder, final Type type) {
         if (type instanceof ParameterizedType) {
