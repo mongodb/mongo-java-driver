@@ -199,6 +199,9 @@ final class PojoBuilderHelper {
                                                      final TypeData<S> parentClassTypeData,
                                                      final List<String> genericTypeNames,
                                                      final Type genericType) {
+        if (propertyTypeParameterMap.get(propertyMetadata.getName()) != null) {
+            return;
+        }
         TypeParameterMap typeParameterMap = getTypeParameterMap(genericTypeNames, genericType);
         propertyTypeParameterMap.put(propertyMetadata.getName(), typeParameterMap);
         propertyMetadata.typeParameterInfo(typeParameterMap, parentClassTypeData);

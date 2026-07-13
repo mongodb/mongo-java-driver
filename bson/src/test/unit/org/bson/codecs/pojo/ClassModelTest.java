@@ -21,6 +21,7 @@ import java.util.SortedSet;
 import org.bson.codecs.pojo.entities.CollectionNestedPojoModel;
 import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
+import org.bson.codecs.pojo.entities.HolderConcreteMapModel;
 import org.bson.codecs.pojo.entities.InterfaceBasedModel;
 import org.bson.codecs.pojo.entities.ListGenericExtendedModel;
 import org.bson.codecs.pojo.entities.ListListGenericExtendedModel;
@@ -264,6 +265,14 @@ public final class ClassModelTest {
         assertEquals(createTypeData(Integer.class), classModel.getPropertyModel("integerField").getTypeData());
         assertEquals(createTypeData(String.class), classModel.getPropertyModel("stringField").getTypeData());
 
+    }
+
+    @Test
+    public void testHolderConcreteMap() {
+        ClassModel<?> classModel = ClassModel.builder(HolderConcreteMapModel.class).build();
+
+        assertEquals(1, classModel.getPropertyModels().size());
+        assertEquals(createTypeData(Map.class, String.class, Object.class), classModel.getPropertyModel("value").getTypeData());
     }
 
     <T> TypeData.Builder<T> createBuilder(final Class<T> clazz, final Class<?>... types) {
