@@ -16,12 +16,8 @@
 
 package org.bson.codecs.pojo.entities;
 
-public class ForwardingDeep1<C> extends ForwardingDeep2<C> {
+public interface ForwardingInterfaceLevel2<K> {
+    K getValue();
 
-    public ForwardingDeep1() {
-    }
-
-    public ForwardingDeep1(final C value) {
-        super(value);
-    }
+    void setValue(K value);
 }

@@ -16,12 +16,12 @@
 
 package org.bson.codecs.pojo.entities;
 
-public class ForwardingDeep2<B> extends ForwardingDeep3<B> {
+public class ForwardingDeepLevel1<C> extends ForwardingDeepLevel2<C> {
 
-    public ForwardingDeep2() {
+    public ForwardingDeepLevel1() {
     }
 
-    public ForwardingDeep2(final B value) {
+    public ForwardingDeepLevel1(final C value) {
         super(value);
     }
 }

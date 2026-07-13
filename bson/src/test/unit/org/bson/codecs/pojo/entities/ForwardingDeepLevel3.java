@@ -18,13 +18,13 @@ package org.bson.codecs.pojo.entities;
 
 import java.util.Objects;
 
-public class ForwardingDeep3<A> {
+public class ForwardingDeepLevel3<A> {
     private A value;
 
-    public ForwardingDeep3() {
+    public ForwardingDeepLevel3() {
     }
 
-    public ForwardingDeep3(final A value) {
+    public ForwardingDeepLevel3(final A value) {
         this.value = value;
     }
 
@@ -45,7 +45,7 @@ public class ForwardingDeep3<A> {
             return false;
         }
 
-        ForwardingDeep3<?> that = (ForwardingDeep3<?>) o;
+        ForwardingDeepLevel3<?> that = (ForwardingDeepLevel3<?>) o;
 
         if (!Objects.equals(value, that.value)) {
             return false;

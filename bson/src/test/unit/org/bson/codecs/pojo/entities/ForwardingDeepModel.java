@@ -16,7 +16,7 @@
 
 package org.bson.codecs.pojo.entities;
 
-public class ForwardingDeepModel extends ForwardingDeep1<Long> {
+public class ForwardingDeepModel extends ForwardingDeepLevel1<Long> {
 
     public ForwardingDeepModel() {
     }

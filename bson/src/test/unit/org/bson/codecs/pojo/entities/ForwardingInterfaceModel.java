@@ -18,7 +18,7 @@ package org.bson.codecs.pojo.entities;
 
 import java.util.Objects;
 
-public class ForwardingInterfaceModel implements ForwardingInterface1<Integer> {
+public class ForwardingInterfaceModel implements ForwardingInterfaceLevel1<Integer> {
     private Integer value;
 
     public ForwardingInterfaceModel() {

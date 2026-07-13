@@ -16,5 +16,5 @@
 
 package org.bson.codecs.pojo.entities;
 
-public interface ForwardingInterface1<T> extends ForwardingInterface2<T> {
+public interface ForwardingInterfaceLevel1<T> extends ForwardingInterfaceLevel2<T> {
 }

@@ -61,14 +61,8 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
     }
 
     public static <T> TypeData<T> newInstance(final Type genericType, final Class<T> clazz) {
-        TypeData.Builder<T> builder = TypeData.builder(clazz);
-        if (genericType instanceof ParameterizedType) {
-            ParameterizedType pType = (ParameterizedType) genericType;
-            for (Type argType : pType.getActualTypeArguments()) {
-                getNestedTypeData(builder, argType);
-            }
-        }
-        return builder.build();
+        // No enclosing class context: type variables have nothing to resolve against and erase to Object.
+        return newInstance(genericType, clazz, Collections.<TypeVariable<?>>emptyList(), null);
     }
 
     static <T> TypeData<T> newInstance(final Type genericParentType, final Class<T> parentClass,
@@ -112,32 +106,14 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
             return TypeData.builder((Class) type).build();
         } else if (type instanceof WildcardType) {
             // A wildcard cannot be the top-level type argument of an extends/implements clause (JLS §8.1.4,
-            // §8.1.5), but it can appear nested inside one (e.g. extends Base<List<? extends Number>>).
-            // Resolve it to its upper bound, mirroring getNestedTypeData, so any type variable inside the
-            // bound is still substituted against the current context.
+            // §8.1.5), but it can appear nested inside one (e.g. extends Base<List<? extends Number>>) or in a
+            // field/method generic type. Resolve it to its upper bound so any type variable inside the bound is
+            // still substituted against the current context.
             return resolveTypeArgument(((WildcardType) type).getUpperBounds()[0], currentClassTypeParameters,
                     currentClassTypeData);
         } else {
             // Any other Type (e.g. GenericArrayType) is erased to Object.
             return TypeData.builder(Object.class).build();
-        }
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private static <T> void getNestedTypeData(final TypeData.Builder<T> builder, final Type type) {
-        if (type instanceof ParameterizedType) {
-            ParameterizedType pType = (ParameterizedType) type;
-            TypeData.Builder paramBuilder = TypeData.builder((Class) pType.getRawType());
-            for (Type argType : pType.getActualTypeArguments()) {
-                getNestedTypeData(paramBuilder, argType);
-            }
-            builder.addTypeParameter(paramBuilder.build());
-        } else if (type instanceof WildcardType) {
-            builder.addTypeParameter(TypeData.builder((Class) ((WildcardType) type).getUpperBounds()[0]).build());
-        } else if (type instanceof TypeVariable) {
-            builder.addTypeParameter(TypeData.builder(Object.class).build());
-        } else if (type instanceof Class) {
-            builder.addTypeParameter(TypeData.builder((Class) type).build());
         }
     }
 
