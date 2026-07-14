@@ -76,7 +76,7 @@ public class ServerSpanLinkageProseTest {
     }
 
     @Test
-    @DisplayName("Prose test 5: server emits a child span of the driver command span")
+    @DisplayName("Prose test 5: server emits a span parented by the driver operation span")
     void testServerSpanLinkage() throws Exception {
         MongoClientSettings clientSettings = getMongoClientSettingsBuilder()
                 .observabilitySettings(ObservabilitySettings.micrometerBuilder()
@@ -92,26 +92,35 @@ public class ServerSpanLinkageProseTest {
 
         List<FinishedSpan> clientSpans = inMemoryOtel.getFinishedSpans();
         assertTrue(clientSpans.size() >= 2, "expected operation + command client spans, got: " + clientSpans);
-        // command span is the innermost (first finished) span; see AbstractMicrometerProseTest ordering
-        FinishedSpan commandSpan = clientSpans.get(0);
-        String traceId = commandSpan.getTraceId();
-        String commandSpanId = commandSpan.getSpanId();
+        // Per the reference-impl design (section 3.1), the driver injects the traceparent from the
+        // OperationContext's active tracing span, i.e. the OPERATION span. The command span is a
+        // client-side child of the operation span, so the server span is a sibling of the command
+        // span, both parented by the operation span. Finished-span ordering is not guaranteed, so
+        // find the command span by name ("find") and take its parent as the operation span id.
+        List<FinishedSpan> commandSpans = clientSpans.stream()
+                .filter(span -> "find".equals(span.getName()))
+                .collect(Collectors.toList());
+        assertTrue(!commandSpans.isEmpty(), "no client command span named 'find' in: " + clientSpans);
 
         Path traceDir = Paths.get(System.getProperty("org.mongodb.test.otel.trace.dir"));
         long deadline = System.currentTimeMillis() + EXPORT_POLL_TIMEOUT_MS;
         while (System.currentTimeMillis() < deadline) {
-            if (serverSpanLinked(traceDir, traceId, commandSpanId)) {
-                return;
+            for (FinishedSpan commandSpan : commandSpans) {
+                String operationSpanId = commandSpan.getParentId();
+                if (operationSpanId != null
+                        && serverSpanLinked(traceDir, commandSpan.getTraceId(), operationSpanId)) {
+                    return;
+                }
             }
             Thread.sleep(EXPORT_POLL_INTERVAL_MS);
         }
-        fail("no server span found in " + traceDir + " with traceId=" + traceId
-                + " and parentSpanId=" + commandSpanId);
+        fail("no server span found in " + traceDir
+                + " with traceId/parentSpanId matching the operation span of any of " + commandSpans);
     }
 
     /**
      * Scans OTLP JSON export files for a span with the given traceId whose parentSpanId is the
-     * driver command span. OTLP file exports contain resourceSpans[].scopeSpans[].spans[] objects
+     * given driver span. OTLP file exports contain resourceSpans[].scopeSpans[].spans[] objects
      * with hex-encoded traceId/spanId/parentSpanId fields; a simple containment check on the two
      * hex ids in the same file line is sufficient and avoids a protobuf/JSON-schema dependency.
      */

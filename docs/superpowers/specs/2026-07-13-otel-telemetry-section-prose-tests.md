@@ -33,7 +33,10 @@ present (drivers MUST omit the section rather than send an invalid traceparent).
 ## 5. End-to-end server span linkage
 
 With tracing enabled, run a CRUD operation (e.g. `find`) against the configured 9.0+
-server. Capture the driver's finished command span (client side). Then read the server's
+server. Capture the driver's finished spans (client side). Then read the server's
 exported OTLP JSON from the trace directory and assert a server span exists whose
-`traceId` equals the client command span's trace-id and whose `parentSpanId` equals the
-client command span's span-id. Allow for the server's batch export interval when polling.
+`traceId` equals the client trace-id and whose `parentSpanId` equals the driver's
+*operation* span-id (the traceparent is injected from the `OperationContext`'s active
+tracing span per the reference-impl design section 3.1, so the server span is a sibling
+of the client command span, both parented by the operation span). Allow for the server's
+batch export interval when polling.
