@@ -58,7 +58,6 @@ public final class MessageSettings {
     private final int maxWireVersion;
     private final ServerType serverType;
     private final boolean sessionSupported;
-    private final boolean tracingSupported;
     private final boolean cryptd;
 
     /**
@@ -81,7 +80,6 @@ public final class MessageSettings {
         private int maxWireVersion = UNKNOWN_WIRE_VERSION;
         private ServerType serverType;
         private boolean sessionSupported;
-        private boolean tracingSupported;
         private boolean cryptd;
 
         /**
@@ -141,11 +139,6 @@ public final class MessageSettings {
             return this;
         }
 
-        public Builder tracingSupported(final boolean tracingSupported) {
-            this.tracingSupported = tracingSupported;
-            return this;
-        }
-
         /**
          * Set whether the server is a mongocryptd.
          *
@@ -200,10 +193,6 @@ public final class MessageSettings {
         return sessionSupported;
     }
 
-    public boolean isTracingSupported() {
-        return tracingSupported;
-    }
-
 
     private MessageSettings(final Builder builder) {
         this.maxDocumentSize = builder.maxDocumentSize;
@@ -212,7 +201,6 @@ public final class MessageSettings {
         this.maxWireVersion = builder.maxWireVersion;
         this.serverType = builder.serverType;
         this.sessionSupported = builder.sessionSupported;
-        this.tracingSupported = builder.tracingSupported;
         this.cryptd = builder.cryptd;
     }
 }
