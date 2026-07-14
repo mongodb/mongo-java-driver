@@ -23,7 +23,17 @@ import io.micrometer.tracing.handler.DefaultTracingObservationHandler;
 import com.mongodb.observability.micrometer.MongodbObservation;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.net.URL;
+import java.net.URLClassLoader;
+import java.util.ArrayList;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 class MicrometerTraceParentTest {
@@ -58,6 +68,93 @@ class MicrometerTraceParentTest {
         assertNull(traceParentFor("0AF7651916CD43DD8448EB211C80319C", VALID_SPAN_ID, true));
         assertNull(traceParentFor(null, VALID_SPAN_ID, true));
         assertNull(traceParentFor(VALID_TRACE_ID, null, true));
+    }
+
+    /**
+     * {@code micrometer-tracing} is an optional dependency. Consumers who only have {@code micrometer-observation}
+     * on the classpath (metrics/logging-only observability setups) must not see a {@link NoClassDefFoundError} or
+     * any other {@link LinkageError} the first time {@code traceParent()} is called.
+     */
+    @Test
+    void shouldExposeMicrometerTracingClasspathGuard() {
+        // Sanity check on the current test classpath (micrometer-tracing IS present here).
+        assertEquals(true, MicrometerTracer.MICROMETER_TRACING_ON_CLASSPATH);
+    }
+
+    /**
+     * Simulates a consumer that has only {@code micrometer-observation} on the classpath (no
+     * {@code micrometer-tracing}), by loading {@link MicrometerTracer} (and its dependency classes) through an
+     * isolated classloader that refuses to resolve {@code io.micrometer.tracing.*}. Asserts that {@code
+     * traceParent()} returns {@code null} rather than throwing {@link NoClassDefFoundError}.
+     */
+    @Test
+    void shouldReturnNullWhenMicrometerTracingIsAbsentFromClasspath() throws Exception {
+        List<URL> urls = new ArrayList<>();
+        String[] classpathEntries = System.getProperty("java.class.path").split(System.getProperty("path.separator"));
+        for (String entry : classpathEntries) {
+            if (entry.contains("micrometer-tracing")) {
+                continue;
+            }
+            urls.add(new java.io.File(entry).toURI().toURL());
+        }
+
+        try (URLClassLoader isolatedLoader = new URLClassLoader(urls.toArray(new URL[0]), null) {
+            @Override
+            protected Class<?> loadClass(final String name, final boolean resolve) throws ClassNotFoundException {
+                if (name.startsWith("io.micrometer.tracing.")) {
+                    throw new ClassNotFoundException(name);
+                }
+                if (name.startsWith("java.") || name.startsWith("javax.") || name.startsWith("jdk.")) {
+                    return Class.forName(name, resolve, null);
+                }
+                return super.loadClass(name, resolve);
+            }
+        }) {
+            Class<?> tracerClass = Class.forName(
+                    "com.mongodb.internal.observability.micrometer.MicrometerTracer", true, isolatedLoader);
+
+            Field guard = tracerClass.getDeclaredField("MICROMETER_TRACING_ON_CLASSPATH");
+            guard.setAccessible(true);
+            assertFalse((Boolean) guard.get(null),
+                    "guard should detect that io.micrometer.tracing is not resolvable in the isolated loader");
+
+            Class<?> registryClass = Class.forName("io.micrometer.observation.ObservationRegistry", true, isolatedLoader);
+            Object registry = registryClass.getMethod("create").invoke(null);
+
+            Constructor<?> tracerCtor = tracerClass.getDeclaredConstructor(
+                    registryClass, boolean.class, int.class,
+                    Class.forName("io.micrometer.observation.ObservationConvention", true, isolatedLoader));
+            Object micrometerTracer = tracerCtor.newInstance(registry, false, 1000, null);
+
+            Class<?> observationTypeClass = Class.forName(
+                    "com.mongodb.observability.micrometer.MongodbObservation", true, isolatedLoader);
+            Object observationType = observationTypeClass.getField("MONGODB_COMMAND").get(null);
+
+            Class<?> tracerInterface = Class.forName(
+                    "com.mongodb.internal.observability.micrometer.Tracer", true, isolatedLoader);
+            Method nextSpan = tracerInterface.getMethod("nextSpan", observationTypeClass, String.class,
+                    Class.forName("com.mongodb.internal.observability.micrometer.TraceContext", true, isolatedLoader),
+                    Class.forName("com.mongodb.MongoNamespace", true, isolatedLoader));
+            Object span = nextSpan.invoke(micrometerTracer, observationType, "find", null, null);
+
+            Class<?> spanInterface = Class.forName(
+                    "com.mongodb.internal.observability.micrometer.Span", true, isolatedLoader);
+            spanInterface.getMethod("openScope").invoke(span);
+
+            Object traceContext = assertDoesNotThrow(() -> spanInterface.getMethod("context").invoke(span),
+                    "obtaining the trace context must not throw when micrometer-tracing is absent");
+
+            Class<?> traceContextInterface = Class.forName(
+                    "com.mongodb.internal.observability.micrometer.TraceContext", true, isolatedLoader);
+            Object traceParent = assertDoesNotThrow(
+                    () -> traceContextInterface.getMethod("traceParent").invoke(traceContext),
+                    "traceParent() must not throw NoClassDefFoundError when micrometer-tracing is absent");
+
+            assertEquals(null, traceParent);
+
+            spanInterface.getMethod("closeScope").invoke(span);
+            spanInterface.getMethod("end").invoke(span);
+        }
     }
 
     private static String traceParentFor(final String traceId, final String spanId, final Boolean sampled) {
