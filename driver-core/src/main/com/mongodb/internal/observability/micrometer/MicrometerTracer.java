@@ -24,7 +24,6 @@ import com.mongodb.observability.micrometer.MongodbObservationContext;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.ObservationRegistry;
-import io.micrometer.tracing.handler.TracingObservationHandler;
 import org.bson.BsonDocument;
 import org.bson.BsonReader;
 import org.bson.json.JsonMode;
@@ -48,10 +47,27 @@ import static java.util.Optional.ofNullable;
  * @since 5.7
  */
 public class MicrometerTracer implements Tracer {
+    /**
+     * {@code micrometer-tracing} is an optional dependency: consumers may have only {@code micrometer-observation}
+     * on the classpath (e.g. metrics/logging-only observability setups). Guard any use of {@code io.micrometer.tracing.*}
+     * types with this flag so that such setups never trigger a {@link NoClassDefFoundError} or {@link LinkageError}.
+     */
+    static final boolean MICROMETER_TRACING_ON_CLASSPATH = isMicrometerTracingOnClasspath();
+
     private final ObservationRegistry observationRegistry;
     private final boolean allowCommandPayload;
     private final int textMaxLength;
     private final ObservationConvention<MongodbObservationContext> convention;
+
+    private static boolean isMicrometerTracingOnClasspath() {
+        try {
+            Class.forName("io.micrometer.tracing.handler.TracingObservationHandler",
+                    false, MicrometerTracer.class.getClassLoader());
+            return true;
+        } catch (ClassNotFoundException | LinkageError e) {
+            return false;
+        }
+    }
 
     /**
      * Constructs a new {@link MicrometerTracer} instance.
@@ -124,30 +140,17 @@ public class MicrometerTracer implements Tracer {
             if (observation == null) {
                 return null;
             }
-            TracingObservationHandler.TracingContext tracingContext =
-                    observation.getContextView().get(TracingObservationHandler.TracingContext.class);
-            if (tracingContext == null || tracingContext.getSpan() == null) {
+            if (!MICROMETER_TRACING_ON_CLASSPATH) {
                 return null;
             }
-            // Fully qualified to avoid a name clash with this package's own TraceContext interface.
-            io.micrometer.tracing.TraceContext ctx = tracingContext.getSpan().context();
-            if (ctx == null) {
-                return null;
-            }
-            String traceId = ctx.traceId();
-            String spanId = ctx.spanId();
-            if (!isValidNonZeroLowercaseHex(traceId, 32) || !isValidNonZeroLowercaseHex(spanId, 16)) {
-                return null;
-            }
-            Boolean sampled = ctx.sampled();
-            return "00-" + traceId + "-" + spanId + (sampled != null && sampled ? "-01" : "-00");
+            return MicrometerTracingSupport.traceParent(observation);
         }
 
         /**
          * The server ({@code validateW3CTraceparent}) rejects ids that are not exactly the expected
          * length of lowercase hex, or that are all zeroes. Never emit a traceparent it would reject.
          */
-        private static boolean isValidNonZeroLowercaseHex(@Nullable final String value, final int expectedLength) {
+        static boolean isValidNonZeroLowercaseHex(@Nullable final String value, final int expectedLength) {
             if (value == null || value.length() != expectedLength) {
                 return false;
             }
@@ -162,6 +165,35 @@ public class MicrometerTracer implements Tracer {
                 }
             }
             return nonZero;
+        }
+    }
+
+    /**
+     * Isolates all hard references to {@code io.micrometer.tracing.*} types. This class must only be loaded/invoked
+     * after {@link #MICROMETER_TRACING_ON_CLASSPATH} has been confirmed {@code true}, so that JVMs which resolve
+     * classes referenced by bytecode eagerly (e.g. during verification) do not trigger a {@link NoClassDefFoundError}
+     * when {@code micrometer-tracing} is absent from the classpath.
+     */
+    private static final class MicrometerTracingSupport {
+        @Nullable
+        static String traceParent(final Observation observation) {
+            io.micrometer.tracing.handler.TracingObservationHandler.TracingContext tracingContext =
+                    observation.getContextView().get(io.micrometer.tracing.handler.TracingObservationHandler.TracingContext.class);
+            if (tracingContext == null || tracingContext.getSpan() == null) {
+                return null;
+            }
+            io.micrometer.tracing.TraceContext ctx = tracingContext.getSpan().context();
+            if (ctx == null) {
+                return null;
+            }
+            String traceId = ctx.traceId();
+            String spanId = ctx.spanId();
+            if (!MicrometerTraceContext.isValidNonZeroLowercaseHex(traceId, 32)
+                    || !MicrometerTraceContext.isValidNonZeroLowercaseHex(spanId, 16)) {
+                return null;
+            }
+            Boolean sampled = ctx.sampled();
+            return "00-" + traceId + "-" + spanId + (sampled != null && sampled ? "-01" : "-00");
         }
     }
 
