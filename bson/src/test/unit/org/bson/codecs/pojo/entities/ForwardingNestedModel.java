@@ -18,7 +18,7 @@ package org.bson.codecs.pojo.entities;
 
 import java.util.List;
 
-public class ForwardingNestedModel extends ForwardingNestedMid<String> {
+public class ForwardingNestedModel extends ForwardingNestedLevel1<String> {
 
     public ForwardingNestedModel() {
     }

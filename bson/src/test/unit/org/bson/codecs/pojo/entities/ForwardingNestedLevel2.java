@@ -18,13 +18,13 @@ package org.bson.codecs.pojo.entities;
 
 import java.util.Objects;
 
-public class ForwardingNestedBase<E> {
+public class ForwardingNestedLevel2<E> {
     private E value;
 
-    public ForwardingNestedBase() {
+    public ForwardingNestedLevel2() {
     }
 
-    public ForwardingNestedBase(final E value) {
+    public ForwardingNestedLevel2(final E value) {
         this.value = value;
     }
 
@@ -45,7 +45,7 @@ public class ForwardingNestedBase<E> {
             return false;
         }
 
-        ForwardingNestedBase<?> that = (ForwardingNestedBase<?>) o;
+        ForwardingNestedLevel2<?> that = (ForwardingNestedLevel2<?>) o;
 
         if (!Objects.equals(value, that.value)) {
             return false;

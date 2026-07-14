@@ -16,14 +16,21 @@
 
 package org.bson.codecs.pojo.entities;
 
-import java.util.List;
+public class ForwardingArrayLevel2<T> {
+    private T[] value;
 
-public class ForwardingNestedMid<Y> extends ForwardingNestedBase<List<Y>> {
-
-    public ForwardingNestedMid() {
+    public ForwardingArrayLevel2() {
     }
 
-    public ForwardingNestedMid(final List<Y> value) {
-        super(value);
+    public ForwardingArrayLevel2(final T[] value) {
+        this.value = value;
+    }
+
+    public T[] getValue() {
+        return value;
+    }
+
+    public void setValue(final T[] value) {
+        this.value = value;
     }
 }

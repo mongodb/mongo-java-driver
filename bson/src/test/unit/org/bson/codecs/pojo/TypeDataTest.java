@@ -182,6 +182,20 @@ public final class TypeDataTest {
     }
 
     @Test
+    public void newInstanceErasesGenericArrayTypeToObject() throws NoSuchFieldException {
+        Field arrayField = Holder.class.getDeclaredField("genericArray");
+        Type arrayGenericType = arrayField.getGenericType();
+
+        List<TypeVariable<?>> typeParams = asList(Holder.class.getTypeParameters());
+        TypeData<Holder> currentResolved = TypeData.builder(Holder.class)
+                .addTypeParameter(TypeData.builder(String.class).build()).build();
+
+        TypeData<Object[]> actual = TypeData.newInstance(arrayGenericType, Object[].class, typeParams, currentResolved);
+        TypeData<Object[]> expected = TypeData.builder(Object[].class).build();
+        assertEquals(expected, actual);
+    }
+
+    @Test
     public void newInstanceResolvesBoundedWildcardToUpperBound() throws NoSuchFieldException {
         Field boundedWildcardField = Holder.class.getDeclaredField("boundedWildcard");
         Type boundedWildcardGenericType = boundedWildcardField.getGenericType();
@@ -201,6 +215,7 @@ public final class TypeDataTest {
         private List<String> concrete;
         private Map<String, T> nestedMap;
         private List<? extends Number> boundedWildcard;
+        private T[] genericArray;
     }
 
     private static class NonGeneric {

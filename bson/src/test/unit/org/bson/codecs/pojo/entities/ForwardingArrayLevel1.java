@@ -16,14 +16,12 @@
 
 package org.bson.codecs.pojo.entities;
 
-import java.util.List;
+public class ForwardingArrayLevel1<U> extends ForwardingArrayLevel2<U> {
 
-public class ForwardingWildcardModel extends ForwardingNestedLevel2<List<? extends ShapeModelAbstract>> {
-
-    public ForwardingWildcardModel() {
+    public ForwardingArrayLevel1() {
     }
 
-    public ForwardingWildcardModel(final List<? extends ShapeModelAbstract> value) {
+    public ForwardingArrayLevel1(final U[] value) {
         super(value);
     }
 }

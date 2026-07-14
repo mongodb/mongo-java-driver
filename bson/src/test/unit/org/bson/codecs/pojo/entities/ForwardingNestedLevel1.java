@@ -18,12 +18,12 @@ package org.bson.codecs.pojo.entities;
 
 import java.util.List;
 
-public class ForwardingWildcardModel extends ForwardingNestedLevel2<List<? extends ShapeModelAbstract>> {
+public class ForwardingNestedLevel1<Y> extends ForwardingNestedLevel2<List<Y>> {
 
-    public ForwardingWildcardModel() {
+    public ForwardingNestedLevel1() {
     }
 
-    public ForwardingWildcardModel(final List<? extends ShapeModelAbstract> value) {
+    public ForwardingNestedLevel1(final List<Y> value) {
         super(value);
     }
 }

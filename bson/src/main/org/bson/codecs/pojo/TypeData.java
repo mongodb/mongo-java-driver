@@ -16,6 +16,7 @@
 
 package org.bson.codecs.pojo;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -67,7 +68,7 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
 
     static <T> TypeData<T> newInstance(final Type genericParentType, final Class<T> parentClass,
                                        final List<TypeVariable<?>> currentClassTypeParameters,
-                                       final TypeData<?> currentClassTypeData) {
+                                       @Nullable final TypeData<?> currentClassTypeData) {
         TypeData.Builder<T> builder = TypeData.builder(parentClass);
         if (genericParentType instanceof ParameterizedType) {
             ParameterizedType pType = (ParameterizedType) genericParentType;
@@ -81,7 +82,7 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private static TypeData<?> resolveTypeArgument(final Type type,
                                           final List<TypeVariable<?>> currentClassTypeParameters,
-                                          final TypeData<?> currentClassTypeData) {
+                                          @Nullable final TypeData<?> currentClassTypeData) {
         if (type instanceof ParameterizedType) {
             ParameterizedType pType = (ParameterizedType) type;
             TypeData.Builder paramBuilder = TypeData.builder((Class) pType.getRawType());
@@ -90,18 +91,7 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
             }
             return paramBuilder.build();
         } else if (type instanceof TypeVariable) {
-            // JLS §4.4: a type variable is declared once and referenced by the same instance
-            // everywhere it appears in scope, so reference equality is sufficient.
-            TypeVariable<?> tv = (TypeVariable<?>) type;
-            for (int i = 0; i < currentClassTypeParameters.size(); i++) {
-                if (currentClassTypeParameters.get(i) == tv) {
-                    if (currentClassTypeData != null && i < currentClassTypeData.getTypeParameters().size()) {
-                        return currentClassTypeData.getTypeParameters().get(i);
-                    }
-                    break;
-                }
-            }
-            return TypeData.builder(Object.class).build();
+            return resolveTypeVariable((TypeVariable<?>) type, currentClassTypeParameters, currentClassTypeData);
         } else if (type instanceof Class) {
             return TypeData.builder((Class) type).build();
         } else if (type instanceof WildcardType) {
@@ -115,6 +105,23 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
             // Any other Type (e.g. GenericArrayType) is erased to Object.
             return TypeData.builder(Object.class).build();
         }
+    }
+
+    private static TypeData<?> resolveTypeVariable(final TypeVariable<?> type, final List<TypeVariable<?>> currentClassTypeParameters,
+                                           @Nullable final TypeData<?> currentClassTypeData) {
+        if (currentClassTypeData != null) {
+            for (int i = 0; i < currentClassTypeParameters.size(); i++) {
+                // JLS §4.4: a type variable is declared once and referenced by the same instance
+                // everywhere it appears in scope, so reference equality is sufficient.
+                if (currentClassTypeParameters.get(i) == type) {
+                    if (i < currentClassTypeData.getTypeParameters().size()) {
+                        return currentClassTypeData.getTypeParameters().get(i);
+                    }
+                    break;
+                }
+            }
+        }
+        return TypeData.builder(Object.class).build();
     }
 
     /**

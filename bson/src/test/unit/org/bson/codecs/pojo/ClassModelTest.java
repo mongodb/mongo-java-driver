@@ -23,6 +23,7 @@ import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ForwardingDeepModel;
 import org.bson.codecs.pojo.entities.ForwardingInterfaceModel;
 import org.bson.codecs.pojo.entities.ForwardingModel;
+import org.bson.codecs.pojo.entities.ForwardingArrayModel;
 import org.bson.codecs.pojo.entities.ForwardingNestedModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.HolderConcreteMapModel;
@@ -301,6 +302,17 @@ public final class ClassModelTest {
 
         assertEquals(1, classModel.getPropertyModels().size());
         assertEquals(createTypeData(List.class, String.class), classModel.getPropertyModel("value").getTypeData());
+    }
+
+    @Test
+    public void testForwardingArrayTypeVariableErasedToObject() {
+        // T[] fields in a generic base class are GenericArrayType; getTypeParameterMap does not
+        // handle GenericArrayType component types, so the T[] erases to Object[] regardless of
+        // the concrete binding at the leaf subclass.
+        ClassModel<?> classModel = ClassModel.builder(ForwardingArrayModel.class).build();
+
+        assertEquals(1, classModel.getPropertyModels().size());
+        assertEquals(createTypeData(Object[].class), classModel.getPropertyModel("value").getTypeData());
     }
 
     @Test
