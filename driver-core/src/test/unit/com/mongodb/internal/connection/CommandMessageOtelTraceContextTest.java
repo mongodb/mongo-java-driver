@@ -23,23 +23,30 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ServerType;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.bulk.InsertRequest;
+import com.mongodb.internal.bulk.WriteRequestWithIndex;
 import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
-import com.mongodb.internal.observability.micrometer.OtelTracePropagationTestToggle;
 import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.observability.micrometer.TraceContext;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
+import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.ByteBuf;
+import org.bson.ByteBufNIO;
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.DecoderContext;
 import org.junit.jupiter.api.Test;
 
-import java.nio.charset.StandardCharsets;
+import java.nio.ByteBuffer;
+import java.util.Collections;
 
 import static com.mongodb.internal.mockito.MongoMockito.mock;
-import static com.mongodb.internal.operation.ServerVersionHelper.LATEST_WIRE_VERSION;
+import static com.mongodb.internal.operation.ServerVersionHelper.EIGHT_DOT_ZERO_WIRE_VERSION;
+import static com.mongodb.internal.operation.ServerVersionHelper.NINE_DOT_ZERO_WIRE_VERSION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
 
 class CommandMessageOtelTraceContextTest {
@@ -49,25 +56,67 @@ class CommandMessageOtelTraceContextTest {
     private static final BsonDocument COMMAND = new BsonDocument("find", new BsonString(NAMESPACE.getCollectionName()));
 
     @Test
-    void writesSectionWhenSupportedAndSampledSpanPresent() {
-        CommandMessage message = buildCommandMessage(true);
-        TraceContext traceContext = () -> TRACEPARENT;
-        Span span = mock(Span.class, mock -> when(mock.context()).thenReturn(traceContext));
+    void shouldWriteTelemetrySectionWhenWireVersionAtLeast29AndSpanActive() {
+        CommandMessage message = buildCommandMessage(NINE_DOT_ZERO_WIRE_VERSION, EmptyMessageSequences.INSTANCE);
+        Span span = spanWithTraceParent(TRACEPARENT);
         OperationContext operationContext = buildOperationContext(span);
 
-        byte[] encoded = encodeToBytes(message, operationContext);
+        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+            message.encode(output, operationContext);
+            byte[] buffer = output.toByteArray();
 
-        assertTrue(containsOtelSection(encoded, TRACEPARENT),
-                "Encoded message should contain the OTel trace context section (kind byte 3 + traceparent C-string)");
+            BsonDocument telemetry = readTelemetrySectionDocument(buffer);
+            assertEquals(new BsonDocument("otel", new BsonDocument("traceparent", new BsonString(TRACEPARENT))), telemetry);
+        }
     }
 
     @Test
-    void getCommandDocumentIgnoresOtelSection() {
+    void shouldNotWriteTelemetrySectionWhenWireVersionBelow29() {
+        CommandMessage message = buildCommandMessage(EIGHT_DOT_ZERO_WIRE_VERSION, EmptyMessageSequences.INSTANCE);
+        Span span = spanWithTraceParent(TRACEPARENT);
+        OperationContext operationContext = buildOperationContext(span);
+
+        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+            message.encode(output, operationContext);
+            byte[] buffer = output.toByteArray();
+
+            assertNull(findTelemetrySectionDocument(buffer));
+        }
+    }
+
+    @Test
+    void shouldNotWriteTelemetrySectionWhenNoSpan() {
+        CommandMessage message = buildCommandMessage(NINE_DOT_ZERO_WIRE_VERSION, EmptyMessageSequences.INSTANCE);
+        OperationContext operationContext = buildOperationContext(null);
+
+        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+            message.encode(output, operationContext);
+            byte[] buffer = output.toByteArray();
+
+            assertNull(findTelemetrySectionDocument(buffer));
+        }
+    }
+
+    @Test
+    void shouldNotWriteTelemetrySectionWhenTraceParentNull() {
+        CommandMessage message = buildCommandMessage(NINE_DOT_ZERO_WIRE_VERSION, EmptyMessageSequences.INSTANCE);
+        Span span = spanWithTraceParent(null);
+        OperationContext operationContext = buildOperationContext(span);
+
+        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+            message.encode(output, operationContext);
+            byte[] buffer = output.toByteArray();
+
+            assertNull(findTelemetrySectionDocument(buffer));
+        }
+    }
+
+    @Test
+    void getCommandDocumentIgnoresTelemetrySection() {
         // Regression guard: InternalStreamConnection calls getCommandDocument() on every send (logging/monitoring/
         // compression). The trailing kind-3 section must not corrupt command-document reconstruction.
-        CommandMessage message = buildCommandMessage(true);
-        TraceContext traceContext = () -> TRACEPARENT;
-        Span span = mock(Span.class, mock -> when(mock.context()).thenReturn(traceContext));
+        CommandMessage message = buildCommandMessage(NINE_DOT_ZERO_WIRE_VERSION, EmptyMessageSequences.INSTANCE);
+        Span span = spanWithTraceParent(TRACEPARENT);
         OperationContext operationContext = buildOperationContext(span);
 
         try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
@@ -82,76 +131,49 @@ class CommandMessageOtelTraceContextTest {
     }
 
     @Test
-    void omitsSectionWhenCapabilityAbsent() {
-        CommandMessage message = buildCommandMessage(false);
-        TraceContext traceContext = () -> TRACEPARENT;
-        Span span = mock(Span.class, mock -> when(mock.context()).thenReturn(traceContext));
+    void shouldWriteTelemetrySectionAfterDocumentSequences() {
+        SplittablePayload payload = new SplittablePayload(SplittablePayload.Type.INSERT,
+                Collections.singletonList(new WriteRequestWithIndex(
+                        new InsertRequest(new BsonDocument("_id", new BsonString("1"))), 0)),
+                true, NoOpFieldNameValidator.INSTANCE);
+        CommandMessage message = buildCommandMessage(NINE_DOT_ZERO_WIRE_VERSION, payload);
+        Span span = spanWithTraceParent(TRACEPARENT);
         OperationContext operationContext = buildOperationContext(span);
 
-        byte[] encoded = encodeToBytes(message, operationContext);
+        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+            message.encode(output, operationContext);
+            byte[] buffer = output.toByteArray();
 
-        assertFalse(containsOtelSection(encoded, TRACEPARENT),
-                "Encoded message should NOT contain the OTel trace context section when tracingSupported=false");
-    }
+            // Sequence section(s) precede the kind-3 telemetry section; scanning left-to-right and taking
+            // the first kind-3 occurrence therefore validates ordering as well as content.
+            BsonDocument telemetry = readTelemetrySectionDocument(buffer);
+            assertEquals(new BsonDocument("otel", new BsonDocument("traceparent", new BsonString(TRACEPARENT))), telemetry);
 
-    @Test
-    void omitsSectionWhenSpanHasNoTraceParent() {
-        CommandMessage message = buildCommandMessage(true);
-        TraceContext traceContext = () -> null;
-        Span span = mock(Span.class, mock -> when(mock.context()).thenReturn(traceContext));
-        OperationContext operationContext = buildOperationContext(span);
-
-        byte[] encoded = encodeToBytes(message, operationContext);
-
-        assertFalse(containsOtelSection(encoded, TRACEPARENT),
-                "Encoded message should NOT contain the OTel trace context section when traceParent is null");
-    }
-
-    @Test
-    void omitsSectionWhenSpanIsNull() {
-        CommandMessage message = buildCommandMessage(true);
-        OperationContext operationContext = buildOperationContext(null);
-
-        byte[] encoded = encodeToBytes(message, operationContext);
-
-        assertFalse(containsOtelSection(encoded, TRACEPARENT),
-                "Encoded message should NOT contain the OTel trace context section when there is no tracing span");
-    }
-
-    @Test
-    void writesSectionWhenForcedEvenIfCapabilityAbsent() {
-        OtelTracePropagationTestToggle.FORCE_PROPAGATION = true;
-        try {
-            CommandMessage message = buildCommandMessage(false); // server did NOT advertise tracingSupport
-            TraceContext traceContext = () -> TRACEPARENT;
-            Span span = mock(Span.class, mock -> when(mock.context()).thenReturn(traceContext));
-            OperationContext operationContext = buildOperationContext(span);
-
-            byte[] encoded = encodeToBytes(message, operationContext);
-
-            assertTrue(containsOtelSection(encoded, TRACEPARENT),
-                    "With FORCE_PROPAGATION the section must be sent even when the server did not advertise support");
-        } finally {
-            OtelTracePropagationTestToggle.FORCE_PROPAGATION = false;
+            BsonDocument commandDocument = message.getCommandDocument(output);
+            assertEquals("test", commandDocument.getString("find").getValue());
         }
     }
 
     // --- helpers ---
 
-    private static CommandMessage buildCommandMessage(final boolean tracingSupported) {
+    private static Span spanWithTraceParent(final String traceParent) {
+        TraceContext traceContext = () -> traceParent;
+        return mock(Span.class, mock -> when(mock.context()).thenReturn(traceContext));
+    }
+
+    private static CommandMessage buildCommandMessage(final int maxWireVersion, final MessageSequences sequences) {
         return new CommandMessage(
                 NAMESPACE.getDatabaseName(),
                 COMMAND,
                 NoOpFieldNameValidator.INSTANCE,
                 ReadPreference.primary(),
                 MessageSettings.builder()
-                        .maxWireVersion(LATEST_WIRE_VERSION)
+                        .maxWireVersion(maxWireVersion)
                         .serverType(ServerType.REPLICA_SET_PRIMARY)
                         .sessionSupported(true)
-                        .tracingSupported(tracingSupported)
                         .build(),
                 true,
-                EmptyMessageSequences.INSTANCE,
+                sequences,
                 ClusterConnectionMode.MULTIPLE,
                 null);
     }
@@ -173,35 +195,45 @@ class CommandMessageOtelTraceContextTest {
         });
     }
 
-    private static byte[] encodeToBytes(final CommandMessage message, final OperationContext operationContext) {
-        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
-            message.encode(output, operationContext);
-            return output.toByteArray();
+    /**
+     * Walks the OP_MSG sections exactly like the production parser (see {@code CommandMessage#getCommandDocument}):
+     * skip the type-0 body document, then for each subsequent section read the kind byte; for kind 1
+     * (document sequence) skip past the {@code int32} section size, and for kind 3 (telemetry) decode and
+     * return the BSON document payload. Returns {@code null} if no kind-3 section is found.
+     */
+    private static BsonDocument findTelemetrySectionDocument(final byte[] buffer) {
+        ByteBuf byteBuf = new ByteBufNIO(ByteBuffer.wrap(buffer));
+        // MsgHeader (16 bytes) + flagBits (4 bytes) + payload type byte (1 byte) for the body section.
+        int position = 16 + 4 + 1;
+        byteBuf.position(position);
+        int bodyLength = byteBuf.getInt(byteBuf.position());
+        byteBuf.position(byteBuf.position() + bodyLength);
+
+        while (byteBuf.hasRemaining()) {
+            byte kind = byteBuf.get();
+            if (kind == 1) {
+                int sectionStart = byteBuf.position();
+                int sectionSize = byteBuf.getInt();
+                byteBuf.position(sectionStart + sectionSize);
+            } else if (kind == 3) {
+                BsonBinaryReader reader = new BsonBinaryReader(byteBuf.asNIO());
+                try {
+                    return new BsonDocumentCodec().decode(reader, DecoderContext.builder().build());
+                } finally {
+                    reader.close();
+                }
+            } else {
+                throw new AssertionError("Unexpected section kind byte: " + kind);
+            }
         }
+        return null;
     }
 
-    /**
-     * Searches for the needle: kind byte {@code 3} immediately followed by the UTF-8 bytes of
-     * {@code traceparent} and a trailing null byte (C-string terminator).
-     */
-    private static boolean containsOtelSection(final byte[] encoded, final String traceparent) {
-        byte[] traceparentBytes = traceparent.getBytes(StandardCharsets.UTF_8);
-        // needle = [0x03, tp[0], tp[1], ..., tp[n-1], 0x00]
-        int needleLen = 1 + traceparentBytes.length + 1;
-        outer:
-        for (int i = 0; i <= encoded.length - needleLen; i++) {
-            if (encoded[i] != 3) {
-                continue;
-            }
-            for (int j = 0; j < traceparentBytes.length; j++) {
-                if (encoded[i + 1 + j] != traceparentBytes[j]) {
-                    continue outer;
-                }
-            }
-            if (encoded[i + 1 + traceparentBytes.length] == 0) {
-                return true;
-            }
+    private static BsonDocument readTelemetrySectionDocument(final byte[] buffer) {
+        BsonDocument telemetry = findTelemetrySectionDocument(buffer);
+        if (telemetry == null) {
+            throw new AssertionError("Expected a kind-3 telemetry section but none was found");
         }
-        return false;
+        return telemetry;
     }
 }

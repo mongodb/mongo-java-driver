@@ -25,7 +25,6 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.MongoNamespaceHelper;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
-import com.mongodb.internal.observability.micrometer.OtelTracePropagationTestToggle;
 import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
@@ -38,6 +37,8 @@ import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.ByteBuf;
 import org.bson.FieldNameValidator;
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.EncoderContext;
 import org.bson.io.BsonOutput;
 
 import java.io.ByteArrayOutputStream;
@@ -66,6 +67,7 @@ import static com.mongodb.internal.connection.BsonWriterHelper.writePayload;
 import static com.mongodb.internal.connection.ByteBufBsonDocument.createList;
 import static com.mongodb.internal.connection.ByteBufBsonDocument.createOne;
 import static com.mongodb.internal.connection.ReadConcernHelper.getReadConcernDocument;
+import static com.mongodb.internal.operation.ServerVersionHelper.NINE_DOT_ZERO_WIRE_VERSION;
 import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION;
 
 /**
@@ -83,11 +85,11 @@ public final class CommandMessage extends RequestMessage {
      */
     private static final byte PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE = 1;
     /**
-     * Specifies that the `OP_MSG` section payload is a W3C traceparent C-string (OpenTelemetry trace context).
-     *
-     * <p>Mirrors the server's {@code kOtelTelemetryContext = 3} section kind (see DRIVERS-3454).</p>
+     * Specifies that the `OP_MSG` section payload is a BSON telemetry document
+     * ({@code {otel: {traceparent: <string>}}}). Mirrors the server's {@code kTelemetry = 3}
+     * section kind (DRIVERS-3454, 10gen/mongo#56646).
      */
-    private static final byte PAYLOAD_TYPE_3_OTEL_TRACE_CONTEXT = 3;
+    private static final byte PAYLOAD_TYPE_3_TELEMETRY = 3;
 
     private static final int UNINITIALIZED_POSITION = -1;
 
@@ -165,7 +167,7 @@ public final class CommandMessage extends RequestMessage {
                 ByteBufBsonDocument byteBufBsonDocument = createOne(byteBuf);
 
                 // If true, there are more sections after the `PAYLOAD_TYPE_0_DOCUMENT` section: either one or more
-                // `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE` sections, and/or a trailing `PAYLOAD_TYPE_3_OTEL_TRACE_CONTEXT` section.
+                // `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE` sections, and/or a trailing `PAYLOAD_TYPE_3_TELEMETRY` section.
                 if (byteBuf.hasRemaining()) {
                     BsonDocument commandBsonDocument = byteBufBsonDocument.toBaseBsonDocument();
 
@@ -174,7 +176,7 @@ public final class CommandMessage extends RequestMessage {
                     while (byteBuf.hasRemaining()) {
                         byte payloadType = byteBuf.get();
                         // Document-sequence sections always precede any trailing non-sequence section (e.g.
-                        // PAYLOAD_TYPE_3_OTEL_TRACE_CONTEXT), and such sections carry no command-document fields, so stop here.
+                        // PAYLOAD_TYPE_3_TELEMETRY), and such sections carry no command-document fields, so stop here.
                         if (payloadType != PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE) {
                             break;
                         }
@@ -290,15 +292,15 @@ public final class CommandMessage extends RequestMessage {
             fail(sequences.toString());
         }
 
-        writeOtelTraceContextSection(bsonOutput, operationContext);
+        writeTelemetryContextSection(bsonOutput, operationContext);
 
         // Write the flag bits
         bsonOutput.writeInt32(flagPosition, getOpMsgFlagBits());
         return commandStartPosition;
     }
 
-    private void writeOtelTraceContextSection(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
-        if (!getSettings().isTracingSupported() && !OtelTracePropagationTestToggle.FORCE_PROPAGATION) {
+    private void writeTelemetryContextSection(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
+        if (getSettings().getMaxWireVersion() < NINE_DOT_ZERO_WIRE_VERSION) {
             return;
         }
         Span tracingSpan = operationContext.getTracingSpan();
@@ -309,8 +311,11 @@ public final class CommandMessage extends RequestMessage {
         if (traceParent == null) {
             return;
         }
-        bsonOutput.writeByte(PAYLOAD_TYPE_3_OTEL_TRACE_CONTEXT);
-        bsonOutput.writeCString(traceParent);
+        bsonOutput.writeByte(PAYLOAD_TYPE_3_TELEMETRY);
+        BsonDocument telemetry = new BsonDocument("otel",
+                new BsonDocument("traceparent", new BsonString(traceParent)));
+        new BsonDocumentCodec().encode(new BsonBinaryWriter(bsonOutput), telemetry,
+                EncoderContext.builder().build());
     }
 
     private int writeOpQuery(final ByteBufferBsonOutput bsonOutput) {
