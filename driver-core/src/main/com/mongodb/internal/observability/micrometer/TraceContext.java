@@ -28,9 +28,10 @@ public interface TraceContext {
     };
 
     /**
-     * The W3C {@code traceparent} string for this context
-     * ({@code 00-<32hex traceId>-<16hex spanId>-<2hex flags>}),
-     * or {@code null} if unavailable or the span is not sampled.
+     * The 55-char W3C {@code traceparent} string for this context
+     * ({@code 00-<32 hex traceId>-<16 hex spanId>-<flags>}; flags {@code 01} sampled / {@code 00} unsampled),
+     * or {@code null} when there is no valid context (no-op span, missing/zero/malformed ids).
+     * Never includes tracestate.
      */
     @Nullable
     String traceParent();
