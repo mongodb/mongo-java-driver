@@ -131,14 +131,37 @@ public class MicrometerTracer implements Tracer {
             }
             // Fully qualified to avoid a name clash with this package's own TraceContext interface.
             io.micrometer.tracing.TraceContext ctx = tracingContext.getSpan().context();
-            if (ctx == null || ctx.traceId() == null || ctx.spanId() == null) {
+            if (ctx == null) {
+                return null;
+            }
+            String traceId = ctx.traceId();
+            String spanId = ctx.spanId();
+            if (!isValidNonZeroLowercaseHex(traceId, 32) || !isValidNonZeroLowercaseHex(spanId, 16)) {
                 return null;
             }
             Boolean sampled = ctx.sampled();
-            if (sampled == null || !sampled) {
-                return null;
+            return "00-" + traceId + "-" + spanId + (sampled != null && sampled ? "-01" : "-00");
+        }
+
+        /**
+         * The server ({@code validateW3CTraceparent}) rejects ids that are not exactly the expected
+         * length of lowercase hex, or that are all zeroes. Never emit a traceparent it would reject.
+         */
+        private static boolean isValidNonZeroLowercaseHex(@Nullable final String value, final int expectedLength) {
+            if (value == null || value.length() != expectedLength) {
+                return false;
             }
-            return "00-" + ctx.traceId() + "-" + ctx.spanId() + "-01";
+            boolean nonZero = false;
+            for (int i = 0; i < value.length(); i++) {
+                char c = value.charAt(i);
+                if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) {
+                    return false;
+                }
+                if (c != '0') {
+                    nonZero = true;
+                }
+            }
+            return nonZero;
         }
     }
 
