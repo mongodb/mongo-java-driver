@@ -1,7 +1,7 @@
 # Design: OpenTelemetry Trace-Context Propagation over OP_MSG
 
 - **Ticket:** [DRIVERS-3454](https://jira.mongodb.org/browse/DRIVERS-3454) — Support trace context propagation to the server
-- **Status:** Design (Investigating phase)
+- **Status:** SUPERSEDED by `2026-07-13-otel-telemetry-section-reference-impl-design.md` (payload is now a BSON document; gating is by maxWireVersion >= 29, not a hello flag)
 - **Author:** Nabil Hachicha
 - **Date:** 2026-06-01
 - **Related:** [DRIVERS-719](https://jira.mongodb.org/browse/DRIVERS-719) (client-side OTel tracing), [SERVER-107128](https://jira.mongodb.org/browse/SERVER-107128) (define trace context in OP_MSG), server POC [10gen/mongo#49930](https://github.com/10gen/mongo/pull/49930)
