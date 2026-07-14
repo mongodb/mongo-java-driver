@@ -23,20 +23,40 @@ import io.micrometer.tracing.handler.DefaultTracingObservationHandler;
 import com.mongodb.observability.micrometer.MongodbObservation;
 import org.junit.jupiter.api.Test;
 
-import java.util.regex.Pattern;
-
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MicrometerTraceParentTest {
-    // SimpleTracer generates 8-byte (16-hex-char) trace IDs; real OTel uses 16-byte (32-hex-char).
-    // Accept either length in the unit test — the format check is what matters here.
-    private static final Pattern TRACEPARENT =
-            Pattern.compile("00-[0-9a-f]{16,32}-[0-9a-f]{16}-[0-9a-f]{2}");
+    private static final String VALID_TRACE_ID = "0af7651916cd43dd8448eb211c80319c";
+    private static final String VALID_SPAN_ID = "b7ad6b7169203331";
 
     @Test
-    void returnsTraceParentForSampledSpan() {
+    void shouldFormatSampledTraceParent() {
+        String traceParent = traceParentFor(VALID_TRACE_ID, VALID_SPAN_ID, true);
+        assertEquals("00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01", traceParent);
+        assertEquals(55, traceParent.length());
+    }
+
+    @Test
+    void shouldFormatUnsampledTraceParentWithZeroFlags() {
+        assertEquals("00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-00",
+                traceParentFor(VALID_TRACE_ID, VALID_SPAN_ID, false));
+        assertEquals("00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-00",
+                traceParentFor(VALID_TRACE_ID, VALID_SPAN_ID, null));
+    }
+
+    @Test
+    void shouldReturnNullForInvalidIds() {
+        assertNull(traceParentFor("00000000000000000000000000000000", VALID_SPAN_ID, true));
+        assertNull(traceParentFor(VALID_TRACE_ID, "0000000000000000", true));
+        assertNull(traceParentFor("abc", VALID_SPAN_ID, true));
+        assertNull(traceParentFor(VALID_TRACE_ID, "abc", true));
+        assertNull(traceParentFor("0AF7651916CD43DD8448EB211C80319C", VALID_SPAN_ID, true));
+        assertNull(traceParentFor(null, VALID_SPAN_ID, true));
+        assertNull(traceParentFor(VALID_TRACE_ID, null, true));
+    }
+
+    private static String traceParentFor(final String traceId, final String spanId, final Boolean sampled) {
         ObservationRegistry registry = ObservationRegistry.create();
         SimpleTracer tracer = new SimpleTracer();
         registry.observationConfig().observationHandler(new DefaultTracingObservationHandler(tracer));
@@ -44,27 +64,12 @@ class MicrometerTraceParentTest {
         MicrometerTracer micrometerTracer = new MicrometerTracer(registry, false, 1000, null);
         Span span = micrometerTracer.nextSpan(MongodbObservation.MONGODB_COMMAND, "find", null, null);
         span.openScope();
-        // SimpleTracer creates spans with sampled=false by default; mark as sampled so
-        // traceParent() emits the header (flags=01).
-        ((SimpleTraceContext) tracer.lastSpan().context()).setSampled(true);
         try {
-            String traceParent = span.context().traceParent();
-            assertNotNull(traceParent);
-            assertTrue(TRACEPARENT.matcher(traceParent).matches(), traceParent);
-        } finally {
-            span.closeScope();
-            span.end();
-        }
-    }
-
-    @Test
-    void returnsNullWhenNoTracingBridgeConfigured() {
-        ObservationRegistry registry = ObservationRegistry.create();
-        MicrometerTracer micrometerTracer = new MicrometerTracer(registry, false, 1000, null);
-        Span span = micrometerTracer.nextSpan(MongodbObservation.MONGODB_COMMAND, "find", null, null);
-        span.openScope();
-        try {
-            assertNull(span.context().traceParent());
+            SimpleTraceContext context = (SimpleTraceContext) tracer.lastSpan().context();
+            context.setTraceId(traceId);
+            context.setSpanId(spanId);
+            context.setSampled(sampled);
+            return span.context().traceParent();
         } finally {
             span.closeScope();
             span.end();
