@@ -48,7 +48,6 @@ public class ConnectionDescription {
     private final List<String> compressors;
     private final BsonArray saslSupportedMechanisms;
     private final Integer logicalSessionTimeoutMinutes;
-    private final boolean tracingSupport;
 
     private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
     private static final int DEFAULT_MAX_WRITE_BATCH_SIZE = 512;
@@ -151,15 +150,6 @@ public class ConnectionDescription {
             final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
             final int maxMessageSize, final List<String> compressors,
             @Nullable final BsonArray saslSupportedMechanisms, @Nullable final Integer logicalSessionTimeoutMinutes) {
-        this(serviceId, connectionId, maxWireVersion, serverType, maxBatchCount, maxDocumentSize, maxMessageSize, compressors,
-                saslSupportedMechanisms, logicalSessionTimeoutMinutes, false);
-    }
-
-    private ConnectionDescription(@Nullable final ObjectId serviceId, final ConnectionId connectionId, final int maxWireVersion,
-            final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
-            final int maxMessageSize, final List<String> compressors,
-            @Nullable final BsonArray saslSupportedMechanisms, @Nullable final Integer logicalSessionTimeoutMinutes,
-            final boolean tracingSupport) {
         this.serviceId = serviceId;
         this.connectionId = connectionId;
         this.serverType = serverType;
@@ -170,7 +160,6 @@ public class ConnectionDescription {
         this.compressors = notNull("compressors", Collections.unmodifiableList(new ArrayList<>(compressors)));
         this.saslSupportedMechanisms = saslSupportedMechanisms;
         this.logicalSessionTimeoutMinutes = logicalSessionTimeoutMinutes;
-        this.tracingSupport = tracingSupport;
     }
     /**
      * Creates a new connection description with the set connection id
@@ -182,7 +171,7 @@ public class ConnectionDescription {
     public ConnectionDescription withConnectionId(final ConnectionId connectionId) {
         notNull("connectionId", connectionId);
         return new ConnectionDescription(serviceId, connectionId, maxWireVersion, serverType, maxBatchCount, maxDocumentSize,
-                maxMessageSize, compressors, saslSupportedMechanisms, logicalSessionTimeoutMinutes, tracingSupport);
+                maxMessageSize, compressors, saslSupportedMechanisms, logicalSessionTimeoutMinutes);
     }
 
     /**
@@ -195,22 +184,7 @@ public class ConnectionDescription {
     public ConnectionDescription withServiceId(final ObjectId serviceId) {
         notNull("serviceId", serviceId);
         return new ConnectionDescription(serviceId, connectionId, maxWireVersion, serverType, maxBatchCount, maxDocumentSize,
-                maxMessageSize, compressors, saslSupportedMechanisms, logicalSessionTimeoutMinutes, tracingSupport);
-    }
-
-    /**
-     * Creates a new connection description with the given tracing support flag.
-     *
-     * <p>A value of {@code true} indicates that the server advertised OpenTelemetry trace-context support in its {@code hello} response
-     * and that the driver may send trace context to the server over OP_MSG.</p>
-     *
-     * @param tracingSupport whether the server supports OpenTelemetry trace-context propagation
-     * @return the new connection description
-     * @since 5.9
-     */
-    public ConnectionDescription withTracingSupport(final boolean tracingSupport) {
-        return new ConnectionDescription(serviceId, connectionId, maxWireVersion, serverType, maxBatchCount, maxDocumentSize,
-                maxMessageSize, compressors, saslSupportedMechanisms, logicalSessionTimeoutMinutes, tracingSupport);
+                maxMessageSize, compressors, saslSupportedMechanisms, logicalSessionTimeoutMinutes);
     }
 
     /**
@@ -319,21 +293,6 @@ public class ConnectionDescription {
     public Integer getLogicalSessionTimeoutMinutes() {
         return logicalSessionTimeoutMinutes;
     }
-
-    /**
-     * Returns whether the server advertised OpenTelemetry trace-context support in its {@code hello} response.
-     *
-     * <p>When {@code true}, the driver may propagate trace context to the server over OP_MSG.
-     * When {@code false} (the default), the server did not advertise this capability and sending unknown OP_MSG sections would cause
-     * the server to reject the message.</p>
-     *
-     * @return {@code true} if the server supports OpenTelemetry trace-context propagation
-     * @since 5.9
-     */
-    public boolean isTracingSupported() {
-        return tracingSupport;
-    }
-
     /**
      * Get the default maximum message size.
      *
@@ -391,9 +350,6 @@ public class ConnectionDescription {
         if (!Objects.equals(logicalSessionTimeoutMinutes, that.logicalSessionTimeoutMinutes)) {
             return false;
         }
-        if (tracingSupport != that.tracingSupport) {
-            return false;
-        }
         return Objects.equals(saslSupportedMechanisms, that.saslSupportedMechanisms);
     }
 
@@ -409,7 +365,6 @@ public class ConnectionDescription {
         result = 31 * result + (serviceId != null ? serviceId.hashCode() : 0);
         result = 31 * result + (saslSupportedMechanisms != null ? saslSupportedMechanisms.hashCode() : 0);
         result = 31 * result + (logicalSessionTimeoutMinutes != null ? logicalSessionTimeoutMinutes.hashCode() : 0);
-        result = 31 * result + (tracingSupport ? 1 : 0);
         return result;
     }
 
@@ -425,7 +380,6 @@ public class ConnectionDescription {
                 + ", compressors=" + compressors
                 + ", logicialSessionTimeoutMinutes=" + logicalSessionTimeoutMinutes
                 + ", serviceId=" + serviceId
-                + ", tracingSupport=" + tracingSupport
                 + '}';
     }
 }
