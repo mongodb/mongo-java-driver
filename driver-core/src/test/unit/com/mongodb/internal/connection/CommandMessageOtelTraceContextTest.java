@@ -55,6 +55,10 @@ class CommandMessageOtelTraceContextTest {
     private static final MongoNamespace NAMESPACE = new MongoNamespace("db.test");
     private static final BsonDocument COMMAND = new BsonDocument("find", new BsonString(NAMESPACE.getCollectionName()));
 
+    /**
+     * Prose test 1: Telemetry section is attached when supported and traced
+     * (see {@code docs/superpowers/specs/2026-07-13-otel-telemetry-section-prose-tests.md})
+     */
     @Test
     void shouldWriteTelemetrySectionWhenWireVersionAtLeast29AndSpanActive() {
         CommandMessage message = buildCommandMessage(NINE_DOT_ZERO_WIRE_VERSION, EmptyMessageSequences.INSTANCE);
@@ -70,6 +74,10 @@ class CommandMessageOtelTraceContextTest {
         }
     }
 
+    /**
+     * Prose test 2: Telemetry section is omitted for older servers
+     * (see {@code docs/superpowers/specs/2026-07-13-otel-telemetry-section-prose-tests.md})
+     */
     @Test
     void shouldNotWriteTelemetrySectionWhenWireVersionBelow29() {
         CommandMessage message = buildCommandMessage(EIGHT_DOT_ZERO_WIRE_VERSION, EmptyMessageSequences.INSTANCE);
@@ -84,6 +92,10 @@ class CommandMessageOtelTraceContextTest {
         }
     }
 
+    /**
+     * Prose test 3: Telemetry section is omitted without an active span
+     * (see {@code docs/superpowers/specs/2026-07-13-otel-telemetry-section-prose-tests.md})
+     */
     @Test
     void shouldNotWriteTelemetrySectionWhenNoSpan() {
         CommandMessage message = buildCommandMessage(NINE_DOT_ZERO_WIRE_VERSION, EmptyMessageSequences.INSTANCE);
@@ -97,6 +109,10 @@ class CommandMessageOtelTraceContextTest {
         }
     }
 
+    /**
+     * Prose test 4: Malformed trace context is never sent
+     * (see {@code docs/superpowers/specs/2026-07-13-otel-telemetry-section-prose-tests.md})
+     */
     @Test
     void shouldNotWriteTelemetrySectionWhenTraceParentNull() {
         CommandMessage message = buildCommandMessage(NINE_DOT_ZERO_WIRE_VERSION, EmptyMessageSequences.INSTANCE);

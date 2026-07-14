@@ -45,6 +45,10 @@ class MicrometerTraceParentTest {
                 traceParentFor(VALID_TRACE_ID, VALID_SPAN_ID, null));
     }
 
+    /**
+     * Prose test 4: Malformed trace context is never sent
+     * (see {@code docs/superpowers/specs/2026-07-13-otel-telemetry-section-prose-tests.md})
+     */
     @Test
     void shouldReturnNullForInvalidIds() {
         assertNull(traceParentFor("00000000000000000000000000000000", VALID_SPAN_ID, true));
