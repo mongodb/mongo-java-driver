@@ -16,21 +16,21 @@
 
 package org.bson.codecs.pojo.entities;
 
-public class ForwardingArrayLevel2<T> {
-    private T[] value;
+public class ForwardingArrayLevel2<E> {
+    private E value;
 
     public ForwardingArrayLevel2() {
     }
 
-    public ForwardingArrayLevel2(final T[] value) {
+    public ForwardingArrayLevel2(final E value) {
         this.value = value;
     }
 
-    public T[] getValue() {
+    public E getValue() {
         return value;
     }
 
-    public void setValue(final T[] value) {
+    public void setValue(final E value) {
         this.value = value;
     }
 }

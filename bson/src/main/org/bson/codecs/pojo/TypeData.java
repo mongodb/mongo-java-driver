@@ -111,9 +111,10 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
                                            @Nullable final TypeData<?> currentClassTypeData) {
         if (currentClassTypeData != null) {
             for (int i = 0; i < currentClassTypeParameters.size(); i++) {
-                // JLS §4.4: a type variable is declared once and referenced by the same instance
-                // everywhere it appears in scope, so reference equality is sufficient.
-                if (currentClassTypeParameters.get(i) == type) {
+                // TypeVariable.equals() is the documented contract: the JDK spec explicitly states
+                // that multiple instances may represent the same type variable and that == must not
+                // be relied upon — only equals() is guaranteed to hold between them.
+                if (currentClassTypeParameters.get(i).equals(type)) {
                     if (i < currentClassTypeData.getTypeParameters().size()) {
                         return currentClassTypeData.getTypeParameters().get(i);
                     }

@@ -16,12 +16,12 @@
 
 package org.bson.codecs.pojo.entities;
 
-public class ForwardingArrayLevel1<U> extends ForwardingArrayLevel2<U> {
+public class ForwardingArrayLevel1<T> extends ForwardingArrayLevel2<T[]> {
 
     public ForwardingArrayLevel1() {
     }
 
-    public ForwardingArrayLevel1(final U[] value) {
+    public ForwardingArrayLevel1(final T[] value) {
         super(value);
     }
 }

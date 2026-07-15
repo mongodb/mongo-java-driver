@@ -312,7 +312,7 @@ public final class ClassModelTest {
         ClassModel<?> classModel = ClassModel.builder(ForwardingArrayModel.class).build();
 
         assertEquals(1, classModel.getPropertyModels().size());
-        assertEquals(createTypeData(Object[].class), classModel.getPropertyModel("value").getTypeData());
+        assertEquals(createTypeData(Object.class), classModel.getPropertyModel("value").getTypeData());
     }
 
     @Test
