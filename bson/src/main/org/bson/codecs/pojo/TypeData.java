@@ -111,9 +111,12 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
                                            @Nullable final TypeData<?> currentClassTypeData) {
         if (currentClassTypeData != null) {
             for (int i = 0; i < currentClassTypeParameters.size(); i++) {
-                // TypeVariable.equals() is the documented contract: the JDK spec explicitly states
-                // that multiple instances may represent the same type variable and that == must not
-                // be relied upon — only equals() is guaranteed to hold between them.
+                //  Given 'class B<T> extends A<T> {}':
+                // - JLS §6.3: the scope of B's type parameter T includes the superclass clause.
+                // - JLS §6.5.5.1: T in "extends A<T>" therefore denotes B's T, not A's.
+                // Both reflection paths represent the same declaration, and the TypeVariable
+                // contract states "all instances representing a type variable must be equal() to
+                // each other".
                 if (currentClassTypeParameters.get(i).equals(type)) {
                     if (i < currentClassTypeData.getTypeParameters().size()) {
                         return currentClassTypeData.getTypeParameters().get(i);
