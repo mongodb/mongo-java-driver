@@ -134,7 +134,7 @@ public class CommitTransactionOperation extends TransactionOperation {
         };
         if (alreadyCommitted) {
             return (operationContext, serverDescription, connectionDescription) ->
-                    getRetryCommandModifier(operationContext.getTimeoutContext())
+                    getRetryCommandModifier(operationContext)
                             .apply(creator.create(operationContext, serverDescription, connectionDescription));
         } else if (recoveryToken != null) {
                 return (operationContext, serverDescription, connectionDescription) ->
@@ -145,13 +145,17 @@ public class CommitTransactionOperation extends TransactionOperation {
     }
 
     @Override
-    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier(final TimeoutContext timeoutContext) {
+    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier(final OperationContext operationContext) {
+        TimeoutContext timeoutContext = operationContext.getTimeoutContext();
         return command -> {
-            WriteConcern retryWriteConcern = getWriteConcern().withW("majority");
-            if (retryWriteConcern.getWTimeout(MILLISECONDS) == null && !timeoutContext.hasTimeoutMS()) {
-                retryWriteConcern = retryWriteConcern.withWTimeout(10000, MILLISECONDS);
+            boolean observedOnlyRetryableOverloadErrors = false; // VAKOTODO get from `SessionContext`
+            if (!observedOnlyRetryableOverloadErrors) {
+                WriteConcern retryWriteConcern = getWriteConcern().withW("majority");
+                if (retryWriteConcern.getWTimeout(MILLISECONDS) == null && !timeoutContext.hasTimeoutMS()) {
+                    retryWriteConcern = retryWriteConcern.withWTimeout(10000, MILLISECONDS);
+                }
+                command.put("writeConcern", retryWriteConcern.asDocument());
             }
-            command.put("writeConcern", retryWriteConcern.asDocument());
             if (recoveryToken != null) {
                 command.put("recoveryToken", recoveryToken);
             }

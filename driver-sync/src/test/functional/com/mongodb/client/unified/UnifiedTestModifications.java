@@ -575,9 +575,13 @@ public final class UnifiedTestModifications {
                         "withTransaction still succeeds if callback aborts and runs extra op");
         // TODO-BACKPRESSURE enable the below tests when JAVA-5956 is done
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
-                .test("transactions", "backpressure-retryable-commit", "commitTransaction retries if backpressure labels are added");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
+                // TODO-BACKPRESSURE The problem is `CommandMessage` not adding `startTransaction` because `firstMessageInTransaction` is `false`
+                // `ClientSessionImpl.notifyMessageSent`, more specifically `messageSentInCurrentTransaction` is at play.
                 .test("transactions", "backpressure-retryable-writes", "retry succeeds if backpressure labels are added to the first operation in a transaction");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
+                // TODO-BACKPRESSURE The problem is `CommitTransactionOperation.getRetryCommandModifier` adding `withW("majority")`
+                // `CommitTransactionOperation.alreadyCommitted` is at play.
+                .test("transactions", "backpressure-retryable-commit", "commitTransaction retries if backpressure labels are added");
 
         // backpressure
 

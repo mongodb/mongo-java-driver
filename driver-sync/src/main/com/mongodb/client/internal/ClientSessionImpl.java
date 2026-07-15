@@ -226,6 +226,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 if (readConcern == null) {
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
+                boolean alreadyCommitted = commitInProgress || transactionState == TransactionState.COMMITTED;
                 commitInProgress = true;
                 if (resetTimeout) {
                     resetTimeout();
@@ -233,8 +234,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 TimeoutContext timeoutContext = getTimeoutContext();
                 WriteConcern writeConcern = assertNotNull(getWriteConcern(timeoutContext));
                 operationExecutor
-                        .execute(new CommitTransactionOperation(writeConcern, maxAdaptiveRetriesSetting,
-                                transactionState == TransactionState.COMMITTED)
+                        .execute(new CommitTransactionOperation(writeConcern, maxAdaptiveRetriesSetting, alreadyCommitted)
                                 .recoveryToken(getRecoveryToken()), readConcern, this);
             }
         } catch (MongoException e) {
@@ -324,7 +324,6 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                                 if (withTransactionTimeoutExpired.getAsBoolean()) {
                                     throw wrapInMongoTimeoutException(mongoException, timeoutMsConfigured);
                                 }
-                                applyMajorityWriteConcernToTransactionOptions();
                                 continue;
                             } else if (mongoException.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
                                 if (transactionSpan != null) {
@@ -359,23 +358,6 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         } finally {
             clearTransactionContext();
             super.close();
-        }
-    }
-
-    // Apply majority write concern if the commit is to be retried.
-    private void applyMajorityWriteConcernToTransactionOptions() {
-        if (transactionOptions != null) {
-            TimeoutContext timeoutContext = getTimeoutContext();
-            WriteConcern writeConcern = getWriteConcern(timeoutContext);
-            if (writeConcern != null) {
-                transactionOptions = TransactionOptions.merge(TransactionOptions.builder()
-                        .writeConcern(writeConcern.withW("majority")).build(), transactionOptions);
-            } else {
-                transactionOptions = TransactionOptions.merge(TransactionOptions.builder()
-                        .writeConcern(WriteConcern.MAJORITY).build(), transactionOptions);
-            }
-        } else {
-            transactionOptions = TransactionOptions.builder().writeConcern(WriteConcern.MAJORITY).build();
         }
     }
 

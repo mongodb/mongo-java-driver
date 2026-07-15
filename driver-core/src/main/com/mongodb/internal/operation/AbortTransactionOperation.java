@@ -21,6 +21,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.internal.MongoNamespaceHelper;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -68,7 +69,7 @@ public class AbortTransactionOperation extends TransactionOperation {
     }
 
     @Override
-    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier(final TimeoutContext timeoutContext) {
+    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier(final OperationContext operationContext) {
         return cmd -> cmd;
     }
 }

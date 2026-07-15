@@ -162,7 +162,8 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
                 return Mono.error(new IllegalStateException("There is no transaction started"));
             }
             if (!messageSentInCurrentTransaction) {
-                cleanupTransaction(TransactionState.COMMITTED);
+                transactionState = TransactionState.COMMITTED;
+                commitInProgress = false;
                 if (transactionSpan != null) {
                     transactionSpan.finalizeTransactionSpan(TransactionState.COMMITTED.name());
                 }
@@ -182,8 +183,8 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
                                 new CommitTransactionOperation(writeConcern, maxAdaptiveRetriesSetting, alreadyCommitted)
                                         .recoveryToken(getRecoveryToken()), readConcern, this)
                         .doOnTerminate(() -> {
-                            commitInProgress = false;
                             transactionState = TransactionState.COMMITTED;
+                            commitInProgress = false;
                         })
                         .doOnError(MongoException.class, e -> {
                             clearTransactionContextOnError(e);
