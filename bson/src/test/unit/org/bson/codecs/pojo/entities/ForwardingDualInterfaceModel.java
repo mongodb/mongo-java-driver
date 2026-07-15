@@ -16,12 +16,12 @@
 
 package org.bson.codecs.pojo.entities;
 
-public class ForwardingDeepModel extends ForwardingDeepLevel1<Long> {
+public class ForwardingDualInterfaceModel extends ForwardingDualInterfaceLevel1<String, Integer> {
 
-    public ForwardingDeepModel() {
+    public ForwardingDualInterfaceModel() {
     }
 
-    public ForwardingDeepModel(final Long value) {
-        super(value);
+    public ForwardingDualInterfaceModel(final String field2, final Integer field1) {
+        super(field2, field1);
     }
 }

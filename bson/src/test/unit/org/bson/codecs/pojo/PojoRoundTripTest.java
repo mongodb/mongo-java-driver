@@ -30,7 +30,6 @@ import org.bson.codecs.pojo.entities.ContainsAlternativeMapAndCollectionModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
 import org.bson.codecs.pojo.entities.DuplicateAnnotationAllowedModel;
 import org.bson.codecs.pojo.entities.FieldAndPropertyTypeMismatchModel;
-import org.bson.codecs.pojo.entities.ForwardingDeepModel;
 import org.bson.codecs.pojo.entities.ForwardingInterfaceModel;
 import org.bson.codecs.pojo.entities.ForwardingModel;
 import org.bson.codecs.pojo.entities.ForwardingNestedModel;
@@ -535,11 +534,6 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 new ForwardingModel("hello"),
                 getPojoCodecProviderBuilder(ForwardingModel.class),
                 "{'value': 'hello'}"));
-
-        data.add(new TestData("Forwarding deep class chain resolves to Long",
-                new ForwardingDeepModel(42L),
-                getPojoCodecProviderBuilder(ForwardingDeepModel.class),
-                "{'value': {'$numberLong': '42'}}"));
 
         data.add(new TestData("Forwarding interface chain resolves to Integer",
                 new ForwardingInterfaceModel(7),

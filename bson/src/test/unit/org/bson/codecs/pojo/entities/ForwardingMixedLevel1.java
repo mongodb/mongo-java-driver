@@ -16,12 +16,31 @@
 
 package org.bson.codecs.pojo.entities;
 
-public class ForwardingDeepLevel2<B> extends ForwardingDeepLevel3<B> {
+public abstract class ForwardingMixedLevel1<T, I> implements ForwardingMixedInterfaceLevel1<I> {
+    private T field1;
+    private I field2;
 
-    public ForwardingDeepLevel2() {
+    public ForwardingMixedLevel1() {
     }
 
-    public ForwardingDeepLevel2(final B value) {
-        super(value);
+    public ForwardingMixedLevel1(final T field1, final I field2) {
+        this.field1 = field1;
+        this.field2 = field2;
+    }
+
+    public T getField1() {
+        return field1;
+    }
+
+    public void setField1(final T field1) {
+        this.field1 = field1;
+    }
+
+    public I getField2() {
+        return field2;
+    }
+
+    public void setField2(final I field2) {
+        this.field2 = field2;
     }
 }

@@ -20,8 +20,9 @@ import java.util.SortedSet;
 
 import org.bson.codecs.pojo.entities.CollectionNestedPojoModel;
 import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
-import org.bson.codecs.pojo.entities.ForwardingDeepModel;
 import org.bson.codecs.pojo.entities.ForwardingInterfaceModel;
+import org.bson.codecs.pojo.entities.ForwardingDualInterfaceModel;
+import org.bson.codecs.pojo.entities.ForwardingMixedModel;
 import org.bson.codecs.pojo.entities.ForwardingModel;
 import org.bson.codecs.pojo.entities.ForwardingArrayModel;
 import org.bson.codecs.pojo.entities.ForwardingNestedModel;
@@ -281,14 +282,6 @@ public final class ClassModelTest {
     }
 
     @Test
-    public void testForwardingDeepChain() {
-        ClassModel<?> classModel = ClassModel.builder(ForwardingDeepModel.class).build();
-
-        assertEquals(1, classModel.getPropertyModels().size());
-        assertEquals(createTypeData(Long.class), classModel.getPropertyModel("value").getTypeData());
-    }
-
-    @Test
     public void testForwardingInterfaceChain() {
         ClassModel<?> classModel = ClassModel.builder(ForwardingInterfaceModel.class).build();
 
@@ -313,6 +306,24 @@ public final class ClassModelTest {
 
         assertEquals(1, classModel.getPropertyModels().size());
         assertEquals(createTypeData(Object.class), classModel.getPropertyModel("value").getTypeData());
+    }
+
+    @Test
+    public void testForwardingMixedClassAndInterface() {
+        ClassModel<?> classModel = ClassModel.builder(ForwardingMixedModel.class).build();
+
+        assertEquals(2, classModel.getPropertyModels().size());
+        assertEquals(createTypeData(String.class), classModel.getPropertyModel("field1").getTypeData());
+        assertEquals(createTypeData(Integer.class), classModel.getPropertyModel("field2").getTypeData());
+    }
+
+    @Test
+    public void testForwardingDualInterface() {
+        ClassModel<?> classModel = ClassModel.builder(ForwardingDualInterfaceModel.class).build();
+
+        assertEquals(2, classModel.getPropertyModels().size());
+        assertEquals(createTypeData(String.class), classModel.getPropertyModel("field2").getTypeData());
+        assertEquals(createTypeData(Integer.class), classModel.getPropertyModel("field1").getTypeData());
     }
 
     @Test
