@@ -182,7 +182,7 @@ public final class TypeDataTest {
     }
 
     @Test
-    public void newInstanceErasesGenericArrayTypeToObject() throws NoSuchFieldException {
+    public void newInstanceErasesGenericArrayTypeToObjectArray() throws NoSuchFieldException {
         Field arrayField = Holder.class.getDeclaredField("genericArray");
         Type arrayGenericType = arrayField.getGenericType();
 

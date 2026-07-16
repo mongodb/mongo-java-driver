@@ -299,9 +299,9 @@ public final class ClassModelTest {
 
     @Test
     public void testForwardingArrayTypeVariableErasedToObject() {
-        // T[] fields in a generic base class are GenericArrayType; getTypeParameterMap does not
-        // handle GenericArrayType component types, so the T[] erases to Object[] regardless of
-        // the concrete binding at the leaf subclass.
+        // The type argument `T[]` in `extends ForwardingArrayLevel2<T[]>` is a GenericArrayType;
+        // getTypeParameterMap does not handle GenericArrayType, so the `value` property erases to
+        // Object regardless of the concrete binding at the leaf subclass.
         ClassModel<?> classModel = ClassModel.builder(ForwardingArrayModel.class).build();
 
         assertEquals(1, classModel.getPropertyModels().size());
