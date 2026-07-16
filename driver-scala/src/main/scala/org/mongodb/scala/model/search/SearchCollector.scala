@@ -34,17 +34,29 @@ import scala.collection.JavaConverters._
 object SearchCollector {
 
   /**
-   * Returns a `SearchCollector` that groups results by values or ranges in the specified faceted fields and returns the count
-   * for each of those groups.
+   * Returns a `SearchCollector` that groups the results of a search based on the specified operator
+   * by values or ranges in the specified faceted fields, and returns the count for each of those groups.
    *
    * @param operator The search operator to use.
    * @param facets The non-empty facet definitions.
    * @return The requested `SearchCollector`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/facet/ facet collector]]
    */
-  @Beta(Array(Reason.CLIENT, Reason.SERVER))
+  @Beta(Array(Reason.CLIENT))
   def facet(operator: SearchOperator, facets: Iterable[_ <: SearchFacet]): FacetSearchCollector =
     JSearchCollector.facet(operator, facets.asJava)
+
+  /**
+   * Returns a `SearchCollector` that groups all the input documents
+   * by values or ranges in the specified faceted fields, and returns the count for each of those groups.
+   *
+   * @param facets The non-empty facet definitions.
+   * @return The requested `SearchCollector`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/facet/ facet collector]]
+   */
+  @Beta(Array(Reason.CLIENT))
+  def facet(facets: Iterable[_ <: SearchFacet]): FacetSearchCollector =
+    JSearchCollector.facet(facets.asJava)
 
   /**
    * Creates a `SearchCollector` from a `Bson` in situations when there is no builder method that better satisfies your needs.
