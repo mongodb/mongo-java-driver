@@ -182,10 +182,9 @@ public class MicrometerTracer implements Tracer {
             if (tracingContext == null || tracingContext.getSpan() == null) {
                 return null;
             }
+            // Span.context() is non-null by contract (the package is @NullMarked); a no-op span yields a
+            // NOOP context whose empty ids fail the hex validation below.
             io.micrometer.tracing.TraceContext ctx = tracingContext.getSpan().context();
-            if (ctx == null) {
-                return null;
-            }
             String traceId = ctx.traceId();
             String spanId = ctx.spanId();
             if (!MicrometerTraceContext.isValidNonZeroLowercaseHex(traceId, 32)
