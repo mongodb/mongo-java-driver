@@ -150,6 +150,7 @@ public class MicrometerTracer implements Tracer {
          * The server ({@code validateW3CTraceparent}) rejects ids that are not exactly the expected
          * length of lowercase hex, or that are all zeroes. Never emit a traceparent it would reject.
          */
+        @SuppressWarnings("BooleanMethodIsAlwaysInverted")
         static boolean isValidNonZeroLowercaseHex(@Nullable final String value, final int expectedLength) {
             if (value == null || value.length() != expectedLength) {
                 return false;
