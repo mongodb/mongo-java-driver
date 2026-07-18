@@ -20,12 +20,7 @@ import com.mongodb.lang.Nullable;
 
 @SuppressWarnings("InterfaceIsType")
 public interface TraceContext {
-    TraceContext EMPTY = new TraceContext() {
-        @Override
-        public String traceParent() {
-            return null;
-        }
-    };
+    TraceContext EMPTY = () -> null;
 
     /**
      * The 55-char W3C {@code traceparent} string for this context
