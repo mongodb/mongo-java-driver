@@ -25,7 +25,9 @@ public class ArrayCodecProvider : CodecProvider {
     override fun <T : Any> get(clazz: Class<T>, registry: CodecRegistry): Codec<T>? = get(clazz, emptyList(), registry)
 
     override fun <T : Any> get(clazz: Class<T>, typeArguments: List<Type>, registry: CodecRegistry): Codec<T>? =
-        if (clazz.isArray) {
+        // ByteArrays must be encoded as compact BSON Binary by ByteArrayCodec.
+        // Returning null lets the registry fall through to ByteArrayCodec.
+        if (clazz.isArray && clazz != ByteArray::class.java) {
             ArrayCodec.create(clazz.kotlin, typeArguments, registry)
         } else null
 }

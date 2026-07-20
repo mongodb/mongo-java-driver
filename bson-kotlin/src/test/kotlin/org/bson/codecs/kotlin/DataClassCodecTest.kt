@@ -45,6 +45,7 @@ import org.bson.codecs.kotlin.samples.DataClassWithBsonExtraElements
 import org.bson.codecs.kotlin.samples.DataClassWithBsonId
 import org.bson.codecs.kotlin.samples.DataClassWithBsonIgnore
 import org.bson.codecs.kotlin.samples.DataClassWithBsonProperty
+import org.bson.codecs.kotlin.samples.DataClassWithByteArray
 import org.bson.codecs.kotlin.samples.DataClassWithCollections
 import org.bson.codecs.kotlin.samples.DataClassWithDataClassMapKey
 import org.bson.codecs.kotlin.samples.DataClassWithDefaults
@@ -122,6 +123,11 @@ class DataClassCodecTest {
             | "arraySimple": ["a", "b", "c", "d"],
             | "nestedArrays":  [["e", "f"], [], ["g", "h"]],
             | "arrayOfMaps":  [{"A": ["aa"], "B": ["bb"]}, {}, {"C": ["cc", "ccc"]}],
+            | "byteArray": {"${'$'}binary": {"base64": "AQIDBA==", "subType": "00"}},
+            | "nestedByteArrays": [
+            |     {"${'$'}binary": {"base64": "AQI=", "subType": "00"}},
+            |     {"${'$'}binary": {"base64": "AwQF", "subType": "00"}}
+            | ],
             |}"""
                 .trimMargin()
 
@@ -130,7 +136,9 @@ class DataClassCodecTest {
                 arrayOf("a", "b", "c", "d"),
                 arrayOf(arrayOf("e", "f"), emptyArray(), arrayOf("g", "h")),
                 arrayOf(
-                    mapOf("A" to arrayOf("aa"), "B" to arrayOf("bb")), emptyMap(), mapOf("C" to arrayOf("cc", "ccc"))))
+                    mapOf("A" to arrayOf("aa"), "B" to arrayOf("bb")), emptyMap(), mapOf("C" to arrayOf("cc", "ccc"))),
+                byteArrayOf(1, 2, 3, 4),
+                arrayOf(byteArrayOf(1, 2), byteArrayOf(3, 4, 5)))
 
         assertRoundTrips(expected, dataClass)
     }
@@ -140,7 +148,7 @@ class DataClassCodecTest {
         val expected =
             """{
             |    "booleanArray": [true, false],
-            |    "byteArray": [1, 2],
+            |    "byteArray": {"${'$'}binary": {"base64": "AQI=", "subType": "00"}},
             |    "charArray": ["a", "b"],
             |    "doubleArray": [ 1.1, 2.2, 3.3],
             |    "floatArray": [1.0, 2.0, 3.0],
@@ -164,6 +172,55 @@ class DataClassCodecTest {
                 shortArrayOf(1, 2, 3),
                 listOf(booleanArrayOf(true, false), booleanArrayOf(false, true)),
                 mapOf(Pair("A", intArrayOf(1, 2)), Pair("B", intArrayOf()), Pair("C", intArrayOf(3, 4))))
+
+        assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithByteArrayEncodesAsBinary() {
+        // A ByteArray field must encode as compact BSON Binary (subType 00),
+        // via ByteArrayCodec, not as a BSON Array of Int32 (one element per byte).
+        val expected = """{"byteArray": {"${'$'}binary": {"base64": "AQIDBA==", "subType": "00"}}}"""
+        assertRoundTrips(expected, DataClassWithByteArray(byteArrayOf(1, 2, 3, 4)))
+    }
+
+    @Test
+    fun testDataClassWithByteArrayDoesNotExpandDocumentSize() {
+        // BSON Array of ints encoding expands size ~8-10x, breaking the 16MB limit.
+        // Binary encoding keeps a 1MB payload close to 1MB.
+        val oneMegabyte = ByteArray(1_000_000)
+        val codec = DataClassCodec.create(DataClassWithByteArray::class, registry())!!
+        val document = BsonDocument()
+        codec.encode(
+            BsonDocumentWriter(document), DataClassWithByteArray(oneMegabyte), EncoderContext.builder().build())
+        val encodedSize = document.toBsonDocument().getBinary("byteArray").data.size
+        assertEquals(1_000_000, encodedSize)
+    }
+
+    @Test
+    fun testDataClassWithObjectArrayEncodesAsBsonArray() {
+        // Ensure normal arrays and ByteArrays are handled correctly.
+        val expected =
+            """{
+            | "arraySimple": ["a", "b", "c", "d"],
+            | "nestedArrays": [["e", "f"], [], ["g", "h"]],
+            | "arrayOfMaps": [{"A": ["aa"], "B": ["bb"]}, {}, {"C": ["cc", "ccc"]}],
+            | "byteArray": {"${'$'}binary": {"base64": "AQIDBA==", "subType": "00"}},
+            | "nestedByteArrays": [
+            |     {"${'$'}binary": {"base64": "AQI=", "subType": "00"}},
+            |     {"${'$'}binary": {"base64": "AwQF", "subType": "00"}}
+            | ]
+            |}"""
+                .trimMargin()
+
+        val dataClass =
+            DataClassWithArrays(
+                arrayOf("a", "b", "c", "d"),
+                arrayOf(arrayOf("e", "f"), emptyArray(), arrayOf("g", "h")),
+                arrayOf(
+                    mapOf("A" to arrayOf("aa"), "B" to arrayOf("bb")), emptyMap(), mapOf("C" to arrayOf("cc", "ccc"))),
+                byteArrayOf(1, 2, 3, 4),
+                arrayOf(byteArrayOf(1, 2), byteArrayOf(3, 4, 5)))
 
         assertRoundTrips(expected, dataClass)
     }
