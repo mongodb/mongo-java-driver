@@ -77,13 +77,14 @@ public class NettyStreamCloseFutureListenerTest {
     @AfterEach
     public void tearDown() throws Exception {
         stream.close();
-        eventLoopGroup.shutdownGracefully();
+        eventLoopGroup.shutdownGracefully().syncUninterruptibly();
         serverSocket.close();
     }
 
     @Test
     @DisplayName("open handler should not remain strongly reachable from the open channel after the open completes")
     public void shouldReleaseOpenHandlerAfterOpenCompletesWhileChannelRemainsOpen() throws Exception {
+        // Open a connection with a handler, and keep only a WeakReference to that handler
         CountDownLatch opened = new CountDownLatch(1);
         AsyncCompletionHandler<Void> handler = new AsyncCompletionHandler<Void>() {
             @Override
@@ -96,17 +97,19 @@ public class NettyStreamCloseFutureListenerTest {
                 opened.countDown();
             }
         };
-        WeakReference<AsyncCompletionHandler<Void>> canary = new WeakReference<AsyncCompletionHandler<Void>>(handler);
+        WeakReference<AsyncCompletionHandler<Void>> canary = new WeakReference<>(handler);
 
         stream.openAsync(OPERATION_CONTEXT, handler);
         assertTrue(opened.await(10, TimeUnit.SECONDS), "open did not complete");
 
+        // Nullify the test's own reference so the driver is the only thing that could still retain the handler.
+        // Note: the channel is deliberately left open (never closed) for the rest of the test, so a positive
+        // result proves the handler is released while the channel is alive.
         handler = null;
-        for (int i = 0; i < 10 && canary.get() != null; i++) {
-            System.gc();
-            Thread.sleep(100);
-        }
-        assertNull(canary.get(),
+
+        // The channel's closeFuture listener must not keep the one-shot open handler alive,
+        // so with no strong reference remaining the handler must be garbage-collectable.
+        assertRefUnreachable(canary,
                 "the connection-open AsyncCompletionHandler must not stay strongly reachable from the open "
                         + "channel (closeFuture listener) after the open has completed");
     }
@@ -114,20 +117,9 @@ public class NettyStreamCloseFutureListenerTest {
     @Test
     @DisplayName("pending read should be failed when the channel is closed")
     public void shouldFailPendingReadWhenChannelIsClosed() throws Exception {
-        AtomicReference<Socket> acceptedSocket = new AtomicReference<>();
-        Thread acceptor = new Thread(() -> {
-            try {
-                acceptedSocket.set(serverSocket.accept());
-            } catch (IOException ignored) {
-                // the assertions below fail if nothing was accepted
-            }
-        });
-        acceptor.start();
+        Socket acceptedSocket = openAndAcceptConnection();
 
-        stream.open(OPERATION_CONTEXT);
-        acceptor.join(TimeUnit.SECONDS.toMillis(10));
-        assertNotNull(acceptedSocket.get(), "the server never accepted the connection");
-
+        // Create a read that 127.0.0.1 will never satisfy, then close the connection from the server side
         CountDownLatch readCompleted = new CountDownLatch(1);
         AtomicReference<Throwable> readFailure = new AtomicReference<>();
         stream.readAsync(4, OPERATION_CONTEXT, new AsyncCompletionHandler<ByteBuf>() {
@@ -143,12 +135,51 @@ public class NettyStreamCloseFutureListenerTest {
             }
         });
 
-        acceptedSocket.get().close();
+        acceptedSocket.close();
 
+        // Assert the closeFuture listener fires and fails the pending read with the expected IOException
         assertTrue(readCompleted.await(10, TimeUnit.SECONDS), "the pending read never completed");
         Throwable failure = readFailure.get();
         assertNotNull(failure, "the pending read completed successfully instead of failing");
         assertInstanceOf(IOException.class, failure);
         assertEquals("The connection to the server was closed", failure.getMessage());
+    }
+
+    /**
+     * Asserts that the referent of {@code ref} is no longer strongly reachable, i.e. no strong reference to it
+     * remains and it is therefore garbage-collectable.
+     * A {@link WeakReference} is a reachability probe: the garbage collector clears it as soon as its referent is
+     * no longer strongly reachable. {@link System#gc()} is only a hint, so we nudge it a few times and give the
+     * collector a moment before checking - if the referent is genuinely unreachable the reference clears quickly.
+     */
+    @SuppressWarnings("BusyWait")
+    private static void assertRefUnreachable(final WeakReference<?> ref, final String message) throws InterruptedException {
+        long deadlineNanos = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        while (ref.get() != null && System.nanoTime() < deadlineNanos) {
+            System.gc();
+            Thread.sleep(100);
+        }
+        assertNull(ref.get(), message);
+    }
+
+    /**
+     * Opens {@link #stream} against the local {@link #serverSocket} and returns the server side of the accepted
+     * connection, so the test can later close it to simulate the server dropping the connection.
+     */
+    private Socket openAndAcceptConnection() throws Exception {
+        AtomicReference<Socket> acceptedSocket = new AtomicReference<>();
+        Thread acceptor = new Thread(() -> {
+            try {
+                acceptedSocket.set(serverSocket.accept());
+            } catch (IOException ignored) {
+                // the assertion below fails if nothing was accepted
+            }
+        });
+        acceptor.start();
+
+        stream.open(OPERATION_CONTEXT);
+        acceptor.join(TimeUnit.SECONDS.toMillis(10));
+        assertNotNull(acceptedSocket.get(), "the server never accepted the connection");
+        return acceptedSocket.get();
     }
 }
