@@ -34,10 +34,19 @@ public class ReplyMessage<T> {
 
     private final T document;
 
+    /**
+     * The message used by every responseTo-mismatch failure. A mismatch means the reply belongs to a different request
+     * than the one just sent, i.e. the stream is desynchronized. Shared so the check in this class and the earlier guard
+     * in {@link InternalStreamConnection} cannot drift apart.
+     */
+    static String responseToMismatchMessage(final long responseTo, final long requestId) {
+        return format("The responseTo (%d) in the response does not match the requestId (%d) in the request", responseTo, requestId);
+    }
+
     public ReplyMessage(final ResponseBuffers responseBuffers, final Decoder<T> decoder, final long requestId) {
         if (requestId != responseBuffers.getReplyHeader().getResponseTo()) {
-            throw new MongoInternalException(format("The responseTo (%d) in the response does not match the requestId (%d) in the "
-                    + "request", responseBuffers.getReplyHeader().getResponseTo(), requestId));
+            throw new MongoInternalException(
+                    responseToMismatchMessage(responseBuffers.getReplyHeader().getResponseTo(), requestId));
         }
 
         try (BsonInput bsonInput = new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer().duplicate())) {
