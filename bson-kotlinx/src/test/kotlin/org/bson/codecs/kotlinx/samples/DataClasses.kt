@@ -47,6 +47,7 @@ import org.bson.BsonSymbol
 import org.bson.BsonTimestamp
 import org.bson.BsonType
 import org.bson.BsonUndefined
+import org.bson.codecs.kotlinx.ByteArrayAsBsonBinary
 import org.bson.codecs.pojo.annotations.BsonCreator
 import org.bson.codecs.pojo.annotations.BsonDiscriminator
 import org.bson.codecs.pojo.annotations.BsonExtraElements
@@ -376,3 +377,56 @@ data class DataClassWithJsonElementsNullable(
     val jsonElements: List<JsonElement?>?,
     val jsonNestedMap: Map<String, JsonElement?>?
 )
+
+@Serializable
+data class DataClassWithByteArray(val byteArray: ByteArray) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as DataClassWithByteArray
+        return byteArray.contentEquals(other.byteArray)
+    }
+
+    override fun hashCode(): Int = byteArray.contentHashCode()
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class DataClassWithArrays(
+    val arraySimple: Array<String>,
+    val nestedArrays: Array<Array<String>>,
+    val arrayOfMaps: Array<Map<String, Array<String>>>,
+    @Serializable(with = ByteArrayAsBsonBinary::class) val byteArray: ByteArray,
+    val nestedByteArrays: Array<@Serializable(with = ByteArrayAsBsonBinary::class) ByteArray>
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as DataClassWithArrays
+
+        if (!arraySimple.contentEquals(other.arraySimple)) return false
+        if (!nestedArrays.contentDeepEquals(other.nestedArrays)) return false
+
+        if (arrayOfMaps.size != other.arrayOfMaps.size) return false
+        arrayOfMaps.forEachIndexed { i, map ->
+            val otherMap = other.arrayOfMaps[i]
+            if (map.keys != otherMap.keys) return false
+            map.keys.forEach { key -> if (!map[key].contentEquals(otherMap[key])) return false }
+        }
+
+        if (!byteArray.contentEquals(other.byteArray)) return false
+        if (!nestedByteArrays.contentDeepEquals(other.nestedByteArrays)) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = arraySimple.contentHashCode()
+        result = 31 * result + nestedArrays.contentDeepHashCode()
+        result = 31 * result + arrayOfMaps.contentHashCode()
+        result = 31 * result + byteArray.contentHashCode()
+        result = 31 * result + nestedByteArrays.contentDeepHashCode()
+        return result
+    }
+}

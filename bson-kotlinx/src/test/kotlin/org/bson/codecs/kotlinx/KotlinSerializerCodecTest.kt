@@ -74,6 +74,7 @@ import org.bson.codecs.kotlinx.samples.DataClassSealedB
 import org.bson.codecs.kotlinx.samples.DataClassSealedC
 import org.bson.codecs.kotlinx.samples.DataClassSelfReferential
 import org.bson.codecs.kotlinx.samples.DataClassWithAnnotations
+import org.bson.codecs.kotlinx.samples.DataClassWithArrays
 import org.bson.codecs.kotlinx.samples.DataClassWithBooleanMapKey
 import org.bson.codecs.kotlinx.samples.DataClassWithBsonConstructor
 import org.bson.codecs.kotlinx.samples.DataClassWithBsonDiscriminator
@@ -82,6 +83,7 @@ import org.bson.codecs.kotlinx.samples.DataClassWithBsonId
 import org.bson.codecs.kotlinx.samples.DataClassWithBsonIgnore
 import org.bson.codecs.kotlinx.samples.DataClassWithBsonProperty
 import org.bson.codecs.kotlinx.samples.DataClassWithBsonRepresentation
+import org.bson.codecs.kotlinx.samples.DataClassWithByteArray
 import org.bson.codecs.kotlinx.samples.DataClassWithCamelCase
 import org.bson.codecs.kotlinx.samples.DataClassWithCollections
 import org.bson.codecs.kotlinx.samples.DataClassWithContextualDateValues
@@ -297,6 +299,50 @@ class KotlinSerializerCodecTest {
                 LocalDate.fromEpochDays(1))
 
         assertRoundTrips(expected, expectedDataClass)
+    }
+
+    @Test
+    fun testDataClassWithByteArrayEncodesAsBsonArrayByDefault() {
+        // By default kotlinx.serialization encodes a ByteArray as a BSON array of int32 elements
+        // (one per byte).
+        // This differs from bson-kotlin's DataClassCodec, which encodes ByteArray as compact BSON
+        // Binary.
+        val expected = """{"byteArray": [1, 2, 3, 4]}"""
+
+        assertRoundTrips(expected, DataClassWithByteArray(byteArrayOf(1, 2, 3, 4)))
+    }
+
+    @Test
+    fun testDataClassWithObjectArrayEncodesAsBsonArray() {
+        // Object arrays encode as BSON arrays, while ByteArray fields opted in via
+        // @Serializable(with = ByteArrayAsBsonBinary::class) encode as compact BSON Binary (subType
+        // 00),
+        // consistent with the standard ByteArrayCodec and bson-kotlin's DataClassCodec. The
+        // per-type-argument
+        // annotation on nestedByteArrays applies the serializer to each inner ByteArray element.
+        val expected =
+            """{
+            | "arraySimple": ["a", "b", "c", "d"],
+            | "nestedArrays": [["e", "f"], [], ["g", "h"]],
+            | "arrayOfMaps": [{"A": ["aa"], "B": ["bb"]}, {}, {"C": ["cc", "ccc"]}],
+            | "byteArray": {"${'$'}binary": {"base64": "AQIDBA==", "subType": "00"}},
+            | "nestedByteArrays": [
+            |     {"${'$'}binary": {"base64": "AQI=", "subType": "00"}},
+            |     {"${'$'}binary": {"base64": "AwQF", "subType": "00"}}
+            | ]
+            |}"""
+                .trimMargin()
+
+        val dataClass =
+            DataClassWithArrays(
+                arrayOf("a", "b", "c", "d"),
+                arrayOf(arrayOf("e", "f"), emptyArray(), arrayOf("g", "h")),
+                arrayOf(
+                    mapOf("A" to arrayOf("aa"), "B" to arrayOf("bb")), emptyMap(), mapOf("C" to arrayOf("cc", "ccc"))),
+                byteArrayOf(1, 2, 3, 4),
+                arrayOf(byteArrayOf(1, 2), byteArrayOf(3, 4, 5)))
+
+        assertRoundTrips(expected, dataClass)
     }
 
     @Test
