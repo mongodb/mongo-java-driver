@@ -458,7 +458,6 @@ public class InternalStreamConnection implements InternalConnection {
                     .getTracingManager()
                     .createTracingSpan(message,
                             operationContext,
-                            () -> message.getCommandDocument(bsonOutput),
                             cmdName -> SECURITY_SENSITIVE_COMMANDS.contains(cmdName)
                                     || SECURITY_SENSITIVE_HELLO_COMMANDS.contains(cmdName),
                             () -> getDescription().getServerAddress(),
@@ -712,7 +711,6 @@ public class InternalStreamConnection implements InternalConnection {
                     .getTracingManager()
                     .createTracingSpan(message,
                             operationContext,
-                            () -> message.getCommandDocument(bsonOutput),
                             cmdName -> SECURITY_SENSITIVE_COMMANDS.contains(cmdName)
                                     || SECURITY_SENSITIVE_HELLO_COMMANDS.contains(cmdName),
                             () -> getDescription().getServerAddress(),
