@@ -442,7 +442,6 @@ public class InternalStreamConnection implements InternalConnection {
         CommandEventSender commandEventSender;
         Span tracingSpan;
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
-            message.encode(bsonOutput, operationContext);
             tracingSpan = operationContext
                     .getTracingManager()
                     .createTracingSpan(message,
@@ -452,6 +451,15 @@ public class InternalStreamConnection implements InternalConnection {
                             () -> getDescription().getServerAddress(),
                             () -> getDescription().getConnectionId()
                     );
+            try {
+                message.encode(bsonOutput, operationContext, tracingSpan);
+            } catch (RuntimeException | Error e) {
+                if (tracingSpan != null) {
+                    tracingSpan.error(e);
+                    tracingSpan.end();
+                }
+                throw e;
+            }
             boolean isLoggingCommandNeeded = isLoggingCommandNeeded();
             boolean isTracingCommandPayloadNeeded = tracingSpan != null && operationContext.getTracingManager().isCommandPayloadEnabled();
 
@@ -616,8 +624,6 @@ public class InternalStreamConnection implements InternalConnection {
 
         Span tracingSpan = null;
         try {
-            message.encode(bsonOutput, operationContext);
-
             tracingSpan = operationContext
                     .getTracingManager()
                     .createTracingSpan(message,
@@ -627,6 +633,8 @@ public class InternalStreamConnection implements InternalConnection {
                             () -> getDescription().getServerAddress(),
                             () -> getDescription().getConnectionId()
                     );
+
+            message.encode(bsonOutput, operationContext, tracingSpan);
 
             CommandEventSender commandEventSender;
             boolean isLoggingCommandNeeded = isLoggingCommandNeeded();
