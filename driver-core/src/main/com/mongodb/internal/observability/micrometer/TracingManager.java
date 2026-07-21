@@ -164,7 +164,6 @@ public class TracingManager {
      *
      * @param message          the command message to trace
      * @param operationContext the operation context containing tracing and session information
-     * @param commandDocumentSupplier a supplier that provides the command document when needed
      * @param isSensitiveCommand a predicate that determines if a command is security-sensitive based on its name
      * @param serverAddressSupplier a supplier that provides the server address when needed
      * @param connectionIdSupplier a supplier that provides the connection ID when needed
@@ -173,7 +172,6 @@ public class TracingManager {
     @Nullable
     public Span createTracingSpan(final CommandMessage message,
             final OperationContext operationContext,
-            final Supplier<BsonDocument> commandDocumentSupplier,
             final Predicate<String> isSensitiveCommand,
             final Supplier<ServerAddress> serverAddressSupplier,
             final Supplier<ConnectionId> connectionIdSupplier
@@ -182,7 +180,7 @@ public class TracingManager {
        if (!isEnabled()) {
             return null;
         }
-        BsonDocument command = commandDocumentSupplier.get();
+        BsonDocument command = message.getRawCommandDocument();
         String commandName = command.getFirstKey();
         if (isSensitiveCommand.test(commandName)) {
             return null;
