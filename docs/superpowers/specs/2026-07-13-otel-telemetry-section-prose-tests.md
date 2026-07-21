@@ -13,7 +13,7 @@ connection whose `maxWireVersion` is >= 29. Assert the resulting OP_MSG contains
 one section of kind 3 whose payload is a BSON document of the form
 `{otel: {traceparent: <string>}}`, where `traceparent` is 55 characters,
 `00-<32 lowercase hex>-<16 lowercase hex>-<2 hex flags>`, and the trace-id/span-id match
-the active span's context.
+the **command span**'s context.
 
 ## 2. Telemetry section is omitted for older servers
 
@@ -35,8 +35,8 @@ present (drivers MUST omit the section rather than send an invalid traceparent).
 With tracing enabled, run a CRUD operation (e.g. `find`) against the configured 9.0+
 server. Capture the driver's finished spans (client side). Then read the server's
 exported OTLP JSON from the trace directory and assert a server span exists whose
-`traceId` equals the client trace-id and whose `parentSpanId` equals the driver's
-*operation* span-id (the traceparent is injected from the `OperationContext`'s active
-tracing span per the reference-impl design section 3.1, so the server span is a sibling
-of the client command span, both parented by the operation span). Allow for the server's
-batch export interval when polling.
+`traceId` equals the client trace-id and whose `parentSpanId` equals the client
+**command** span's span-id (the traceparent is injected from the `OperationContext`'s
+active tracing span per the reference-impl design section 3.1, which is now the command
+span, so the server span is a direct child of the client command span). Allow for the
+server's batch export interval when polling.
