@@ -92,8 +92,8 @@ public class ServerSpanLinkageProseTest {
 
         List<FinishedSpan> clientSpans = inMemoryOtel.getFinishedSpans();
         assertTrue(clientSpans.size() >= 2, "expected operation + command client spans, got: " + clientSpans);
-        // Per the reference-impl design (section 3.1), the driver injects the traceparent from the
-        // OperationContext's active tracing span, i.e. the COMMAND span. The server span is a
+        // Per the command-span propagation design (2026-07-18), the driver injects the traceparent
+        // of the COMMAND span, passed to CommandMessage.encode(...). The server span is a
         // child of the command span, so the server span's parentSpanId equals the command span's
         // own span id. Finished-span ordering is not guaranteed, so find the command span by name
         // ("find") and use its own span id as the expected parent of the server span.
