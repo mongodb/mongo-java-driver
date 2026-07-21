@@ -36,7 +36,8 @@ With tracing enabled, run a CRUD operation (e.g. `find`) against the configured 
 server. Capture the driver's finished spans (client side). Then read the server's
 exported OTLP JSON from the trace directory and assert a server span exists whose
 `traceId` equals the client trace-id and whose `parentSpanId` equals the client
-**command** span's span-id (the traceparent is injected from the `OperationContext`'s
-active tracing span per the reference-impl design section 3.1, which is now the command
-span, so the server span is a direct child of the client command span). Allow for the
-server's batch export interval when polling.
+**command** span's span-id (the traceparent is that of the command span, passed to
+`CommandMessage.encode(...)` per the 2026-07-18 command-span propagation design;
+`OperationContext.getTracingSpan()` still returns the operation span, used only for
+parenting the command span — so the server span is a direct child of the client command
+span). Allow for the server's batch export interval when polling.

@@ -159,10 +159,11 @@ Expected: PASSED. The test runs an instrumented `find`, then polls the trace
 directory for an exported server span whose `traceId` equals the client trace
 id and whose `parentSpanId` equals the driver's **command** span id.
 
-Important semantics: the driver injects the traceparent from the
-`OperationContext`'s active tracing span — the *command* span, per the
-reference-impl design section 3.1 — because command-span creation was hoisted
-above `CommandMessage.encode()` in `InternalStreamConnection.sendAndReceiveInternal()`.
+Important semantics: the driver injects the traceparent of the *command* span,
+which is created before encoding and passed explicitly to
+`CommandMessage.encode(bsonOutput, operationContext, commandSpan)` in
+`InternalStreamConnection` (`OperationContext.getTracingSpan()` still returns the
+*operation* span and is used only to parent the command span).
 The server `find` span is therefore a *direct child* of the client command
 span. (An earlier iteration of the driver created the command span after
 encoding, so the traceparent carried the operation span instead and the
