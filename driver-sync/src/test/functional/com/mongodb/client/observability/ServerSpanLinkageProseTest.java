@@ -76,7 +76,7 @@ public class ServerSpanLinkageProseTest {
     }
 
     @Test
-    @DisplayName("Prose test 5: server emits a span parented by the driver operation span")
+    @DisplayName("Prose test 5: server emits a span parented by the driver command span")
     void testServerSpanLinkage() throws Exception {
         MongoClientSettings clientSettings = getMongoClientSettingsBuilder()
                 .observabilitySettings(ObservabilitySettings.micrometerBuilder()
@@ -93,10 +93,10 @@ public class ServerSpanLinkageProseTest {
         List<FinishedSpan> clientSpans = inMemoryOtel.getFinishedSpans();
         assertTrue(clientSpans.size() >= 2, "expected operation + command client spans, got: " + clientSpans);
         // Per the reference-impl design (section 3.1), the driver injects the traceparent from the
-        // OperationContext's active tracing span, i.e. the OPERATION span. The command span is a
-        // client-side child of the operation span, so the server span is a sibling of the command
-        // span, both parented by the operation span. Finished-span ordering is not guaranteed, so
-        // find the command span by name ("find") and take its parent as the operation span id.
+        // OperationContext's active tracing span, i.e. the COMMAND span. The server span is a
+        // child of the command span, so the server span's parentSpanId equals the command span's
+        // own span id. Finished-span ordering is not guaranteed, so find the command span by name
+        // ("find") and use its own span id as the expected parent of the server span.
         List<FinishedSpan> commandSpans = clientSpans.stream()
                 .filter(span -> "find".equals(span.getName()))
                 .collect(Collectors.toList());
@@ -106,16 +106,16 @@ public class ServerSpanLinkageProseTest {
         long deadline = System.currentTimeMillis() + EXPORT_POLL_TIMEOUT_MS;
         while (System.currentTimeMillis() < deadline) {
             for (FinishedSpan commandSpan : commandSpans) {
-                String operationSpanId = commandSpan.getParentId();
-                if (operationSpanId != null
-                        && serverSpanLinked(traceDir, commandSpan.getTraceId(), operationSpanId)) {
+                String commandSpanId = commandSpan.getSpanId();
+                if (commandSpanId != null
+                        && serverSpanLinked(traceDir, commandSpan.getTraceId(), commandSpanId)) {
                     return;
                 }
             }
             Thread.sleep(EXPORT_POLL_INTERVAL_MS);
         }
         fail("no server span found in " + traceDir
-                + " with traceId/parentSpanId matching the operation span of any of " + commandSpans);
+                + " with traceId/parentSpanId matching the command span of any of " + commandSpans);
     }
 
     /**
