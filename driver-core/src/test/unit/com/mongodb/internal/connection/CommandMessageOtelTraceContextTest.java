@@ -63,10 +63,10 @@ class CommandMessageOtelTraceContextTest {
     void shouldWriteTelemetrySectionWhenWireVersionAtLeast29AndSpanActive() {
         CommandMessage message = buildCommandMessage(NINE_DOT_ZERO_WIRE_VERSION, EmptyMessageSequences.INSTANCE);
         Span span = spanWithTraceParent(TRACEPARENT);
-        OperationContext operationContext = buildOperationContext(span);
+        OperationContext operationContext = buildOperationContext();
 
         try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
-            message.encode(output, operationContext);
+            message.encode(output, operationContext, span);
             byte[] buffer = output.toByteArray();
 
             BsonDocument telemetry = readTelemetrySectionDocument(buffer);
@@ -82,10 +82,10 @@ class CommandMessageOtelTraceContextTest {
     void shouldNotWriteTelemetrySectionWhenWireVersionBelow29() {
         CommandMessage message = buildCommandMessage(EIGHT_DOT_ZERO_WIRE_VERSION, EmptyMessageSequences.INSTANCE);
         Span span = spanWithTraceParent(TRACEPARENT);
-        OperationContext operationContext = buildOperationContext(span);
+        OperationContext operationContext = buildOperationContext();
 
         try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
-            message.encode(output, operationContext);
+            message.encode(output, operationContext, span);
             byte[] buffer = output.toByteArray();
 
             assertNull(findTelemetrySectionDocument(buffer));
@@ -93,16 +93,18 @@ class CommandMessageOtelTraceContextTest {
     }
 
     /**
-     * Prose test 3: Telemetry section is omitted without an active span
+     * Prose test 3: Telemetry section is omitted without an active span. This also covers the case where the
+     * operation context carries a span for parenting but no command span is passed to encode, since the
+     * operation context's span is irrelevant to the telemetry section.
      * (see {@code docs/superpowers/specs/2026-07-13-otel-telemetry-section-prose-tests.md})
      */
     @Test
     void shouldNotWriteTelemetrySectionWhenNoSpan() {
         CommandMessage message = buildCommandMessage(NINE_DOT_ZERO_WIRE_VERSION, EmptyMessageSequences.INSTANCE);
-        OperationContext operationContext = buildOperationContext(null);
+        OperationContext operationContext = buildOperationContext();
 
         try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
-            message.encode(output, operationContext);
+            message.encode(output, operationContext, null);
             byte[] buffer = output.toByteArray();
 
             assertNull(findTelemetrySectionDocument(buffer));
@@ -117,10 +119,10 @@ class CommandMessageOtelTraceContextTest {
     void shouldNotWriteTelemetrySectionWhenTraceParentNull() {
         CommandMessage message = buildCommandMessage(NINE_DOT_ZERO_WIRE_VERSION, EmptyMessageSequences.INSTANCE);
         Span span = spanWithTraceParent(null);
-        OperationContext operationContext = buildOperationContext(span);
+        OperationContext operationContext = buildOperationContext();
 
         try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
-            message.encode(output, operationContext);
+            message.encode(output, operationContext, span);
             byte[] buffer = output.toByteArray();
 
             assertNull(findTelemetrySectionDocument(buffer));
@@ -133,10 +135,10 @@ class CommandMessageOtelTraceContextTest {
         // compression). The trailing kind-3 section must not corrupt command-document reconstruction.
         CommandMessage message = buildCommandMessage(NINE_DOT_ZERO_WIRE_VERSION, EmptyMessageSequences.INSTANCE);
         Span span = spanWithTraceParent(TRACEPARENT);
-        OperationContext operationContext = buildOperationContext(span);
+        OperationContext operationContext = buildOperationContext();
 
         try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
-            message.encode(output, operationContext);
+            message.encode(output, operationContext, span);
             BsonDocument commandDocument = message.getCommandDocument(output);
             assertEquals("test", commandDocument.getString("find").getValue());
             assertEquals("db", commandDocument.getString("$db").getValue());
@@ -154,10 +156,10 @@ class CommandMessageOtelTraceContextTest {
                 true, NoOpFieldNameValidator.INSTANCE);
         CommandMessage message = buildCommandMessage(NINE_DOT_ZERO_WIRE_VERSION, payload);
         Span span = spanWithTraceParent(TRACEPARENT);
-        OperationContext operationContext = buildOperationContext(span);
+        OperationContext operationContext = buildOperationContext();
 
         try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
-            message.encode(output, operationContext);
+            message.encode(output, operationContext, span);
             byte[] buffer = output.toByteArray();
 
             // Sequence section(s) precede the kind-3 telemetry section; scanning left-to-right and taking
@@ -167,6 +169,24 @@ class CommandMessageOtelTraceContextTest {
 
             BsonDocument commandDocument = message.getCommandDocument(output);
             assertEquals("test", commandDocument.getString("find").getValue());
+        }
+    }
+
+    /**
+     * NEW: The 2-arg {@code encode} inherited from {@code RequestMessage} never attaches the telemetry section,
+     * even when the wire version supports it. This guards monitoring/compression/other callers that still use
+     * the 2-arg overload.
+     */
+    @Test
+    void shouldNotWriteTelemetrySectionViaTwoArgEncode() {
+        CommandMessage message = buildCommandMessage(NINE_DOT_ZERO_WIRE_VERSION, EmptyMessageSequences.INSTANCE);
+        OperationContext operationContext = buildOperationContext();
+
+        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+            message.encode(output, operationContext);
+            byte[] buffer = output.toByteArray();
+
+            assertNull(findTelemetrySectionDocument(buffer));
         }
     }
 
@@ -194,7 +214,7 @@ class CommandMessageOtelTraceContextTest {
                 null);
     }
 
-    private static OperationContext buildOperationContext(final Span span) {
+    private static OperationContext buildOperationContext() {
         SessionContext sessionContext = mock(SessionContext.class, mock -> {
             when(mock.getClusterTime()).thenReturn(null);
             when(mock.hasSession()).thenReturn(false);
@@ -207,7 +227,6 @@ class CommandMessageOtelTraceContextTest {
         return mock(OperationContext.class, mock -> {
             when(mock.getSessionContext()).thenReturn(sessionContext);
             when(mock.getTimeoutContext()).thenReturn(timeoutContext);
-            when(mock.getTracingSpan()).thenReturn(span);
         });
     }
 
