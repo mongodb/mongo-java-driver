@@ -210,6 +210,16 @@ public final class CommandMessage extends RequestMessage {
     }
 
     /**
+     * The raw (pre-encoding) command document this message was constructed with. Unlike
+     * {@link #getCommandDocument(ByteBufferBsonOutput)}, this does not include fields added during encoding
+     * ({@code $db}, {@code $readPreference}) nor document-sequence fields, but its first key is always the
+     * command name, and it is available before {@code encode()} runs.
+     */
+    public BsonDocument getRawCommandDocument() {
+        return command;
+    }
+
+    /**
      * Get the field name from a buffer positioned at the start of the document sequence identifier of an OP_MSG Section of type
      * `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE`.
      * <p>
