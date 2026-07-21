@@ -251,8 +251,10 @@ internal data class DataClassCodec<T : Any>(
 
         @Suppress("UNCHECKED_CAST")
         private fun CodecRegistry.getCodec(kParameter: KParameter, clazz: Class<Any>, types: List<Type>): Codec<Any> {
+            // ByteArrays use a dedicated ByteArrayCodec in the registry that encodes compact BSON
+            // Binary.
             val codec =
-                if (clazz.isArray) {
+                if (clazz.isArray && clazz != ByteArray::class.java) {
                     ArrayCodec.create(clazz.kotlin, types, this)
                 } else if (types.isEmpty()) {
                     this.get(clazz)
