@@ -111,6 +111,16 @@ public final class CommandMessage extends RequestMessage {
     private final ClusterConnectionMode clusterConnectionMode;
     private final ServerApi serverApi;
 
+    /**
+     * The command span to attach to the OP_MSG telemetry section during {@linkplain
+     * #encode(ByteBufferBsonOutput, OperationContext, Span) encoding}. Set for the duration of that overload's
+     * call and cleared afterward; {@code null} otherwise (including for the plain 2-arg {@code encode}, which
+     * never attaches a telemetry section). Not thread-safe: a {@code CommandMessage} is built and encoded by a
+     * single thread per send attempt, so a transient field is safe.
+     */
+    @Nullable
+    private Span commandSpanForEncoding;
+
     CommandMessage(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final ClusterConnectionMode clusterConnectionMode,
                    @Nullable final ServerApi serverApi) {
@@ -260,6 +270,23 @@ public final class CommandMessage extends RequestMessage {
         this.firstDocumentPosition = useOpMsg() ? writeOpMsg(bsonOutput, operationContext) : writeOpQuery(bsonOutput);
     }
 
+    /**
+     * Encodes the message, attaching the OP_MSG telemetry section with {@code commandSpan}'s trace context when
+     * the gating conditions hold (see {@link #writeTelemetryContextSection}). The 2-arg {@link
+     * #encode(ByteBufferBsonOutput, OperationContext)} never attaches the section. Not thread-safe: a message
+     * must be encoded by one thread at a time (already the case — a {@code CommandMessage} is built and encoded
+     * per send attempt).
+     */
+    public void encode(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext,
+            @Nullable final Span commandSpan) {
+        this.commandSpanForEncoding = commandSpan;
+        try {
+            encode(bsonOutput, operationContext);
+        } finally {
+            this.commandSpanForEncoding = null;
+        }
+    }
+
     @SuppressWarnings("try")
     private int writeOpMsg(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
         int messageStartPosition = bsonOutput.getPosition() - MESSAGE_PROLOGUE_LENGTH;
@@ -302,22 +329,22 @@ public final class CommandMessage extends RequestMessage {
             fail(sequences.toString());
         }
 
-        writeTelemetryContextSection(bsonOutput, operationContext);
+        writeTelemetryContextSection(bsonOutput);
 
         // Write the flag bits
         bsonOutput.writeInt32(flagPosition, getOpMsgFlagBits());
         return commandStartPosition;
     }
 
-    private void writeTelemetryContextSection(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
+    private void writeTelemetryContextSection(final ByteBufferBsonOutput bsonOutput) {
         if (getSettings().getMaxWireVersion() < NINE_DOT_ZERO_WIRE_VERSION) {
             return;
         }
-        Span tracingSpan = operationContext.getTracingSpan();
-        if (tracingSpan == null) {
+        Span commandSpan = this.commandSpanForEncoding;
+        if (commandSpan == null) {
             return;
         }
-        String traceParent = tracingSpan.context().traceParent();
+        String traceParent = commandSpan.context().traceParent();
         if (traceParent == null) {
             return;
         }
