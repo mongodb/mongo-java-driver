@@ -18,6 +18,12 @@ Last executed successfully: 2026-07-14, against
 after the #56646 merge), linux arm64 dist-test binary run in Docker on a macOS
 arm64 host. `ServerSpanLinkageProseTest` PASSED.
 
+Re-verified 2026-07-21 against a `9.0.0-alpha0` server in Docker container
+`otel-opta` after the driver was changed to inject the traceparent from the
+command span (rather than the operation span): `ServerSpanLinkageProseTest`
+PASSED, with the server's `find` span `parentSpanId` equal to the client
+command span's own span id.
+
 ## Prerequisites
 
 - A `mongod` built from `10gen/mongo` `master` at or after the 2026-07-06 merge
@@ -151,17 +157,18 @@ Notes:
 
 Expected: PASSED. The test runs an instrumented `find`, then polls the trace
 directory for an exported server span whose `traceId` equals the client trace
-id and whose `parentSpanId` equals the driver's **operation** span id.
+id and whose `parentSpanId` equals the driver's **command** span id.
 
-Important semantics (verified empirically on 2026-07-14): the driver injects
-the traceparent from the `OperationContext`'s active tracing span — the
-*operation* span, per the reference-impl design section 3.1 — because
-`CommandMessage.encode()` runs before the command span is created in
-`InternalStreamConnection.sendAndReceiveInternal()`. The server `find` span is
-therefore a *sibling* of the client command span, both children of the
-operation span. The first version of the prose test asserted parentage by the
-command span and failed against the real server; it was fixed to assert the
-operation-span linkage.
+Important semantics: the driver injects the traceparent from the
+`OperationContext`'s active tracing span — the *command* span, per the
+reference-impl design section 3.1 — because command-span creation was hoisted
+above `CommandMessage.encode()` in `InternalStreamConnection.sendAndReceiveInternal()`.
+The server `find` span is therefore a *direct child* of the client command
+span. (An earlier iteration of the driver created the command span after
+encoding, so the traceparent carried the operation span instead and the
+server span was a sibling of the command span; the prose test was adjusted
+accordingly at the time but has since been reverted to assert command-span
+linkage now that the command span is created before encoding.)
 
 Debugging order if it fails:
 1. `maxWireVersion >= 29`? If lower, the driver never attaches the section
@@ -216,8 +223,8 @@ docker run --rm -d --name jaeger -p 16686:16686 -p 4318:4318 jaegertracing/all-i
 ```
 
 Run the same instrumented `find` and check http://localhost:16686 for a single
-trace containing the client operation span, the client command span, and the
-server span (the latter two as siblings under the operation span).
+trace containing the client operation span, the client command span (a child
+of the operation span), and the server span (a child of the command span).
 
 ## Notes
 
