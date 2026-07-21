@@ -76,3 +76,34 @@ split across the two specs that own each layer, in the `mongodb/specifications` 
 
 - Run available repo checks locally (`pre-commit run --files <changed>` and/or `mkdocs build --strict`) if the
   tooling is installed; otherwise verify 120-char width and markdown lint manually and note it.
+
+---
+
+## Decision record (2026-07-21): spec prose test — chosen candidate, deferred
+
+**Decision:** the spec PR remains normative-text-only for now; no prose test was added to
+`source/open-telemetry/tests/README.md`. When the DRIVERS review asks for a test plan (the PR template expects
+one), the agreed candidate is a single appended prose test (*Test 3*, numbering is load-bearing — existing tests
+1–2 must not be renumbered):
+
+> **Test 3: Trace Context Propagation Does Not Affect Command Execution.** With tracing enabled, run CRUD
+> operations across the standard server-version/topology matrix, on both sides of the wire-version gate
+> (`maxWireVersion` < 29 and >= 29), and assert the operations succeed and spans are emitted.
+
+**Why this candidate (and not the alternatives):** cross-driver prose tests can only rely on observables every
+driver has. The telemetry section is invisible to command monitoring/APM (transport-layer), and server spans are
+observable only with special mongod startup parameters (OTLP exporter + feature flag) that no driver CI matrix
+provisions. That rules out prescribing (a) wire-level gating-matrix assertions (driver-internal byte inspection)
+and (b) the full server-span-linkage e2e (infra burden other driver teams would reject). The chosen test instead
+uses the **server's strict validation as the oracle**: a 9.0+ server `uasserts` on any malformed traceparent and
+a pre-9.0 server rejects unknown OP_MSG section kinds, so plain command success across the matrix simultaneously
+verifies the wire-version gate and the well-formedness of anything sent — and directly tests the spec's key
+operational property that telemetry must never become an availability failure. It runs on existing CI with zero
+new infrastructure.
+
+**Known limitation (accepted):** the test cannot prove the section is ever *sent* — a driver that never attaches
+the section passes trivially (false-negative tolerant). Positive proof of emission/omission stays in
+driver-internal unit tests (in the Java reference implementation: the `CommandMessageOtelTraceContextTest`
+OP_MSG round-trip matrix and the `ServerSpanLinkageProseTest` e2e, see
+`docs/superpowers/specs/2026-07-13-otel-telemetry-section-prose-tests.md`); the spec test text should recommend —
+not mandate — equivalent driver-level verification.
