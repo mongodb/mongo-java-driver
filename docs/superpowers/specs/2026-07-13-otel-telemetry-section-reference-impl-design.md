@@ -74,6 +74,10 @@ span (per the DRIVERS-719 implementation), so those exclusions fall out of condi
 without extra plumbing. `MessageSettings` already carries `maxWireVersion`, so no new
 capability plumbing is needed.
 
+> **2026-07-18 amendment:** condition 2 now requires the **command span** rather than the
+> operation span — see `2026-07-18-command-span-propagation-design.md` for the rationale
+> and the updated spec text.
+
 ### 3.2 Wire encoding (`CommandMessage`)
 
 In `writeOpMsg()`, after the body and any document-sequence sections, when the gating rule
