@@ -34,6 +34,7 @@ import java.util.function.Supplier;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.ClusterFixture.isWindows;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
@@ -80,23 +81,6 @@ public final class UnifiedTestModifications {
                         + "unspecified on server 9.0+ (DRIVERS-3006)")
                 .when(() -> !serverVersionLessThan(9, 0))
                 .directory("client-side-operations-timeout");
-        def.retry("Unified CSOT tests do not account for RTT which varies in TLS vs non-TLS runs")
-                .whenFailureContains("timeout")
-                .test("client-side-operations-timeout",
-                        "timeoutMS behaves correctly for non-tailable cursors",
-                        "timeoutMS is refreshed for getMore if timeoutMode is iteration - success");
-
-        def.retry("Unified CSOT tests do not account for RTT which varies in TLS vs non-TLS runs")
-                .whenFailureContains("timeout")
-                .test("client-side-operations-timeout",
-                        "timeoutMS behaves correctly for tailable non-awaitData cursors",
-                        "timeoutMS is refreshed for getMore - success");
-
-        def.retry("Unified CSOT tests do not account for RTT which varies in TLS vs non-TLS runs")
-                .whenFailureContains("timeout")
-                .test("client-side-operations-timeout",
-                        "timeoutMS behaves correctly for tailable non-awaitData cursors",
-                        "timeoutMS is refreshed for getMore - success");
 
         //TODO-invistigate
         /*
@@ -209,6 +193,116 @@ public final class UnifiedTestModifications {
                         "timeoutMS can be configured on a MongoClient - dropIndexes on collection")
                 .test("client-side-operations-timeout", "timeoutMS can be configured on a MongoClient",
                         "timeoutMS can be set to 0 on a MongoClient - dropIndexes on collection");
+
+        def.retry("Unified CSOT tests do not account for RTT which varies in TLS vs non-TLS runs")
+                .whenFailureContains("timeout")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for non-tailable cursors",
+                        "timeoutMS is refreshed for getMore if timeoutMode is iteration - success");
+        def.retry("Unified CSOT tests do not account for RTT which varies in TLS vs non-TLS runs")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for tailable non-awaitData cursors",
+                        "timeoutMS is refreshed for getMore - success");
+
+        // Windows / slower-TLS-host CSOT timeout adjustments (JAVA-6057): these tests are calibrated for the fast
+        // Linux CI hosts; on Windows connection establishment consumes the tight budgets. See
+        // ClusterFixture.scaleForWindows and scaleForWindows(BsonArray, BsonDocument, int) below.
+
+        // "Whole operation" tests block two commands sharing one budget and expect the 2nd to time out. Scale
+        // timeoutMS and blockTimeMS by the same factor so the ordering is preserved with more setup headroom.
+        def.transform("JAVA-6057: whole-operation CSOT timeouts (cursor-lifetime, bulkWrite) are too tight for the "
+                        + "slower Windows TLS hosts, where the budget is consumed by connection establishment before "
+                        + "the command under test is sent",
+                (entitiesArray, definition) -> scaleForWindows(entitiesArray, definition, 10))
+                .when(ClusterFixture::isWindows)
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for non-tailable cursors",
+                        "remaining timeoutMS applied to getMore if timeoutMode is cursor_lifetime")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for non-tailable cursors",
+                        "remaining timeoutMS applied to getMore if timeoutMode is unset")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for bulkWrite operations",
+                        "timeoutMS applied to entire bulkWrite, not individual commands");
+
+        // getMore-refresh "success" tests (timeoutMS 200/250, expect no error): on Windows setup eats the budget so
+        // they time out unexpectedly. Raise timeoutMS to a value-agnostic 1000ms floor (safe since they expect success).
+        def.transform("JAVA-6057: getMore-refresh success timeouts are too tight for the slower Windows TLS hosts, "
+                                + "where connection setup consumes the budget before the command completes",
+                        (entitiesArray, definition) ->
+                                raiseIntToFloor(definition.getArray("operations"), "arguments.timeoutMS", 1000))
+                .when(ClusterFixture::isWindows)
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for change streams",
+                        "timeoutMS is refreshed for getMore if maxAwaitTimeMS is set")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for non-tailable cursors",
+                        "timeoutMS is refreshed for getMore if timeoutMode is iteration - success")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for tailable awaitData cursors",
+                        "timeoutMS is refreshed for getMore if maxAwaitTimeMS is set")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for tailable awaitData cursors",
+                        "timeoutMS is refreshed for getMore if maxAwaitTimeMS is not set")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for tailable non-awaitData cursors",
+                        "timeoutMS is refreshed for getMore - success");
+
+        // Retryable tests use client timeoutMS=100 + minPoolSize=1; on Windows the background handshake exceeds 100ms
+        // so the pool never populates ("Error waiting for awaitMinPoolSizeMS"). Scale ×10 (whole-op block ordering kept).
+        def.transform("JAVA-6057: retryable CSOT tests cannot populate minPoolSize under the tight client-level "
+                        + "timeoutMS on the slower Windows TLS hosts, where background connection establishment "
+                        + "exceeds the timeout",
+                (entitiesArray, definition) -> scaleForWindows(entitiesArray, definition, 10))
+                .when(ClusterFixture::isWindows)
+                .file("client-side-operations-timeout", "timeoutMS behaves correctly for retryable operations");
+
+        def.transform("JAVA-5839: Bump blocking/timeout to avoid CI latency failures",
+                (entitiesArray, definition) -> {
+                    // Two blocked finds (times:2); the 2nd must time out (2 events). On Windows 1000/600 keeps
+                    // 2*600 > 1000 with setup headroom so the first find completes.
+                    findAndSetInt(entitiesArray, "client.uriOptions.timeoutMS", 75, isWindows() ? 1000 : 250);
+                    findAndSetInt(definition.getArray("operations"),
+                            "arguments.failPoint.data.blockTimeMS", 50, isWindows() ? 600 : 200);
+                })
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for GridFS download operations",
+                        "timeoutMS applied to entire download, not individual parts");
+
+        // Single-command GridFS CSOT tests: on Windows the tight 75ms budget is spent on connection setup before the
+        // command is sent (expected:<1> but was:<0>). Bump timeoutMS/blockTimeMS so the timeout triggers on the command.
+        def.transform("JAVA-6057: GridFS CSOT timeouts are too tight for the slower Windows TLS hosts, where the "
+                        + "timeout elapses during connection establishment before the command under test is sent",
+                (entitiesArray, definition) -> {
+                    findAndSetInt(entitiesArray, "client.uriOptions.timeoutMS", 75, 250);
+                    findAndSetInt(definition.getArray("operations"),
+                            "arguments.failPoint.data.blockTimeMS", 100, 400);
+                })
+                .when(ClusterFixture::isWindows)
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for GridFS download operations",
+                        "timeoutMS applied to find to get files document")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for GridFS download operations",
+                        "timeoutMS applied to find to get chunks")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for GridFS delete operations",
+                        "timeoutMS applied to delete against the files collection")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for GridFS delete operations",
+                        "timeoutMS applied to delete against the chunks collection")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for advanced GridFS API operations",
+                        "timeoutMS applied to update during a rename")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for advanced GridFS API operations",
+                        "timeoutMS applied to files collection drop")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for advanced GridFS API operations",
+                        "timeoutMS applied to chunks collection drop")
+                .test("client-side-operations-timeout",
+                        "timeoutMS behaves correctly for GridFS find operations",
+                        "timeoutMS applied to find command");
 
         // OpenTelemetry
         def.skipNoncompliantReactive("withTransaction is not supported in the reactive driver unified test runner")
@@ -331,15 +425,6 @@ public final class UnifiedTestModifications {
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5689")
                 .file("gridfs", "gridfs-deleteByName")
                 .file("gridfs", "gridfs-renameByName");
-        def.transform("JAVA-5839: Bump blocking/timeout to avoid CI latency failures",
-                (entitiesArray, definition) -> {
-                    findAndSetInt(entitiesArray, "client.uriOptions.timeoutMS", 75, 250);
-                    findAndSetInt(definition.getArray("operations"),
-                            "arguments.failPoint.data.blockTimeMS", 50, 200);
-                })
-                .test("client-side-operations-timeout",
-                        "timeoutMS behaves correctly for GridFS download operations",
-                        "timeoutMS applied to entire download, not individual parts");
 
         // Skip all rawData based tests
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5830 rawData support only added to Go and Node")
@@ -554,6 +639,109 @@ public final class UnifiedTestModifications {
      */
     static void findAndSetInt(final BsonArray array, final String path,
             final int expectedValue, final int newValue) {
+        findAndSetInt(array, path, expectedValue, newValue, true);
+    }
+
+    /**
+     * Raises the numeric leaf at {@code path} to {@code floor} wherever it is below it (leaving larger values
+     * untouched). Unlike {@link #findAndSetInt} it does not assert the current value, so one transform can cover
+     * sibling tests using different (but similarly tight) values. Fails if the path is never found.
+     */
+    static void raiseIntToFloor(final BsonArray array, final String path, final int floor) {
+        String[] segments = path.split("\\.");
+        int matches = 0;
+        for (BsonValue element : array) {
+            if (!element.isDocument()) {
+                continue;
+            }
+            BsonDocument current = element.asDocument();
+            boolean found = true;
+            for (int i = 0; i < segments.length - 1; i++) {
+                if (current.containsKey(segments[i]) && current.get(segments[i]).isDocument()) {
+                    current = current.getDocument(segments[i]);
+                } else {
+                    found = false;
+                    break;
+                }
+            }
+            String leafKey = segments[segments.length - 1];
+            if (found && current.containsKey(leafKey) && current.get(leafKey).isNumber()) {
+                matches++;
+                int oldValue = current.get(leafKey).asNumber().intValue();
+                if (oldValue < floor) {
+                    LOGGER.info(format("  %s: %d -> %d", path, oldValue, floor));
+                    current.put(leafKey, new BsonInt32(floor));
+                }
+            }
+        }
+        if (matches == 0) {
+            throw new AssertionFailedError(format(
+                    "raiseIntToFloor: no value found at path '%s'. Spec may have changed or path is incorrect.",
+                    path));
+        }
+    }
+
+    /**
+     * Unified analogue of {@link ClusterFixture#scaleForWindows(long)}: multiplies a test's CSOT knobs by
+     * {@code factor} — {@code client.uriOptions.timeoutMS} and the operations' {@code arguments.timeoutMS} /
+     * {@code arguments.failPoint.data.blockTimeMS} — preserving their ordering so a test that expects a specific
+     * command to time out still does. Use for timeout-expecting tests; success-only tests use {@link #raiseIntToFloor}.
+     * Fails if nothing was scaled, to catch spec drift.
+     */
+    static void scaleForWindows(final BsonArray entitiesArray, final BsonDocument definition, final int factor) {
+        int changes = 0;
+        changes += multiplyInt(entitiesArray, "client.uriOptions.timeoutMS", factor);
+        BsonArray operations = definition.getArray("operations");
+        changes += multiplyInt(operations, "arguments.timeoutMS", factor);
+        changes += multiplyInt(operations, "arguments.failPoint.data.blockTimeMS", factor);
+        if (changes == 0) {
+            throw new AssertionFailedError(
+                    "scaleForWindows: no timeoutMS/blockTimeMS found to scale. Spec may have changed.");
+        }
+    }
+
+    /**
+     * Walks {@code array} for the numeric leaf at the dot-separated {@code path} and multiplies each occurrence by
+     * {@code factor} (logging each change). Tolerates the path being absent. Returns the number of values changed.
+     */
+    private static int multiplyInt(final BsonArray array, final String path, final int factor) {
+        String[] segments = path.split("\\.");
+        int count = 0;
+        for (BsonValue element : array) {
+            if (!element.isDocument()) {
+                continue;
+            }
+            BsonDocument current = element.asDocument();
+            boolean found = true;
+            for (int i = 0; i < segments.length - 1; i++) {
+                if (current.containsKey(segments[i]) && current.get(segments[i]).isDocument()) {
+                    current = current.getDocument(segments[i]);
+                } else {
+                    found = false;
+                    break;
+                }
+            }
+            String leafKey = segments[segments.length - 1];
+            if (found && current.containsKey(leafKey) && current.get(leafKey).isNumber()) {
+                int oldValue = current.get(leafKey).asNumber().intValue();
+                int newValue = oldValue * factor;
+                LOGGER.info(format("  %s: %d -> %d", path, oldValue, newValue));
+                current.put(leafKey, new BsonInt32(newValue));
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Variant of {@link #findAndSetInt(BsonArray, String, int, int)} that, when {@code required} is
+     * {@code false}, tolerates the path being absent (no replacement made) instead of failing. Useful when a
+     * single transform is applied across a file whose tests do not all contain the field being adjusted.
+     *
+     * @param required whether at least one replacement must be made
+     */
+    static void findAndSetInt(final BsonArray array, final String path,
+            final int expectedValue, final int newValue, final boolean required) {
         String[] segments = path.split("\\.");
         int replacements = 0;
         for (BsonValue element : array) {
@@ -584,7 +772,7 @@ public final class UnifiedTestModifications {
                 replacements++;
             }
         }
-        if (replacements == 0) {
+        if (replacements == 0 && required) {
             throw new AssertionFailedError(format(
                     "findAndSetInt: no value found at path '%s'. Spec may have changed or path is incorrect.",
                     path));

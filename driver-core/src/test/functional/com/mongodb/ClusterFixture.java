@@ -84,6 +84,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -836,5 +837,20 @@ public final class ClusterFixture {
 
     public static OperationContext getOperationContext(final ReadPreference readPreference) {
         return applySessionContext(OPERATION_CONTEXT, readPreference);
+    }
+
+    /** Factor by which CSOT timeout/block values are widened on Windows, whose slower TLS setup eats tight budgets. */
+    public static final int WINDOWS_CSOT_TIMEOUT_MULTIPLIER = 10;
+
+    public static boolean isWindows() {
+        return System.getProperty("os.name", "").toLowerCase(Locale.ROOT).startsWith("windows");
+    }
+
+    /**
+     * Scales a CSOT timeout / failpoint-block value by {@link #WINDOWS_CSOT_TIMEOUT_MULTIPLIER} on Windows (unchanged
+     * elsewhere). Scale a test's timeout and its blockTimeMS together to preserve which command times out.
+     */
+    public static int scaleForWindows(final int millis) {
+        return isWindows() ? millis * WINDOWS_CSOT_TIMEOUT_MULTIPLIER : millis;
     }
 }
