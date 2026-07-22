@@ -46,6 +46,7 @@ import static com.mongodb.internal.mockito.MongoMockito.mock;
 import static com.mongodb.internal.operation.ServerVersionHelper.EIGHT_DOT_ZERO_WIRE_VERSION;
 import static com.mongodb.internal.operation.ServerVersionHelper.NINE_DOT_ZERO_WIRE_VERSION;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.when;
 
@@ -76,8 +77,7 @@ class CommandMessageOtelTraceContextTest {
     }
 
     /**
-     * Prose test 2: Telemetry section is omitted for older servers
-     * (see {@code docs/superpowers/specs/2026-07-13-otel-telemetry-section-prose-tests.md})
+     * Telemetry section is omitted for older servers
      */
     @Test
     void shouldNotWriteTelemetrySectionWhenWireVersionBelow29() {
@@ -94,10 +94,7 @@ class CommandMessageOtelTraceContextTest {
     }
 
     /**
-     * Prose test 3: Telemetry section is omitted without an active span. This also covers the case where the
-     * operation context carries a span for parenting but no command span is passed to encode, since the
-     * operation context's span is irrelevant to the telemetry section.
-     * (see {@code docs/superpowers/specs/2026-07-13-otel-telemetry-section-prose-tests.md})
+     * Telemetry section is omitted without an active span.
      */
     @Test
     void shouldNotWriteTelemetrySectionWhenNoSpan() {
@@ -113,8 +110,7 @@ class CommandMessageOtelTraceContextTest {
     }
 
     /**
-     * Prose test 4: Malformed trace context is never sent
-     * (see {@code docs/superpowers/specs/2026-07-13-otel-telemetry-section-prose-tests.md})
+     * Malformed trace context is never sent.
      */
     @Test
     void shouldNotWriteTelemetrySectionWhenTraceParentNull() {
@@ -144,7 +140,8 @@ class CommandMessageOtelTraceContextTest {
             assertEquals("test", commandDocument.getString("find").getValue());
             assertEquals("db", commandDocument.getString("$db").getValue());
             // The reconstructed command is exactly the body section (find + $db); the trailing
-            // kind-3 section must not leak any extra fields into it.
+            // kind-3 section must not leak into it.
+            assertFalse(commandDocument.containsKey("otel"));
             assertEquals(2, commandDocument.size());
         }
     }
