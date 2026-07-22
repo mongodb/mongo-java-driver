@@ -91,6 +91,35 @@ class LoggingCommandEventSenderSpecification extends Specification {
         debugLoggingEnabled << [true, false]
     }
 
+    def 'should not send failed or succeeded events if the started event was not completed'() {
+        given:
+        def connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()))
+        def database = 'test'
+        def messageSettings = MessageSettings.builder().maxWireVersion(LATEST_WIRE_VERSION).build()
+        def commandListener = new TestCommandListener()
+        def commandDocument = new BsonDocument('ping', new BsonInt32(1))
+        def replyDocument = new BsonDocument('ok', new BsonInt32(1))
+        def message = new CommandMessage(database, commandDocument,
+                NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(), messageSettings, MULTIPLE, null)
+        def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
+        message.encode(bsonOutput, new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
+                Stub(TimeoutContext), null))
+        def logger = Stub(Logger) {
+            isDebugEnabled() >> false
+        }
+        def sender = new LoggingCommandEventSender([] as Set, [] as Set, connectionDescription, commandListener,
+                OPERATION_CONTEXT, message, message.getCommandDocument(bsonOutput),
+                new StructuredLogger(logger), LoggerSettings.builder().build())
+
+        when: 'terminal events are sent without a completed started event'
+        sender.sendFailedEvent(new MongoInternalException('failure!'))
+        sender.sendSucceededEvent(MessageHelper.buildSuccessfulReply(message.getId(), replyDocument.toJson()))
+        sender.sendSucceededEventForOneWayCommand()
+
+        then: 'no events are delivered'
+        commandListener.getEvents().isEmpty()
+    }
+
     def 'should log events'() {
         given:
         def serverId = new ServerId(new ClusterId(), new ServerAddress())
