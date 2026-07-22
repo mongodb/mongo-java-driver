@@ -546,7 +546,7 @@ public class InternalStreamConnection implements InternalConnection {
             final OperationContext operationContext) {
 
         Compressor localSendCompressor = sendCompressor;
-        if (localSendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
+        if (localSendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandName())) {
             trySendMessage(message, bsonOutput, operationContext);
         } else {
             ByteBufferBsonOutput compressedBsonOutput;
@@ -765,7 +765,7 @@ public class InternalStreamConnection implements InternalConnection {
 
             commandEventSender.sendStartedEvent();
             Compressor localSendCompressor = sendCompressor;
-            if (localSendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
+            if (localSendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandName())) {
                 sendCommandMessageAsync(message.getId(), decoder, operationContext, tracingCallback, bsonOutput, commandEventSender,
                         message.isResponseExpected());
             } else {
