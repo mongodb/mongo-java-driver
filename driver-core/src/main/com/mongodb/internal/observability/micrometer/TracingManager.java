@@ -30,7 +30,7 @@ import com.mongodb.observability.micrometer.MicrometerObservabilitySettings;
 import com.mongodb.observability.micrometer.MongodbObservation;
 import com.mongodb.observability.micrometer.MongodbObservationContext;
 import io.micrometer.observation.ObservationRegistry;
-import org.bson.BsonDocument;
+import org.bson.BsonInt64;
 
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -180,8 +180,7 @@ public class TracingManager {
        if (!isEnabled()) {
             return null;
         }
-        BsonDocument command = message.getRawCommandDocument();
-        String commandName = command.getFirstKey();
+        String commandName = message.getCommandName();
         if (isSensitiveCommand.test(commandName)) {
             return null;
         }
@@ -222,9 +221,9 @@ public class TracingManager {
             ConnectionId connectionId = connectionIdSupplier.get();
             mongodbContext.setConnectionId(connectionId);
 
-            if (command.containsKey("getMore")) {
-                long cursorId = command.getInt64("getMore").longValue();
-                mongodbContext.setCursorId(cursorId);
+            BsonInt64 getMoreCursorId = message.getGetMoreCursorId();
+            if (getMoreCursorId != null) {
+                mongodbContext.setCursorId(getMoreCursorId.longValue());
             }
 
             SessionContext sessionContext = operationContext.getSessionContext();
