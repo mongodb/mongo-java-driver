@@ -1,5 +1,11 @@
 # Follow-up: sync send-path command-span leak window (pre-existing)
 
+- **Status: IMPLEMENTED 2026-07-22** in commit `b4c8e8caf3` (single-owner `catch (Throwable)` in the sync path,
+  `LoggingCommandEventSender` started-event pairing guard [option C], `Span.closeScope()` no-op contract javadoc).
+  Verified: `LoggingCommandEventSenderSpecification` (incl. new pairing test), `InternalStreamConnection*`,
+  `CommandMessageOtelTraceContextTest`, micrometer suites (124 tests green), and `MicrometerProseTest` against a
+  live wire-29 server. A JAVA ticket should still be filed retroactively for release notes; the commit message
+  carries a `JAVA-XXXX` placeholder to amend once the ticket exists.
 - **For:** future JAVA ticket (not yet filed)
 - **Found by:** final code review of the DRIVERS-3454 command-span propagation change (2026-07-21); confirmed
   **pre-existing** — the window is the same size before and after that change, it was not introduced by it.
@@ -74,6 +80,11 @@ it before `openScope()` or twice is a no-op, and `Span.EMPTY` no-ops trivially. 
   scope was opened — with unconditional `closeScope()` this holds automatically per the no-op contract above.
 
 ## Test idea
+
+> Note (2026-07-22): the throwing-`CommandListener` variant below is NOT viable — user listener exceptions are
+> already swallowed in `ProtocolHelper.sendCommandStartedEvent` (`catch (Exception)` + warn log), so they cannot
+> reach this window. The implemented test instead unit-tests the sender's pairing guard directly
+> (`LoggingCommandEventSenderSpecification`: terminal events without a completed started event are suppressed).
 
 Unit test with a mock/failing `CommandListener` whose `commandStarted` throws, tracing enabled with
 `InMemoryOtelSetup` (or a recording `ObservationRegistry`): assert the command observation is stopped with an
