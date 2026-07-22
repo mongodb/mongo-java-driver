@@ -220,10 +220,11 @@ public final class CommandMessage extends RequestMessage {
     }
 
     /**
-     * The raw (pre-encoding) command document this message was constructed with. Unlike
-     * {@link #getCommandDocument(ByteBufferBsonOutput)}, this does not include fields added during encoding
-     * ({@code $db}, {@code $readPreference}) nor document-sequence fields, but its first key is always the
-     * command name, and it is available before {@code encode()} runs.
+     * The raw command document this message was constructed with, usable before {@code encode()} runs
+     * (unlike {@link #getCommandDocument(ByteBufferBsonOutput)}, which re-parses the encoded buffer).
+     * It lacks the fields added during encoding ({@code $db}, {@code $readPreference}, ...) and any
+     * document-sequence fields; since encoding only appends fields, its first key is the command name,
+     * same as in the encoded document.
      */
     public BsonDocument getRawCommandDocument() {
         return command;
