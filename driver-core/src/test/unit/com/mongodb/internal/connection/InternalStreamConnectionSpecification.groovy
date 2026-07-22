@@ -25,6 +25,7 @@ import com.mongodb.MongoSocketException
 import com.mongodb.MongoSocketReadException
 import com.mongodb.MongoSocketReadTimeoutException
 import com.mongodb.MongoSocketWriteException
+import com.mongodb.MongoSocketWriteTimeoutException
 import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
@@ -472,6 +473,25 @@ class InternalStreamConnectionSpecification extends Specification {
         def mongoSocketReadTimeoutException = timeoutException.getCause()
         mongoSocketReadTimeoutException instanceof MongoSocketReadTimeoutException
         mongoSocketReadTimeoutException.getCause() instanceof SocketTimeoutException
+
+        connection.isClosed()
+    }
+
+    def 'Should throw timeout exception with underlying socket exception as a cause when Stream.write throws SocketTimeoutException'() {
+        given:
+        stream.write(_, _) >> { throw new SocketTimeoutException() }
+        def connection = getOpenedConnection()
+        def (buffers, messageId) = helper.hello()
+
+        when:
+        connection.sendMessage(buffers, messageId, OPERATION_CONTEXT.withTimeoutContext(
+                new TimeoutContext(TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT)))
+
+        then:
+        def timeoutException = thrown(MongoOperationTimeoutException)
+        def mongoSocketWriteTimeoutException = timeoutException.getCause()
+        mongoSocketWriteTimeoutException instanceof MongoSocketWriteTimeoutException
+        mongoSocketWriteTimeoutException.getCause() instanceof SocketTimeoutException
 
         connection.isClosed()
     }
