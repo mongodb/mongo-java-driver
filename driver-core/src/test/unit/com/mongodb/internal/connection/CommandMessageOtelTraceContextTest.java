@@ -30,6 +30,7 @@ import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.observability.micrometer.TraceContext;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -40,9 +41,13 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.nio.ByteBuffer;
 import java.util.Collections;
+import java.util.stream.Stream;
 
 import static com.mongodb.internal.mockito.MongoMockito.mock;
 import static com.mongodb.internal.operation.ServerVersionHelper.EIGHT_DOT_ZERO_WIRE_VERSION;
@@ -50,6 +55,8 @@ import static com.mongodb.internal.operation.ServerVersionHelper.NINE_DOT_ZERO_W
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Named.named;
+import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.when;
 
 class CommandMessageOtelTraceContextTest {
@@ -78,46 +85,20 @@ class CommandMessageOtelTraceContextTest {
         }
     }
 
-    /**
-     * Telemetry section is omitted for older servers
-     */
-    @Test
-    void shouldNotWriteTelemetrySectionWhenWireVersionBelow29() {
-        CommandMessage message = buildCommandMessage(EIGHT_DOT_ZERO_WIRE_VERSION, EmptyMessageSequences.INSTANCE);
-        Span span = spanWithTraceParent(TRACEPARENT);
-        OperationContext operationContext = buildOperationContext();
-
-        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
-            message.encode(output, operationContext, span);
-            byte[] buffer = output.toByteArray();
-
-            assertNull(findTelemetrySectionDocument(buffer));
-        }
+    private static Stream<Arguments> telemetrySectionOmittedCases() {
+        return Stream.of(
+                arguments(named("wire version below 29", EIGHT_DOT_ZERO_WIRE_VERSION),
+                        named("valid span", spanWithTraceParent(TRACEPARENT))),
+                arguments(named("wire version 29", NINE_DOT_ZERO_WIRE_VERSION),
+                        named("no command span", null)),
+                arguments(named("wire version 29", NINE_DOT_ZERO_WIRE_VERSION),
+                        named("span without traceparent", spanWithTraceParent(null))));
     }
 
-    /**
-     * Telemetry section is omitted without an active span.
-     */
-    @Test
-    void shouldNotWriteTelemetrySectionWhenNoSpan() {
-        CommandMessage message = buildCommandMessage(NINE_DOT_ZERO_WIRE_VERSION, EmptyMessageSequences.INSTANCE);
-        OperationContext operationContext = buildOperationContext();
-
-        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
-            message.encode(output, operationContext, null);
-            byte[] buffer = output.toByteArray();
-
-            assertNull(findTelemetrySectionDocument(buffer));
-        }
-    }
-
-    /**
-     * Malformed trace context is never sent.
-     */
-    @Test
-    void shouldNotWriteTelemetrySectionWhenTraceParentNull() {
-        CommandMessage message = buildCommandMessage(NINE_DOT_ZERO_WIRE_VERSION, EmptyMessageSequences.INSTANCE);
-        Span span = spanWithTraceParent(null);
+    @ParameterizedTest(name = "{0}, {1}")
+    @MethodSource("telemetrySectionOmittedCases")
+    void shouldNotWriteTelemetrySection(final int maxWireVersion, @Nullable final Span span) {
+        CommandMessage message = buildCommandMessage(maxWireVersion, EmptyMessageSequences.INSTANCE);
         OperationContext operationContext = buildOperationContext();
 
         try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
