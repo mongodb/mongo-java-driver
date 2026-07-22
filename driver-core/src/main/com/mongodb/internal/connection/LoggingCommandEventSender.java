@@ -72,6 +72,13 @@ class LoggingCommandEventSender implements CommandEventSender {
     private final String commandName;
     private volatile BsonDocument commandDocument;
     private final boolean redactionRequired;
+    /**
+     * Guards event pairing: terminal (failed/succeeded) events and logs are emitted only after the started
+     * event has completed, so callers may invoke {@link #sendFailedEvent} unconditionally from any error path
+     * without pairing knowledge. Volatile because the started and terminal events may fire on different
+     * threads in the async path.
+     */
+    private volatile boolean startedEventCompleted;
 
     LoggingCommandEventSender(final Set<String> securitySensitiveCommands, final Set<String> securitySensitiveHelloCommands,
             final ConnectionDescription description,
@@ -117,11 +124,15 @@ class LoggingCommandEventSender implements CommandEventSender {
         // the buffer underlying the command document may be released after the started event, so set to null to ensure it's not used
         // when sending the failed or succeeded event
         commandDocument = null;
+        startedEventCompleted = true;
     }
 
 
     @Override
     public void sendFailedEvent(final Throwable t) {
+        if (!startedEventCompleted) {
+            return;
+        }
         Throwable commandEventException = t;
         if (t instanceof MongoCommandException && redactionRequired) {
             commandEventException = MongoCommandExceptionUtils.redacted((MongoCommandException) t);
@@ -157,6 +168,9 @@ class LoggingCommandEventSender implements CommandEventSender {
     }
 
     private void sendSucceededEvent(final BsonDocument reply) {
+        if (!startedEventCompleted) {
+            return;
+        }
         long elapsedTimeNanos = System.nanoTime() - startTimeNanos;
 
         if (loggingRequired()) {

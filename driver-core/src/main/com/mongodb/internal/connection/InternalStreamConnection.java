@@ -439,8 +439,12 @@ public class InternalStreamConnection implements InternalConnection {
     @Nullable
     private <T> T sendAndReceiveInternal(final CommandMessage message, final Decoder<T> decoder,
             final OperationContext operationContext) {
-        CommandEventSender commandEventSender;
-        Span tracingSpan;
+        CommandEventSender commandEventSender = new NoOpCommandEventSender();
+        Span tracingSpan = null;
+        // Single owner of the span and event sender until the message is handed off to the receive phase:
+        // any failure from span creation through sendCommandMessage ends the span exactly once and emits at
+        // most one failed event (LoggingCommandEventSender suppresses terminal events until the started event
+        // has completed, and Span.closeScope() is a no-op if no scope was opened).
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
             tracingSpan = operationContext
                     .getTracingManager()
@@ -451,15 +455,7 @@ public class InternalStreamConnection implements InternalConnection {
                             () -> getDescription().getServerAddress(),
                             () -> getDescription().getConnectionId()
                     );
-            try {
-                message.encode(bsonOutput, operationContext, tracingSpan);
-            } catch (RuntimeException | Error e) {
-                if (tracingSpan != null) {
-                    tracingSpan.error(e);
-                    tracingSpan.end();
-                }
-                throw e;
-            }
+            message.encode(bsonOutput, operationContext, tracingSpan);
             boolean isLoggingCommandNeeded = isLoggingCommandNeeded();
             boolean isTracingCommandPayloadNeeded = tracingSpan != null && operationContext.getTracingManager().isCommandPayloadEnabled();
 
@@ -474,8 +470,6 @@ public class InternalStreamConnection implements InternalConnection {
                         operationContext, message, commandDocument,
                         COMMAND_PROTOCOL_LOGGER, loggerSettings);
                 commandEventSender.sendStartedEvent();
-            } else {
-                commandEventSender = new NoOpCommandEventSender();
             }
             if (isTracingCommandPayloadNeeded) {
                 tracingSpan.setQueryText(commandDocument);
@@ -483,18 +477,15 @@ public class InternalStreamConnection implements InternalConnection {
             if (tracingSpan != null) {
                 tracingSpan.openScope();
             }
-
-            try {
-                sendCommandMessage(message, bsonOutput, operationContext);
-            } catch (Exception e) {
-                if (tracingSpan != null) {
-                    tracingSpan.error(e);
-                    tracingSpan.closeScope();
-                    tracingSpan.end();
-                }
-                commandEventSender.sendFailedEvent(e);
-                throw e;
+            sendCommandMessage(message, bsonOutput, operationContext);
+        } catch (Throwable t) {
+            if (tracingSpan != null) {
+                tracingSpan.error(t);
+                tracingSpan.closeScope();
+                tracingSpan.end();
             }
+            commandEventSender.sendFailedEvent(t);
+            throw t;
         }
 
         if (message.isResponseExpected()) {
