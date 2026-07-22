@@ -52,12 +52,13 @@ import static org.mockito.Mockito.when;
 class CommandMessageOtelTraceContextTest {
 
     private static final String TRACEPARENT = "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01";
+    private static final BsonDocument EXPECTED_TELEMETRY_DOCUMENT =
+            new BsonDocument("otel", new BsonDocument("traceparent", new BsonString(TRACEPARENT)));
     private static final MongoNamespace NAMESPACE = new MongoNamespace("db.test");
     private static final BsonDocument COMMAND = new BsonDocument("find", new BsonString(NAMESPACE.getCollectionName()));
 
     /**
-     * Prose test 1: Telemetry section is attached when supported and traced
-     * (see {@code docs/superpowers/specs/2026-07-13-otel-telemetry-section-prose-tests.md})
+     * Telemetry section is attached when supported and traced.
      */
     @Test
     void shouldWriteTelemetrySectionWhenWireVersionAtLeast29AndSpanActive() {
@@ -70,7 +71,7 @@ class CommandMessageOtelTraceContextTest {
             byte[] buffer = output.toByteArray();
 
             BsonDocument telemetry = readTelemetrySectionDocument(buffer);
-            assertEquals(new BsonDocument("otel", new BsonDocument("traceparent", new BsonString(TRACEPARENT))), telemetry);
+            assertEquals(EXPECTED_TELEMETRY_DOCUMENT, telemetry);
         }
     }
 
@@ -165,7 +166,7 @@ class CommandMessageOtelTraceContextTest {
             // Sequence section(s) precede the kind-3 telemetry section; scanning left-to-right and taking
             // the first kind-3 occurrence therefore validates ordering as well as content.
             BsonDocument telemetry = readTelemetrySectionDocument(buffer);
-            assertEquals(new BsonDocument("otel", new BsonDocument("traceparent", new BsonString(TRACEPARENT))), telemetry);
+            assertEquals(EXPECTED_TELEMETRY_DOCUMENT, telemetry);
 
             BsonDocument commandDocument = message.getCommandDocument(output);
             assertEquals("test", commandDocument.getString("find").getValue());
@@ -231,9 +232,8 @@ class CommandMessageOtelTraceContextTest {
     }
 
     /**
-     * Walks the OP_MSG sections exactly like the production parser (see {@code CommandMessage#getCommandDocument}):
-     * skip the type-0 body document, then for each subsequent section read the kind byte; for kind 1
-     * (document sequence) skip past the {@code int32} section size, and for kind 3 (telemetry) decode and
+     * Walks the OP_MSG sections skip the type-0 body document, then for each subsequent section read the kind byte;
+     * for kind 1 (document sequence) skip past the {@code int32} section size, and for kind 3 (telemetry) decode and
      * return the BSON document payload. Returns {@code null} if no kind-3 section is found.
      */
     private static BsonDocument findTelemetrySectionDocument(final byte[] buffer) {
