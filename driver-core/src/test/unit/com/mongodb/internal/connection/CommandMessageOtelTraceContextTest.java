@@ -32,11 +32,13 @@ import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
 import org.junit.jupiter.api.Test;
 
 import java.nio.ByteBuffer;
@@ -167,6 +169,47 @@ class CommandMessageOtelTraceContextTest {
 
             BsonDocument commandDocument = message.getCommandDocument(output);
             assertEquals("test", commandDocument.getString("find").getValue());
+        }
+    }
+
+    /**
+     * Same guarantee as {@link #shouldWriteTelemetrySectionAfterDocumentSequences()}, but for the
+     * {@link DualMessageSequences} branch (the {@code clientBulkWrite} path). It is the only branch that
+     * assembles its two kind-1 sections via {@link ByteBufferBsonOutput#branch()} (out-of-order buffer
+     * segments merged on close), so the trailing kind-3 section's placement is worth pinning separately.
+     */
+    @Test
+    void shouldWriteTelemetrySectionAfterDualMessageSequences() {
+        DualMessageSequences sequences = new DualMessageSequences(
+                "ops", NoOpFieldNameValidator.INSTANCE, "nsInfo", NoOpFieldNameValidator.INSTANCE) {
+            @Override
+            public EncodeDocumentsResult encodeDocuments(final WritersProviderAndLimitsChecker writersProviderAndLimitsChecker) {
+                writersProviderAndLimitsChecker.tryWrite((firstWriter, secondWriter) -> {
+                    new BsonDocumentCodec().encode(firstWriter,
+                            new BsonDocument("insert", new BsonInt32(0)),
+                            EncoderContext.builder().build());
+                    new BsonDocumentCodec().encode(secondWriter,
+                            new BsonDocument("ns", new BsonString(NAMESPACE.getFullName())),
+                            EncoderContext.builder().build());
+                    return 1;
+                });
+                return new EncodeDocumentsResult(true, Collections.emptyList());
+            }
+        };
+        CommandMessage message = buildCommandMessage(NINE_DOT_ZERO_WIRE_VERSION, sequences);
+        Span span = spanWithTraceParent(TRACEPARENT);
+        OperationContext operationContext = buildOperationContext();
+
+        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+            message.encode(output, operationContext, span);
+            byte[] buffer = output.toByteArray();
+
+            BsonDocument telemetry = readTelemetrySectionDocument(buffer);
+            assertEquals(EXPECTED_TELEMETRY_DOCUMENT, telemetry);
+
+            BsonDocument commandDocument = message.getCommandDocument(output);
+            assertEquals("test", commandDocument.getString("find").getValue());
+            assertFalse(commandDocument.containsKey("otel"));
         }
     }
 
