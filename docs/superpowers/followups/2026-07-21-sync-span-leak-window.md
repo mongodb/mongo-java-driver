@@ -44,18 +44,31 @@ catches) and never got whole-block coverage.
 
 ## Suggested fix
 
-Restructure the sync path so the span has exactly one owner from creation to hand-off, e.g. wrap everything from
-just after `createTracingSpan` up to (and including) the `sendCommandMessage` try in one
-`catch (RuntimeException | Error e)` that does `error(e)`, `closeScope()` if the scope was opened, `end()`, and
-`commandEventSender.sendFailedEvent(e)` when the sender exists — replacing the current two separate catches
-(mirroring the async path's single-owner structure). Care points:
+Restructure the sync path so the span has exactly one owner from creation to hand-off: wrap everything from just
+after `createTracingSpan` up to (and including) `sendCommandMessage` in one `catch (RuntimeException | Error e)`
+that does `error(e)`, `closeScope()`, `end()`, and `commandEventSender.sendFailedEvent(e)` — replacing the
+current two separate catches (mirroring the async path's single-owner structure). This also removes the
+duplicated error/end snippets between the encode catch and the send catch.
 
-- `closeScope()` must only run if `openScope()` succeeded (track a boolean, or make `closeScope()` idempotent /
-  safe before open — check `MicrometerSpan`'s scope implementation).
+The unified catch can call `closeScope()` unconditionally — no "was the scope opened" flag is needed (reviewed
+2026-07-22): `MicrometerSpan.closeScope()` null-guards its `scope` field and nulls it after closing, so calling
+it before `openScope()` or twice is a no-op, and `Span.EMPTY` no-ops trivially. Care points:
+
+- **Promote that no-op behavior from implementation detail to interface contract**: add to
+  `Span.closeScope()`'s javadoc — "Calling this without a prior `openScope()`, or more than once, is a no-op." —
+  so the unified error path (and any future `Span` implementation or test double) can rely on it, and so a later
+  refactor doesn't "simplify away" the null-guard. Note `openScope()`'s current javadoc ("Must be paired with
+  {@link #closeScope()} in a try-finally block") reads stricter than this usage; adjust wording accordingly.
 - Do not double-send `sendFailedEvent` (currently only the `sendCommandMessage` catch sends it; the started event
-  fires at `:476`, so a failure before that must not emit a failed event for a never-started command).
-- Keep the encode-failure semantics added by the command-span work: encode failures end the span before any scope
-  is opened (no `closeScope` on that path).
+  fires at `:476`). Initialize `commandEventSender` to `NoOpCommandEventSender` before the block so failures
+  prior to sender creation no-op. New edge to decide consciously: if `sendStartedEvent` itself throws, the
+  logging sender is already assigned and a failed event would be emitted for a command whose started event never
+  completed — arguably more correct than today's silence, but it is a command-monitoring behavior change.
+- Unify the exception types: the current send catch is `catch (Exception)`, which misses `Error` (the encode
+  catch already handles `RuntimeException | Error`); pick `RuntimeException | Error` (or `Throwable`, matching
+  the async path) for the unified catch.
+- Keep the encode-failure semantics added by the command-span work: an encode failure ends the span before any
+  scope was opened — with unconditional `closeScope()` this holds automatically per the no-op contract above.
 
 ## Test idea
 
