@@ -61,7 +61,7 @@ import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.ClusterFixture.TIMEOUT
 import static com.mongodb.ClusterFixture.checkReferenceCountReachesTarget
 import static com.mongodb.ClusterFixture.executeAsync
@@ -108,7 +108,7 @@ class OperationFunctionalSpecification extends Specification {
 
     void acknowledgeWrite(final SingleConnectionBinding binding) {
         new MixedBulkWriteOperation(getNamespace(), [new InsertRequest(new BsonDocument())], true,
-                ACKNOWLEDGED, false).execute(binding, OPERATION_CONTEXT)
+                ACKNOWLEDGED, false).execute(binding, createOperationContext())
         binding.release()
     }
 
@@ -234,24 +234,26 @@ class OperationFunctionalSpecification extends Specification {
     void testOperation(operation, List<Integer> serverVersion, BsonDocument expectedCommand, boolean async, result = null,
                        boolean checkCommand = true, boolean checkSecondaryOk = false,
                        ReadPreference readPreference = ReadPreference.primary(), boolean retryable = false,
-                       ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
+                       ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false,
+                       int expectedConnectionReleaseCountPerAttempt = 1) {
         testOperation(operation, serverVersion, ReadConcern.DEFAULT, expectedCommand, async, result, checkCommand, checkSecondaryOk,
-        readPreference, retryable, serverType, activeTransaction)
+        readPreference, retryable, serverType, activeTransaction, expectedConnectionReleaseCountPerAttempt)
     }
 
     void testOperation(operation, List<Integer> serverVersion, ReadConcern readConcern, BsonDocument expectedCommand, boolean async,
                        result = null, boolean checkCommand = true, boolean checkSecondaryOk = false,
                        ReadPreference readPreference = ReadPreference.primary(), boolean retryable = false,
-                       ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
+                       ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false,
+                       int expectedConnectionReleaseCountPerAttempt = 1) {
         def test = async ? this.&testAsyncOperation : this.&testSyncOperation
         test(operation, serverVersion, readConcern, result, checkCommand, expectedCommand, checkSecondaryOk, readPreference, retryable,
-                serverType, activeTransaction)
+                serverType, activeTransaction, expectedConnectionReleaseCountPerAttempt)
     }
 
     void testOperationRetries(operation, List<Integer> serverVersion, BsonDocument expectedCommand, boolean async, result = null,
-                              Boolean activeTransaction = false) {
+                              Boolean activeTransaction = false, int expectedConnectionReleaseCountPerAttempt = 1) {
         testOperation(operation, serverVersion, expectedCommand, async, result, true, false, ReadPreference.primary(), true,
-             ServerType.REPLICA_SET_PRIMARY, activeTransaction)
+             ServerType.REPLICA_SET_PRIMARY, activeTransaction, expectedConnectionReleaseCountPerAttempt)
     }
 
     void testRetryableOperationThrowsOriginalError(operation, List<List<Integer>> serverVersions, List<ServerType> serverTypes,
@@ -278,8 +280,9 @@ class OperationFunctionalSpecification extends Specification {
     def testSyncOperation(operation, List<Integer> serverVersion, ReadConcern readConcern, result, Boolean checkCommand=true,
                           BsonDocument expectedCommand=null, Boolean checkSecondaryOk=false,
                           ReadPreference readPreference=ReadPreference.primary(), Boolean retryable = false,
-                          ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
-        def operationContext = OPERATION_CONTEXT
+                          ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false,
+                          int expectedConnectionReleaseCountPerAttempt = 1) {
+        def operationContext = createOperationContext()
                 .withSessionContext(Stub(SessionContext) {
                     hasActiveTransaction() >> activeTransaction
                     getReadConcern() >> readConcern
@@ -338,9 +341,9 @@ class OperationFunctionalSpecification extends Specification {
         }
 
         if (retryable) {
-            2 * connection.release()
+            (2 * expectedConnectionReleaseCountPerAttempt) * connection.release()
         } else {
-            1 * connection.release()
+            expectedConnectionReleaseCountPerAttempt * connection.release()
         }
         if (operation instanceof ReadOperation) {
             operation.execute(readBinding, operationContext)
@@ -352,8 +355,9 @@ class OperationFunctionalSpecification extends Specification {
     def testAsyncOperation(operation = operation, List<Integer> serverVersion = serverVersion, ReadConcern readConcern, result = null,
                            Boolean checkCommand = true, BsonDocument expectedCommand = null, Boolean checkSecondaryOk = false,
                            ReadPreference readPreference = ReadPreference.primary(), Boolean retryable = false,
-                           ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
-        def operationContext = OPERATION_CONTEXT
+                           ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false,
+                           int expectedConnectionReleaseCountPerAttempt = 1) {
+        def operationContext = createOperationContext()
                 .withSessionContext(Stub(SessionContext) {
                     hasActiveTransaction() >> activeTransaction
                     getReadConcern() >> readConcern
@@ -417,9 +421,9 @@ class OperationFunctionalSpecification extends Specification {
         }
 
         if (retryable) {
-            2 * connection.release()
+            (2 * expectedConnectionReleaseCountPerAttempt) * connection.release()
         } else {
-            1 * connection.release()
+            expectedConnectionReleaseCountPerAttempt * connection.release()
         }
 
         if (operation instanceof ReadOperation) {
@@ -447,7 +451,7 @@ class OperationFunctionalSpecification extends Specification {
             }
         }
 
-        def operationContext = OPERATION_CONTEXT.withSessionContext(
+        def operationContext = createOperationContext().withSessionContext(
                 Stub(SessionContext) {
                     hasSession() >> true
                     hasActiveTransaction() >> false
@@ -488,7 +492,7 @@ class OperationFunctionalSpecification extends Specification {
             }
         }
 
-        def operationContext = OPERATION_CONTEXT.withSessionContext(
+        def operationContext = createOperationContext().withSessionContext(
                 Stub(SessionContext) {
                     hasSession() >> true
                     hasActiveTransaction() >> false

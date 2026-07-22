@@ -231,9 +231,11 @@ public class InternalStreamConnection implements InternalConnection {
         isTrue("Open already called", stream == null);
         stream = streamFactory.create(serverId.getAddress());
         OperationContext operationContext = originalOperationContext;
+        boolean beforeHandshake = true;
         try {
             stream.open(operationContext);
             InternalConnectionInitializationDescription initializationDescription = connectionInitializer.startHandshake(this, operationContext);
+            beforeHandshake = false;
 
             operationContext = operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout);
             initAfterHandshakeStart(initializationDescription);
@@ -242,6 +244,9 @@ public class InternalStreamConnection implements InternalConnection {
             initAfterHandshakeFinish(initializationDescription);
         } catch (Throwable t) {
             close();
+            if (beforeHandshake) {
+                BackpressureErrorLabeler.applyLabelsIfEligible(t);
+            }
             if (t instanceof MongoException) {
                 throw (MongoException) t;
             } else {
@@ -264,6 +269,7 @@ public class InternalStreamConnection implements InternalConnection {
                             (initialResult, initialException) -> {
                                     if (initialException != null) {
                                         close();
+                                        BackpressureErrorLabeler.applyLabelsIfEligible(initialException);
                                         callback.onResult(null, initialException);
                                     } else {
                                         assertNotNull(initialResult);
@@ -279,11 +285,13 @@ public class InternalStreamConnection implements InternalConnection {
                 @Override
                 public void failed(final Throwable t) {
                     close();
+                    BackpressureErrorLabeler.applyLabelsIfEligible(t);
                     callback.onResult(null, t);
                 }
             });
         } catch (Throwable t) {
             close();
+            BackpressureErrorLabeler.applyLabelsIfEligible(t);
             callback.onResult(null, t);
         }
     }

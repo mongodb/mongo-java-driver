@@ -40,6 +40,7 @@ import com.mongodb.event.TestServerMonitorListener;
 import com.mongodb.internal.connection.TestClusterListener;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
+import com.mongodb.internal.connection.TestServerListener;
 import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
@@ -71,7 +72,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -119,6 +119,7 @@ public abstract class UnifiedTest {
     private static final String TOPOLOGY_CLOSED_EVENT = "topologyClosedEvent";
     private static final List<String> TOPOLOGY_EVENT_NAMES = asList("topologyOpeningEvent", "topologyDescriptionChangedEvent",
             TOPOLOGY_CLOSED_EVENT);
+    private static final String SERVER_DESCRIPTION_CHANGED_EVENT = "serverDescriptionChangedEvent";
 
     public static final int RETRY_ATTEMPTS = 3;
     public static final int FORCE_FLAKY_ATTEMPTS = 10;
@@ -431,33 +432,46 @@ public abstract class UnifiedTest {
                 context.getEventMatcher().assertConnectionPoolEventsEquality(client, ignoreExtraEvents, expectedEvents,
                         listener.getEvents());
             } else if (eventType.equals("sdam")) {
+                List<BsonDocument> expectedTopologyEvents = new ArrayList<>();
+                List<BsonDocument> expectedServerDescriptionChangedEvents = new ArrayList<>();
+                List<BsonDocument> expectedHeartbeatEvents = new ArrayList<>();
 
-                // SDAM tests also include topology events, so we need to separate them to be able to assert them separately.
-                // Partition the expected events into two lists with the key being if it's a topology based event or not.
-                Map<Boolean, List<BsonDocument>> partitionedEventsMap = expectedEvents.stream()
-                        .map(BsonValue::asDocument)
-                        .collect(Collectors.partitioningBy(doc -> TOPOLOGY_EVENT_NAMES.stream().anyMatch(doc::containsKey)));
+                for (BsonValue event : expectedEvents) {
+                    BsonDocument doc = event.asDocument();
+                    if (TOPOLOGY_EVENT_NAMES.stream().anyMatch(doc::containsKey)) {
+                        expectedTopologyEvents.add(doc);
+                    } else if (doc.containsKey(SERVER_DESCRIPTION_CHANGED_EVENT)) {
+                        expectedServerDescriptionChangedEvents.add(doc);
+                    } else {
+                        expectedHeartbeatEvents.add(doc);
+                    }
+                }
 
-                BsonArray expectedTopologyEvents = new BsonArray(partitionedEventsMap.get(true));
                 if (!expectedTopologyEvents.isEmpty()) {
                     TestClusterListener clusterListener = entities.getClusterListener(client);
-                    // Unfortunately, some tests expect the cluster to be closed, but do not define it as a waitForEvent in the spec -
-                    // causing a race condition in the test.
-                    if (expectedTopologyEvents.stream().anyMatch(doc -> doc.asDocument().containsKey(TOPOLOGY_CLOSED_EVENT))) {
+                    // Race guard: some tests expect topologyClosedEvent without a prior waitForEvent.
+                    if (expectedTopologyEvents.stream().anyMatch(doc -> doc.containsKey(TOPOLOGY_CLOSED_EVENT))) {
                         context.getEventMatcher().waitForClusterClosedEvent(client, clusterListener);
                     }
-
                     List<Object> topologyEvents = new ArrayList<>();
                     topologyEvents.add(clusterListener.getClusterOpeningEvent());
                     topologyEvents.addAll(clusterListener.getClusterDescriptionChangedEvents());
                     topologyEvents.add(clusterListener.getClusterClosingEvent());
-                    context.getEventMatcher().assertTopologyEventsEquality(client, ignoreExtraEvents, expectedTopologyEvents, topologyEvents);
+                    context.getEventMatcher().assertTopologyEventsEquality(client, ignoreExtraEvents,
+                            new BsonArray(expectedTopologyEvents), topologyEvents);
                 }
 
-                BsonArray expectedSdamEvents = new BsonArray(partitionedEventsMap.get(false));
-                if (!expectedSdamEvents.isEmpty()) {
+                if (!expectedServerDescriptionChangedEvents.isEmpty()) {
+                    TestServerListener serverListener = entities.getServerListener(client);
+                    context.getEventMatcher().assertServerMonitorEventsEquality(client, ignoreExtraEvents,
+                            new BsonArray(expectedServerDescriptionChangedEvents),
+                            serverListener.getServerDescriptionChangedEvents());
+                }
+
+                if (!expectedHeartbeatEvents.isEmpty()) {
                     TestServerMonitorListener serverMonitorListener = entities.getServerMonitorListener(client);
-                    context.getEventMatcher().assertServerMonitorEventsEquality(client, ignoreExtraEvents, expectedSdamEvents, serverMonitorListener.getEvents());
+                    context.getEventMatcher().assertServerMonitorEventsEquality(client, ignoreExtraEvents,
+                            new BsonArray(expectedHeartbeatEvents), serverMonitorListener.getEvents());
                 }
             } else {
                 throw new UnsupportedOperationException("Unexpected event type: " + eventType);
@@ -810,6 +824,8 @@ public abstract class UnifiedTest {
             case "poolReadyEvent":
             case "connectionCreatedEvent":
             case "connectionReadyEvent":
+            case "connectionClosedEvent":
+            case "connectionCheckedInEvent":
                 context.getEventMatcher().waitForConnectionPoolEvents(clientId, event, count, entities.getConnectionPoolListener(clientId));
                 break;
             case "serverHeartbeatStartedEvent":

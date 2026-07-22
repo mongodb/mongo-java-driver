@@ -18,7 +18,6 @@ package com.mongodb.internal.operation.retry;
 import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.internal.async.function.LoopState.AttachmentKey;
-import com.mongodb.internal.operation.MixedBulkWriteOperation.BulkWriteTracker;
 import org.bson.BsonDocument;
 
 import java.util.HashSet;
@@ -40,7 +39,6 @@ public final class AttachmentKeys {
     private static final AttachmentKey<BsonDocument> COMMAND = DefaultAttachmentKey.of("command");
     private static final AttachmentKey<Boolean> RETRYABLE_WRITE_COMMAND_FLAG = DefaultAttachmentKey.of("retryableWriteCommandFlag");
     private static final AttachmentKey<Supplier<String>> COMMAND_DESCRIPTION_SUPPLIER = DefaultAttachmentKey.of("commandDescriptionSupplier");
-    private static final AttachmentKey<BulkWriteTracker> BULK_WRITE_TRACKER = DefaultAttachmentKey.of("bulkWriteTracker");
 
     public static AttachmentKey<Integer> maxWireVersion() {
         return MAX_WIRE_VERSION;
@@ -61,10 +59,6 @@ public final class AttachmentKeys {
 
     public static AttachmentKey<Supplier<String>> commandDescriptionSupplier() {
         return COMMAND_DESCRIPTION_SUPPLIER;
-    }
-
-    public static AttachmentKey<BulkWriteTracker> bulkWriteTracker() {
-        return BULK_WRITE_TRACKER;
     }
 
     private AttachmentKeys() {
