@@ -35,6 +35,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonElement;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.ByteBuf;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
@@ -220,14 +221,23 @@ public final class CommandMessage extends RequestMessage {
     }
 
     /**
-     * The raw command document this message was constructed with, usable before {@code encode()} runs
-     * (unlike {@link #getCommandDocument(ByteBufferBsonOutput)}, which re-parses the encoded buffer).
-     * It lacks the fields added during encoding ({@code $db}, {@code $readPreference}, ...) and any
-     * document-sequence fields; since encoding only appends fields, its first key is the command name,
-     * same as in the encoded document.
+     * The command name (first key of the command document — for MongoDB commands the first element
+     * names the command). Available before {@code encode()} runs, unlike
+     * {@link #getCommandDocument(ByteBufferBsonOutput)}; identical to the encoded document's first
+     * key, since encoding only appends fields.
      */
-    public BsonDocument getRawCommandDocument() {
-        return command;
+    public String getCommandName() {
+        return command.getFirstKey();
+    }
+
+    /**
+     * The cursor id if this is a {@code getMore} command, or {@code null} otherwise.
+     * Available before {@code encode()} runs.
+     */
+    @Nullable
+    public BsonInt64 getGetMoreCursorId() {
+        BsonValue value = command.get("getMore");
+        return value instanceof BsonInt64 ? (BsonInt64) value : null;
     }
 
     /**
