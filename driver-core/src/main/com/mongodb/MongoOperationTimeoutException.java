@@ -40,7 +40,7 @@ import java.util.concurrent.TimeUnit;
  * @since 5.2
  */
 @Alpha(Reason.CLIENT)
-public final class MongoOperationTimeoutException extends MongoTimeoutException {
+public final class MongoOperationTimeoutException extends MongoClientException {
     private static final long serialVersionUID = 1L;
 
     /**
