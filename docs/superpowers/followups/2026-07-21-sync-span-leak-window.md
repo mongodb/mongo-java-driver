@@ -64,9 +64,12 @@ it before `openScope()` or twice is a no-op, and `Span.EMPTY` no-ops trivially. 
   prior to sender creation no-op. New edge to decide consciously: if `sendStartedEvent` itself throws, the
   logging sender is already assigned and a failed event would be emitted for a command whose started event never
   completed — arguably more correct than today's silence, but it is a command-monitoring behavior change.
-- Unify the exception types: the current send catch is `catch (Exception)`, which misses `Error` (the encode
-  catch already handles `RuntimeException | Error`); pick `RuntimeException | Error` (or `Throwable`, matching
-  the async path) for the unified catch.
+- Unify the exception types on `catch (Throwable t)` + `throw t;`, matching the async path (decided 2026-07-22).
+  This compiles without signature changes via Java 7 precise rethrow (the catch parameter is effectively final
+  and the try body declares no checked exceptions — the same rule the current `catch (Exception) { throw e; }`
+  already relies on), fixes the current send catch's `Error` blind spot, and forces a compile error if a future
+  edit introduces a checked-exception throw site. Trade-off (accepted, same as async): fatal errors like OOM run
+  best-effort cleanup before propagating.
 - Keep the encode-failure semantics added by the command-span work: an encode failure ends the span before any
   scope was opened — with unconditional `closeScope()` this holds automatically per the no-op contract above.
 
