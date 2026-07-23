@@ -310,7 +310,6 @@ package object search {
    * @since 4.11
    */
   @Sealed
-  @Beta(Array(Reason.SERVER))
   type VectorSearchOptions = com.mongodb.client.model.search.VectorSearchOptions
 
   /**
@@ -323,7 +322,6 @@ package object search {
    * @since 5.2
    */
   @Sealed
-  @Beta(Array(Reason.SERVER))
   type ApproximateVectorSearchOptions = com.mongodb.client.model.search.ApproximateVectorSearchOptions
 
   /**
@@ -337,7 +335,6 @@ package object search {
    * @since 5.2
    */
   @Sealed
-  @Beta(Array(Reason.SERVER))
   type ExactVectorSearchOptions = com.mongodb.client.model.search.ExactVectorSearchOptions
 
   /**
