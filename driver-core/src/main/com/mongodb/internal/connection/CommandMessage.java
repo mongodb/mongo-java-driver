@@ -38,8 +38,6 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.ByteBuf;
 import org.bson.FieldNameValidator;
-import org.bson.codecs.BsonDocumentCodec;
-import org.bson.codecs.EncoderContext;
 import org.bson.io.BsonOutput;
 
 import java.io.ByteArrayOutputStream;
@@ -218,7 +216,7 @@ public final class CommandMessage extends RequestMessage {
     }
 
     /**
-     * The command name (first key of the command document. Available before {@code encode()} runs, unlike
+     * The command name (the first key of the command document). Available before {@code encode()} runs, unlike
      * {@link #getCommandDocument(ByteBufferBsonOutput)}; identical to the encoded document's first
      * key, since encoding only appends fields.
      */
@@ -353,10 +351,13 @@ public final class CommandMessage extends RequestMessage {
             return;
         }
         bsonOutput.writeByte(PAYLOAD_TYPE_3_TELEMETRY);
-        BsonDocument telemetry = new BsonDocument("otel",
-                new BsonDocument("traceparent", new BsonString(traceParent)));
-        new BsonDocumentCodec().encode(new BsonBinaryWriter(bsonOutput), telemetry,
-                EncoderContext.builder().build());
+        // {otel: {traceparent: <value>}}
+        BsonBinaryWriter writer = new BsonBinaryWriter(bsonOutput);
+        writer.writeStartDocument();
+        writer.writeStartDocument("otel");
+        writer.writeString("traceparent", traceParent);
+        writer.writeEndDocument();
+        writer.writeEndDocument();
     }
 
     private int writeOpQuery(final ByteBufferBsonOutput bsonOutput) {

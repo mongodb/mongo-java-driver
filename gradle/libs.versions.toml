@@ -187,8 +187,8 @@ reactive-streams-tck = { module = " org.reactivestreams:reactive-streams-tck", v
 reflections = { module = "org.reflections:reflections", version.ref = "reflections" }
 
 micrometer-tracing = { module = "io.micrometer:micrometer-tracing", version.ref = "micrometer-tracing" }
-micrometer-tracing-integration-test-bom = { module = " io.micrometer:micrometer-tracing-bom", version.ref = "micrometer-tracing" }
-micrometer-tracing-integration-test = { module = " io.micrometer:micrometer-tracing-integration-test" }
+micrometer-tracing-integration-test-bom = { module = "io.micrometer:micrometer-tracing-bom", version.ref = "micrometer-tracing" }
+micrometer-tracing-integration-test = { module = "io.micrometer:micrometer-tracing-integration-test" }
 
 [bundles]
 aws-java-sdk-v1 = ["aws-java-sdk-v1-core", "aws-java-sdk-v1-sts"]
