@@ -142,6 +142,7 @@ echo "Running tests with Java ${JAVA_VERSION}"
           ${MULTI_MONGOS_URI_SYSTEM_PROPERTY} ${API_VERSION} ${GRADLE_EXTRA_VARS} \
           ${JAVA_SYSPROP_ASYNC_TRANSPORT}  ${JAVA_SYSPROP_NETTY_SSL_PROVIDER} \
           -Dorg.mongodb.test.fle.on.demand.credential.test.failure.enabled=true \
+          -Dorg.mongodb.test.diagnostics.thread.dump.enabled=true \
           --stacktrace --info --continue ${TESTS} | tee -a logs.txt
 
 if grep -q 'LEAK:' logs.txt ; then
