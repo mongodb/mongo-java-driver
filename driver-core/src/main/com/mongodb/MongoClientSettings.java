@@ -432,9 +432,13 @@ public final class MongoClientSettings {
          *
          * <p>Starting with the 3.11.0 release, the default value is true</p>
          *
+         * <p>If a {@linkplain #timeout(long, TimeUnit) timeout} is set, the driver may retry
+         * multiple times until the timeout expires. Otherwise, at most one retry attempt is made.
+         *
          * @param retryWrites sets if writes should be retried if they fail due to a network error.
          * @return this
          * @see #getRetryWrites()
+         * @see #timeout(long, TimeUnit)
          * @mongodb.server.release 3.6
          */
         public Builder retryWrites(final boolean retryWrites) {
@@ -445,9 +449,13 @@ public final class MongoClientSettings {
         /**
          * Sets whether reads should be retried if they fail due to a network error.
          *
+         * <p>If a {@linkplain #timeout(long, TimeUnit) timeout} is set, the driver may retry
+         * multiple times until the timeout expires. Otherwise, at most one retry attempt is made.
+         *
          * @param retryReads sets if reads should be retried if they fail due to a network error.
          * @return this
          * @see #getRetryReads()
+         * @see #timeout(long, TimeUnit)
          * @since 3.11
          * @mongodb.server.release 3.6
          */
@@ -715,14 +723,28 @@ public final class MongoClientSettings {
          *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
          * </ul>
          *
-         *  <p>Note: When using synchronous API, this timeout does not limit socket writes, therefore there is a possibility that the
-         *  operation might not be timed out when expected. This limitation does not apply to the reactive streams API.
+         * <p>The timeout can be set at the following levels (ordered by lowest precedence):
+         * <ul>
+         *   <li>{@link #timeout(long, TimeUnit) MongoClientSettings} (current)</li>
+         *   <li>{@code MongoCluster.withTimeout}</li>
+         *   <li>{@code MongoDatabase.withTimeout}</li>
+         *   <li>{@code MongoCollection.withTimeout}</li>
+         *   <li>{@link ClientSessionOptions.Builder#defaultTimeout(long, TimeUnit) ClientSessionOptions}</li>
+         *   <li>{@link TransactionOptions.Builder#timeout(Long, TimeUnit) TransactionOptions}</li>
+         * </ul>
+         * If not set at a given level, the timeout is inherited from the level above.
+         *
+         * <p>If {@linkplain #retryWrites(boolean) write} or {@linkplain #retryReads(boolean) read} retries are enabled,
+         * the driver may retry multiple times until the timeout expires.
+         *
+         * <p>Note: When using synchronous API, this timeout does not limit socket writes, therefore there is a possibility that the
+         * operation might not be timed out when expected. This limitation does not apply to the reactive streams API.
          *
          * @param timeout the timeout
          * @param timeUnit the time unit
          * @return this
          * @since 5.2
-         * @see #getTimeout
+         * @see #getTimeout(TimeUnit)
          */
         @Alpha(Reason.CLIENT)
         public Builder timeout(final long timeout, final TimeUnit timeUnit) {
@@ -791,7 +813,11 @@ public final class MongoClientSettings {
      *
      * <p>Starting with the 3.11.0 release, the default value is true</p>
      *
+     * <p>If a {@linkplain #getTimeout(TimeUnit) timeout} is set, the driver may retry
+     * multiple times until the timeout expires. Otherwise, at most one retry attempt is made.
+     *
      * @return the retryWrites value
+     * @see #getTimeout(TimeUnit)
      * @mongodb.server.release 3.6
      */
     public boolean getRetryWrites() {
@@ -801,7 +827,11 @@ public final class MongoClientSettings {
     /**
      * Returns true if reads should be retried if they fail due to a network error or other retryable error. The default value is true.
      *
+     * <p>If a {@linkplain #getTimeout(TimeUnit) timeout} is set, the driver may retry
+     * multiple times until the timeout expires. Otherwise, at most one retry attempt is made.
+     *
      * @return the retryReads value
+     * @see #getTimeout(TimeUnit)
      * @since 3.11
      * @mongodb.server.release 3.6
      */
@@ -933,12 +963,26 @@ public final class MongoClientSettings {
      *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
      * </ul>
      *
-     *  <p>Note: When using synchronous API, this timeout does not limit socket writes, therefore there is a possibility that the
-     *  operation might not be timed out when expected. This limitation does not apply to the reactive streams API.
+     * <p>The timeout can also be set at the following levels (ordered by lowest precedence):
+     * <ul>
+     *   <li>{@code MongoCluster.getTimeout}</li>
+     *   <li>{@code MongoDatabase.getTimeout}</li>
+     *   <li>{@code MongoCollection.getTimeout}</li>
+     *   <li>{@link ClientSessionOptions.Builder#defaultTimeout(long, TimeUnit) ClientSessionOptions}</li>
+     *   <li>{@link TransactionOptions.Builder#timeout(Long, TimeUnit) TransactionOptions}</li>
+     * </ul>
+     * If not set at a given level, the timeout is inherited from the level above.
+     *
+     * <p>If {@linkplain #getRetryWrites() write} or {@linkplain #getRetryReads() read} retries are enabled,
+     * the driver may retry multiple times until the timeout expires. Otherwise, at most one retry attempt is made.
+     *
+     * <p>Note: When using synchronous API, this timeout does not limit socket writes, therefore there is a possibility that the
+     * operation might not be timed out when expected. This limitation does not apply to the reactive streams API.
      *
      * @param timeUnit the time unit
      * @return the timeout in the given time unit
      * @since 5.2
+     * @see Builder#timeout(long, TimeUnit)
      */
     @Alpha(Reason.CLIENT)
     @Nullable
