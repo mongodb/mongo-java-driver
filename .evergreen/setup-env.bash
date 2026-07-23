@@ -1,5 +1,15 @@
 # Java configurations for evergreen
 
+# On Windows Evergreen hosts `OS` is a native environment variable set to
+# "Windows_NT". It is not set on other platforms, so default it from `uname`
+# to avoid an unbound variable error under `set -u`.
+if [ -z "${OS:-}" ]; then
+  case "$(uname -s)" in
+    CYGWIN*|MINGW*|MSYS*|Windows_NT) OS="Windows_NT" ;;
+    *) OS="$(uname -s)" ;;
+  esac
+fi
+
 if [ "Windows_NT" == "$OS" ]; then
   export JDK8="/cygdrive/c/java/jdk8"
   export JDK11="/cygdrive/c/java/jdk11"
