@@ -90,7 +90,7 @@ public interface Span {
 
     /**
      * Opens a scope for this span, making it the current observation on the thread.
-     * A successful {@code openScope()} must eventually be followed by {@link #closeScope()}.
+     * A successful {@code openScope()} must be followed by {@link #closeScope()}.
      */
     void openScope();
 
