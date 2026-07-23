@@ -172,41 +172,42 @@ public final class CommandMessage extends RequestMessage {
                 byteBuf.position(firstDocumentPosition);
                 ByteBufBsonDocument byteBufBsonDocument = createOne(byteBuf);
 
-                // If true, there are more sections after the `PAYLOAD_TYPE_0_DOCUMENT` section: either one or more
+                // There may be more sections after the `PAYLOAD_TYPE_0_DOCUMENT` section: either one or more
                 // `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE` sections, and/or a trailing `PAYLOAD_TYPE_3_TELEMETRY` section.
-                if (byteBuf.hasRemaining()) {
-                    BsonDocument commandBsonDocument = byteBufBsonDocument.toBaseBsonDocument();
+                // The command document is materialized lazily, only when a document sequence has to be folded into
+                // it; otherwise (no sections, or only a telemetry section) the cheap lazy document is returned.
+                BsonDocument commandBsonDocument = null;
 
-                    // Each loop iteration processes one Document Sequence
-                    // When there are no more bytes remaining, there are no more Document Sequences
-                    while (byteBuf.hasRemaining()) {
-                        byte payloadType = byteBuf.get();
-                        // Document-sequence sections always precede any trailing non-sequence section (e.g.
-                        // PAYLOAD_TYPE_3_TELEMETRY), and such sections carry no command-document fields, so stop here.
-                        if (payloadType != PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE) {
-                            break;
-                        }
-                        int sequenceStart = byteBuf.position();
-                        int sequenceSizeInBytes = byteBuf.getInt();
-                        int sectionEnd = sequenceStart + sequenceSizeInBytes;
-
-                        String fieldName = getSequenceIdentifier(byteBuf);
-                        // If this assertion fires, it means that the driver has started using document sequences for nested fields.  If
-                        // so, this method will need to change in order to append the value to the correct nested document.
-                        assertFalse(fieldName.contains("."));
-
-                        ByteBuf documentsByteBufSlice = byteBuf.duplicate().limit(sectionEnd);
-                        try {
-                            commandBsonDocument.append(fieldName, new BsonArray(createList(documentsByteBufSlice)));
-                        } finally {
-                            documentsByteBufSlice.release();
-                        }
-                        byteBuf.position(sectionEnd);
+                // Each loop iteration processes one Document Sequence
+                // When there are no more bytes remaining, there are no more Document Sequences
+                while (byteBuf.hasRemaining()) {
+                    byte payloadType = byteBuf.get();
+                    // Document-sequence sections always precede any trailing non-sequence section (e.g.
+                    // PAYLOAD_TYPE_3_TELEMETRY), and such sections carry no command-document fields, so stop here.
+                    if (payloadType != PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE) {
+                        break;
                     }
-                    return commandBsonDocument;
-                } else {
-                    return byteBufBsonDocument;
+                    if (commandBsonDocument == null) {
+                        commandBsonDocument = byteBufBsonDocument.toBaseBsonDocument();
+                    }
+                    int sequenceStart = byteBuf.position();
+                    int sequenceSizeInBytes = byteBuf.getInt();
+                    int sectionEnd = sequenceStart + sequenceSizeInBytes;
+
+                    String fieldName = getSequenceIdentifier(byteBuf);
+                    // If this assertion fires, it means that the driver has started using document sequences for nested fields.  If
+                    // so, this method will need to change in order to append the value to the correct nested document.
+                    assertFalse(fieldName.contains("."));
+
+                    ByteBuf documentsByteBufSlice = byteBuf.duplicate().limit(sectionEnd);
+                    try {
+                        commandBsonDocument.append(fieldName, new BsonArray(createList(documentsByteBufSlice)));
+                    } finally {
+                        documentsByteBufSlice.release();
+                    }
+                    byteBuf.position(sectionEnd);
                 }
+                return commandBsonDocument != null ? commandBsonDocument : byteBufBsonDocument;
             } finally {
                 byteBuf.release();
             }
