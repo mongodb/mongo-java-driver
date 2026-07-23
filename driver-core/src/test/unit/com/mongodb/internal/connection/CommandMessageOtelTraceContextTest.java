@@ -155,9 +155,7 @@ class CommandMessageOtelTraceContextTest {
 
     /**
      * Same guarantee as {@link #shouldWriteTelemetrySectionAfterDocumentSequences()}, but for the
-     * {@link DualMessageSequences} branch (the {@code clientBulkWrite} path). It is the only branch that
-     * assembles its two kind-1 sections via {@link ByteBufferBsonOutput#branch()} (out-of-order buffer
-     * segments merged on close), so the trailing kind-3 section's placement is worth pinning separately.
+     * {@link DualMessageSequences} branch (the {@code clientBulkWrite} path).
      */
     @Test
     void shouldWriteTelemetrySectionAfterDualMessageSequences() {
@@ -195,7 +193,7 @@ class CommandMessageOtelTraceContextTest {
     }
 
     /**
-     * NEW: The 2-arg {@code encode} inherited from {@code RequestMessage} never attaches the telemetry section,
+     * The 2-arg {@code encode} inherited from {@code RequestMessage} never attaches the telemetry section,
      * even when the wire version supports it. This guards monitoring/compression/other callers that still use
      * the 2-arg overload.
      */

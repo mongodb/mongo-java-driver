@@ -35,6 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MicrometerTraceParentTest {
     private static final String VALID_TRACE_ID = "0af7651916cd43dd8448eb211c80319c";
@@ -55,10 +56,6 @@ class MicrometerTraceParentTest {
                 traceParentFor(VALID_TRACE_ID, VALID_SPAN_ID, null));
     }
 
-    /**
-     * Prose test 4: Malformed trace context is never sent
-     * (see {@code docs/superpowers/specs/2026-07-13-otel-telemetry-section-prose-tests.md})
-     */
     @Test
     void shouldReturnNullForInvalidIds() {
         assertNull(traceParentFor("00000000000000000000000000000000", VALID_SPAN_ID, true));
@@ -78,7 +75,7 @@ class MicrometerTraceParentTest {
     @Test
     void shouldExposeMicrometerTracingClasspathGuard() {
         // Sanity check on the current test classpath (micrometer-tracing IS present here).
-        assertEquals(true, MicrometerTracer.MICROMETER_TRACING_ON_CLASSPATH);
+        assertTrue(MicrometerTracer.MICROMETER_TRACING_ON_CLASSPATH);
     }
 
     /**
@@ -150,7 +147,7 @@ class MicrometerTraceParentTest {
                     () -> traceContextInterface.getMethod("traceParent").invoke(traceContext),
                     "traceParent() must not throw NoClassDefFoundError when micrometer-tracing is absent");
 
-            assertEquals(null, traceParent);
+            assertNull(traceParent);
 
             spanInterface.getMethod("closeScope").invoke(span);
             spanInterface.getMethod("end").invoke(span);
