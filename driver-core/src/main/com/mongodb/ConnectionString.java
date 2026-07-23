@@ -49,6 +49,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -286,6 +287,10 @@ public class ConnectionString {
 
     private static final String MONGODB_PREFIX = "mongodb://";
     private static final String MONGODB_SRV_PREFIX = "mongodb+srv://";
+    private static final Pattern STREAM_PROCESSING_HOST_PATTERN = Pattern.compile(
+            "^atlas-stream-[a-zA-Z0-9]+-[a-zA-Z0-9]+"
+            + "\\.[a-zA-Z0-9-]+\\.a\\.query\\.mongodb(?:-[a-zA-Z]+)?\\.net(?::\\d+)?$",
+            Pattern.CASE_INSENSITIVE);
     private static final Set<String> ALLOWED_OPTIONS_IN_TXT_RECORD =
             new HashSet<>(asList("authsource", "replicaset", "loadbalanced"));
     private static final Logger LOGGER = Loggers.getLogger("uri");
@@ -295,6 +300,7 @@ public class ConnectionString {
 
     private final MongoCredential credential;
     private final boolean isSrvProtocol;
+    private final boolean isAtlasStreamProcessingWorkspace;
     private final List<String> hosts;
     private final String database;
     private final String collection;
@@ -428,6 +434,9 @@ public class ConnectionString {
             }
         }
         this.hosts = unresolvedHosts;
+        isAtlasStreamProcessingWorkspace = !isSrvProtocol
+                && unresolvedHosts.size() == 1
+                && STREAM_PROCESSING_HOST_PATTERN.matcher(unresolvedHosts.get(0)).matches();
 
         // Process the authDB section
         String nsPart;
@@ -468,6 +477,17 @@ public class ConnectionString {
         Map<String, List<String>> combinedOptionsMaps = combineOptionsMaps(txtRecordsOptionsMap, connectionStringOptionsMap);
         if (isSrvProtocol && !(combinedOptionsMaps.containsKey("tls") || combinedOptionsMaps.containsKey("ssl"))) {
             combinedOptionsMaps.put("tls", singletonList("true"));
+        }
+        if (isAtlasStreamProcessingWorkspace) {
+            if (!(combinedOptionsMaps.containsKey("tls") || combinedOptionsMaps.containsKey("ssl"))) {
+                combinedOptionsMaps.put("tls", singletonList("true"));
+            }
+            if (!combinedOptionsMaps.containsKey("authsource")) {
+                combinedOptionsMaps.put("authsource", singletonList("admin"));
+            }
+            if (!combinedOptionsMaps.containsKey("directconnection")) {
+                combinedOptionsMaps.put("directconnection", singletonList("true"));
+            }
         }
         translateOptions(combinedOptionsMaps);
 
@@ -1332,6 +1352,19 @@ public class ConnectionString {
     }
 
     /**
+     * Returns true if this connection string targets an Atlas Stream Processing workspace.
+     *
+     * <p>Workspace hosts match the pattern {@code atlas-stream-*.*a.query.mongodb*.net}.
+     * When true, TLS, {@code directConnection=true}, and {@code authSource=admin} are applied by default.</p>
+     *
+     * @return true if targeting a stream processing workspace
+     * @since 5.5
+     */
+    public boolean isAtlasStreamProcessingWorkspace() {
+        return isAtlasStreamProcessingWorkspace;
+    }
+
+    /**
      * Gets the maximum number of hosts to connect to when using SRV protocol.
      *
      * @return the maximum number of hosts to connect to when using SRV protocol.  Defaults to null.
@@ -1786,6 +1819,7 @@ public class ConnectionString {
         }
         ConnectionString that = (ConnectionString) o;
         return isSrvProtocol == that.isSrvProtocol
+                && isAtlasStreamProcessingWorkspace == that.isAtlasStreamProcessingWorkspace
                 && Objects.equals(directConnection, that.directConnection)
                 && Objects.equals(credential, that.credential)
                 && Objects.equals(hosts, that.hosts)
@@ -1825,7 +1859,7 @@ public class ConnectionString {
 
     @Override
     public int hashCode() {
-        return Objects.hash(credential, isSrvProtocol, hosts, database, collection, directConnection, readPreference,
+        return Objects.hash(credential, isSrvProtocol, isAtlasStreamProcessingWorkspace, hosts, database, collection, directConnection, readPreference,
                 writeConcern, retryWrites, retryReads, readConcern, minConnectionPoolSize, maxConnectionPoolSize, maxWaitTime,
                 maxConnectionIdleTime, maxConnectionLifeTime, maxConnecting, connectTimeout, timeout, socketTimeout, sslEnabled,
                 sslInvalidHostnameAllowed, requiredReplicaSetName, serverSelectionTimeout, localThreshold, heartbeatFrequency,
