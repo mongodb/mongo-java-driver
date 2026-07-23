@@ -34,7 +34,7 @@ public final class ServerVersionHelper {
     // Server 9.0 (WIRE_VERSION_90 = 29). Minimum wire version for the OP_MSG telemetry
     // section (OTel trace-context propagation, DRIVERS-3454).
     public static final int NINE_DOT_ZERO_WIRE_VERSION = 29;
-    public static final int LATEST_WIRE_VERSION = EIGHT_DOT_ZERO_WIRE_VERSION;
+    public static final int LATEST_WIRE_VERSION = NINE_DOT_ZERO_WIRE_VERSION;
 
     public static boolean serverIsAtLeastVersionFourDotFour(final ConnectionDescription description) {
         return description.getMaxWireVersion() >= FOUR_DOT_FOUR_WIRE_VERSION;
