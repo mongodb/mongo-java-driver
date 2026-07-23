@@ -304,6 +304,7 @@ public class ConnectionString {
     private String srvServiceName;
     private Boolean directConnection;
     private Boolean loadBalanced;
+    private Boolean onlyConnectOriginalUrl;
     private ReadPreference readPreference;
     private WriteConcern writeConcern;
     private Boolean retryWrites;
@@ -569,6 +570,8 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("srvmaxhosts");
         GENERAL_OPTIONS_KEYS.add("srvservicename");
 
+        GENERAL_OPTIONS_KEYS.add("onlyconnectoriginalurl");
+
         COMPRESSOR_KEYS.add("compressors");
         COMPRESSOR_KEYS.add("zlibcompressionlevel");
 
@@ -723,6 +726,9 @@ public class ConnectionString {
                     break;
                 case "srvservicename":
                     srvServiceName = value;
+                    break;
+                case "onlyconnectoriginalurl":
+                    onlyConnectOriginalUrl = parseBoolean(value, "onlyconnectoriginalurl");
                     break;
                 default:
                     break;
@@ -1404,6 +1410,19 @@ public class ConnectionString {
     @Nullable
     public Boolean isLoadBalanced() {
         return loadBalanced;
+    }
+
+    /**
+     * Gets the value of the {@code onlyConnectOriginalUrl} property from the connection string.
+     * When true, the driver will only connect to the servers specified in the original connection string
+     * and will not add or remove servers based on replica set topology discovery.
+     *
+     * @return true if only the original URL hosts should be connected, or null if unset
+     * @since 5.7
+     */
+    @Nullable
+    public Boolean getOnlyConnectOriginalUrl() {
+        return onlyConnectOriginalUrl;
     }
 
     /**
