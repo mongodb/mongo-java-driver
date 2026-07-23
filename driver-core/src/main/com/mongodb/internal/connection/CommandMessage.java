@@ -87,8 +87,7 @@ public final class CommandMessage extends RequestMessage {
     private static final byte PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE = 1;
     /**
      * Specifies that the `OP_MSG` section payload is a BSON telemetry document
-     * ({@code {otel: {traceparent: <string>}}}). Mirrors the server's {@code kTelemetry = 3}
-     * section kind (DRIVERS-3454, 10gen/mongo#56646).
+     * ({@code {otel: {traceparent: <string>}}}).
      */
     private static final byte PAYLOAD_TYPE_3_TELEMETRY = 3;
 
@@ -115,9 +114,7 @@ public final class CommandMessage extends RequestMessage {
     /**
      * The command span to attach to the OP_MSG telemetry section during {@linkplain
      * #encode(ByteBufferBsonOutput, OperationContext, Span) encoding}. Set for the duration of that overload's
-     * call and cleared afterward; {@code null} otherwise (including for the plain 2-arg {@code encode}, which
-     * never attaches a telemetry section). Not thread-safe: a {@code CommandMessage} is built and encoded by a
-     * single thread per send attempt, so a transient field is safe.
+     * call and cleared afterward; {@code null} otherwise.
      */
     @Nullable
     private Span commandSpanForEncoding;
@@ -221,8 +218,7 @@ public final class CommandMessage extends RequestMessage {
     }
 
     /**
-     * The command name (first key of the command document — for MongoDB commands the first element
-     * names the command). Available before {@code encode()} runs, unlike
+     * The command name (first key of the command document. Available before {@code encode()} runs, unlike
      * {@link #getCommandDocument(ByteBufferBsonOutput)}; identical to the encoded document's first
      * key, since encoding only appends fields.
      */
@@ -232,7 +228,6 @@ public final class CommandMessage extends RequestMessage {
 
     /**
      * The cursor id if this is a {@code getMore} command, or {@code null} otherwise.
-     * Available before {@code encode()} runs.
      */
     @Nullable
     public BsonInt64 getGetMoreCursorId() {
@@ -284,9 +279,7 @@ public final class CommandMessage extends RequestMessage {
     /**
      * Encodes the message, attaching the OP_MSG telemetry section with {@code commandSpan}'s trace context when
      * the gating conditions hold (see {@link #writeTelemetryContextSection}). The 2-arg {@link
-     * #encode(ByteBufferBsonOutput, OperationContext)} never attaches the section. Not thread-safe: a message
-     * must be encoded by one thread at a time (already the case — a {@code CommandMessage} is built and encoded
-     * per send attempt).
+     * #encode(ByteBufferBsonOutput, OperationContext)} never attaches the section.
      */
     public void encode(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext,
             @Nullable final Span commandSpan) {
