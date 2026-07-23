@@ -47,10 +47,27 @@ import static java.util.Optional.ofNullable;
  * @since 5.7
  */
 public class MicrometerTracer implements Tracer {
+    /**
+     * {@code micrometer-tracing} is an optional dependency: consumers may have only {@code micrometer-observation}
+     * on the classpath (e.g. metrics/logging-only observability setups). Guard any use of {@code io.micrometer.tracing.*}
+     * types with this flag so that such setups never trigger a {@link NoClassDefFoundError} or {@link LinkageError}.
+     */
+    static final boolean MICROMETER_TRACING_ON_CLASSPATH = isMicrometerTracingOnClasspath();
+
     private final ObservationRegistry observationRegistry;
     private final boolean allowCommandPayload;
     private final int textMaxLength;
     private final ObservationConvention<MongodbObservationContext> convention;
+
+    private static boolean isMicrometerTracingOnClasspath() {
+        try {
+            Class.forName("io.micrometer.tracing.handler.TracingObservationHandler",
+                    false, MicrometerTracer.class.getClassLoader());
+            return true;
+        } catch (ClassNotFoundException | LinkageError e) {
+            return false;
+        }
+    }
 
     /**
      * Constructs a new {@link MicrometerTracer} instance.
@@ -115,6 +132,68 @@ public class MicrometerTracer implements Tracer {
          */
         MicrometerTraceContext(@Nullable final Observation observation) {
             this.observation = observation;
+        }
+
+        @Override
+        @Nullable
+        public String traceParent() {
+            if (observation == null) {
+                return null;
+            }
+            if (!MICROMETER_TRACING_ON_CLASSPATH) {
+                return null;
+            }
+            return MicrometerTracingSupport.traceParent(observation);
+        }
+
+        /**
+         * The server ({@code validateW3CTraceparent}) rejects ids that are not exactly the expected
+         * length of lowercase hex, or that are all zeroes. Never emit a traceparent it would reject.
+         */
+        @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+        static boolean isValidNonZeroLowercaseHex(@Nullable final String value, final int expectedLength) {
+            if (value == null || value.length() != expectedLength) {
+                return false;
+            }
+            boolean nonZero = false;
+            for (int i = 0; i < value.length(); i++) {
+                char c = value.charAt(i);
+                if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) {
+                    return false;
+                }
+                if (c != '0') {
+                    nonZero = true;
+                }
+            }
+            return nonZero;
+        }
+    }
+
+    /**
+     * Isolates all hard references to {@code io.micrometer.tracing.*} types. This class must only be loaded/invoked
+     * after {@link #MICROMETER_TRACING_ON_CLASSPATH} has been confirmed {@code true}, so that JVMs which resolve
+     * classes referenced by bytecode eagerly (e.g. during verification) do not trigger a {@link NoClassDefFoundError}
+     * when {@code micrometer-tracing} is absent from the classpath.
+     */
+    private static final class MicrometerTracingSupport {
+        @Nullable
+        static String traceParent(final Observation observation) {
+            io.micrometer.tracing.handler.TracingObservationHandler.TracingContext tracingContext =
+                    observation.getContextView().get(io.micrometer.tracing.handler.TracingObservationHandler.TracingContext.class);
+            if (tracingContext == null || tracingContext.getSpan() == null) {
+                return null;
+            }
+            // Span.context() is non-null by contract (the package is @NullMarked); a no-op span yields a
+            // NOOP context whose empty ids fail the hex validation below.
+            io.micrometer.tracing.TraceContext ctx = tracingContext.getSpan().context();
+            String traceId = ctx.traceId();
+            String spanId = ctx.spanId();
+            if (!MicrometerTraceContext.isValidNonZeroLowercaseHex(traceId, 32)
+                    || !MicrometerTraceContext.isValidNonZeroLowercaseHex(spanId, 16)) {
+                return null;
+            }
+            Boolean sampled = ctx.sampled();
+            return "00-" + traceId + "-" + spanId + (sampled != null && sampled ? "-01" : "-00");
         }
     }
 
