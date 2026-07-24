@@ -36,8 +36,8 @@ import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY
 import static com.mongodb.connection.ServerType.STANDALONE
-import static com.mongodb.internal.operation.OperationHelper.canRetryRead
-import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite
+import static com.mongodb.internal.operation.OperationHelper.isReadRetryRequirementsMet
+import static com.mongodb.internal.operation.OperationHelper.isNonCommandWriteRetryRequirementsMet
 import static com.mongodb.internal.operation.OperationHelper.validateWriteRequests
 
 class OperationHelperSpecification extends Specification {
@@ -81,8 +81,8 @@ class OperationHelperSpecification extends Specification {
         }
 
         expect:
-        isRetryableWrite(retryWrites, writeConcern, connectionDescription, noTransactionSessionContext) == expected
-        !isRetryableWrite(retryWrites, writeConcern, connectionDescription, activeTransactionSessionContext)
+        isNonCommandWriteRetryRequirementsMet(retryWrites, writeConcern, connectionDescription, noTransactionSessionContext) == expected
+        !isNonCommandWriteRetryRequirementsMet(retryWrites, writeConcern, connectionDescription, activeTransactionSessionContext)
 
         where:
         retryWrites | writeConcern   | connectionDescription                 | expected
@@ -106,8 +106,8 @@ class OperationHelperSpecification extends Specification {
         }
 
         expect:
-        canRetryRead(createOperationContext().withSessionContext(noTransactionSessionContext))
-        !canRetryRead(createOperationContext().withSessionContext(activeTransactionSessionContext))
+        isReadRetryRequirementsMet(true, createOperationContext().withSessionContext(noTransactionSessionContext))
+        !isReadRetryRequirementsMet(true, createOperationContext().withSessionContext(activeTransactionSessionContext))
     }
 
 

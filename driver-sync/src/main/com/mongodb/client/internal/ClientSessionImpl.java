@@ -52,6 +52,7 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.TimeoutContext.DEFAULT_TIMEOUT_MESSAGE;
 import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 
@@ -416,6 +417,6 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
     private static MongoClientException wrapInNonTimeoutMsMongoTimeoutException(final MongoException cause) {
         return cause instanceof MongoTimeoutException
                 ? (MongoTimeoutException) cause
-                : new WithTransactionTimeoutException("Operation exceeded the timeout limit.", cause);
+                : new WithTransactionTimeoutException(DEFAULT_TIMEOUT_MESSAGE, cause);
     }
 }

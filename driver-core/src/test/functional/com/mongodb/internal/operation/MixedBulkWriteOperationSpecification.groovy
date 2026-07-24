@@ -1118,7 +1118,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
         when:
         testRetryableOperationThrowsOriginalError(operation, [[3, 6, 0], [3, 6, 0]],
-                [REPLICA_SET_PRIMARY, REPLICA_SET_PRIMARY, STANDALONE], originalException, async, 4)
+                [REPLICA_SET_PRIMARY, STANDALONE], originalException, async, 4)
 
         then:
         Exception commandException = thrown()
@@ -1126,7 +1126,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
         when:
         testRetryableOperationThrowsOriginalError(operation, [[3, 6, 0]],
-                [REPLICA_SET_PRIMARY, REPLICA_SET_PRIMARY], originalException, async, 2)
+                [REPLICA_SET_PRIMARY], originalException, async, 2)
 
         then:
         commandException = thrown()

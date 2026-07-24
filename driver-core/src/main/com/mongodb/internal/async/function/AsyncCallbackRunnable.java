@@ -20,8 +20,8 @@ import com.mongodb.internal.async.SingleResultCallback;
 /**
  * An {@linkplain AsyncCallbackFunction asynchronous callback-based function} of no parameters and no successful result.
  * This class is a callback-based counterpart of {@link Runnable}.
- *
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ * <p>
+ * This class is not part of the public API and may be removed or changed at any time.
  *
  * @see AsyncCallbackFunction
  */

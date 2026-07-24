@@ -66,7 +66,7 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.CommandOperationHelper.commandWriteConcern;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
+import static com.mongodb.internal.operation.OperationHelper.isNonCommandWriteRetryRequirementsMet;
 import static com.mongodb.internal.operation.WriteConcernHelper.createWriteConcernError;
 import static java.util.Collections.singletonMap;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -101,20 +101,19 @@ public final class BulkWriteBatch {
                                                       final List<? extends WriteRequest> writeRequests,
                                                       final OperationContext operationContext,
                                                       @Nullable final BsonValue comment, @Nullable final BsonDocument variables) {
-        boolean canRetryWrites = isRetryableWrite(retryWrites, writeConcern, connectionDescription, operationContext.getSessionContext());
+        boolean nonCommandWriteRetryRequirementsMet = isNonCommandWriteRetryRequirementsMet(retryWrites, writeConcern, connectionDescription, operationContext.getSessionContext());
         List<WriteRequestWithIndex> writeRequestsWithIndex = new ArrayList<>();
-        boolean writeRequestsAreRetryable = true;
+        boolean commandWriteRetryRequirementsMet = true;
         for (int i = 0; i < writeRequests.size(); i++) {
             WriteRequest writeRequest = writeRequests.get(i);
-            writeRequestsAreRetryable = writeRequestsAreRetryable && isRetryable(writeRequest);
+            commandWriteRetryRequirementsMet = commandWriteRetryRequirementsMet && isCommandWriteRetryRequirementsMet(writeRequest);
             writeRequestsWithIndex.add(new WriteRequestWithIndex(writeRequest, i));
         }
-        if (canRetryWrites && !writeRequestsAreRetryable) {
-            canRetryWrites = false;
+        if (nonCommandWriteRetryRequirementsMet && !commandWriteRetryRequirementsMet) {
             logWriteModelDoesNotSupportRetries();
         }
         return new BulkWriteBatch(namespace, connectionDescription, ordered, writeConcern, bypassDocumentValidation,
-                canRetryWrites, new BulkWriteBatchCombiner(connectionDescription.getServerAddress(), ordered, writeConcern),
+                nonCommandWriteRetryRequirementsMet && commandWriteRetryRequirementsMet, new BulkWriteBatchCombiner(connectionDescription.getServerAddress(), ordered, writeConcern),
                 writeRequestsWithIndex, operationContext, comment, variables);
     }
 
@@ -214,7 +213,7 @@ public final class BulkWriteBatch {
         }
     }
 
-    boolean getRetryWrites() {
+    boolean isWriteRetryRequirementsMet() {
         return retryWrites;
     }
 
@@ -377,7 +376,7 @@ public final class BulkWriteBatch {
         }
     }
 
-    private static boolean isRetryable(final WriteRequest writeRequest) {
+    private static boolean isCommandWriteRetryRequirementsMet(final WriteRequest writeRequest) {
         if (writeRequest.getType() == UPDATE || writeRequest.getType() == REPLACE) {
             return !((UpdateRequest) writeRequest).isMulti();
         } else if (writeRequest.getType() == DELETE) {
