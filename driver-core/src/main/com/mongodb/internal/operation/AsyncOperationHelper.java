@@ -48,7 +48,6 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
@@ -59,10 +58,7 @@ import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreat
 import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRetryControl;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
 import static com.mongodb.internal.operation.CommandOperationHelper.isWriteRetryRequirementsMet;
-import static com.mongodb.internal.operation.OperationHelper.isReadRetryRequirementsMet;
 import static com.mongodb.internal.operation.OperationHelper.isServerWriteRetryRequirementsMet;
-import static com.mongodb.internal.operation.SpecRetryPolicy.Descriptor.READ;
-import static com.mongodb.internal.operation.SpecRetryPolicy.Descriptor.WRITE;
 import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConcernError;
 
 final class AsyncOperationHelper {
@@ -195,7 +191,9 @@ final class AsyncOperationHelper {
             final CommandReadTransformerAsync<D, T> transformer,
             final boolean retryReadsSetting,
             final SingleResultCallback<T> callback) {
-        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(EnumSet.of(READ), retryReadsSetting, isReadRetryRequirementsMet(retryReadsSetting, operationContext), operationContext);
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
+                new SpecRetryPolicy.IndividualPolicies(retryReadsSetting).includeRead(operationContext),
+                operationContext);
         binding.retain();
         AsyncCallbackSupplier<T> asyncRead = decorateWithRetriesAsync(retryControl, operationContext,
                 (AsyncCallbackSupplier<T>) funcCallback ->
@@ -263,7 +261,9 @@ final class AsyncOperationHelper {
         beginAsync().<R>thenSupply(c -> {
             binding.retain();
             MutableValue<BsonDocument> command = new MutableValue<>();
-            RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(EnumSet.of(WRITE), effectiveRetryWritesSetting, effectiveRetryWritesSetting, operationContext);
+            RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
+                    new SpecRetryPolicy.IndividualPolicies(effectiveRetryWritesSetting).includeWrite(),
+                    operationContext);
             AsyncCallbackSupplier<R> retryingWrite = decorateWithRetriesAsync(retryControl, operationContext, supplierCallback -> {
                 beginAsync().<R>thenSupply(withSourceAndConnectionCallback -> {
                     boolean firstAttempt = retryControl.isFirstAttempt();

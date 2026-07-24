@@ -30,6 +30,7 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.observability.micrometer.TracingManager;
+import com.mongodb.internal.operation.OperationHelper;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
@@ -41,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.mongodb.MongoException.SYSTEM_OVERLOADED_ERROR_LABEL;
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -265,6 +267,7 @@ public class OperationContext {
         }
 
         public void onAttemptFailure(final Throwable attemptFailedResult) {
+            assertFalse(attemptFailedResult instanceof OperationHelper.ResourceSupplierInternalException);
             if (candidate == null || attemptFailedResult instanceof MongoConnectionPoolClearedException) {
                 candidate = null;
                 return;

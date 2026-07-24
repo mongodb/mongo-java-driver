@@ -35,11 +35,9 @@ import org.bson.BsonDocument;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
-import static com.mongodb.internal.operation.SpecRetryPolicy.ExplicitMaxRetries.RETRIES_LIMITED_BY_DESCRIPTORS;
+import static com.mongodb.internal.operation.SpecRetryPolicy.ExplicitMaxRetries.RETRIES_LIMITED_BY_INDIVIDUAL_POLICIES;
 import static com.mongodb.internal.operation.SpecRetryPolicy.ExplicitMaxRetries.NO_RETRIES_LIMIT;
-import static com.mongodb.internal.operation.SpecRetryPolicy.ExplicitMaxRetries.NO_RETRIES;
 import static java.util.Arrays.asList;
 
 @SuppressWarnings("overloads")
@@ -71,22 +69,16 @@ public final class CommandOperationHelper {
 
     /* Read Binding Helpers */
 
-    /**
-     * See {@link SpecRetryPolicy#SpecRetryPolicy(Set, boolean, boolean, ExplicitMaxRetries, OperationContext.ServerDeprioritization)}.
-     */
     static RetryControl<SpecRetryPolicy> createSpecRetryControl(
-            final Set<SpecRetryPolicy.Descriptor> retryPolicyDescriptors,
-            final boolean effectiveRetrySetting,
-            final boolean retryRequirementsMaybeMet,
+            final SpecRetryPolicy.IndividualPolicies policies,
             final OperationContext operationContext) {
-        ExplicitMaxRetries explicitMaxRetries;
-        if (effectiveRetrySetting && retryRequirementsMaybeMet) {
-            explicitMaxRetries = operationContext.getTimeoutContext().hasTimeoutMS() ? NO_RETRIES_LIMIT : RETRIES_LIMITED_BY_DESCRIPTORS;
-        } else {
-            explicitMaxRetries = NO_RETRIES;
-        }
+        ExplicitMaxRetries explicitMaxRetries = operationContext.getTimeoutContext().hasTimeoutMS()
+                ? NO_RETRIES_LIMIT
+                : RETRIES_LIMITED_BY_INDIVIDUAL_POLICIES;
         return new RetryControl<>(new SpecRetryPolicy(
-                retryPolicyDescriptors, effectiveRetrySetting, retryRequirementsMaybeMet, explicitMaxRetries, operationContext.getServerDeprioritization()));
+                policies,
+                explicitMaxRetries,
+                operationContext.getServerDeprioritization()));
     }
 
     private static final List<Integer> RETRYABLE_ERROR_CODES = asList(6, 7, 89, 91, 134, 189, 262, 9001, 13436, 13435, 11602, 11600, 10107);

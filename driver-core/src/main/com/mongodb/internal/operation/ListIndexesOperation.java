@@ -33,7 +33,6 @@ import org.bson.BsonValue;
 import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 
-import java.util.EnumSet;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -52,9 +51,7 @@ import static com.mongodb.internal.operation.CursorHelper.getCursorDocumentFromB
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.applyTimeoutModeToOperationContext;
-import static com.mongodb.internal.operation.OperationHelper.isReadRetryRequirementsMet;
 import static com.mongodb.internal.operation.SingleBatchCursor.createEmptySingleBatchCursor;
-import static com.mongodb.internal.operation.SpecRetryPolicy.Descriptor.READ;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.createReadCommandAndExecute;
 import static com.mongodb.internal.operation.SyncOperationHelper.cursorDocumentToBatchCursor;
@@ -134,7 +131,9 @@ public class ListIndexesOperation<T> implements ReadOperationCursor<T> {
     public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
         OperationContext listIndexesOperationContext = applyTimeoutModeToOperationContext(timeoutMode, operationContext);
 
-        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(EnumSet.of(READ), retryReads, isReadRetryRequirementsMet(retryReads, listIndexesOperationContext), listIndexesOperationContext);
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
+                new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(listIndexesOperationContext),
+                listIndexesOperationContext);
         Supplier<BatchCursor<T>> read = decorateWithRetries(retryControl, listIndexesOperationContext, () ->
             withSourceAndConnection(binding::getReadConnectionSource, false, listIndexesOperationContext, (source, connection, operationContextWithMinRTT) -> {
                 try {
@@ -153,7 +152,9 @@ public class ListIndexesOperation<T> implements ReadOperationCursor<T> {
     public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         OperationContext listIndexesOperationContext = applyTimeoutModeToOperationContext(timeoutMode, operationContext);
 
-        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(EnumSet.of(READ), retryReads, isReadRetryRequirementsMet(retryReads, listIndexesOperationContext), listIndexesOperationContext);
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
+                new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(listIndexesOperationContext),
+                listIndexesOperationContext);
         binding.retain();
         AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = decorateWithRetriesAsync(
                 retryControl, listIndexesOperationContext, (AsyncCallbackSupplier<AsyncBatchCursor<T>>) funcCallback ->
