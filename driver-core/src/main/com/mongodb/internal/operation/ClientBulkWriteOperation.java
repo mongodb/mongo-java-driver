@@ -205,7 +205,6 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final OperationContext operationContext,
             final SingleResultCallback<ClientBulkWriteResult> callback) {
         beginAsync().<ClientBulkWriteResult>thenSupply(c -> {
-            binding.retain();
             WriteConcern effectiveWriteConcern = validateAndGetEffectiveWriteConcern(operationContext.getSessionContext());
             ResultAccumulator resultAccumulator = new ResultAccumulator();
             MutableValue<MongoException> transformedTopLevelError = new MutableValue<>();
@@ -218,7 +217,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             }).<ClientBulkWriteResult>thenApply((ignored, buildResultCallback) -> {
                 buildResultCallback.complete(resultAccumulator.build(transformedTopLevelError.getNullable(), effectiveWriteConcern));
             }).finish(c);
-        }).thenAlwaysRunAndFinish(binding::release, callback);
+        }).finish(callback);
     }
 
     /**
