@@ -83,7 +83,7 @@ public final class BulkWriteBatch {
     private final boolean ordered;
     private final WriteConcern writeConcern;
     private final Boolean bypassDocumentValidation;
-    private final boolean retryWrites;
+    private final boolean writeRetryRequirementsMet;
     private final BulkWriteBatchCombiner bulkWriteBatchCombiner;
     private final IndexMap indexMap;
     private final WriteRequest.Type batchType;
@@ -97,11 +97,11 @@ public final class BulkWriteBatch {
     static BulkWriteBatch createBulkWriteBatch(final MongoNamespace namespace,
                                                final ConnectionDescription connectionDescription,
                                                       final boolean ordered, final WriteConcern writeConcern,
-                                                      final Boolean bypassDocumentValidation, final boolean retryWrites,
+                                                      final Boolean bypassDocumentValidation, final boolean retryWritesSetting,
                                                       final List<? extends WriteRequest> writeRequests,
                                                       final OperationContext operationContext,
                                                       @Nullable final BsonValue comment, @Nullable final BsonDocument variables) {
-        boolean nonCommandWriteRetryRequirementsMet = isNonCommandWriteRetryRequirementsMet(retryWrites, writeConcern, connectionDescription, operationContext.getSessionContext());
+        boolean nonCommandWriteRetryRequirementsMet = isNonCommandWriteRetryRequirementsMet(retryWritesSetting, writeConcern, connectionDescription, operationContext.getSessionContext());
         List<WriteRequestWithIndex> writeRequestsWithIndex = new ArrayList<>();
         boolean commandWriteRetryRequirementsMet = true;
         for (int i = 0; i < writeRequests.size(); i++) {
@@ -119,7 +119,7 @@ public final class BulkWriteBatch {
 
     private BulkWriteBatch(final MongoNamespace namespace, final ConnectionDescription connectionDescription,
                            final boolean ordered, final WriteConcern writeConcern, @Nullable final Boolean bypassDocumentValidation,
-                           final boolean retryWrites, final BulkWriteBatchCombiner bulkWriteBatchCombiner,
+                           final boolean writeRetryRequirementsMet, final BulkWriteBatchCombiner bulkWriteBatchCombiner,
                            final List<WriteRequestWithIndex> writeRequestsWithIndices, final OperationContext operationContext,
                            @Nullable final BsonValue comment, @Nullable final BsonDocument variables) {
         this.namespace = namespace;
@@ -129,7 +129,7 @@ public final class BulkWriteBatch {
         this.bypassDocumentValidation = bypassDocumentValidation;
         this.bulkWriteBatchCombiner = bulkWriteBatchCombiner;
         this.batchType = writeRequestsWithIndices.isEmpty() ? INSERT : writeRequestsWithIndices.get(0).getType();
-        this.retryWrites = retryWrites;
+        this.writeRetryRequirementsMet = writeRetryRequirementsMet;
 
         List<WriteRequestWithIndex> payloadItems = new ArrayList<>();
         List<WriteRequestWithIndex> unprocessedItems = new ArrayList<>();
@@ -170,7 +170,7 @@ public final class BulkWriteBatch {
             }
             putIfNotNull(command, "comment", comment);
             putIfNotNull(command, "let", variables);
-            if (retryWrites) {
+            if (writeRetryRequirementsMet) {
                 command.put("txnNumber", new BsonInt64(sessionContext.advanceTransactionNumber()));
             }
         }
@@ -178,7 +178,7 @@ public final class BulkWriteBatch {
 
     private BulkWriteBatch(final MongoNamespace namespace, final ConnectionDescription connectionDescription,
                            final boolean ordered, final WriteConcern writeConcern, final Boolean bypassDocumentValidation,
-                           final boolean retryWrites, final BulkWriteBatchCombiner bulkWriteBatchCombiner, final IndexMap indexMap,
+                           final boolean writeRetryRequirementsMet, final BulkWriteBatchCombiner bulkWriteBatchCombiner, final IndexMap indexMap,
                            final WriteRequest.Type batchType, final BsonDocument command, final SplittablePayload payload,
                            final List<WriteRequestWithIndex> unprocessed, final OperationContext operationContext,
                            @Nullable final BsonValue comment, @Nullable final BsonDocument variables) {
@@ -192,11 +192,11 @@ public final class BulkWriteBatch {
         this.batchType = batchType;
         this.payload = payload;
         this.unprocessed = unprocessed;
-        this.retryWrites = retryWrites;
+        this.writeRetryRequirementsMet = writeRetryRequirementsMet;
         this.operationContext = operationContext;
         this.comment = comment;
         this.variables = variables;
-        if (retryWrites) {
+        if (writeRetryRequirementsMet) {
             command.put("txnNumber", new BsonInt64(operationContext.getSessionContext().advanceTransactionNumber()));
         }
         this.command = command;
@@ -214,7 +214,7 @@ public final class BulkWriteBatch {
     }
 
     boolean isWriteRetryRequirementsMet() {
-        return retryWrites;
+        return writeRetryRequirementsMet;
     }
 
     BsonDocument getCommand() {
@@ -260,11 +260,11 @@ public final class BulkWriteBatch {
             }
 
 
-            return new BulkWriteBatch(namespace, connectionDescription, ordered, writeConcern, bypassDocumentValidation, retryWrites,
+            return new BulkWriteBatch(namespace, connectionDescription, ordered, writeConcern, bypassDocumentValidation, writeRetryRequirementsMet,
                     bulkWriteBatchCombiner, nextIndexMap, batchType, command, payload.getNextSplit(), unprocessed, operationContext,
                     comment, variables);
         } else {
-            return new BulkWriteBatch(namespace, connectionDescription, ordered, writeConcern, bypassDocumentValidation, retryWrites,
+            return new BulkWriteBatch(namespace, connectionDescription, ordered, writeConcern, bypassDocumentValidation, writeRetryRequirementsMet,
                     bulkWriteBatchCombiner, unprocessed, operationContext, comment, variables);
         }
     }
