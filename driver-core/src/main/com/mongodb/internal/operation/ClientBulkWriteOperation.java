@@ -292,13 +292,12 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 // and `ClientSession`, `TransactionContext` are aware of that.
                 () -> withSourceAndConnection(binding::getWriteConnectionSource, true, operationContext,
                         (connectionSource, connection, operationContextWithMinRtt) -> {
-                            SpecRetryPolicy retryPolicy = retryControl.getPolicy().onCommand(() -> BULK_WRITE_COMMAND_NAME);
+                            retryControl.getPolicy().onCommand(() -> BULK_WRITE_COMMAND_NAME);
                             ConnectionDescription connectionDescription = connection.getDescription();
                             retryControl.breakAndThrowIfRetryAnd(() -> !isServerWriteRetryRequirementsMet(connectionDescription));
                             resultAccumulator.onNewServerAddress(connectionDescription.getServerAddress());
                             ClientBulkWriteCommand bulkWriteCommand = createBulkWriteCommand(
-                                    retryControl, connectionDescription, effectiveWriteConcern, sessionContext, unexecutedModels, batchEncoder,
-                                    () -> retryPolicy.onWriteRetryRequirements(true, connectionDescription));
+                                    retryControl, connectionDescription, effectiveWriteConcern, sessionContext, unexecutedModels, batchEncoder);
                             return executeBulkWriteCommandAndExhaustOkResponse(
                                     retryControl, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern, operationContextWithMinRtt);
                         })
@@ -348,13 +347,12 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                     supplierCallback -> withAsyncSourceAndConnection(binding::getWriteConnectionSource, true, operationContext, supplierCallback,
                             (connectionSource, connection, operationContextWithMinRtt, functionCallback) -> {
                                 beginAsync().<ExhaustiveClientBulkWriteCommandOkResponse>thenSupply(executeAndExhaustCallback -> {
-                                    SpecRetryPolicy retryPolicy = retryControl.getPolicy().onCommand(() -> BULK_WRITE_COMMAND_NAME);
+                                    retryControl.getPolicy().onCommand(() -> BULK_WRITE_COMMAND_NAME);
                                     ConnectionDescription connectionDescription = connection.getDescription();
                                     retryControl.breakAndThrowIfRetryAnd(() -> !isServerWriteRetryRequirementsMet(connectionDescription));
                                     resultAccumulator.onNewServerAddress(connectionDescription.getServerAddress());
                                     ClientBulkWriteCommand bulkWriteCommand = createBulkWriteCommand(
-                                            retryControl, connectionDescription, effectiveWriteConcern, sessionContext, unexecutedModels, batchEncoder,
-                                            () -> retryPolicy.onWriteRetryRequirements(true, connectionDescription));
+                                            retryControl, connectionDescription, effectiveWriteConcern, sessionContext, unexecutedModels, batchEncoder);
                                     executeBulkWriteCommandAndExhaustOkResponseAsync(
                                             retryControl, connectionSource, connection, bulkWriteCommand, effectiveWriteConcern, operationContextWithMinRtt, executeAndExhaustCallback);
                                 }).finish(functionCallback);
@@ -532,8 +530,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final WriteConcern effectiveWriteConcern,
             final SessionContext sessionContext,
             final List<? extends ClientNamespacedWriteModel> unexecutedModels,
-            final BatchEncoder batchEncoder,
-            final Runnable onWriteRetryRequirementsMet) {
+            final BatchEncoder batchEncoder) {
         BsonDocument commandDocument = new BsonDocument(BULK_WRITE_COMMAND_NAME, new BsonInt32(1))
                 .append("errorsOnly", BsonBoolean.valueOf(!options.isVerboseResults()))
                 .append("ordered", BsonBoolean.valueOf(options.isOrdered()));
@@ -553,7 +550,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                         batchEncoder,
                         options,
                         () -> {
-                            onWriteRetryRequirementsMet.run();
+                            retryControl.getPolicy().onWriteRetryRequirements(true, connectionDescription);
                             return retryControl.isFirstAttempt()
                                     ? sessionContext.advanceTransactionNumber()
                                     : sessionContext.getTransactionNumber();
