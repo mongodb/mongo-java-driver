@@ -926,7 +926,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
              * <a href="https://www.mongodb.com/docs/manual/reference/error-codes/#mongodb-error-391">{@code ReauthenticationRequired}</a>
              * error.
              */
-            private final MemoizingLongSupplier doIfRetryRequirementsMetAndAdvanceGetTxnNumber;
+            private final MemoizingLongSupplier markRetryRequirementsMetAndAdvanceGetTxnNumber;
 
             @VisibleForTesting(otherwise = PACKAGE)
             public OpsAndNsInfo(
@@ -934,13 +934,13 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                     final List<? extends ClientNamespacedWriteModel> models,
                     final BatchEncoder batchEncoder,
                     final ConcreteClientBulkWriteOptions options,
-                    final LongSupplier doIfRetryRequirementsMetAndAdvanceGetTxnNumber) {
+                    final LongSupplier markRetryRequirementsMetAndAdvanceGetTxnNumber) {
                 super("ops", new OpsFieldNameValidator(models), "nsInfo", NoOpFieldNameValidator.INSTANCE);
                 this.nonCommandWriteRetryRequirementsMet = nonCommandWriteRetryRequirementsMet;
                 this.models = models;
                 this.batchEncoder = batchEncoder;
                 this.options = options;
-                this.doIfRetryRequirementsMetAndAdvanceGetTxnNumber = new MemoizingLongSupplier(doIfRetryRequirementsMetAndAdvanceGetTxnNumber);
+                this.markRetryRequirementsMetAndAdvanceGetTxnNumber = new MemoizingLongSupplier(markRetryRequirementsMetAndAdvanceGetTxnNumber);
             }
 
             @Override
@@ -983,7 +983,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                         // we will execute more batches, so we must request a response to maintain the order of individual write operations
                         options.isOrdered() && maxModelIndexInBatch < models.size() - 1,
                         writeRetryRequirementsMet
-                                ? singletonList(new BsonElement("txnNumber", new BsonInt64(doIfRetryRequirementsMetAndAdvanceGetTxnNumber.get())))
+                                ? singletonList(new BsonElement("txnNumber", new BsonInt64(markRetryRequirementsMetAndAdvanceGetTxnNumber.get())))
                                 : emptyList());
             }
 
