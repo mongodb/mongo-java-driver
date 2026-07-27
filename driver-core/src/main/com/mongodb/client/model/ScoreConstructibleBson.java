@@ -22,6 +22,7 @@ import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 final class ScoreConstructibleBson extends AbstractConstructibleBson<ScoreConstructibleBson> implements ScoreOptions {
@@ -46,6 +47,7 @@ final class ScoreConstructibleBson extends AbstractConstructibleBson<ScoreConstr
 
     @Override
     public ScoreOptions weight(final double weight) {
+        isTrueArgument("weight must be in the range [0, 1]", weight >= 0 && weight <= 1);
         return newAppended("weight", weight);
     }
 

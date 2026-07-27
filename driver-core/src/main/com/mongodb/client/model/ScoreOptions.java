@@ -51,6 +51,8 @@ public interface ScoreOptions extends Bson {
      *
      * @param weight the weight
      * @return a new {@link ScoreOptions} with the provided option set
+     * @throws IllegalArgumentException if the weight is not in the range [0, 1]
+     * @mongodb.driver.manual reference/operator/aggregation/score/ $score
      * @since 5.10
      */
     ScoreOptions weight(double weight);

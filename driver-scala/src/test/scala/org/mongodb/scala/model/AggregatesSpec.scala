@@ -39,7 +39,6 @@ import org.mongodb.scala.model.search.SearchFacet.stringFacet
 import org.mongodb.scala.model.search.SearchHighlight.paths
 import com.mongodb.client.model.{ Aggregates => JAggregates }
 import com.mongodb.client.model.RerankQuery
-import com.mongodb.client.model.ScoreNormalization
 import com.mongodb.client.model.ScoreOptions.scoreOptions
 import com.mongodb.client.model.search.VectorSearchQuery
 import org.bson.BinaryVector
@@ -939,6 +938,21 @@ class AggregatesSpec extends BaseSpec {
       }"""
       )
     )
+  }
+
+  it should "render $score with each normalization type" in {
+    Seq(
+      (ScoreNormalization.NONE, "none"),
+      (ScoreNormalization.SIGMOID, "sigmoid"),
+      (ScoreNormalization.MIN_MAX_SCALER, "minMaxScaler")
+    ).foreach {
+      case (normalization, expected) =>
+        toBson(
+          Aggregates.score("$rating", scoreOptions().normalization(normalization))
+        ) should equal(
+          Document(s"""{ "$$score": { "score": "$$rating", "normalization": "$expected" } }""")
+        )
+    }
   }
 
   it should "render $unset" in {

@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.math.RoundingMode;
@@ -59,6 +60,7 @@ import static java.util.Arrays.asList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class AggregatesTest extends OperationTest {
@@ -480,11 +482,25 @@ public class AggregatesTest extends OperationTest {
                         .scoreDetails(true)));
     }
 
-    @Test
-    public void testScoreWithMinMaxScalerNormalization() {
+    @ParameterizedTest
+    @EnumSource(ScoreNormalization.class)
+    public void testScoreWithEachNormalization(final ScoreNormalization normalization) {
         assertPipeline(
-                "{'$score': {'score': '$rating', 'normalization': 'minMaxScaler'}}",
-                score("$rating", scoreOptions().normalization(ScoreNormalization.MIN_MAX_SCALER)));
+                "{'$score': {'score': '$rating', 'normalization': '" + normalization.getValue() + "'}}",
+                score("$rating", scoreOptions().normalization(normalization)));
+    }
+
+    @Test
+    public void testScoreWeightValidation() {
+        assertThrows(IllegalArgumentException.class, () -> scoreOptions().weight(-0.1));
+        assertThrows(IllegalArgumentException.class, () -> scoreOptions().weight(1.1));
+        assertThrows(IllegalArgumentException.class, () -> scoreOptions().weight(Double.NaN));
+        assertPipeline(
+                "{'$score': {'score': '$rating', 'weight': 0.0}}",
+                score("$rating", scoreOptions().weight(0)));
+        assertPipeline(
+                "{'$score': {'score': '$rating', 'weight': 1.0}}",
+                score("$rating", scoreOptions().weight(1)));
     }
 
     @Test
@@ -505,5 +521,20 @@ public class AggregatesTest extends OperationTest {
             double scoreValue = result.getNumber("score").doubleValue();
             Assertions.assertTrue(scoreValue > 0 && scoreValue < 1);
         });
+    }
+
+    @ParameterizedTest
+    @EnumSource(ScoreNormalization.class)
+    public void testScoreOnServerWithEachNormalization(final ScoreNormalization normalization) {
+        assumeTrue(serverVersionAtLeast(8, 2));
+        getCollectionHelper().insertDocuments("[{_id: 1, rating: 2}, {_id: 2, rating: 4}]");
+
+        List<Bson> pipeline = asList(
+                score("$rating", scoreOptions().normalization(normalization)),
+                Aggregates.project(Projections.computed("score", new Document("$meta", "score"))));
+
+        List<BsonDocument> results = getCollectionHelper().aggregate(pipeline);
+        assertEquals(2, results.size());
+        results.forEach(result -> Assertions.assertTrue(result.isNumber("score")));
     }
 }
