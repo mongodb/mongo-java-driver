@@ -39,6 +39,8 @@ import org.mongodb.scala.model.search.SearchFacet.stringFacet
 import org.mongodb.scala.model.search.SearchHighlight.paths
 import com.mongodb.client.model.{ Aggregates => JAggregates }
 import com.mongodb.client.model.RerankQuery
+import com.mongodb.client.model.ScoreNormalization
+import com.mongodb.client.model.ScoreOptions.scoreOptions
 import com.mongodb.client.model.search.VectorSearchQuery
 import org.bson.BinaryVector
 import org.mongodb.scala.model.search.SearchCollector
@@ -902,6 +904,37 @@ class AggregatesSpec extends BaseSpec {
             "path": ["content", "title"],
             "numDocsToRerank": 50,
             "model": "rerank-2.5-lite"
+        }
+      }"""
+      )
+    )
+  }
+
+  it should "render $score" in {
+    toBson(
+      Aggregates.score(Document("""{$multiply: ["$rating", 2]}"""))
+    ) should equal(
+      Document("""{ "$score": { "score": {"$multiply": ["$rating", 2]} } }""")
+    )
+  }
+
+  it should "render $score with options" in {
+    toBson(
+      Aggregates.score(
+        "$rating",
+        scoreOptions()
+          .normalization(ScoreNormalization.SIGMOID)
+          .weight(0.5)
+          .scoreDetails(true)
+      )
+    ) should equal(
+      Document(
+        """{
+        "$score": {
+            "score": "$rating",
+            "normalization": "sigmoid",
+            "weight": 0.5,
+            "scoreDetails": true
         }
       }"""
       )

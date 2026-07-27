@@ -43,10 +43,12 @@ import static com.mongodb.client.model.Accumulators.percentile;
 import static com.mongodb.client.model.Aggregates.geoNear;
 import static com.mongodb.client.model.Aggregates.group;
 import static com.mongodb.client.model.Aggregates.rerank;
+import static com.mongodb.client.model.Aggregates.score;
 import static com.mongodb.client.model.Aggregates.unset;
 import static com.mongodb.client.model.Aggregates.vectorSearch;
 import static com.mongodb.client.model.RerankQuery.rerankQuery;
 import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
+import static com.mongodb.client.model.ScoreOptions.scoreOptions;
 import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Windows.Bound.UNBOUNDED;
 import static com.mongodb.client.model.Windows.documents;
@@ -452,5 +454,56 @@ public class AggregatesTest extends OperationTest {
                         100,
                         "rerank-2"
                 ));
+    }
+
+    @Test
+    public void testScoreWithExpression() {
+        assertPipeline(
+                "{'$score': {'score': {'$multiply': ['$rating', 2]}}}",
+                score(new Document("$multiply", asList("$rating", 2))));
+    }
+
+    @Test
+    public void testScoreWithAllOptions() {
+        assertPipeline(
+                "{"
+                        + "  '$score': {"
+                        + "    'score': '$rating',"
+                        + "    'normalization': 'sigmoid',"
+                        + "    'weight': 0.5,"
+                        + "    'scoreDetails': true"
+                        + "  }"
+                        + "}",
+                score("$rating", scoreOptions()
+                        .normalization(ScoreNormalization.SIGMOID)
+                        .weight(0.5)
+                        .scoreDetails(true)));
+    }
+
+    @Test
+    public void testScoreWithMinMaxScalerNormalization() {
+        assertPipeline(
+                "{'$score': {'score': '$rating', 'normalization': 'minMaxScaler'}}",
+                score("$rating", scoreOptions().normalization(ScoreNormalization.MIN_MAX_SCALER)));
+    }
+
+    @Test
+    public void testScore() {
+        assumeTrue(serverVersionAtLeast(8, 2));
+        getCollectionHelper().insertDocuments("[{_id: 1, rating: 2}, {_id: 2, rating: 4}]");
+
+        List<Bson> pipeline = asList(
+                score(new Document("$multiply", asList("$rating", 2)),
+                        scoreOptions().normalization(ScoreNormalization.SIGMOID)),
+                Aggregates.sort(ascending("_id")),
+                Aggregates.project(Projections.computed("score", new Document("$meta", "score"))));
+
+        List<BsonDocument> results = getCollectionHelper().aggregate(pipeline);
+        assertEquals(2, results.size());
+        // sigmoid normalization maps each score into the range (0, 1)
+        results.forEach(result -> {
+            double scoreValue = result.getNumber("score").doubleValue();
+            Assertions.assertTrue(scoreValue > 0 && scoreValue < 1);
+        });
     }
 }
