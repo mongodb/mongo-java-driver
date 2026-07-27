@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import static com.mongodb.ClusterFixture.WINDOWS_CSOT_TIMEOUT_MULTIPLIER;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.isWindows;
@@ -200,6 +201,7 @@ public final class UnifiedTestModifications {
                         "timeoutMS behaves correctly for non-tailable cursors",
                         "timeoutMS is refreshed for getMore if timeoutMode is iteration - success");
         def.retry("Unified CSOT tests do not account for RTT which varies in TLS vs non-TLS runs")
+                .whenFailureContains("timeout")
                 .test("client-side-operations-timeout",
                         "timeoutMS behaves correctly for tailable non-awaitData cursors",
                         "timeoutMS is refreshed for getMore - success");
@@ -213,7 +215,8 @@ public final class UnifiedTestModifications {
         def.transform("JAVA-6057: whole-operation CSOT timeouts (cursor-lifetime, bulkWrite) are too tight for the "
                         + "slower Windows TLS hosts, where the budget is consumed by connection establishment before "
                         + "the command under test is sent",
-                (entitiesArray, definition) -> scaleForWindows(entitiesArray, definition, 10))
+                (entitiesArray, definition) ->
+                        scaleForWindows(entitiesArray, definition, WINDOWS_CSOT_TIMEOUT_MULTIPLIER))
                 .when(ClusterFixture::isWindows)
                 .test("client-side-operations-timeout",
                         "timeoutMS behaves correctly for non-tailable cursors",
@@ -249,11 +252,13 @@ public final class UnifiedTestModifications {
                         "timeoutMS is refreshed for getMore - success");
 
         // Retryable tests use client timeoutMS=100 + minPoolSize=1; on Windows the background handshake exceeds 100ms
-        // so the pool never populates ("Error waiting for awaitMinPoolSizeMS"). Scale ×10 (whole-op block ordering kept).
+        // so the pool never populates ("Error waiting for awaitMinPoolSizeMS"). Scale by
+        // WINDOWS_CSOT_TIMEOUT_MULTIPLIER (whole-op block ordering kept).
         def.transform("JAVA-6057: retryable CSOT tests cannot populate minPoolSize under the tight client-level "
                         + "timeoutMS on the slower Windows TLS hosts, where background connection establishment "
                         + "exceeds the timeout",
-                (entitiesArray, definition) -> scaleForWindows(entitiesArray, definition, 10))
+                (entitiesArray, definition) ->
+                        scaleForWindows(entitiesArray, definition, WINDOWS_CSOT_TIMEOUT_MULTIPLIER))
                 .when(ClusterFixture::isWindows)
                 .file("client-side-operations-timeout", "timeoutMS behaves correctly for retryable operations");
 
@@ -682,7 +687,7 @@ public final class UnifiedTestModifications {
     }
 
     /**
-     * Unified analogue of {@link ClusterFixture#scaleForWindows(long)}: multiplies a test's CSOT knobs by
+     * Unified analogue of {@link ClusterFixture#scaleForWindows(int)}: multiplies a test's CSOT knobs by
      * {@code factor} — {@code client.uriOptions.timeoutMS} and the operations' {@code arguments.timeoutMS} /
      * {@code arguments.failPoint.data.blockTimeMS} — preserving their ordering so a test that expects a specific
      * command to time out still does. Use for timeout-expecting tests; success-only tests use {@link #raiseIntToFloor}.

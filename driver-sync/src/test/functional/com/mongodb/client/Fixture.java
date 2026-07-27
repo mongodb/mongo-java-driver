@@ -19,8 +19,11 @@ package com.mongodb.client;
 import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ServerDescription;
+import org.bson.diagnostics.Logger;
+import org.bson.diagnostics.Loggers;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -34,6 +37,7 @@ import static java.util.Objects.requireNonNull;
  * Helper class for the acceptance tests.
  */
 public final class Fixture {
+    private static final Logger LOGGER = Loggers.getLogger("Fixture");
     private static final long MIN_HEARTBEAT_FREQUENCY_MS = 50L;
 
     private static MongoClient mongoClient;
@@ -56,8 +60,10 @@ public final class Fixture {
                 if (defaultDatabase != null) {
                     try {
                         defaultDatabase.drop();
-                    } catch (Exception e) {
-                        // ignore
+                    } catch (MongoException e) {
+                        // The server may already be shutting down, or the client may have been closed by another
+                        // hook; failing to drop the test database must not fail the build.
+                        LOGGER.info("Ignoring failure to drop the default database during shutdown: " + e.getMessage());
                     }
                 }
                 mongoClient.close();
