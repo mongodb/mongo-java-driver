@@ -67,17 +67,9 @@ public final class MongoCryptHelper {
         if (operationTimeout == null) {
             return;
         }
-        operationTimeout.run(TimeUnit.MICROSECONDS,
-                // infinite timeout: no CSOT budget to enforce; libmongocrypt's retry count is the only limit
-                () -> { },
-                remainingMicros -> {
-                    if (remainingMicros < backoffMicros) {
-                        throw TimeoutContext.createMongoTimeoutException(KMS_TIMEOUT_ERROR_MESSAGE);
-                    }
-                },
-                () -> {
-                    throw TimeoutContext.createMongoTimeoutException(KMS_TIMEOUT_ERROR_MESSAGE);
-                });
+        operationTimeout.shortenBy(backoffMicros, TimeUnit.MICROSECONDS).onExpired(() -> {
+            throw TimeoutContext.createMongoTimeoutException(KMS_TIMEOUT_ERROR_MESSAGE);
+        });
     }
 
     public static MongoCryptOptions createMongoCryptOptions(final ClientEncryptionSettings settings) {
