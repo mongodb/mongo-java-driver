@@ -1371,4 +1371,26 @@ class AggregatesSpecification extends Specification {
         ScoreNormalization.minMaxScaler().toBsonValue() == new BsonString('minMaxScaler')
         ScoreNormalization.of(new BsonString('sigmoid')).toBsonValue() == new BsonString('sigmoid')
     }
+
+    def 'should create FusionPipeline'() {
+        when:
+        def pipeline = FusionPipeline.of('p1', match(eq('x', 1)), limit(2))
+
+        then:
+        pipeline.name == 'p1'
+        pipeline.pipeline.size() == 2
+        pipeline == FusionPipeline.of('p1', [match(eq('x', 1)), limit(2)])
+
+        when:
+        FusionPipeline.of('', match(eq('x', 1)))
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        FusionPipeline.of('p1', [])
+
+        then:
+        thrown(IllegalArgumentException)
+    }
 }
