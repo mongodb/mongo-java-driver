@@ -102,6 +102,7 @@ import static com.mongodb.client.model.search.SearchPath.fieldPath
 import static com.mongodb.client.model.search.SearchPath.wildcardPath
 import static com.mongodb.client.model.search.VectorSearchOptions.approximateVectorSearchOptions
 import static com.mongodb.client.model.search.VectorSearchOptions.exactVectorSearchOptions
+import static com.mongodb.client.model.ScoreFusionOptions.scoreFusionOptions
 import static java.util.Arrays.asList
 import static org.bson.BsonDocument.parse
 
@@ -1392,5 +1393,21 @@ class AggregatesSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+    }
+
+    def 'should render ScoreFusionCombination and ScoreFusionOptions'() {
+        expect:
+        toBson(ScoreFusionCombination.weighted(new Document('p1', 0.3d).append('p2', 0.7d))) ==
+                parse('{weights: {p1: 0.3, p2: 0.7}}')
+        toBson(ScoreFusionCombination.weighted(new Document('p1', 0.3d)).avg()) ==
+                parse('{weights: {p1: 0.3}, method: "avg"}')
+        toBson(ScoreFusionCombination.expression(new Document('$sum', ['$$p1', '$$p2']))) ==
+                parse('{method: "expression", expression: {$sum: ["$$p1", "$$p2"]}}')
+        toBson(scoreFusionOptions()) == parse('{}')
+        toBson(scoreFusionOptions()
+                .combination(ScoreFusionCombination.expression(new Document('$sum', ['$$p1', '$$p2'])))
+                .scoreDetails(true)) ==
+                parse('{combination: {method: "expression", expression: {$sum: ["$$p1", "$$p2"]}}, scoreDetails: true}')
+        toBson(scoreFusionOptions().option('scoreDetails', true)) == parse('{scoreDetails: true}')
     }
 }
