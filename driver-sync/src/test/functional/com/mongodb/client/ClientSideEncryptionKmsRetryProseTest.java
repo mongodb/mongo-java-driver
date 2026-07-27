@@ -20,9 +20,10 @@ import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.client.vault.ClientEncryptions;
 
-public class ClientSideEncryptionKmsRetryProseTest extends AbstractClientSideEncryptionKmsRetryProseTest {
+class ClientSideEncryptionKmsRetryProseTest extends AbstractClientSideEncryptionKmsRetryProseTest {
+
     @Override
-    public ClientEncryption getClientEncryption(final ClientEncryptionSettings settings) {
+    protected ClientEncryption getClientEncryption(final ClientEncryptionSettings settings) {
         return ClientEncryptions.create(settings);
     }
 }

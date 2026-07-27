@@ -61,61 +61,50 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class MongoCryptTest {
     @Test
     public void testEncrypt() throws URISyntaxException, IOException {
-        MongoCrypt mongoCrypt = createMongoCrypt();
-        assertNotNull(mongoCrypt);
+        try (MongoCrypt mongoCrypt = createMongoCrypt();
+                MongoCryptContext encryptor = mongoCrypt.createEncryptionContext("test", getResourceAsDocument("command.json"))) {
+            assertEquals(State.NEED_MONGO_COLLINFO, encryptor.getState());
 
-        MongoCryptContext encryptor = mongoCrypt.createEncryptionContext("test", getResourceAsDocument("command.json"));
+            BsonDocument listCollectionsFilter = encryptor.getMongoOperation();
+            assertEquals(getResourceAsDocument("list-collections-filter.json"), listCollectionsFilter);
 
-        assertEquals(State.NEED_MONGO_COLLINFO, encryptor.getState());
+            encryptor.addMongoOperationResult(getResourceAsDocument("collection-info.json"));
+            encryptor.completeMongoOperation();
+            assertEquals(State.NEED_MONGO_MARKINGS, encryptor.getState());
 
-        BsonDocument listCollectionsFilter = encryptor.getMongoOperation();
-        assertEquals(getResourceAsDocument("list-collections-filter.json"), listCollectionsFilter);
+            BsonDocument jsonSchema = encryptor.getMongoOperation();
+            assertEquals(getResourceAsDocument("mongocryptd-command.json"), jsonSchema);
 
-        encryptor.addMongoOperationResult(getResourceAsDocument("collection-info.json"));
-        encryptor.completeMongoOperation();
-        assertEquals(State.NEED_MONGO_MARKINGS, encryptor.getState());
+            encryptor.addMongoOperationResult(getResourceAsDocument("mongocryptd-reply.json"));
+            encryptor.completeMongoOperation();
+            assertEquals(State.NEED_MONGO_KEYS, encryptor.getState());
 
-        BsonDocument jsonSchema = encryptor.getMongoOperation();
-        assertEquals(getResourceAsDocument("mongocryptd-command.json"), jsonSchema);
+            testKeyDecryptor(encryptor);
 
-        encryptor.addMongoOperationResult(getResourceAsDocument("mongocryptd-reply.json"));
-        encryptor.completeMongoOperation();
-        assertEquals(State.NEED_MONGO_KEYS, encryptor.getState());
+            assertEquals(State.READY, encryptor.getState());
 
-        testKeyDecryptor(encryptor);
-
-        assertEquals(State.READY, encryptor.getState());
-
-        RawBsonDocument encryptedDocument = encryptor.finish();
-        assertEquals(State.DONE, encryptor.getState());
-        assertEquals(getResourceAsDocument("encrypted-command.json"), encryptedDocument);
-
-        encryptor.close();
-
-        mongoCrypt.close();
+            RawBsonDocument encryptedDocument = encryptor.finish();
+            assertEquals(State.DONE, encryptor.getState());
+            assertEquals(getResourceAsDocument("encrypted-command.json"), encryptedDocument);
+        }
     }
 
 
     @Test
     public void testDecrypt() throws IOException, URISyntaxException {
-        MongoCrypt mongoCrypt = createMongoCrypt();
-        assertNotNull(mongoCrypt);
+        try (MongoCrypt mongoCrypt = createMongoCrypt();
+                MongoCryptContext decryptor =
+                        mongoCrypt.createDecryptionContext(getResourceAsDocument("encrypted-command-reply.json"))) {
+            assertEquals(State.NEED_MONGO_KEYS, decryptor.getState());
 
-        MongoCryptContext decryptor = mongoCrypt.createDecryptionContext(getResourceAsDocument("encrypted-command-reply.json"));
+            testKeyDecryptor(decryptor);
 
-        assertEquals(State.NEED_MONGO_KEYS, decryptor.getState());
+            assertEquals(State.READY, decryptor.getState());
 
-        testKeyDecryptor(decryptor);
-
-        assertEquals(State.READY, decryptor.getState());
-
-        RawBsonDocument decryptedDocument = decryptor.finish();
-        assertEquals(State.DONE, decryptor.getState());
-        assertEquals(getResourceAsDocument("command-reply.json"), decryptedDocument);
-
-        decryptor.close();
-
-        mongoCrypt.close();
+            RawBsonDocument decryptedDocument = decryptor.finish();
+            assertEquals(State.DONE, decryptor.getState());
+            assertEquals(getResourceAsDocument("command-reply.json"), decryptedDocument);
+        }
     }
 
     @Test
@@ -144,7 +133,6 @@ public class MongoCryptTest {
     @Test
     public void testMultipleCloseCalls() {
         MongoCrypt mongoCrypt = createMongoCrypt();
-        assertNotNull(mongoCrypt);
 
         mongoCrypt.close();
         mongoCrypt.close();
@@ -152,237 +140,218 @@ public class MongoCryptTest {
 
     @Test
     public void testDataKeyCreation() {
-        MongoCrypt mongoCrypt = createMongoCrypt();
-        assertNotNull(mongoCrypt);
-
         List<String> keyAltNames = Arrays.asList("first", "second");
-        MongoCryptContext dataKeyContext = mongoCrypt.createDataKeyContext("local",
-                MongoDataKeyOptions.builder().masterKey(new BsonDocument())
-                        .keyAltNames(keyAltNames)
-                        .build());
-        assertEquals(State.READY, dataKeyContext.getState());
+        try (MongoCrypt mongoCrypt = createMongoCrypt();
+                MongoCryptContext dataKeyContext = mongoCrypt.createDataKeyContext("local",
+                        MongoDataKeyOptions.builder().masterKey(new BsonDocument())
+                                .keyAltNames(keyAltNames)
+                                .build())) {
+            assertEquals(State.READY, dataKeyContext.getState());
 
-        RawBsonDocument dataKeyDocument = dataKeyContext.finish();
-        assertEquals(State.DONE, dataKeyContext.getState());
-        assertNotNull(dataKeyDocument);
+            RawBsonDocument dataKeyDocument = dataKeyContext.finish();
+            assertEquals(State.DONE, dataKeyContext.getState());
+            assertNotNull(dataKeyDocument);
 
-        List<String> actualKeyAltNames = dataKeyDocument.getArray("keyAltNames").stream()
-                .map(bsonValue -> bsonValue.asString().getValue())
-                .sorted()
-                .collect(Collectors.toList());
-        assertIterableEquals(keyAltNames, actualKeyAltNames);
-        dataKeyContext.close();
-        mongoCrypt.close();
+            List<String> actualKeyAltNames = dataKeyDocument.getArray("keyAltNames").stream()
+                    .map(bsonValue -> bsonValue.asString().getValue())
+                    .sorted()
+                    .collect(Collectors.toList());
+            assertIterableEquals(keyAltNames, actualKeyAltNames);
+        }
     }
 
     @Test
     public void testExplicitEncryptionDecryption() {
-        MongoCrypt mongoCrypt = createMongoCrypt();
-        assertNotNull(mongoCrypt);
+        try (MongoCrypt mongoCrypt = createMongoCrypt()) {
+            BsonDocument documentToEncrypt = new BsonDocument("v", new BsonString("hello"));
+            MongoExplicitEncryptOptions options = MongoExplicitEncryptOptions.builder()
+                    .keyId(new BsonBinary(BsonBinarySubType.UUID_STANDARD, Base64.getDecoder().decode("YWFhYWFhYWFhYWFhYWFhYQ==")))
+                    .algorithm("AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic")
+                    .build();
+            RawBsonDocument encryptedDocument;
+            try (MongoCryptContext encryptor = mongoCrypt.createExplicitEncryptionContext(documentToEncrypt, options)) {
+                assertEquals(State.NEED_MONGO_KEYS, encryptor.getState());
 
-        BsonDocument documentToEncrypt = new BsonDocument("v", new BsonString("hello"));
-        MongoExplicitEncryptOptions options = MongoExplicitEncryptOptions.builder()
-                .keyId(new BsonBinary(BsonBinarySubType.UUID_STANDARD, Base64.getDecoder().decode("YWFhYWFhYWFhYWFhYWFhYQ==")))
-                .algorithm("AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic")
-                .build();
-        MongoCryptContext encryptor = mongoCrypt.createExplicitEncryptionContext(documentToEncrypt, options);
-        assertEquals(State.NEED_MONGO_KEYS, encryptor.getState());
+                testKeyDecryptor(encryptor);
 
-        testKeyDecryptor(encryptor);
+                assertEquals(State.READY, encryptor.getState());
 
-        assertEquals(State.READY, encryptor.getState());
+                encryptedDocument = encryptor.finish();
+                assertEquals(State.DONE, encryptor.getState());
+                assertEquals(getResourceAsDocument("encrypted-value.json"), encryptedDocument);
+            }
 
-        RawBsonDocument encryptedDocument = encryptor.finish();
-        assertEquals(State.DONE, encryptor.getState());
-        assertEquals(getResourceAsDocument("encrypted-value.json"), encryptedDocument);
+            try (MongoCryptContext decryptor = mongoCrypt.createExplicitDecryptionContext(encryptedDocument)) {
+                assertEquals(State.READY, decryptor.getState());
 
-        MongoCryptContext decryptor = mongoCrypt.createExplicitDecryptionContext(encryptedDocument);
-
-        assertEquals(State.READY, decryptor.getState());
-
-        RawBsonDocument decryptedDocument = decryptor.finish();
-        assertEquals(State.DONE, decryptor.getState());
-        assertEquals(documentToEncrypt, decryptedDocument);
-
-        encryptor.close();
-
-        mongoCrypt.close();
+                RawBsonDocument decryptedDocument = decryptor.finish();
+                assertEquals(State.DONE, decryptor.getState());
+                assertEquals(documentToEncrypt, decryptedDocument);
+            }
+        }
     }
 
 
     @Test
     public void testExplicitExpressionEncryption() {
-        MongoCrypt mongoCrypt = createMongoCrypt();
-        assertNotNull(mongoCrypt);
+        try (MongoCrypt mongoCrypt = createMongoCrypt()) {
+            BsonDocument valueToEncrypt = getResourceAsDocument("fle2-find-range-explicit-v2/int32/value-to-encrypt.json");
+            BsonDocument rangeOptions = getResourceAsDocument("fle2-find-range-explicit-v2/int32/rangeopts.json");
+            BsonDocument expectedEncryptedPayload = getResourceAsDocument("fle2-find-range-explicit-v2/int32/encrypted-payload.json");
 
-        BsonDocument valueToEncrypt = getResourceAsDocument("fle2-find-range-explicit-v2/int32/value-to-encrypt.json");
-        BsonDocument rangeOptions = getResourceAsDocument("fle2-find-range-explicit-v2/int32/rangeopts.json");
-        BsonDocument expectedEncryptedPayload = getResourceAsDocument("fle2-find-range-explicit-v2/int32/encrypted-payload.json");
+            MongoExplicitEncryptOptions options = MongoExplicitEncryptOptions.builder()
+                    .keyId(new BsonBinary(BsonBinarySubType.UUID_STANDARD, Base64.getDecoder().decode("q83vqxI0mHYSNBI0VniQEg==")))
+                    .algorithm("Range")
+                    .queryType("range")
+                    .contentionFactor(4L)
+                    .rangeOptions(rangeOptions)
+                    .build();
+            try (MongoCryptContext encryptor = mongoCrypt.createEncryptExpressionContext(valueToEncrypt, options)) {
+                assertEquals(State.NEED_MONGO_KEYS, encryptor.getState());
 
-        MongoExplicitEncryptOptions options = MongoExplicitEncryptOptions.builder()
-                .keyId(new BsonBinary(BsonBinarySubType.UUID_STANDARD, Base64.getDecoder().decode("q83vqxI0mHYSNBI0VniQEg==")))
-                .algorithm("Range")
-                .queryType("range")
-                .contentionFactor(4L)
-                .rangeOptions(rangeOptions)
-                .build();
-        MongoCryptContext encryptor = mongoCrypt.createEncryptExpressionContext(valueToEncrypt, options);
-        assertEquals(State.NEED_MONGO_KEYS, encryptor.getState());
+                testKeyDecryptor(encryptor, "fle2-find-range-explicit-v2/int32/key-filter.json",
+                        "keys/ABCDEFAB123498761234123456789012-local-document.json");
 
-        testKeyDecryptor(encryptor, "fle2-find-range-explicit-v2/int32/key-filter.json", "keys/ABCDEFAB123498761234123456789012-local-document.json");
+                assertEquals(State.READY, encryptor.getState());
 
-        assertEquals(State.READY, encryptor.getState());
-
-        RawBsonDocument actualEncryptedPayload = encryptor.finish();
-        assertEquals(State.DONE, encryptor.getState());
-        assertEquals(expectedEncryptedPayload, actualEncryptedPayload);
-
-        encryptor.close();
-        mongoCrypt.close();
+                RawBsonDocument actualEncryptedPayload = encryptor.finish();
+                assertEquals(State.DONE, encryptor.getState());
+                assertEquals(expectedEncryptedPayload, actualEncryptedPayload);
+            }
+        }
     }
 
     @Test
     public void testRangePreviewQueryTypeIsNotSupported() {
-        MongoCrypt mongoCrypt = createMongoCrypt();
-        assertNotNull(mongoCrypt);
+        try (MongoCrypt mongoCrypt = createMongoCrypt()) {
+            BsonDocument valueToEncrypt = getResourceAsDocument("fle2-find-range-explicit-v2/int32/value-to-encrypt.json");
+            BsonDocument rangeOptions = getResourceAsDocument("fle2-find-range-explicit-v2/int32/rangeopts.json");
 
-        BsonDocument valueToEncrypt = getResourceAsDocument("fle2-find-range-explicit-v2/int32/value-to-encrypt.json");
-        BsonDocument rangeOptions = getResourceAsDocument("fle2-find-range-explicit-v2/int32/rangeopts.json");
+            MongoExplicitEncryptOptions options = MongoExplicitEncryptOptions.builder()
+                    .keyId(new BsonBinary(BsonBinarySubType.UUID_STANDARD, Base64.getDecoder().decode("q83vqxI0mHYSNBI0VniQEg==")))
+                    .algorithm("Range")
+                    .queryType("rangePreview")
+                    .contentionFactor(4L)
+                    .rangeOptions(rangeOptions)
+                    .build();
 
-        MongoExplicitEncryptOptions options = MongoExplicitEncryptOptions.builder()
-                .keyId(new BsonBinary(BsonBinarySubType.UUID_STANDARD, Base64.getDecoder().decode("q83vqxI0mHYSNBI0VniQEg==")))
-                .algorithm("Range")
-                .queryType("rangePreview")
-                .contentionFactor(4L)
-                .rangeOptions(rangeOptions)
-                .build();
-
-        MongoCryptException exp = assertThrows(MongoCryptException.class, () -> mongoCrypt.createEncryptExpressionContext(valueToEncrypt, options));
-        assertEquals("Query type 'rangePreview' is deprecated, please use 'range'", exp.getMessage());
-        mongoCrypt.close();
+            MongoCryptException exp = assertThrows(MongoCryptException.class,
+                    () -> mongoCrypt.createEncryptExpressionContext(valueToEncrypt, options));
+            assertEquals("Query type 'rangePreview' is deprecated, please use 'range'", exp.getMessage());
+        }
     }
 
     @Test
     public void testRangePreviewAlgorithmIsNotSupported() {
-        MongoCrypt mongoCrypt = createMongoCrypt();
-        assertNotNull(mongoCrypt);
+        try (MongoCrypt mongoCrypt = createMongoCrypt()) {
+            BsonDocument valueToEncrypt = getResourceAsDocument("fle2-find-range-explicit-v2/int32/value-to-encrypt.json");
+            BsonDocument rangeOptions = getResourceAsDocument("fle2-find-range-explicit-v2/int32/rangeopts.json");
 
-        BsonDocument valueToEncrypt = getResourceAsDocument("fle2-find-range-explicit-v2/int32/value-to-encrypt.json");
-        BsonDocument rangeOptions = getResourceAsDocument("fle2-find-range-explicit-v2/int32/rangeopts.json");
+            MongoExplicitEncryptOptions options = MongoExplicitEncryptOptions.builder()
+                    .keyId(new BsonBinary(BsonBinarySubType.UUID_STANDARD, Base64.getDecoder().decode("q83vqxI0mHYSNBI0VniQEg==")))
+                    .algorithm("RangePreview")
+                    .rangeOptions(rangeOptions)
+                    .build();
 
-        MongoExplicitEncryptOptions options = MongoExplicitEncryptOptions.builder()
-                .keyId(new BsonBinary(BsonBinarySubType.UUID_STANDARD, Base64.getDecoder().decode("q83vqxI0mHYSNBI0VniQEg==")))
-                .algorithm("RangePreview")
-                .rangeOptions(rangeOptions)
-                .build();
-
-        MongoCryptException exp = assertThrows(MongoCryptException.class, () -> mongoCrypt.createEncryptExpressionContext(valueToEncrypt, options));
-        assertEquals("Algorithm 'rangePreview' is deprecated, please use 'range'", exp.getMessage());
-        mongoCrypt.close();
+            MongoCryptException exp = assertThrows(MongoCryptException.class,
+                    () -> mongoCrypt.createEncryptExpressionContext(valueToEncrypt, options));
+            assertEquals("Algorithm 'rangePreview' is deprecated, please use 'range'", exp.getMessage());
+        }
     }
 
     @Test
     public void testExplicitEncryptionDecryptionKeyAltName() throws IOException, URISyntaxException {
-        MongoCrypt mongoCrypt = createMongoCrypt();
-        assertNotNull(mongoCrypt);
+        try (MongoCrypt mongoCrypt = createMongoCrypt()) {
+            BsonDocument documentToEncrypt = new BsonDocument("v", new BsonString("hello"));
+            MongoExplicitEncryptOptions options = MongoExplicitEncryptOptions.builder()
+                    .keyAltName("altKeyName")
+                    .algorithm("AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic")
+                    .build();
 
-        BsonDocument documentToEncrypt = new BsonDocument("v", new BsonString("hello"));
-        MongoExplicitEncryptOptions options = MongoExplicitEncryptOptions.builder()
-                .keyAltName("altKeyName")
-                .algorithm("AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic")
-                .build();
-        MongoCryptContext encryptor = mongoCrypt.createExplicitEncryptionContext(documentToEncrypt, options);
+            RawBsonDocument encryptedDocument;
+            try (MongoCryptContext encryptor = mongoCrypt.createExplicitEncryptionContext(documentToEncrypt, options)) {
+                assertEquals(State.NEED_MONGO_KEYS, encryptor.getState());
+                testKeyDecryptor(encryptor, "key-filter-keyAltName.json", "key-document.json");
 
-        assertEquals(State.NEED_MONGO_KEYS, encryptor.getState());
-        testKeyDecryptor(encryptor, "key-filter-keyAltName.json", "key-document.json");
+                assertEquals(State.READY, encryptor.getState());
 
-        assertEquals(State.READY, encryptor.getState());
+                encryptedDocument = encryptor.finish();
+                assertEquals(State.DONE, encryptor.getState());
+                assertEquals(getResourceAsDocument("encrypted-value.json"), encryptedDocument);
+            }
 
-        RawBsonDocument encryptedDocument = encryptor.finish();
-        assertEquals(State.DONE, encryptor.getState());
-        assertEquals(getResourceAsDocument("encrypted-value.json"), encryptedDocument);
+            try (MongoCryptContext decryptor = mongoCrypt.createExplicitDecryptionContext(encryptedDocument)) {
+                assertEquals(State.READY, decryptor.getState());
 
-        MongoCryptContext decryptor = mongoCrypt.createExplicitDecryptionContext(encryptedDocument);
-
-        assertEquals(State.READY, decryptor.getState());
-
-        RawBsonDocument decryptedDocument = decryptor.finish();
-        assertEquals(State.DONE, decryptor.getState());
-        assertEquals(documentToEncrypt, decryptedDocument);
-
-        encryptor.close();
-
-        mongoCrypt.close();
+                RawBsonDocument decryptedDocument = decryptor.finish();
+                assertEquals(State.DONE, decryptor.getState());
+                assertEquals(documentToEncrypt, decryptedDocument);
+            }
+        }
     }
 
     @Test
     public void testKmsRetryOnHttpErrorAndNetworkError() {
-        MongoCrypt mongoCrypt = createMongoCrypt();
-        assertNotNull(mongoCrypt);
+        try (MongoCrypt mongoCrypt = createMongoCrypt();
+                MongoCryptContext decryptor =
+                        mongoCrypt.createDecryptionContext(getResourceAsDocument("encrypted-command-reply.json"))) {
+            MongoKeyDecryptor keyDecryptor = feedKeysAndGetKeyDecryptor(decryptor);
 
-        MongoCryptContext decryptor = mongoCrypt.createDecryptionContext(getResourceAsDocument("encrypted-command-reply.json"));
-        MongoKeyDecryptor keyDecryptor = feedKeysAndGetKeyDecryptor(decryptor);
+            // No backoff is requested before the first attempt
+            assertEquals(0, keyDecryptor.sleepMicroseconds());
 
-        // No backoff is requested before the first attempt
-        assertEquals(0, keyDecryptor.sleepMicroseconds());
+            // A complete HTTP 429 response marks the request as retryable. The backoff is jittered,
+            // so it may legitimately be zero; only that the call succeeds can be asserted.
+            assertTrue(keyDecryptor.feedWithRetry(getHttpResourceAsByteBuffer("kms-reply-429.txt")));
+            keyDecryptor.sleepMicroseconds();
 
-        // A complete HTTP 429 response marks the request as retryable. The backoff is jittered,
-        // so it may legitimately be zero; only that the call succeeds can be asserted.
-        assertTrue(keyDecryptor.feedWithRetry(getHttpResourceAsByteBuffer("kms-reply-429.txt")));
-        keyDecryptor.sleepMicroseconds();
+            // The context stays in NEED_KMS and the key decryptor is re-presented for the retry
+            keyDecryptor = reenterNeedKms(decryptor);
 
-        // The context stays in NEED_KMS and the key decryptor is re-presented for the retry
-        keyDecryptor = reenterNeedKms(decryptor);
-        assertTrue(keyDecryptor.bytesNeeded() > 0);
-        assertTrue(keyDecryptor.getMessage().remaining() > 0);
+            // A network error is retryable while budget remains
+            assertTrue(keyDecryptor.fail());
+            keyDecryptor = reenterNeedKms(decryptor);
 
-        // A network error is retryable while budget remains
-        assertTrue(keyDecryptor.fail());
-        keyDecryptor = reenterNeedKms(decryptor);
+            // A successful response completes the key decryption
+            assertFalse(keyDecryptor.feedWithRetry(getHttpResourceAsByteBuffer("kms-reply.txt")));
+            assertEquals(0, keyDecryptor.bytesNeeded());
 
-        // A successful response completes the key decryption
-        assertFalse(keyDecryptor.feedWithRetry(getHttpResourceAsByteBuffer("kms-reply.txt")));
-        assertEquals(0, keyDecryptor.bytesNeeded());
+            assertNull(decryptor.nextKeyDecryptor());
+            decryptor.completeKeyDecryptors();
+            assertEquals(State.READY, decryptor.getState());
 
-        assertNull(decryptor.nextKeyDecryptor());
-        decryptor.completeKeyDecryptors();
-        assertEquals(State.READY, decryptor.getState());
-
-        RawBsonDocument decryptedDocument = decryptor.finish();
-        assertEquals(State.DONE, decryptor.getState());
-        assertEquals(getResourceAsDocument("command-reply.json"), decryptedDocument);
-
-        decryptor.close();
-        mongoCrypt.close();
+            RawBsonDocument decryptedDocument = decryptor.finish();
+            assertEquals(State.DONE, decryptor.getState());
+            assertEquals(getResourceAsDocument("command-reply.json"), decryptedDocument);
+        }
     }
 
     @Test
     public void testKmsRetryExhaustsBudget() {
-        MongoCrypt mongoCrypt = createMongoCrypt();
-        assertNotNull(mongoCrypt);
+        try (MongoCrypt mongoCrypt = createMongoCrypt();
+                MongoCryptContext decryptor =
+                        mongoCrypt.createDecryptionContext(getResourceAsDocument("encrypted-command-reply.json"))) {
+            MongoKeyDecryptor keyDecryptor = feedKeysAndGetKeyDecryptor(decryptor);
 
-        MongoCryptContext decryptor = mongoCrypt.createDecryptionContext(getResourceAsDocument("encrypted-command-reply.json"));
-        MongoKeyDecryptor keyDecryptor = feedKeysAndGetKeyDecryptor(decryptor);
-
-        int retriesAllowed = 0;
-        while (retriesAllowed < 100 && keyDecryptor.fail()) {
-            retriesAllowed++;
+            int retriesAllowed = 0;
+            while (retriesAllowed < 100 && keyDecryptor.fail()) {
+                retriesAllowed++;
+            }
+            assertTrue(retriesAllowed > 0, "expected at least one retry to be allowed");
+            assertTrue(retriesAllowed < 100, "expected the retry budget to be exhausted");
         }
-        assertTrue(retriesAllowed > 0, "expected at least one retry to be allowed");
-        assertTrue(retriesAllowed < 100, "expected the retry budget to be exhausted");
-
-        decryptor.close();
-        mongoCrypt.close();
     }
 
-    private MongoKeyDecryptor reenterNeedKms(final MongoCryptContext context) {
+    private static MongoKeyDecryptor reenterNeedKms(final MongoCryptContext context) {
         assertEquals(State.NEED_KMS, context.getState());
         MongoKeyDecryptor keyDecryptor = context.nextKeyDecryptor();
         assertNotNull(keyDecryptor);
+        assertTrue(keyDecryptor.bytesNeeded() > 0);
+        assertTrue(keyDecryptor.getMessage().remaining() > 0);
         return keyDecryptor;
     }
 
-    private MongoKeyDecryptor feedKeysAndGetKeyDecryptor(final MongoCryptContext context) {
+    private static MongoKeyDecryptor feedKeysAndGetKeyDecryptor(final MongoCryptContext context) {
         assertEquals(State.NEED_MONGO_KEYS, context.getState());
         BsonDocument keyFilter = context.getMongoOperation();
         assertEquals(getResourceAsDocument("key-filter.json"), keyFilter);
@@ -431,7 +400,7 @@ public class MongoCryptTest {
     }
 
     private MongoCrypt createMongoCrypt() {
-        return MongoCrypts.create(MongoCryptOptions
+        MongoCrypt mongoCrypt = MongoCrypts.create(MongoCryptOptions
                 .builder()
                 .awsKmsProviderOptions(MongoAwsKmsProviderOptions.builder()
                         .accessKeyId("example")
@@ -441,6 +410,8 @@ public class MongoCryptTest {
                         .localMasterKey(ByteBuffer.wrap(new byte[96]))
                         .build())
                 .build());
+        assertNotNull(mongoCrypt);
+        return mongoCrypt;
     }
 
     private static BsonDocument getResourceAsDocument(final String fileName)  {

@@ -23,13 +23,13 @@ export GRADLE_EXTRA_VARS="-Pssl.enabled=true -Pssl.trustStoreType=jks -Pssl.trus
 set +o errexit
 
 ./gradlew --stacktrace --info ${GRADLE_EXTRA_VARS} -Dorg.mongodb.test.uri=${MONGODB_URI} \
-    -Dorg.mongodb.test.kms.retry.ca.path="${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem" \
+    -Dorg.mongodb.test.kms.retry.run="true" \
     driver-sync:cleanTest driver-sync:test --tests ClientSideEncryptionKmsRetryProseTest
 first=$?
 echo "sync exit code: $first"
 
 ./gradlew --stacktrace --info ${GRADLE_EXTRA_VARS} -Dorg.mongodb.test.uri=${MONGODB_URI} \
-    -Dorg.mongodb.test.kms.retry.ca.path="${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem" \
+    -Dorg.mongodb.test.kms.retry.run="true" \
     driver-reactive-streams:cleanTest driver-reactive-streams:test --tests ClientSideEncryptionKmsRetryProseTest
 second=$?
 echo "reactive exit code: $second"

@@ -199,7 +199,6 @@ class MongoCryptImpl implements MongoCrypt {
             mongocrypt_setopt_use_need_kms_credentials_state(wrapped);
         }
 
-        // always enabled; backoff and budget management are the driver's responsibility
         configure(() -> mongocrypt_setopt_retry_kms(wrapped, true));
 
         if (options.getKmsProviderOptions() != null) {

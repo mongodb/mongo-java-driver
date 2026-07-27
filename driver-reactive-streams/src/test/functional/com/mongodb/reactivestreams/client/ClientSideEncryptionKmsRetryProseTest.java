@@ -22,9 +22,10 @@ import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.reactivestreams.client.syncadapter.SyncClientEncryption;
 import com.mongodb.reactivestreams.client.vault.ClientEncryptions;
 
-public class ClientSideEncryptionKmsRetryProseTest extends AbstractClientSideEncryptionKmsRetryProseTest {
+class ClientSideEncryptionKmsRetryProseTest extends AbstractClientSideEncryptionKmsRetryProseTest {
+
     @Override
-    public ClientEncryption getClientEncryption(final ClientEncryptionSettings settings) {
+    protected ClientEncryption getClientEncryption(final ClientEncryptionSettings settings) {
         return new SyncClientEncryption(ClientEncryptions.create(settings));
     }
 }

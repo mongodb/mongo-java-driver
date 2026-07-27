@@ -26,12 +26,15 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class CstringTest {
 
-    // A native function declared to return a cstring (e.g. mongocrypt_status_message) may return a
-    // NULL pointer. By default JNA would marshal that to a null cstring reference, causing callers
-    // that immediately call toString() to throw a NullPointerException. The fromNative override must
-    // return a non-null cstring instead.
+    /**
+     * A native function declared to return a cstring (e.g. mongocrypt_status_message) may return a
+     * NULL pointer. By default JNA would marshal that to a null cstring reference, causing callers
+     * that immediately call toString() to throw a NullPointerException. The fromNative override must
+     * return a non-null cstring instead; that cstring is backed by {@link Pointer#NULL}, and its
+     * toString() returns the empty string.
+     */
     @Test
-    void fromNativeReturnsEmptyStringBackedInstanceForNullPointer() {
+    void fromNativeReturnsNonNullCstringForNullPointer() {
         cstring result = (cstring) new cstring().fromNative(null, null);
 
         assertNotNull(result);

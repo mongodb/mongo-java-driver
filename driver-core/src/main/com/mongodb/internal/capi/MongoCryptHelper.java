@@ -23,6 +23,7 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoConfigurationException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.authentication.AwsCredentialHelper;
@@ -57,7 +58,7 @@ public final class MongoCryptHelper {
     public static final String KMS_TIMEOUT_ERROR_MESSAGE = "KMS key decryption exceeded the timeout limit.";
 
     /**
-     * Throws a {@code MongoOperationTimeoutException} if the operation timeout has expired or the
+     * Throws a {@link MongoOperationTimeoutException} if the operation timeout has expired or the
      * KMS retry backoff would exceed the remaining operation time.
      *
      * @param operationTimeout the operation timeout, or null if none
