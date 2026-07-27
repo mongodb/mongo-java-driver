@@ -202,7 +202,11 @@ object Aggregates {
    * @note Requires MongoDB 8.2 or greater
    * @since 5.10
    */
-  def scoreFusion(pipelines: Seq[FusionPipeline], normalization: ScoreNormalization, options: ScoreFusionOptions): Bson =
+  def scoreFusion(
+      pipelines: Seq[FusionPipeline],
+      normalization: ScoreNormalization,
+      options: ScoreFusionOptions
+  ): Bson =
     JAggregates.scoreFusion(pipelines.asJava, normalization, options)
 
   /**
