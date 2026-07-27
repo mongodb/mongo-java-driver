@@ -1394,6 +1394,24 @@ class AggregatesSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+
+        when:
+        FusionPipeline.of(' ', match(eq('x', 1)))
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        FusionPipeline.of(null, match(eq('x', 1)))
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        FusionPipeline.of('p1', match(eq('x', 1)), null)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should render ScoreFusionCombination and ScoreFusionOptions'() {

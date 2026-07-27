@@ -65,7 +65,7 @@ public final class FusionPipeline {
 
     private FusionPipeline(final String name, final List<? extends Bson> pipeline) {
         notNull("name", name);
-        isTrueArgument("name must not be empty", !name.isEmpty());
+        isTrueArgument("name must not be empty", !name.trim().isEmpty());
         notNull("pipeline", pipeline);
         isTrueArgument("pipeline must not be empty", !pipeline.isEmpty());
         for (Bson stage : pipeline) {
