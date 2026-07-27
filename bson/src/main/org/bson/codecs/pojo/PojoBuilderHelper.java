@@ -264,11 +264,23 @@ final class PojoBuilderHelper {
         TypeData<?> parentClassTypeData = classTypeData;
         while (currentClass != null && !currentClass.isEnum() && !currentClass.equals(Object.class)) {
             classesToScan.add(new ClassWithParentTypeData<>(currentClass, parentClassTypeData));
-            parentClassTypeData = TypeData.newInstance(currentClass.getGenericSuperclass(), currentClass);
-            for (Class<?> interfaceClass : currentClass.getInterfaces()) {
-                classesToScan.addAll(getClassHierarchy((Class<? super T>) interfaceClass, parentClassTypeData));
+
+            List<TypeVariable<?>> currentTypeParams = asList(currentClass.getTypeParameters());
+            Type[] genericInterfaces = currentClass.getGenericInterfaces();
+            Class<?>[] interfaces = currentClass.getInterfaces();
+            for (int i = 0; i < interfaces.length; i++) {
+                TypeData<?> ifaceResolved = TypeData.newInstance(
+                        genericInterfaces[i], interfaces[i], currentTypeParams, parentClassTypeData);
+                classesToScan.addAll(getClassHierarchy((Class<? super T>) interfaces[i], ifaceResolved));
             }
-            currentClass = currentClass.getSuperclass();
+
+            Class<? super T> superClass = currentClass.getSuperclass();
+            if (superClass != null) {
+                parentClassTypeData = TypeData.newInstance(
+                        currentClass.getGenericSuperclass(), superClass,
+                        currentTypeParams, parentClassTypeData);
+            }
+            currentClass = superClass;
         }
         return classesToScan;
     }
