@@ -46,9 +46,11 @@ import org.bson.annotations.Reason;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
@@ -1091,6 +1093,55 @@ public final class Aggregates {
         isTrueArgument("paths must not be empty", !paths.isEmpty());
         notNull("model", model);
         return new RerankBson(query, paths, numDocsToRerank, model);
+    }
+
+    /**
+     * Creates a {@code $scoreFusion} pipeline stage, which combines the results of the given input pipelines,
+     * normalizing and combining the scores they produce. It must be the first stage of an aggregation pipeline
+     * run on a collection, and the input pipelines must be scored selection pipelines on the same collection,
+     * e.g., starting with a {@link #search(SearchOperator, SearchOptions) $search}
+     * or {@link #vectorSearch(FieldSearchPath, Iterable, String, long, VectorSearchOptions) $vectorSearch} stage.
+     * You may use the {@code $meta: "score"} expression to extract the combined score of a document.
+     *
+     * @param pipelines The non-empty input pipelines with unique names.
+     * @param normalization The way in which the scores produced by the input pipelines are normalized.
+     * @return The {@code $scoreFusion} pipeline stage.
+     * @mongodb.driver.manual reference/operator/aggregation/scoreFusion/ $scoreFusion
+     * @mongodb.server.release 8.2
+     * @since 5.10
+     */
+    public static Bson scoreFusion(final List<FusionPipeline> pipelines, final ScoreNormalization normalization) {
+        return scoreFusion(pipelines, normalization, ScoreFusionOptions.scoreFusionOptions());
+    }
+
+    /**
+     * Creates a {@code $scoreFusion} pipeline stage, which combines the results of the given input pipelines,
+     * normalizing and combining the scores they produce. It must be the first stage of an aggregation pipeline
+     * run on a collection, and the input pipelines must be scored selection pipelines on the same collection,
+     * e.g., starting with a {@link #search(SearchOperator, SearchOptions) $search}
+     * or {@link #vectorSearch(FieldSearchPath, Iterable, String, long, VectorSearchOptions) $vectorSearch} stage.
+     * You may use the {@code $meta: "score"} expression to extract the combined score of a document.
+     *
+     * @param pipelines The non-empty input pipelines with unique names.
+     * @param normalization The way in which the scores produced by the input pipelines are normalized.
+     * @param options Optional {@code $scoreFusion} pipeline stage fields.
+     * @return The {@code $scoreFusion} pipeline stage.
+     * @mongodb.driver.manual reference/operator/aggregation/scoreFusion/ $scoreFusion
+     * @mongodb.server.release 8.2
+     * @since 5.10
+     */
+    public static Bson scoreFusion(final List<FusionPipeline> pipelines, final ScoreNormalization normalization,
+            final ScoreFusionOptions options) {
+        notNull("pipelines", pipelines);
+        isTrueArgument("pipelines must not be empty", !pipelines.isEmpty());
+        Set<String> names = new HashSet<>();
+        for (FusionPipeline pipeline : pipelines) {
+            notNull("pipeline", pipeline);
+            isTrueArgument("pipeline names must be unique", names.add(pipeline.getName()));
+        }
+        notNull("normalization", normalization);
+        notNull("options", options);
+        return new ScoreFusionStage(pipelines, normalization, options);
     }
 
     /**
@@ -2339,6 +2390,45 @@ public final class Aggregates {
                     + ", queryVector=" + queryVector
                     + ", index=" + index
                     + ", limit=" + limit
+                    + ", options=" + options
+                    + '}';
+        }
+    }
+
+    private static final class ScoreFusionStage implements Bson {
+        private final List<FusionPipeline> pipelines;
+        private final ScoreNormalization normalization;
+        private final ScoreFusionOptions options;
+
+        ScoreFusionStage(final List<FusionPipeline> pipelines, final ScoreNormalization normalization,
+                final ScoreFusionOptions options) {
+            this.pipelines = pipelines;
+            this.normalization = normalization;
+            this.options = options;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+            BsonDocument pipelinesDoc = new BsonDocument();
+            for (FusionPipeline pipeline : pipelines) {
+                BsonArray stages = new BsonArray();
+                for (Bson stage : pipeline.getPipeline()) {
+                    stages.add(stage.toBsonDocument(documentClass, codecRegistry));
+                }
+                pipelinesDoc.append(pipeline.getName(), stages);
+            }
+            BsonDocument specificationDoc = new BsonDocument("input",
+                    new BsonDocument("pipelines", pipelinesDoc)
+                            .append("normalization", normalization.toBsonValue()));
+            specificationDoc.putAll(options.toBsonDocument(documentClass, codecRegistry));
+            return new BsonDocument("$scoreFusion", specificationDoc);
+        }
+
+        @Override
+        public String toString() {
+            return "Stage{name=$scoreFusion"
+                    + ", pipelines=" + pipelines
+                    + ", normalization=" + normalization
                     + ", options=" + options
                     + '}';
         }

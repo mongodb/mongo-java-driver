@@ -69,6 +69,7 @@ import static com.mongodb.client.model.Aggregates.project
 import static com.mongodb.client.model.Aggregates.replaceRoot
 import static com.mongodb.client.model.Aggregates.replaceWith
 import static com.mongodb.client.model.Aggregates.sample
+import static com.mongodb.client.model.Aggregates.scoreFusion
 import static com.mongodb.client.model.Aggregates.search
 import static com.mongodb.client.model.Aggregates.searchMeta
 import static com.mongodb.client.model.Aggregates.set
@@ -1409,5 +1410,64 @@ class AggregatesSpecification extends Specification {
                 .scoreDetails(true)) ==
                 parse('{combination: {method: "expression", expression: {$sum: ["$$p1", "$$p2"]}}, scoreDetails: true}')
         toBson(scoreFusionOptions().option('scoreDetails', true)) == parse('{scoreDetails: true}')
+    }
+
+    def 'should render $scoreFusion'() {
+        expect:
+        toBson(scoreFusion(
+                [FusionPipeline.of('p1', match(eq('x', 1))), FusionPipeline.of('p2', match(eq('x', 2)))],
+                ScoreNormalization.sigmoid())) ==
+                parse('''{$scoreFusion: {input: {
+                    pipelines: {p1: [{$match: {x: 1}}], p2: [{$match: {x: 2}}]},
+                    normalization: "sigmoid"}}}''')
+
+        toBson(scoreFusion(
+                [FusionPipeline.of('p1', match(eq('x', 1))), FusionPipeline.of('p2', match(eq('x', 2)), limit(5))],
+                ScoreNormalization.minMaxScaler(),
+                scoreFusionOptions()
+                        .combination(ScoreFusionCombination.weighted(new Document('p1', 0.3d).append('p2', 0.7d)).avg())
+                        .scoreDetails(true))) ==
+                parse('''{$scoreFusion: {input: {
+                    pipelines: {p1: [{$match: {x: 1}}], p2: [{$match: {x: 2}}, {$limit: 5}]},
+                    normalization: "minMaxScaler"},
+                    combination: {weights: {p1: 0.3, p2: 0.7}, method: "avg"},
+                    scoreDetails: true}}''')
+
+        toBson(scoreFusion(
+                [FusionPipeline.of('p1', match(eq('x', 1))), FusionPipeline.of('p2', match(eq('x', 2)))],
+                ScoreNormalization.none(),
+                scoreFusionOptions().combination(
+                        ScoreFusionCombination.expression(new Document('$sum', ['$$p1', '$$p2']))))) ==
+                parse('''{$scoreFusion: {input: {
+                    pipelines: {p1: [{$match: {x: 1}}], p2: [{$match: {x: 2}}]},
+                    normalization: "none"},
+                    combination: {method: "expression", expression: {$sum: ["$$p1", "$$p2"]}}}}''')
+    }
+
+    def 'should validate $scoreFusion arguments'() {
+        when:
+        scoreFusion([], ScoreNormalization.none())
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        scoreFusion([FusionPipeline.of('p1', match(eq('x', 1))), FusionPipeline.of('p1', match(eq('x', 2)))],
+                ScoreNormalization.none())
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        scoreFusion(null, ScoreNormalization.none())
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        scoreFusion([FusionPipeline.of('p1', match(eq('x', 1)))], null)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 }
