@@ -362,6 +362,70 @@ package object model {
   }
 
   /**
+   * A named aggregation pipeline used as an input to a fusion pipeline stage, e.g., `\$scoreFusion`.
+   *
+   * @note Requires MongoDB 8.2 or greater
+   * @since 5.10
+   */
+  type FusionPipeline = com.mongodb.client.model.FusionPipeline
+
+  /**
+   * A named aggregation pipeline used as an input to a fusion pipeline stage, e.g., `\$scoreFusion`.
+   *
+   * @note Requires MongoDB 8.2 or greater
+   * @since 5.10
+   */
+  object FusionPipeline {
+
+    /**
+     * Construct a new instance
+     *
+     * @param name     the non-empty pipeline name, unique within the containing stage
+     * @param pipeline the non-empty pipeline
+     * @return the new FusionPipeline
+     */
+    def apply(name: String, pipeline: Bson*): FusionPipeline = {
+      com.mongodb.client.model.FusionPipeline.of(name, pipeline.asJava)
+    }
+  }
+
+  /**
+   * The way in which the scores produced by the `\$scoreFusion` input pipelines are normalized before being combined.
+   *
+   * @note Requires MongoDB 8.2 or greater
+   * @since 5.10
+   */
+  @Sealed
+  type ScoreNormalization = com.mongodb.client.model.ScoreNormalization
+
+  /**
+   * The way in which the normalized scores produced by the `\$scoreFusion` input pipelines are combined.
+   *
+   * @note Requires MongoDB 8.2 or greater
+   * @since 5.10
+   */
+  @Sealed
+  type ScoreFusionCombination = com.mongodb.client.model.ScoreFusionCombination
+
+  /**
+   * A weighted `ScoreFusionCombination`.
+   *
+   * @note Requires MongoDB 8.2 or greater
+   * @since 5.10
+   */
+  @Sealed
+  type WeightedScoreFusionCombination = com.mongodb.client.model.WeightedScoreFusionCombination
+
+  /**
+   * Represents optional fields of the `\$scoreFusion` pipeline stage of an aggregation pipeline.
+   *
+   * @note Requires MongoDB 8.2 or greater
+   * @since 5.10
+   */
+  @Sealed
+  type ScoreFusionOptions = com.mongodb.client.model.ScoreFusionOptions
+
+  /**
    * A helper to define new fields for the `\$addFields` pipeline stage
    *
    * @tparam TExpression the expression type

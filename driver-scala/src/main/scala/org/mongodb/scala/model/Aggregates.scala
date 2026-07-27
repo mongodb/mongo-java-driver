@@ -177,6 +177,35 @@ object Aggregates {
   def facet(facets: Facet*): Bson = JAggregates.facet(facets.asJava)
 
   /**
+   * Creates a `\$scoreFusion` pipeline stage, which combines the results of the given input pipelines,
+   * normalizing and combining the scores they produce.
+   *
+   * @param pipelines     the non-empty input pipelines with unique names
+   * @param normalization the way in which the scores produced by the input pipelines are normalized
+   * @return the `\$scoreFusion` pipeline stage
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/scoreFusion/ \$scoreFusion]]
+   * @note Requires MongoDB 8.2 or greater
+   * @since 5.10
+   */
+  def scoreFusion(pipelines: Seq[FusionPipeline], normalization: ScoreNormalization): Bson =
+    JAggregates.scoreFusion(pipelines.asJava, normalization)
+
+  /**
+   * Creates a `\$scoreFusion` pipeline stage, which combines the results of the given input pipelines,
+   * normalizing and combining the scores they produce.
+   *
+   * @param pipelines     the non-empty input pipelines with unique names
+   * @param normalization the way in which the scores produced by the input pipelines are normalized
+   * @param options       optional `\$scoreFusion` pipeline stage fields
+   * @return the `\$scoreFusion` pipeline stage
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/scoreFusion/ \$scoreFusion]]
+   * @note Requires MongoDB 8.2 or greater
+   * @since 5.10
+   */
+  def scoreFusion(pipelines: Seq[FusionPipeline], normalization: ScoreNormalization, options: ScoreFusionOptions): Bson =
+    JAggregates.scoreFusion(pipelines.asJava, normalization, options)
+
+  /**
    * Creates a `\$graphLookup` pipeline stage for the specified filter
    *
    * @param from             the collection to query
