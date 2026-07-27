@@ -19,16 +19,21 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.FusionPipeline;
+import com.mongodb.client.model.ScoreFusionCombination;
+import com.mongodb.client.model.ScoreNormalization;
 import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Position;
 import com.mongodb.client.test.CollectionHelper;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.conversions.Bson;
 import org.bson.json.JsonWriterSettings;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -69,6 +74,7 @@ import static com.mongodb.client.model.Projections.computedSearchMeta;
 import static com.mongodb.client.model.Projections.metaSearchHighlights;
 import static com.mongodb.client.model.Projections.metaSearchScore;
 import static com.mongodb.client.model.Projections.metaVectorSearchScore;
+import static com.mongodb.client.model.ScoreFusionOptions.scoreFusionOptions;
 import static com.mongodb.client.model.search.FuzzySearchOptions.fuzzySearchOptions;
 import static com.mongodb.client.model.search.SearchCollector.facet;
 import static com.mongodb.client.model.search.SearchCount.lowerBound;
@@ -328,6 +334,30 @@ final class AggregatesSearchIntegrationTest {
                 () -> asserter.accept(and(gte("year", 2015), lte("year", 2016))),
                 () -> asserter.accept(or(eq("year", 2015), eq("year", 2016)))
         );
+    }
+
+    @Test
+    void scoreFusion() {
+        assumeTrue(serverVersionAtLeast(8, 2));
+        CollectionHelper<BsonDocument> collectionHelper = collectionHelpers.get(MFLIX_EMBEDDED_MOVIES_NS);
+        List<Bson> pipeline = asList(
+                Aggregates.scoreFusion(
+                        asList(
+                                FusionPipeline.of("vector", Aggregates.vectorSearch(
+                                        fieldPath("plot_embedding"), QUERY_VECTOR, "sample_mflix__embedded_movies", LIMIT,
+                                        approximateVectorSearchOptions(LIMIT + 1))),
+                                FusionPipeline.of("text",
+                                        Aggregates.search(SearchOperator.text(fieldPath("title"), "train"),
+                                                searchOptions().index("sample_mflix__embedded_movies")),
+                                        Aggregates.limit(LIMIT))),
+                        ScoreNormalization.sigmoid(),
+                        scoreFusionOptions()
+                                .combination(ScoreFusionCombination.weighted(
+                                        new Document("vector", 0.7).append("text", 0.3)))
+                                .scoreDetails(true)),
+                Aggregates.limit(LIMIT));
+        List<BsonDocument> results = collectionHelper.aggregate(pipeline);
+        Asserters.nonEmpty().accept(results, msgSupplier(pipeline));
     }
 
     /**
