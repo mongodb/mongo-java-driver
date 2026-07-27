@@ -22,6 +22,7 @@ import com.mongodb.client.model.search.SearchCollector
 import com.mongodb.client.model.search.SearchOperator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonString
 import org.bson.Document
 import org.bson.BinaryVector
 import org.bson.conversions.Bson
@@ -1361,5 +1362,13 @@ class AggregatesSpecification extends Specification {
         replaceRoot('$a1').hashCode() == replaceRoot('$a1').hashCode()
         replaceRoot('$a1.b').hashCode() == replaceRoot('$a1.b').hashCode()
         replaceRoot('$a1').hashCode() == replaceRoot('$a1').hashCode()
+    }
+
+    def 'should create ScoreNormalization'() {
+        expect:
+        ScoreNormalization.none().toBsonValue() == new BsonString('none')
+        ScoreNormalization.sigmoid().toBsonValue() == new BsonString('sigmoid')
+        ScoreNormalization.minMaxScaler().toBsonValue() == new BsonString('minMaxScaler')
+        ScoreNormalization.of(new BsonString('sigmoid')).toBsonValue() == new BsonString('sigmoid')
     }
 }
