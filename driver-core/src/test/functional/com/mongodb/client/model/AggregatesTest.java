@@ -42,11 +42,16 @@ import static com.mongodb.client.model.Accumulators.median;
 import static com.mongodb.client.model.Accumulators.percentile;
 import static com.mongodb.client.model.Aggregates.geoNear;
 import static com.mongodb.client.model.Aggregates.group;
+import static com.mongodb.client.model.Aggregates.match;
+import static com.mongodb.client.model.Aggregates.project;
 import static com.mongodb.client.model.Aggregates.rerank;
+import static com.mongodb.client.model.Aggregates.scoreFusion;
 import static com.mongodb.client.model.Aggregates.unset;
 import static com.mongodb.client.model.Aggregates.vectorSearch;
+import static com.mongodb.client.model.Filters.exists;
 import static com.mongodb.client.model.RerankQuery.rerankQuery;
 import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
+import static com.mongodb.client.model.ScoreFusionOptions.scoreFusionOptions;
 import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Windows.Bound.UNBOUNDED;
 import static com.mongodb.client.model.Windows.documents;
@@ -54,6 +59,8 @@ import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.VectorSearchOptions.approximateVectorSearchOptions;
 import static com.mongodb.client.model.search.VectorSearchQuery.textQuery;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -452,5 +459,105 @@ public class AggregatesTest extends OperationTest {
                         100,
                         "rerank-2"
                 ));
+    }
+
+    // TODO JAVA-6202 replace the raw $score documents in these tests with the $score builder once available
+    private static final Bson SCORE_BY_X = BsonDocument.parse("{$score: {score: '$x'}}");
+    private static final Bson SCORE_BY_Y = BsonDocument.parse("{$score: {score: '$y'}}");
+
+    private void insertScoreFusionDocuments() {
+        getCollectionHelper().insertDocuments(
+                BsonDocument.parse("{_id: 1, x: 10, y: 1}"),
+                BsonDocument.parse("{_id: 2, x: 5, y: 2}"),
+                BsonDocument.parse("{_id: 3, x: 1, y: 3}"));
+    }
+
+    private List<Integer> idsFor(final Bson scoreFusionStage) {
+        return getCollectionHelper().aggregate(singletonList(scoreFusionStage)).stream()
+                .map(doc -> doc.getInt32("_id").getValue())
+                .collect(toList());
+    }
+
+    @ParameterizedTest
+    @MethodSource("scoreFusionNormalizations")
+    public void shouldScoreFusionWithEachNormalization(final ScoreNormalization normalization) {
+        assumeTrue(serverVersionAtLeast(8, 2));
+        insertScoreFusionDocuments();
+        List<Integer> ids = idsFor(scoreFusion(
+                asList(
+                        FusionPipeline.of("byX", match(exists("x")), SCORE_BY_X),
+                        FusionPipeline.of("byY", match(exists("y")), SCORE_BY_Y)),
+                normalization));
+        assertEquals(3, ids.size());
+    }
+
+    private static Stream<ScoreNormalization> scoreFusionNormalizations() {
+        return Stream.of(ScoreNormalization.none(), ScoreNormalization.sigmoid(), ScoreNormalization.minMaxScaler());
+    }
+
+    @Test
+    public void shouldScoreFusionWithWeights() {
+        assumeTrue(serverVersionAtLeast(8, 2));
+        insertScoreFusionDocuments();
+        // weight only the "byY" pipeline: expected order is descending y
+        List<Integer> ids = idsFor(scoreFusion(
+                asList(
+                        FusionPipeline.of("byX", match(exists("x")), SCORE_BY_X),
+                        FusionPipeline.of("byY", match(exists("y")), SCORE_BY_Y)),
+                ScoreNormalization.none(),
+                scoreFusionOptions().combination(
+                        ScoreFusionCombination.weighted(new Document("byX", 0).append("byY", 1)))));
+        assertEquals(asList(3, 2, 1), ids);
+    }
+
+    @Test
+    public void shouldScoreFusionWithWeightsAndAvgMethod() {
+        assumeTrue(serverVersionAtLeast(8, 2));
+        insertScoreFusionDocuments();
+        List<Integer> ids = idsFor(scoreFusion(
+                asList(
+                        FusionPipeline.of("byX", match(exists("x")), SCORE_BY_X),
+                        FusionPipeline.of("byY", match(exists("y")), SCORE_BY_Y)),
+                ScoreNormalization.none(),
+                scoreFusionOptions().combination(
+                        ScoreFusionCombination.weighted(new Document("byX", 1).append("byY", 0)).avg())));
+        assertEquals(asList(1, 2, 3), ids);
+    }
+
+    @Test
+    public void shouldScoreFusionWithExpressionCombination() {
+        assumeTrue(serverVersionAtLeast(8, 2));
+        insertScoreFusionDocuments();
+        // ignore byX, use 10 * byY: expected order is descending y
+        List<Integer> ids = idsFor(scoreFusion(
+                asList(
+                        FusionPipeline.of("byX", match(exists("x")), SCORE_BY_X),
+                        FusionPipeline.of("byY", match(exists("y")), SCORE_BY_Y)),
+                ScoreNormalization.none(),
+                scoreFusionOptions().combination(ScoreFusionCombination.expression(
+                        new Document("$sum", asList(
+                                new Document("$multiply", asList("$$byX", 0)),
+                                new Document("$multiply", asList("$$byY", 10))))))));
+        assertEquals(asList(3, 2, 1), ids);
+    }
+
+    @Test
+    public void shouldScoreFusionWithScoreDetails() {
+        assumeTrue(serverVersionAtLeast(8, 2));
+        insertScoreFusionDocuments();
+        List<BsonDocument> results = getCollectionHelper().aggregate(asList(
+                scoreFusion(
+                        asList(
+                                FusionPipeline.of("byX", match(exists("x")), SCORE_BY_X),
+                                FusionPipeline.of("byY", match(exists("y")), SCORE_BY_Y)),
+                        ScoreNormalization.sigmoid(),
+                        scoreFusionOptions().scoreDetails(true)),
+                project(Projections.fields(
+                        Projections.meta("score", "score"),
+                        Projections.meta("scoreDetails", "scoreDetails")))));
+        assertEquals(3, results.size());
+        BsonDocument details = results.get(0).getDocument("scoreDetails");
+        Assertions.assertNotNull(details);
+        Assertions.assertNotNull(details.get("details"));
     }
 }
