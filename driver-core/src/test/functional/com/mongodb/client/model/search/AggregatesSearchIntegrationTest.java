@@ -350,7 +350,7 @@ final class AggregatesSearchIntegrationTest {
                                         Aggregates.search(SearchOperator.text(fieldPath("title"), "train"),
                                                 searchOptions().index("sample_mflix__embedded_movies")),
                                         Aggregates.limit(LIMIT))),
-                        ScoreNormalization.sigmoid(),
+                        ScoreNormalization.SIGMOID,
                         scoreFusionOptions()
                                 .combination(ScoreFusionCombination.weighted(
                                         new Document("vector", 0.7).append("text", 0.3)))

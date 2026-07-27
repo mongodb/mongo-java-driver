@@ -13,46 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.mongodb.scala.model
 
-import com.mongodb.annotations.Sealed
 import com.mongodb.client.model.{ ScoreNormalization => JScoreNormalization }
-import org.bson.BsonValue
 
 /**
- * The way in which the scores produced by the `\$scoreFusion` input pipelines are normalized before being combined.
+ * Normalization methods for the `\$score` pipeline stage.
  *
+ * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/score/ \$score]]
  * @note Requires MongoDB 8.2 or greater
  * @since 5.10
  */
-@Sealed object ScoreNormalization {
+object ScoreNormalization {
 
   /**
-   * Returns a `ScoreNormalization` instance representing no normalization.
-   *
-   * @return The requested `ScoreNormalization`.
+   * No normalization is applied.
    */
-  def none: ScoreNormalization = JScoreNormalization.none()
+  val NONE: ScoreNormalization = JScoreNormalization.NONE
 
   /**
-   * Returns a `ScoreNormalization` instance representing normalization via the sigmoid function.
-   *
-   * @return The requested `ScoreNormalization`.
+   * Normalizes the score to the range [0, 1] by applying the sigmoid function.
    */
-  def sigmoid: ScoreNormalization = JScoreNormalization.sigmoid()
+  val SIGMOID: ScoreNormalization = JScoreNormalization.SIGMOID
 
   /**
-   * Returns a `ScoreNormalization` instance representing min-max scaling of the scores to the range [0, 1].
-   *
-   * @return The requested `ScoreNormalization`.
+   * Normalizes the score to the range [0, 1] by applying min-max scaling.
    */
-  def minMaxScaler: ScoreNormalization = JScoreNormalization.minMaxScaler()
-
-  /**
-   * Returns a `ScoreNormalization` instance representing the given normalization.
-   *
-   * @param normalization the normalization
-   * @return The requested `ScoreNormalization`.
-   */
-  def of(normalization: BsonValue): ScoreNormalization = JScoreNormalization.of(normalization)
+  val MIN_MAX_SCALER: ScoreNormalization = JScoreNormalization.MIN_MAX_SCALER
 }

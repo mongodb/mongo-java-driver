@@ -30,6 +30,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
 import java.math.RoundingMode;
@@ -479,7 +480,7 @@ public class AggregatesTest extends OperationTest {
     }
 
     @ParameterizedTest
-    @MethodSource("scoreFusionNormalizations")
+    @EnumSource(ScoreNormalization.class)
     public void shouldScoreFusionWithEachNormalization(final ScoreNormalization normalization) {
         assumeTrue(serverVersionAtLeast(8, 2));
         insertScoreFusionDocuments();
@@ -491,10 +492,6 @@ public class AggregatesTest extends OperationTest {
         assertEquals(3, ids.size());
     }
 
-    private static Stream<ScoreNormalization> scoreFusionNormalizations() {
-        return Stream.of(ScoreNormalization.none(), ScoreNormalization.sigmoid(), ScoreNormalization.minMaxScaler());
-    }
-
     @Test
     public void shouldScoreFusionWithWeights() {
         assumeTrue(serverVersionAtLeast(8, 2));
@@ -504,7 +501,7 @@ public class AggregatesTest extends OperationTest {
                 asList(
                         FusionPipeline.of("byX", match(exists("x")), SCORE_BY_X),
                         FusionPipeline.of("byY", match(exists("y")), SCORE_BY_Y)),
-                ScoreNormalization.none(),
+                ScoreNormalization.NONE,
                 scoreFusionOptions().combination(
                         ScoreFusionCombination.weighted(new Document("byX", 0).append("byY", 1)))));
         assertEquals(asList(3, 2, 1), ids);
@@ -518,7 +515,7 @@ public class AggregatesTest extends OperationTest {
                 asList(
                         FusionPipeline.of("byX", match(exists("x")), SCORE_BY_X),
                         FusionPipeline.of("byY", match(exists("y")), SCORE_BY_Y)),
-                ScoreNormalization.none(),
+                ScoreNormalization.NONE,
                 scoreFusionOptions().combination(
                         ScoreFusionCombination.weighted(new Document("byX", 1).append("byY", 0)).avg())));
         assertEquals(asList(1, 2, 3), ids);
@@ -533,7 +530,7 @@ public class AggregatesTest extends OperationTest {
                 asList(
                         FusionPipeline.of("byX", match(exists("x")), SCORE_BY_X),
                         FusionPipeline.of("byY", match(exists("y")), SCORE_BY_Y)),
-                ScoreNormalization.none(),
+                ScoreNormalization.NONE,
                 scoreFusionOptions().combination(ScoreFusionCombination.expression(
                         new Document("$sum", asList(
                                 new Document("$multiply", asList("$$byX", 0)),
@@ -550,7 +547,7 @@ public class AggregatesTest extends OperationTest {
                         asList(
                                 FusionPipeline.of("byX", match(exists("x")), SCORE_BY_X),
                                 FusionPipeline.of("byY", match(exists("y")), SCORE_BY_Y)),
-                        ScoreNormalization.sigmoid(),
+                        ScoreNormalization.SIGMOID,
                         scoreFusionOptions().scoreDetails(true)),
                 project(Projections.fields(
                         Projections.meta("score", "score"),

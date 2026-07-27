@@ -2419,7 +2419,7 @@ public final class Aggregates {
             }
             BsonDocument specificationDoc = new BsonDocument("input",
                     new BsonDocument("pipelines", pipelinesDoc)
-                            .append("normalization", normalization.toBsonValue()));
+                            .append("normalization", new BsonString(normalization.getValue())));
             specificationDoc.putAll(options.toBsonDocument(documentClass, codecRegistry));
             return new BsonDocument("$scoreFusion", specificationDoc);
         }

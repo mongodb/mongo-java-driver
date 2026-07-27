@@ -1366,13 +1366,6 @@ class AggregatesSpecification extends Specification {
         replaceRoot('$a1').hashCode() == replaceRoot('$a1').hashCode()
     }
 
-    def 'should create ScoreNormalization'() {
-        expect:
-        ScoreNormalization.none().toBsonValue() == new BsonString('none')
-        ScoreNormalization.sigmoid().toBsonValue() == new BsonString('sigmoid')
-        ScoreNormalization.minMaxScaler().toBsonValue() == new BsonString('minMaxScaler')
-        ScoreNormalization.of(new BsonString('sigmoid')).toBsonValue() == new BsonString('sigmoid')
-    }
 
     def 'should create FusionPipeline'() {
         when:
@@ -1434,14 +1427,14 @@ class AggregatesSpecification extends Specification {
         expect:
         toBson(scoreFusion(
                 [FusionPipeline.of('p1', match(eq('x', 1))), FusionPipeline.of('p2', match(eq('x', 2)))],
-                ScoreNormalization.sigmoid())) ==
+                ScoreNormalization.SIGMOID)) ==
                 parse('''{$scoreFusion: {input: {
                     pipelines: {p1: [{$match: {x: 1}}], p2: [{$match: {x: 2}}]},
                     normalization: "sigmoid"}}}''')
 
         toBson(scoreFusion(
                 [FusionPipeline.of('p1', match(eq('x', 1))), FusionPipeline.of('p2', match(eq('x', 2)), limit(5))],
-                ScoreNormalization.minMaxScaler(),
+                ScoreNormalization.MIN_MAX_SCALER,
                 scoreFusionOptions()
                         .combination(ScoreFusionCombination.weighted(new Document('p1', 0.3d).append('p2', 0.7d)).avg())
                         .scoreDetails(true))) ==
@@ -1453,7 +1446,7 @@ class AggregatesSpecification extends Specification {
 
         toBson(scoreFusion(
                 [FusionPipeline.of('p1', match(eq('x', 1))), FusionPipeline.of('p2', match(eq('x', 2)))],
-                ScoreNormalization.none(),
+                ScoreNormalization.NONE,
                 scoreFusionOptions().combination(
                         ScoreFusionCombination.expression(new Document('$sum', ['$$p1', '$$p2']))))) ==
                 parse('''{$scoreFusion: {input: {
@@ -1464,20 +1457,20 @@ class AggregatesSpecification extends Specification {
 
     def 'should validate $scoreFusion arguments'() {
         when:
-        scoreFusion([], ScoreNormalization.none())
+        scoreFusion([], ScoreNormalization.NONE)
 
         then:
         thrown(IllegalArgumentException)
 
         when:
         scoreFusion([FusionPipeline.of('p1', match(eq('x', 1))), FusionPipeline.of('p1', match(eq('x', 2)))],
-                ScoreNormalization.none())
+                ScoreNormalization.NONE)
 
         then:
         thrown(IllegalArgumentException)
 
         when:
-        scoreFusion(null, ScoreNormalization.none())
+        scoreFusion(null, ScoreNormalization.NONE)
 
         then:
         thrown(IllegalArgumentException)

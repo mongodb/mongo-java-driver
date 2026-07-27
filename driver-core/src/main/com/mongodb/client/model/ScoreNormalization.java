@@ -16,64 +16,39 @@
 
 package com.mongodb.client.model;
 
-import com.mongodb.annotations.Sealed;
-import org.bson.BsonString;
-import org.bson.BsonValue;
-
-import static com.mongodb.assertions.Assertions.notNull;
-
 /**
- * The way in which the scores produced by the {@linkplain Aggregates#scoreFusion(java.util.List, ScoreNormalization,
- * ScoreFusionOptions) $scoreFusion} input pipelines are normalized before being combined.
+ * Normalization methods for the {@code $score} pipeline stage.
  *
- * @since 5.10
+ * @mongodb.driver.manual reference/operator/aggregation/score/ $score
  * @mongodb.server.release 8.2
+ * @since 5.10
  */
-@Sealed
-public interface ScoreNormalization {
+public enum ScoreNormalization {
     /**
-     * Returns a {@link ScoreNormalization} instance representing no normalization.
-     *
-     * @return The requested {@link ScoreNormalization}.
+     * No normalization is applied.
      */
-    static ScoreNormalization none() {
-        return new ScoreNormalizationBson(new BsonString("none"));
+    NONE("none"),
+    /**
+     * Normalizes the score to the range [0, 1] by applying the sigmoid function.
+     */
+    SIGMOID("sigmoid"),
+    /**
+     * Normalizes the score to the range [0, 1] by applying min-max scaling.
+     */
+    MIN_MAX_SCALER("minMaxScaler");
+
+    private final String value;
+
+    ScoreNormalization(final String value) {
+        this.value = value;
     }
 
     /**
-     * Returns a {@link ScoreNormalization} instance representing normalization via the sigmoid function.
+     * Returns the value as expected by the server.
      *
-     * @return The requested {@link ScoreNormalization}.
+     * @return the server value
      */
-    static ScoreNormalization sigmoid() {
-        return new ScoreNormalizationBson(new BsonString("sigmoid"));
+    public String getValue() {
+        return value;
     }
-
-    /**
-     * Returns a {@link ScoreNormalization} instance representing min-max scaling of the scores to the range [0, 1].
-     *
-     * @return The requested {@link ScoreNormalization}.
-     */
-    static ScoreNormalization minMaxScaler() {
-        return new ScoreNormalizationBson(new BsonString("minMaxScaler"));
-    }
-
-    /**
-     * Creates a {@link ScoreNormalization} from a {@link BsonValue} in situations when there is no builder method
-     * that better satisfies your needs.
-     * This method cannot be used to validate the syntax.
-     *
-     * @param normalization A {@link BsonValue} representing the required {@link ScoreNormalization}.
-     * @return The requested {@link ScoreNormalization}.
-     */
-    static ScoreNormalization of(final BsonValue normalization) {
-        return new ScoreNormalizationBson(notNull("normalization", normalization));
-    }
-
-    /**
-     * Converts this object to {@link BsonValue}.
-     *
-     * @return A {@link BsonValue} representing this {@link ScoreNormalization}.
-     */
-    BsonValue toBsonValue();
 }
