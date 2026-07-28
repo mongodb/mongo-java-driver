@@ -1395,6 +1395,24 @@ class AggregatesSpecification extends Specification {
         thrown(IllegalArgumentException)
 
         when:
+        FusionPipeline.of('$vector', match(eq('x', 1)))
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        FusionPipeline.of('a.b', match(eq('x', 1)))
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        FusionPipeline.of('a\u0000b', match(eq('x', 1)))
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
         FusionPipeline.of(null, match(eq('x', 1)))
 
         then:

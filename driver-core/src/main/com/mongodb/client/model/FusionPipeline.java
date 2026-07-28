@@ -33,6 +33,8 @@ import static java.util.Collections.unmodifiableList;
  * The name uniquely identifies the pipeline within the stage and may be referred to
  * by other parts of the stage, e.g., as the {@code "$$name"} variable in a
  * {@linkplain ScoreFusionCombination#expression(Bson) combination expression}.
+ * A name must not be empty, must not start with {@code $}, and must not contain {@code .}
+ * or the null character.
  *
  * @since 5.10
  * @mongodb.server.release 8.2
@@ -44,7 +46,8 @@ public final class FusionPipeline {
     /**
      * Creates a new {@link FusionPipeline}.
      *
-     * @param name The non-empty pipeline name, unique within the containing stage.
+     * @param name The pipeline name, unique within the containing stage. It must not be empty,
+     * must not start with {@code $}, and must not contain {@code .} or the null character.
      * @param pipeline The non-empty pipeline.
      * @return The requested {@link FusionPipeline}.
      */
@@ -55,7 +58,8 @@ public final class FusionPipeline {
     /**
      * Creates a new {@link FusionPipeline}.
      *
-     * @param name The non-empty pipeline name, unique within the containing stage.
+     * @param name The pipeline name, unique within the containing stage. It must not be empty,
+     * must not start with {@code $}, and must not contain {@code .} or the null character.
      * @param pipeline The non-empty pipeline.
      * @return The requested {@link FusionPipeline}.
      */
@@ -66,6 +70,9 @@ public final class FusionPipeline {
     private FusionPipeline(final String name, final List<? extends Bson> pipeline) {
         notNull("name", name);
         isTrueArgument("name must not be empty", !name.trim().isEmpty());
+        isTrueArgument("name must not start with '$'", !name.startsWith("$"));
+        isTrueArgument("name must not contain '.'", !name.contains("."));
+        isTrueArgument("name must not contain the null character", name.indexOf('\u0000') < 0);
         notNull("pipeline", pipeline);
         isTrueArgument("pipeline must not be empty", !pipeline.isEmpty());
         for (Bson stage : pipeline) {
