@@ -504,6 +504,7 @@ public class AggregatesTest extends OperationTest {
         assertEquals(3, results.size());
         if (normalization == ScoreNormalization.NONE) {
             // the server combines the scores of the two pipelines with avg by default: (x + y) / 2
+            // https://www.mongodb.com/docs/manual/reference/operator/aggregation/scoreFusion/
             assertEquals(asList(5.5, 3.5, 2.0), scoresFor(results));
         } else {
             // sigmoid maps each pipeline score into (0, 1) and minMaxScaler into [0, 1],
@@ -518,6 +519,7 @@ public class AggregatesTest extends OperationTest {
         insertScoreFusionDocuments();
         // weight only the "byY" pipeline: expected order is descending y, each score is y / 2
         // because the server combines the weighted scores of the two pipelines with avg by default
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/scoreFusion/
         List<BsonDocument> results = resultsWithScoresFor(scoreFusion(
                 asList(
                         FusionPipeline.of("byX", match(exists("x")), SCORE_BY_X),
