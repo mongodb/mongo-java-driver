@@ -19,6 +19,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.FusionPipeline;
 import com.mongodb.client.model.ScoreFusionCombination;
 import com.mongodb.client.model.ScoreNormalization;
@@ -355,9 +356,28 @@ final class AggregatesSearchIntegrationTest {
                                 .combination(ScoreFusionCombination.weighted(
                                         new Document("vector", 0.7).append("text", 0.3)))
                                 .scoreDetails(true)),
-                Aggregates.limit(LIMIT));
+                Aggregates.limit(LIMIT),
+                Aggregates.project(Projections.fields(
+                        Projections.meta("score", "score"),
+                        Projections.meta("scoreDetails", "scoreDetails"))));
         List<BsonDocument> results = collectionHelper.aggregate(pipeline);
         Asserters.nonEmpty().accept(results, msgSupplier(pipeline));
+        assertTrue(results.size() <= LIMIT, msgSupplier(pipeline));
+        double previousScore = Double.MAX_VALUE;
+        for (BsonDocument result : results) {
+            double score = result.getNumber("score").doubleValue();
+            // each sigmoid-normalized pipeline score is in (0, 1) and the weighted scores are averaged
+            assertTrue(score > 0 && score < 1, msgSupplier(pipeline));
+            // results are ordered by descending fused score
+            assertTrue(score <= previousScore, msgSupplier(pipeline));
+            previousScore = score;
+            BsonDocument scoreDetails = result.getDocument("scoreDetails");
+            assertEquals(score, scoreDetails.getNumber("value").doubleValue(), msgSupplier(pipeline));
+            assertEquals("sigmoid", scoreDetails.getString("normalization").getValue(), msgSupplier(pipeline));
+            assertFalse(scoreDetails.getString("description").getValue().isEmpty(), msgSupplier(pipeline));
+            // one details entry per input pipeline
+            assertEquals(2, scoreDetails.getArray("details").size(), msgSupplier(pipeline));
+        }
     }
 
     /**
