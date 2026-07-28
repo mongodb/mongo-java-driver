@@ -19,9 +19,10 @@ package org.mongodb.scala.model
 import com.mongodb.client.model.{ ScoreNormalization => JScoreNormalization }
 
 /**
- * Normalization methods for the `\$score` pipeline stage.
+ * Normalization methods for the `\$score` and `\$scoreFusion` pipeline stages.
  *
  * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/score/ \$score]]
+ * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/scoreFusion/ \$scoreFusion]]
  * @note Requires MongoDB 8.2 or greater
  * @since 5.10
  */
@@ -33,7 +34,7 @@ object ScoreNormalization {
   val NONE: ScoreNormalization = JScoreNormalization.NONE
 
   /**
-   * Normalizes the score to the range [0, 1] by applying the sigmoid function.
+   * Normalizes the score to the range (0, 1) by applying the sigmoid function.
    */
   val SIGMOID: ScoreNormalization = JScoreNormalization.SIGMOID
 

@@ -17,9 +17,11 @@
 package com.mongodb.client.model;
 
 /**
- * Normalization methods for the {@link Aggregates#score(Object, ScoreOptions) $score} pipeline stage.
+ * Normalization methods for the {@link Aggregates#score(Object, ScoreOptions) $score}
+ * and {@code $scoreFusion} pipeline stages.
  *
  * @mongodb.driver.manual reference/operator/aggregation/score/ $score
+ * @mongodb.driver.manual reference/operator/aggregation/scoreFusion/ $scoreFusion
  * @mongodb.server.release 8.2
  * @since 5.10
  */
@@ -29,7 +31,7 @@ public enum ScoreNormalization {
      */
     NONE("none"),
     /**
-     * Normalizes the score to the range [0, 1] by applying the sigmoid function.
+     * Normalizes the score to the range (0, 1) by applying the sigmoid function.
      */
     SIGMOID("sigmoid"),
     /**
