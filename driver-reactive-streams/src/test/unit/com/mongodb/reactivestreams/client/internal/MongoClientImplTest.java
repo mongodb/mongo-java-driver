@@ -211,7 +211,7 @@ public class MongoClientImplTest extends TestHelper {
                     .thenReturn(new ClientMetadata("test", mongoDriverInformation));
         });
         StreamFactoryFactory streamFactoryFactory = MongoMockito.mock(StreamFactoryFactory.class, mock -> {
-            when(mock.getClientExecutor()).thenReturn(AsyncClientExecutor.unimplemented());
+            when(mock.getClientExecutor()).thenReturn(AsyncClientExecutor.NO_OP);
         });
         return new MongoClientImpl(MongoClientSettings.builder().build(),
                 mongoDriverInformation, cluster, streamFactoryFactory, OPERATION_EXECUTOR);

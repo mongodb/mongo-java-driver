@@ -229,6 +229,6 @@ class ServerSessionPoolSpecification extends Specification {
     }
 
     static createServerSessionPool(Cluster cluster) {
-        new ServerSessionPool(cluster, AsyncClientExecutor.unimplemented(), TIMEOUT_SETTINGS, getServerApi())
+        new ServerSessionPool(cluster, AsyncClientExecutor.NO_OP, TIMEOUT_SETTINGS, getServerApi())
     }
 }

@@ -79,7 +79,7 @@ class MongoClientTest {
         StreamFactoryFactory streamFactoryFactory = MongoMockito.mock(
                 StreamFactoryFactory.class,
                 mock -> {
-                    when(mock.getClientExecutor()).thenReturn(AsyncClientExecutor.unimplemented());
+                    when(mock.getClientExecutor()).thenReturn(AsyncClientExecutor.NO_OP);
                     try {
                         doNothing().when(mock).close();
                     } catch (Exception e) {

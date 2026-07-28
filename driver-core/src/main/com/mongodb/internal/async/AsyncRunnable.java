@@ -235,7 +235,7 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
         return thenRun(callback -> {
             new RetryingAsyncCallbackSupplier<Void>(
                     // `AsyncClientExecutor` is not needed, given the contract of `SimpleRetryPolicy`, `RetryingAsyncCallbackSupplier`
-                    AsyncClientExecutor.unimplemented(),
+                    AsyncClientExecutor.NO_OP,
                     new RetryControl<>(new SimpleRetryPolicy(shouldRetry)),
                     // `finish` is required here instead of `unsafeFinish`
                     // because only `finish` meets the contract of

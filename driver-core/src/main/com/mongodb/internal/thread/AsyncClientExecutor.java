@@ -16,7 +16,6 @@
 package com.mongodb.internal.thread;
 
 import com.mongodb.annotations.ThreadSafe;
-import com.mongodb.assertions.Assertions;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.StreamFactoryFactory;
 
@@ -45,12 +44,7 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 @ThreadSafe
 public interface AsyncClientExecutor extends AutoCloseable {
-    /**
-     * The returned {@link AsyncClientExecutor} must not be used, as its methods {@linkplain Assertions#fail() fail}.
-     */
-    static AsyncClientExecutor unimplemented() {
-        return UnimplementedAsyncClientExecutor.instance();
-    }
+    AsyncClientExecutor NO_OP = UnimplementedAsyncClientExecutor.instance();
 
     /**
      * @param executor The executor to use for executing tasks.

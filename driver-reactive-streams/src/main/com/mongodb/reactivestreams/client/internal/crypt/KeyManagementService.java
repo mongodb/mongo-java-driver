@@ -183,7 +183,7 @@ class KeyManagementService implements Closeable {
                         throw new MongoOperationTimeoutException(TIMEOUT_ERROR_MESSAGE);
                     });
         }
-        return OperationContext.simpleOperationContext(timeoutSettings, null, AsyncClientExecutor.unimplemented());
+        return OperationContext.simpleOperationContext(timeoutSettings, null, AsyncClientExecutor.NO_OP);
     }
 
     @NonNull

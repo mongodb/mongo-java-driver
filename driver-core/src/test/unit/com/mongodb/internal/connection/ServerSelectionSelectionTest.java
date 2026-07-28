@@ -304,7 +304,7 @@ public class ServerSelectionSelectionTest {
                         IgnorableRequestContext.INSTANCE,
                         NoOpSessionContext.INSTANCE,
                         new TimeoutContext(TIMEOUT_SETTINGS.withServerSelectionTimeoutMS(0)),
-                        AsyncClientExecutor.unimplemented(),
+                        AsyncClientExecutor.NO_OP,
                         TracingManager.NO_OP,
                         null,
                         null,

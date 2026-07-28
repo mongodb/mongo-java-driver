@@ -50,7 +50,7 @@ public final class StreamFactoryHelper {
 
                 @Override
                 public AsyncClientExecutor getClientExecutor() {
-                    return AsyncClientExecutor.unimplemented();
+                    return AsyncClientExecutor.NO_OP;
                 }
 
                 @Override

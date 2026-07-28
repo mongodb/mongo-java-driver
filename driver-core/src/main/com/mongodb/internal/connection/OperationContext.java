@@ -70,7 +70,7 @@ public class OperationContext {
     @VisibleForTesting(otherwise = PRIVATE)
     public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
             @Nullable final ServerApi serverApi) {
-        this(requestContext, sessionContext, timeoutContext, AsyncClientExecutor.unimplemented(), TracingManager.NO_OP, serverApi, null);
+        this(requestContext, sessionContext, timeoutContext, AsyncClientExecutor.NO_OP, TracingManager.NO_OP, serverApi, null);
     }
 
     public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
@@ -114,7 +114,7 @@ public class OperationContext {
 
     @VisibleForTesting(otherwise = PRIVATE)
     static OperationContext simpleOperationContext(final TimeoutSettings timeoutSettings) {
-        return simpleOperationContext(timeoutSettings, null, AsyncClientExecutor.unimplemented());
+        return simpleOperationContext(timeoutSettings, null, AsyncClientExecutor.NO_OP);
     }
 
     public OperationContext withSessionContext(final SessionContext sessionContext) {

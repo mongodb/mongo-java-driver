@@ -261,6 +261,6 @@ class MongoClusterSpecification extends Specification {
         new MongoClusterImpl(null, cluster, settings.codecRegistry, null, null,
                 originator, operationExecutor, settings.readConcern, settings.readPreference, settings.retryReads, settings.retryWrites,
                 settings.enableOverloadRetargeting, null, serverSessionPool, TimeoutSettings.create(settings), settings.uuidRepresentation,
-                settings.writeConcern, AsyncClientExecutor.unimplemented(), TracingManager.NO_OP)
+                settings.writeConcern, AsyncClientExecutor.NO_OP, TracingManager.NO_OP)
     }
 }

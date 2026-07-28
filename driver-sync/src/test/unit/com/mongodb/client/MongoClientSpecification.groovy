@@ -229,7 +229,7 @@ class MongoClientSpecification extends Specification {
 
     def mockStreamFactoryFactory() {
         Mock(StreamFactoryFactory) {
-            getClientExecutor() >> AsyncClientExecutor.unimplemented()
+            getClientExecutor() >> AsyncClientExecutor.NO_OP
         }
     }
 }
