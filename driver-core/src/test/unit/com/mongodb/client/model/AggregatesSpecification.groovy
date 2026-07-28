@@ -22,7 +22,6 @@ import com.mongodb.client.model.search.SearchCollector
 import com.mongodb.client.model.search.SearchOperator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
-import org.bson.BsonString
 import org.bson.Document
 import org.bson.BinaryVector
 import org.bson.conversions.Bson

@@ -908,6 +908,96 @@ class AggregatesSpec extends BaseSpec {
     )
   }
 
+  it should "render $scoreFusion" in {
+    toBson(
+      Aggregates.scoreFusion(
+        Seq(
+          FusionPipeline("p1", Aggregates.filter(Filters.equal("x", 1))),
+          FusionPipeline("p2", Aggregates.filter(Filters.equal("x", 2)))
+        ),
+        ScoreNormalization.SIGMOID
+      )
+    ) should equal(
+      Document(
+        """{
+        "$scoreFusion": {
+            "input": {
+                "pipelines": {
+                    "p1": [{"$match": {"x": 1}}],
+                    "p2": [{"$match": {"x": 2}}]
+                },
+                "normalization": "sigmoid"
+            }
+        }
+      }"""
+      )
+    )
+  }
+
+  it should "render $scoreFusion with options" in {
+    toBson(
+      Aggregates.scoreFusion(
+        Seq(
+          FusionPipeline("p1", Aggregates.filter(Filters.equal("x", 1))),
+          FusionPipeline("p2", Aggregates.filter(Filters.equal("x", 2)))
+        ),
+        ScoreNormalization.MIN_MAX_SCALER,
+        ScoreFusionOptions
+          .scoreFusionOptions()
+          .combination(ScoreFusionCombination.weighted(Document("p1" -> 0.3, "p2" -> 0.7)).avg())
+          .scoreDetails(true)
+      )
+    ) should equal(
+      Document(
+        """{
+        "$scoreFusion": {
+            "input": {
+                "pipelines": {
+                    "p1": [{"$match": {"x": 1}}],
+                    "p2": [{"$match": {"x": 2}}]
+                },
+                "normalization": "minMaxScaler"
+            },
+            "combination": {"weights": {"p1": 0.3, "p2": 0.7}, "method": "avg"},
+            "scoreDetails": true
+        }
+      }"""
+      )
+    )
+  }
+
+  it should "render $scoreFusion with expression combination" in {
+    toBson(
+      Aggregates.scoreFusion(
+        Seq(
+          FusionPipeline("p1", Aggregates.filter(Filters.equal("x", 1))),
+          FusionPipeline("p2", Aggregates.filter(Filters.equal("x", 2)))
+        ),
+        ScoreNormalization.NONE,
+        ScoreFusionOptions
+          .scoreFusionOptions()
+          .combination(
+            ScoreFusionCombination.expression(Document("""{$sum: ["$$p1", "$$p2"]}"""))
+          )
+      )
+    ) should equal(
+      Document(
+        """{
+        "$scoreFusion": {
+            "input": {
+                "pipelines": {
+                    "p1": [{"$match": {"x": 1}}],
+                    "p2": [{"$match": {"x": 2}}]
+                },
+                "normalization": "none"
+            },
+            "combination": {"method": "expression", "expression": {"$sum": ["$$p1", "$$p2"]}}
+        }
+      }"""
+      )
+    )
+  }
+
   it should "render $unset" in {
     toBson(
       Aggregates.unset("title", "author.first")
