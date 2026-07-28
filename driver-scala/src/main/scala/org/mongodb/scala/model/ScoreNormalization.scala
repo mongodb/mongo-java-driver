@@ -33,7 +33,7 @@ object ScoreNormalization {
   val NONE: ScoreNormalization = JScoreNormalization.NONE
 
   /**
-   * Normalizes the score to the range [0, 1] by applying the sigmoid function.
+   * Normalizes the score to the range (0, 1) by applying the sigmoid function.
    */
   val SIGMOID: ScoreNormalization = JScoreNormalization.SIGMOID
 

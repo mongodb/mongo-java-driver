@@ -29,7 +29,7 @@ public enum ScoreNormalization {
      */
     NONE("none"),
     /**
-     * Normalizes the score to the range [0, 1] by applying the sigmoid function.
+     * Normalizes the score to the range (0, 1) by applying the sigmoid function.
      */
     SIGMOID("sigmoid"),
     /**
