@@ -580,9 +580,17 @@ public class AggregatesTest extends OperationTest {
                         Projections.meta("score", "score"),
                         Projections.meta("scoreDetails", "scoreDetails")))));
         assertEquals(3, results.size());
-        Assertions.assertTrue(results.get(0).getNumber("score").doubleValue() > 0);
-        BsonDocument details = results.get(0).getDocument("scoreDetails");
-        Assertions.assertNotNull(details);
-        Assertions.assertNotNull(details.get("details"));
+        results.forEach(result -> {
+            double score = result.getNumber("score").doubleValue();
+            Assertions.assertTrue(score > 0);
+            BsonDocument scoreDetails = result.getDocument("scoreDetails");
+            // "value" holds the same combined score as the score metadata
+            assertEquals(score, scoreDetails.getNumber("value").doubleValue());
+            Assertions.assertFalse(scoreDetails.getString("description").getValue().isEmpty());
+            assertEquals("sigmoid", scoreDetails.getString("normalization").getValue());
+            Assertions.assertNotNull(scoreDetails.getDocument("combination"));
+            // one entry per input pipeline
+            assertEquals(2, scoreDetails.getArray("details").size());
+        });
     }
 }
