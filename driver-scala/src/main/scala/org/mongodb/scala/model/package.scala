@@ -390,12 +390,11 @@ package object model {
   }
 
   /**
-   * The way in which the scores produced by the `\$scoreFusion` input pipelines are normalized before being combined.
+   * Normalization methods for the `\$score` and `\$scoreFusion` pipeline stages.
    *
    * @note Requires MongoDB 8.2 or greater
    * @since 5.10
    */
-  @Sealed
   type ScoreNormalization = com.mongodb.client.model.ScoreNormalization
 
   /**
