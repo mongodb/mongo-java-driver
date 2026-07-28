@@ -69,7 +69,7 @@ public final class RetryingSyncSupplier<R> implements Supplier<R> {
         return asyncFunctionSuccessfulResult.get().getNullable();
     }
 
-    private void sleep(final Duration duration) {
+    private static void sleep(final Duration duration) {
         try {
             NANOSECONDS.sleep(duration.toNanos());
         } catch (InterruptedException e) {
