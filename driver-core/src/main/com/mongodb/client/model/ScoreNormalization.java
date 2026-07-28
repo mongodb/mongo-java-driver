@@ -17,9 +17,10 @@
 package com.mongodb.client.model;
 
 /**
- * Normalization methods for the {@code $score} pipeline stage.
+ * Normalization methods for the {@code $score} and {@code $scoreFusion} pipeline stages.
  *
  * @mongodb.driver.manual reference/operator/aggregation/score/ $score
+ * @mongodb.driver.manual reference/operator/aggregation/scoreFusion/ $scoreFusion
  * @mongodb.server.release 8.2
  * @since 5.10
  */
