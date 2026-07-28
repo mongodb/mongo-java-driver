@@ -473,9 +473,21 @@ public class AggregatesTest extends OperationTest {
                 BsonDocument.parse("{_id: 3, x: 1, y: 3}"));
     }
 
-    private List<Integer> idsFor(final Bson scoreFusionStage) {
-        return getCollectionHelper().aggregate(singletonList(scoreFusionStage)).stream()
+    private List<BsonDocument> resultsWithScoresFor(final Bson scoreFusionStage) {
+        return getCollectionHelper().aggregate(asList(
+                scoreFusionStage,
+                project(Projections.meta("score", "score"))));
+    }
+
+    private List<Integer> idsFor(final List<BsonDocument> results) {
+        return results.stream()
                 .map(doc -> doc.getInt32("_id").getValue())
+                .collect(toList());
+    }
+
+    private List<Double> scoresFor(final List<BsonDocument> results) {
+        return results.stream()
+                .map(doc -> doc.getNumber("score").doubleValue())
                 .collect(toList());
     }
 
@@ -484,49 +496,61 @@ public class AggregatesTest extends OperationTest {
     public void shouldScoreFusionWithEachNormalization(final ScoreNormalization normalization) {
         assumeTrue(serverVersionAtLeast(8, 2));
         insertScoreFusionDocuments();
-        List<Integer> ids = idsFor(scoreFusion(
+        List<BsonDocument> results = resultsWithScoresFor(scoreFusion(
                 asList(
                         FusionPipeline.of("byX", match(exists("x")), SCORE_BY_X),
                         FusionPipeline.of("byY", match(exists("y")), SCORE_BY_Y)),
                 normalization));
-        assertEquals(3, ids.size());
+        assertEquals(3, results.size());
+        if (normalization == ScoreNormalization.NONE) {
+            // the server combines the scores of the two pipelines with avg by default: (x + y) / 2
+            assertEquals(asList(5.5, 3.5, 2.0), scoresFor(results));
+        } else {
+            // sigmoid maps each pipeline score into (0, 1) and minMaxScaler into [0, 1],
+            // so the average of the two is within [0, 1]
+            scoresFor(results).forEach(score -> Assertions.assertTrue(score >= 0 && score <= 1));
+        }
     }
 
     @Test
     public void shouldScoreFusionWithWeights() {
         assumeTrue(serverVersionAtLeast(8, 2));
         insertScoreFusionDocuments();
-        // weight only the "byY" pipeline: expected order is descending y
-        List<Integer> ids = idsFor(scoreFusion(
+        // weight only the "byY" pipeline: expected order is descending y, each score is y / 2
+        // because the server combines the weighted scores of the two pipelines with avg by default
+        List<BsonDocument> results = resultsWithScoresFor(scoreFusion(
                 asList(
                         FusionPipeline.of("byX", match(exists("x")), SCORE_BY_X),
                         FusionPipeline.of("byY", match(exists("y")), SCORE_BY_Y)),
                 ScoreNormalization.NONE,
                 scoreFusionOptions().combination(
                         ScoreFusionCombination.weighted(new Document("byX", 0).append("byY", 1)))));
-        assertEquals(asList(3, 2, 1), ids);
+        assertEquals(asList(3, 2, 1), idsFor(results));
+        assertEquals(asList(1.5, 1.0, 0.5), scoresFor(results));
     }
 
     @Test
     public void shouldScoreFusionWithWeightsAndAvgMethod() {
         assumeTrue(serverVersionAtLeast(8, 2));
         insertScoreFusionDocuments();
-        List<Integer> ids = idsFor(scoreFusion(
+        // weight only the "byX" pipeline and average over the two pipelines: each score is x / 2
+        List<BsonDocument> results = resultsWithScoresFor(scoreFusion(
                 asList(
                         FusionPipeline.of("byX", match(exists("x")), SCORE_BY_X),
                         FusionPipeline.of("byY", match(exists("y")), SCORE_BY_Y)),
                 ScoreNormalization.NONE,
                 scoreFusionOptions().combination(
                         ScoreFusionCombination.weighted(new Document("byX", 1).append("byY", 0)).avg())));
-        assertEquals(asList(1, 2, 3), ids);
+        assertEquals(asList(1, 2, 3), idsFor(results));
+        assertEquals(asList(5.0, 2.5, 0.5), scoresFor(results));
     }
 
     @Test
     public void shouldScoreFusionWithExpressionCombination() {
         assumeTrue(serverVersionAtLeast(8, 2));
         insertScoreFusionDocuments();
-        // ignore byX, use 10 * byY: expected order is descending y
-        List<Integer> ids = idsFor(scoreFusion(
+        // ignore byX, use 10 * byY: expected order is descending y, each score is exactly 10 * y
+        List<BsonDocument> results = resultsWithScoresFor(scoreFusion(
                 asList(
                         FusionPipeline.of("byX", match(exists("x")), SCORE_BY_X),
                         FusionPipeline.of("byY", match(exists("y")), SCORE_BY_Y)),
@@ -535,7 +559,8 @@ public class AggregatesTest extends OperationTest {
                         new Document("$sum", asList(
                                 new Document("$multiply", asList("$$byX", 0)),
                                 new Document("$multiply", asList("$$byY", 10))))))));
-        assertEquals(asList(3, 2, 1), ids);
+        assertEquals(asList(3, 2, 1), idsFor(results));
+        assertEquals(asList(30.0, 20.0, 10.0), scoresFor(results));
     }
 
     @Test
@@ -553,6 +578,7 @@ public class AggregatesTest extends OperationTest {
                         Projections.meta("score", "score"),
                         Projections.meta("scoreDetails", "scoreDetails")))));
         assertEquals(3, results.size());
+        Assertions.assertTrue(results.get(0).getNumber("score").doubleValue() > 0);
         BsonDocument details = results.get(0).getDocument("scoreDetails");
         Assertions.assertNotNull(details);
         Assertions.assertNotNull(details.get("details"));
