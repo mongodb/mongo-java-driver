@@ -75,9 +75,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
-import org.bson.codecs.DocumentCodec;
 
 import javax.net.ssl.SSLException;
 import java.time.Duration;
@@ -146,7 +144,6 @@ public final class ClusterFixture {
     private static Cluster asyncCluster;
     private static final Map<ReadPreference, ReadWriteBinding> BINDING_MAP = new HashMap<>();
     private static final Map<ReadPreference, SimpleSessionContext> SESSION_CONTEXT_MAP = new HashMap<>();
-    private static final Map<ReadPreference, SimpleSessionContext> ASYNC_SESSION_CONTEXT_MAP = new HashMap<>();
     private static final Map<ReadPreference, AsyncReadWriteBinding> ASYNC_BINDING_MAP = new HashMap<>();
 
     private static ServerVersion mongoCryptVersion;
@@ -253,19 +250,6 @@ public final class ClusterFixture {
                         .map(name -> getEnv(name, ""))
                         .filter(s -> !s.isEmpty())
                         .count() == requiredSystemProperties.size();
-    }
-
-    public static Document getServerStatus() {
-        return new CommandReadOperation<>("admin", new BsonDocument("serverStatus", new BsonInt32(1)),
-                new DocumentCodec())
-                .execute(getBinding(), createOperationContext());
-    }
-
-    public static boolean supportsFsync() {
-        Document serverStatus = getServerStatus();
-        Document storageEngine = (Document) serverStatus.get("storageEngine");
-
-        return storageEngine != null && !storageEngine.get("name").equals("inMemory");
     }
 
     static class ShutdownHook extends Thread {
@@ -416,7 +400,6 @@ public final class ClusterFixture {
         if (!ASYNC_BINDING_MAP.containsKey(readPreference)) {
             AsyncReadWriteBinding binding = new AsyncClusterBinding(cluster, readPreference);
             ASYNC_BINDING_MAP.put(readPreference, binding);
-            ASYNC_SESSION_CONTEXT_MAP.put(readPreference, new SimpleSessionContext());
         }
         return ASYNC_BINDING_MAP.get(readPreference);
     }
@@ -724,7 +707,7 @@ public final class ClusterFixture {
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
-    public static <T> void loopCursor(final List<AsyncBatchCursor<T>> batchCursors, final Block<T> block) throws Throwable {
+    public static <T> void loopCursor(final List<AsyncBatchCursor<T>> batchCursors, final Block<T> block) {
         List<FutureResultCallback<Void>> futures = new ArrayList<>();
         for (AsyncBatchCursor<T> batchCursor : batchCursors) {
             FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<>();
@@ -766,7 +749,7 @@ public final class ClusterFixture {
         });
     }
 
-    public static <T> List<T> collectCursorResults(final AsyncBatchCursor<T> batchCursor) throws Throwable {
+    public static <T> List<T> collectCursorResults(final AsyncBatchCursor<T> batchCursor) {
         List<T> results = new ArrayList<>();
         FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<>();
         loopCursor(batchCursor, t -> results.add(t), futureResultCallback);
