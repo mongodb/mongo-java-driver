@@ -163,19 +163,19 @@ final class SpecRetryPolicy implements RetryPolicy {
             return false;
         }
         MongoException mongoException = (MongoException) exception;
-        boolean connectionPoolClearedException = mongoException instanceof MongoConnectionPoolClearedException;
-        if (connectionPoolClearedException && policies.isRetrySettingEffectivelyTrue()) {
-            // We would have retried regardless of the settings,
-            // but we add `RETRYABLE_WRITE_ERROR_LABEL` only if retries are enabled via settings.
+        boolean retryableConnectionPoolClearedException = mongoException instanceof MongoConnectionPoolClearedException
+                && policies.isRetrySettingEffectivelyTrue();
+        if (retryableConnectionPoolClearedException) {
             mongoException.addLabel(RETRYABLE_WRITE_ERROR_LABEL);
         }
-        boolean retryRegardlessOfRequirementsHavingBeenMet = connectionPoolClearedException || isRetryableMongoSecurityException(mongoException);
+        boolean retryRegardlessOfTheRestOfRequirementsBeingMet = retryableConnectionPoolClearedException
+                || (policies.isRetrySettingEffectivelyTrue() && isRetryableMongoSecurityException(mongoException));
         boolean retry;
         if (state.isRequirementsMet()) {
             addRetryableWriteErrorLabelIfNeeded(mongoException, state.getMaxWireVersion());
             retry = mongoException.hasErrorLabel(RETRYABLE_WRITE_ERROR_LABEL);
         } else {
-            retry = retryRegardlessOfRequirementsHavingBeenMet;
+            retry = retryRegardlessOfTheRestOfRequirementsBeingMet;
         }
         return retry;
     }
