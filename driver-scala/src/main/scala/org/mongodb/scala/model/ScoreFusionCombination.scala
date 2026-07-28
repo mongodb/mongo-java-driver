@@ -15,7 +15,6 @@
  */
 package org.mongodb.scala.model
 
-import com.mongodb.annotations.Sealed
 import com.mongodb.client.model.{ ScoreFusionCombination => JScoreFusionCombination }
 import org.mongodb.scala.bson.conversions.Bson
 
@@ -25,7 +24,7 @@ import org.mongodb.scala.bson.conversions.Bson
  * @note Requires MongoDB 8.2 or greater
  * @since 5.10
  */
-@Sealed object ScoreFusionCombination {
+object ScoreFusionCombination {
 
   /**
    * Returns a `WeightedScoreFusionCombination` that combines the normalized scores using the given weights.
