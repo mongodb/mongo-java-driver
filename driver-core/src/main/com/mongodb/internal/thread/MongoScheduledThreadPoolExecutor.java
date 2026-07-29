@@ -15,36 +15,27 @@
  */
 package com.mongodb.internal.thread;
 
-import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.lang.Nullable;
 
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 
-import static com.mongodb.assertions.Assertions.assertNull;
-import static com.mongodb.assertions.Assertions.assertTrue;
-import static com.mongodb.internal.thread.MongoThreadPoolExecutor.handleTaskExceptions;
+import static com.mongodb.internal.thread.MongoThreadPoolExecutor.propagateTaskFailureToUncaughtExceptionHandler;
 
 /**
  * See {@link MongoThreadPoolExecutor}.
  */
 final class MongoScheduledThreadPoolExecutor extends ScheduledThreadPoolExecutor {
-    private final Logger logger;
-
     MongoScheduledThreadPoolExecutor(
             final int corePoolSize,
-            final ThreadFactory threadFactory,
-            final Logger logger) {
+            final ThreadFactory threadFactory) {
         super(corePoolSize, threadFactory);
         setRemoveOnCancelPolicy(true);
-        this.logger = logger;
     }
 
     @Override
     protected void afterExecute(final Runnable r, @Nullable final Throwable t) {
         super.afterExecute(r, t);
-        assertTrue(r instanceof Future<?>);
-        handleTaskExceptions(r, assertNull(t), logger);
+        propagateTaskFailureToUncaughtExceptionHandler(r, t);
     }
 }

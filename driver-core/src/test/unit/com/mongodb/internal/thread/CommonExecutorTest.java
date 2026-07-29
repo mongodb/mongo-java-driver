@@ -15,44 +15,38 @@
  */
 package com.mongodb.internal.thread;
 
-import com.mongodb.lang.Nullable;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.lang.Thread.UncaughtExceptionHandler;
+import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
 
 import static com.mongodb.internal.thread.CommonExecutor.commonExecutor;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 class CommonExecutorTest {
-    private static final long TIMEOUT_MILLIS = SECONDS.toMillis(1);
-
-    @Nullable
-    private UncaughtExceptionHandler originalUncaughtExceptionHandler;
-
-    @BeforeEach
-    void beforeEach() {
-        originalUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
-    }
-
-    @AfterEach
-    void afterEach() {
-        if (originalUncaughtExceptionHandler != null) {
-            Thread.setDefaultUncaughtExceptionHandler(originalUncaughtExceptionHandler);
-        }
-    }
-
+    private static final long TIMEOUT_MILLIS = 400;
+    /**
+     * This test verifies that even in the unlikely event that the single scheduling thread is terminated,
+     * it is replaced with another one to execute a previously scheduled task.
+     */
     @Test
-    void uncaughtExceptionHandlerExecutesInDifferentThread() throws Exception {
-        CompletableFuture<Thread> threadFuture = new CompletableFuture<>();
-        Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
-            threadFuture.complete(Thread.currentThread());
-        });
-        commonExecutor().uncaughtError(new AssertionError());
-        assertNotSame(Thread.currentThread(), threadFuture.get(TIMEOUT_MILLIS, MILLISECONDS));
+    void singleSchedulingThreadIsReplacedIfTerminated() throws Exception {
+        Executor sameThreadExecutor = Runnable::run;
+        CompletableFuture<Thread> newSchedulingThread = new CompletableFuture<>();
+        commonExecutor().schedule(
+                () -> newSchedulingThread.complete(Thread.currentThread()),
+                Duration.ofMillis(TIMEOUT_MILLIS / 2),
+                sameThreadExecutor);
+        CompletableFuture<Thread> terminatedSchedulingThread = new CompletableFuture<>();
+        commonExecutor().schedule(
+                () -> {
+                    terminatedSchedulingThread.complete(Thread.currentThread());
+                    throw new Error("This error is thrown in the single scheduling thread, causing its termination");
+                },
+                Duration.ZERO,
+                sameThreadExecutor);
+        assertNotSame(terminatedSchedulingThread.get(TIMEOUT_MILLIS, MILLISECONDS), newSchedulingThread.get(TIMEOUT_MILLIS, MILLISECONDS));
     }
 }

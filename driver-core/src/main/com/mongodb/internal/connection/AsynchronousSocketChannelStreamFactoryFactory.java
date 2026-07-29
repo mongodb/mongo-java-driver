@@ -19,7 +19,6 @@ package com.mongodb.internal.connection;
 import com.mongodb.connection.AsyncTransportSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.internal.thread.MongoThreadPoolExecutor;
@@ -56,7 +55,7 @@ public final class AsynchronousSocketChannelStreamFactoryFactory implements Stre
         int availableProcessors = Runtime.getRuntime().availableProcessors();
         ownedExecutorBackingClientExecutor = new MongoThreadPoolExecutor(
                 availableProcessors, availableProcessors, Duration.ofMinutes(5),
-                new LinkedBlockingQueue<>(), new DaemonThreadFactory("ClientExecutor"), Loggers.getLogger("client"));
+                new LinkedBlockingQueue<>(), new DaemonThreadFactory("ClientExecutor"));
         ownedExecutorBackingClientExecutor.allowCoreThreadTimeOut(true);
         clientExecutor = AsyncClientExecutor.backedBy(ownedExecutorBackingClientExecutor);
     }

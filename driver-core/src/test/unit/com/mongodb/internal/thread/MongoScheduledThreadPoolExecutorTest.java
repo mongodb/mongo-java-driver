@@ -16,7 +16,7 @@
 package com.mongodb.internal.thread;
 
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.concurrent.Callable;
 
@@ -24,14 +24,20 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class MongoScheduledThreadPoolExecutorTest extends MongoThreadPoolExecutorTest {
     @ParameterizedTest
-    @ValueSource(booleans = {true, false})
+    @CsvSource({
+            "false, false",
+            "false, true",
+            "true, false",
+            "true, true"})
     @Override
-    void delegateErrorToDefaultUncaughtExceptionHandlerAndLog(final boolean taskCompletesAbruptlyWithError) throws Exception {
-        MongoScheduledThreadPoolExecutor executor = new MongoScheduledThreadPoolExecutor(1, new DaemonThreadFactory("test"), getLogger());
+    void delegateErrorToDefaultUncaughtExceptionHandlerOrLog(
+            final boolean taskCompletesAbruptlyWithError,
+            final boolean setDefaultUncaughtExceptionHandler) throws Exception {
+        MongoScheduledThreadPoolExecutor executor = new MongoScheduledThreadPoolExecutor(1, new DaemonThreadFactory("test"));
         try {
-            Error error = new AssertionError();
-            RuntimeException exception = new RuntimeException();
-            Throwable expectedException = taskCompletesAbruptlyWithError ? error : exception;
+            Error error = new Error("expected error");
+            RuntimeException exception = new RuntimeException("expected exception");
+            Throwable expectedThrowable = taskCompletesAbruptlyWithError ? error : exception;
             Runnable runnable = () -> {
                 if (taskCompletesAbruptlyWithError) {
                     throw error;
@@ -43,14 +49,14 @@ class MongoScheduledThreadPoolExecutorTest extends MongoThreadPoolExecutorTest {
                 runnable.run();
                 return null;
             };
-            assertDelegateErrorToDefaultUncaughtExceptionHandlerAndLog(expectedException, false, () -> executor.execute(runnable));
-            assertDelegateErrorToDefaultUncaughtExceptionHandlerAndLog(expectedException, false, () -> executor.submit(runnable));
-            assertDelegateErrorToDefaultUncaughtExceptionHandlerAndLog(expectedException, false, () -> executor.submit(runnable, null));
-            assertDelegateErrorToDefaultUncaughtExceptionHandlerAndLog(expectedException, false, () -> executor.submit(callable));
-            assertDelegateErrorToDefaultUncaughtExceptionHandlerAndLog(expectedException, false, () -> executor.schedule(runnable, 0, MILLISECONDS));
-            assertDelegateErrorToDefaultUncaughtExceptionHandlerAndLog(expectedException, false, () -> executor.schedule(callable, 0, MILLISECONDS));
-            assertDelegateErrorToDefaultUncaughtExceptionHandlerAndLog(expectedException, false, () -> executor.scheduleAtFixedRate(runnable, 0, 1, MILLISECONDS));
-            assertDelegateErrorToDefaultUncaughtExceptionHandlerAndLog(expectedException, false, () -> executor.scheduleWithFixedDelay(runnable, 0, 1, MILLISECONDS));
+            assertDelegateErrorToDefaultUncaughtExceptionHandlerOrLog(expectedThrowable, setDefaultUncaughtExceptionHandler, () -> executor.execute(runnable));
+            assertDelegateErrorToDefaultUncaughtExceptionHandlerOrLog(expectedThrowable, setDefaultUncaughtExceptionHandler, () -> executor.submit(runnable));
+            assertDelegateErrorToDefaultUncaughtExceptionHandlerOrLog(expectedThrowable, setDefaultUncaughtExceptionHandler, () -> executor.submit(runnable, null));
+            assertDelegateErrorToDefaultUncaughtExceptionHandlerOrLog(expectedThrowable, setDefaultUncaughtExceptionHandler, () -> executor.submit(callable));
+            assertDelegateErrorToDefaultUncaughtExceptionHandlerOrLog(expectedThrowable, setDefaultUncaughtExceptionHandler, () -> executor.schedule(runnable, 0, MILLISECONDS));
+            assertDelegateErrorToDefaultUncaughtExceptionHandlerOrLog(expectedThrowable, setDefaultUncaughtExceptionHandler, () -> executor.schedule(callable, 0, MILLISECONDS));
+            assertDelegateErrorToDefaultUncaughtExceptionHandlerOrLog(expectedThrowable, setDefaultUncaughtExceptionHandler, () -> executor.scheduleAtFixedRate(runnable, 0, 1, MILLISECONDS));
+            assertDelegateErrorToDefaultUncaughtExceptionHandlerOrLog(expectedThrowable, setDefaultUncaughtExceptionHandler, () -> executor.scheduleWithFixedDelay(runnable, 0, 1, MILLISECONDS));
         } finally {
             executor.shutdownNow();
         }

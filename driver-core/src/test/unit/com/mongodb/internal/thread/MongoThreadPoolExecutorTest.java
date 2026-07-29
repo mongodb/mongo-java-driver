@@ -15,61 +15,77 @@
  */
 package com.mongodb.internal.thread;
 
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.CsvSource;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.lang.Thread.UncaughtExceptionHandler;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.matches;
-import static org.mockito.Mockito.clearInvocations;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MongoThreadPoolExecutorTest {
     private static final long TIMEOUT_MILLIS = 100;
 
-    private Logger logger;
-
+    @Nullable
+    private PrintStream originalStderr;
+    private ByteArrayOutputStream stderrTap;
     @Nullable
     private UncaughtExceptionHandler originalUncaughtExceptionHandler;
 
     @BeforeEach
-    void beforeEach() {
-        logger = spy(Loggers.getLogger("test"));
+    void beforeEach() throws UnsupportedEncodingException {
         originalUncaughtExceptionHandler = Thread.getDefaultUncaughtExceptionHandler();
+        originalStderr = System.err;
+        stderrTap = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(stderrTap, true, StandardCharsets.UTF_8.name()));
     }
 
     @AfterEach
-    void afterEach() {
-        if (originalUncaughtExceptionHandler != null) {
+    void afterEach() throws IOException {
+        try {
             Thread.setDefaultUncaughtExceptionHandler(originalUncaughtExceptionHandler);
+        } finally {
+            try {
+                if (originalStderr != null) {
+                    System.setErr(originalStderr);
+                }
+            } finally {
+                if (stderrTap != null) {
+                    stderrTap.close();
+                }
+            }
         }
     }
 
     @ParameterizedTest
-    @ValueSource(booleans = {true, false})
-    void delegateErrorToDefaultUncaughtExceptionHandlerAndLog(final boolean taskCompletesAbruptlyWithError) throws Exception {
+    @CsvSource({
+            "false, false",
+            "false, true",
+            "true, false",
+            "true, true"
+    })
+    void delegateErrorToDefaultUncaughtExceptionHandlerOrLog(
+            final boolean taskCompletesAbruptlyWithError,
+            final boolean setDefaultUncaughtExceptionHandler) throws Exception {
         MongoThreadPoolExecutor executor = new MongoThreadPoolExecutor(
-                1, 1, Duration.ofMillis(TIMEOUT_MILLIS), new LinkedBlockingQueue<>(), new DaemonThreadFactory("test"), logger);
+                1, 1, Duration.ofMillis(TIMEOUT_MILLIS), new LinkedBlockingQueue<>(), new DaemonThreadFactory("test"));
         try {
-            Error error = new AssertionError();
-            RuntimeException exception = new RuntimeException();
+            Error error = new Error("expected error");
+            RuntimeException exception = new RuntimeException("expected exception");
             Throwable expectedThrowable = taskCompletesAbruptlyWithError ? error : exception;
             Runnable runnable = () -> {
                 if (taskCompletesAbruptlyWithError) {
@@ -82,44 +98,46 @@ class MongoThreadPoolExecutorTest {
                 runnable.run();
                 return null;
             };
-            assertDelegateErrorToDefaultUncaughtExceptionHandlerAndLog(expectedThrowable, true, () -> executor.execute(runnable));
-            assertDelegateErrorToDefaultUncaughtExceptionHandlerAndLog(expectedThrowable, false, () -> executor.submit(runnable));
-            assertDelegateErrorToDefaultUncaughtExceptionHandlerAndLog(expectedThrowable, false, () -> executor.submit(runnable, null));
-            assertDelegateErrorToDefaultUncaughtExceptionHandlerAndLog(expectedThrowable, false, () -> executor.submit(callable));
+            assertDelegateErrorToDefaultUncaughtExceptionHandlerOrLog(expectedThrowable, setDefaultUncaughtExceptionHandler, () -> executor.execute(runnable));
+            assertDelegateErrorToDefaultUncaughtExceptionHandlerOrLog(expectedThrowable, setDefaultUncaughtExceptionHandler, () -> executor.submit(runnable));
+            assertDelegateErrorToDefaultUncaughtExceptionHandlerOrLog(expectedThrowable, setDefaultUncaughtExceptionHandler, () -> executor.submit(runnable, null));
+            assertDelegateErrorToDefaultUncaughtExceptionHandlerOrLog(expectedThrowable, setDefaultUncaughtExceptionHandler, () -> executor.submit(callable));
         } finally {
             executor.shutdownNow();
         }
     }
 
-    /**
-     * @param delegatesExceptionToUncaughtExceptionHandler The {@link ExecutorService#execute(Runnable)} method usually results in
-     * the task exception to be thrown from the worker thread {@link Thread#run()} method,
-     * though {@link ScheduledThreadPoolExecutor#execute(Runnable)} is an example where that is not the case.
-     * This is different from the behavior of the {@link ExecutorService#submit(Runnable)} method, and similar methods that return
-     * a {@link Future} holding the task exception.
-     * This parameter reflects the expected behavior, depending on the method used by {@code submitThrowingTask}.
-     */
-    void assertDelegateErrorToDefaultUncaughtExceptionHandlerAndLog(
+    void assertDelegateErrorToDefaultUncaughtExceptionHandlerOrLog(
             final Throwable expectedThrowable,
-            final boolean delegatesExceptionToUncaughtExceptionHandler,
+            final boolean setDefaultUncaughtExceptionHandler,
             final Runnable submitThrowingTask) throws Exception {
         CompletableFuture<Throwable> uncaughtExceptionFuture = new CompletableFuture<>();
-        Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
-            uncaughtExceptionFuture.complete(e);
-        });
-        clearInvocations(logger);
+        if (setDefaultUncaughtExceptionHandler) {
+            Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+                uncaughtExceptionFuture.complete(e);
+            });
+        } else {
+            // we remove the original `UncaughtExceptionHandler` to guarantee that uncaught exceptions are printed to `System.err`
+            Thread.setDefaultUncaughtExceptionHandler(null);
+        }
+        stderrTap.reset();
         submitThrowingTask.run();
         Thread.sleep(TIMEOUT_MILLIS);
-        if (expectedThrowable instanceof Error || delegatesExceptionToUncaughtExceptionHandler) {
+        if (setDefaultUncaughtExceptionHandler) {
             Throwable actualUncaughtException = uncaughtExceptionFuture.get(TIMEOUT_MILLIS, MILLISECONDS);
-            assertSame(expectedThrowable, actualUncaughtException);
+            if (expectedThrowable instanceof Error) {
+                assertSame(expectedThrowable, actualUncaughtException);
+            } else {
+                assertInstanceOf(Error.class, actualUncaughtException);
+                assertSame(expectedThrowable, actualUncaughtException.getCause());
+            }
         } else {
-            assertFalse(uncaughtExceptionFuture.isDone());
+            String actualLoggedMessage = stderrTap.toString(StandardCharsets.UTF_8.name());
+            assertTrue(actualLoggedMessage.contains(expectedThrowable.getClass().getName()) && actualLoggedMessage.contains(expectedThrowable.getMessage()),
+                    () -> {
+                        return String.format("actualLoggedMessage=%s does not contain information about expectedThrowable=%s",
+                                actualLoggedMessage, expectedThrowable);
+                    });
         }
-        verify(logger).error(matches("A task completed abruptly"), any());
-    }
-
-    Logger getLogger() {
-        return logger;
     }
 }

@@ -15,9 +15,10 @@
  */
 package com.mongodb.internal.thread;
 
-import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.lang.Nullable;
 
+import java.io.PrintStream;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.time.Duration;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CancellationException;
@@ -27,65 +28,77 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
-import static com.mongodb.internal.thread.CommonExecutor.commonExecutor;
+import static com.mongodb.assertions.Assertions.fail;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
- * A {@link ThreadPoolExecutor} that always handles task exceptions,
- * even if the caller ignores the {@link Future} that represents completion of the task:
- * <ul>
- *     <li>
- *     {@link Error}s packed into {@link Future}s are handled via {@link CommonExecutor#uncaughtError(Error)}.</li>
- *     <li>
- *     All {@link Throwable}s are logged.</li>
- * </ul>
+ * A {@link ThreadPoolExecutor} that ensures the task failure is propagated to the {@link UncaughtExceptionHandler}, if there is any,
+ * even if it is wrapped into a {@link Future} that represents completion of the task. This terminates the worker thread.
+ * Any non-{@link Error} gets turned into {@link AssertionError}, because all {@link Exception}s must be caught and handled by tasks.
+ * <p>
+ * The driver code never observes task failures through {@link Future}s that represent completion of tasks,
+ * which is why this class is useful.
+ * <p>
+ * Handling a task failure when it is an {@link Error} this way enables applications to decide how to deal with it
+ * via {@link UncaughtExceptionHandler}. An {@link Error} is more likely to cause an invariant violation than an {@link Exception},
+ * because it is less likely to be taken into account in code. An {@link AssertionError} outright informs about an invariant violation.
+ * Furthermore, a {@link VirtualMachineError} not only may happen in a peculiar situation,
+ * but also may be <a href="https://docs.oracle.com/javase/specs/jls/se17/html/jls-11.html#jls-11.1.3">asynchronous</a>.
+ * That is why it may be a good idea for an application to terminate on {@link Error}.
+ * We cannot make such a decision for an application, but we must do our best to give it an opportunity to react to an {@link Error}.
+ * <p>
+ * If there is no {@link UncaughtExceptionHandler}, then the failure is {@linkplain Throwable#printStackTrace(PrintStream) printed}
+ * to {@link System#err}, see {@link ThreadGroup#uncaughtException(Thread, Throwable)}.
  */
 public final class MongoThreadPoolExecutor extends ThreadPoolExecutor {
-    private final Logger logger;
-
     public MongoThreadPoolExecutor(
             final int corePoolSize,
             final int maximumPoolSize,
             final Duration keepAliveTime,
             final BlockingQueue<Runnable> workQueue,
-            final ThreadFactory threadFactory,
-            final Logger logger) {
+            final ThreadFactory threadFactory) {
         super(corePoolSize, maximumPoolSize, keepAliveTime.toNanos(), NANOSECONDS, workQueue, threadFactory);
-        this.logger = logger;
     }
 
     @Override
     protected void afterExecute(final Runnable r, @Nullable final Throwable t) {
         super.afterExecute(r, t);
-        handleTaskExceptions(r, t, logger);
+        propagateTaskFailureToUncaughtExceptionHandler(r, t);
     }
 
-    static void handleTaskExceptions(final Runnable r, @Nullable final Throwable t, final Logger logger) {
-        Throwable exception = getException(r, t);
-        if (exception instanceof Error && t == null) {
-            // the `Error` is held in `r`, and would have not been thrown to be handled by the uncaught exception handler
-            commonExecutor().uncaughtError((Error) exception);
+    static void propagateTaskFailureToUncaughtExceptionHandler(final Runnable maybeFuture, @Nullable final Throwable t) {
+        if (t != null) {
+            if (t instanceof Error) {
+                // nothing to do, as we know `t` is going to be thrown and caught by `UncaughtExceptionHandler`, if there is any
+                return;
+            } else {
+                throw fail(t);
+            }
         }
-        if (exception != null) {
-            logger.error("A task completed abruptly", exception);
+        Throwable tWrapped = unwrapThrowable(maybeFuture);
+        if (tWrapped != null) {
+            if (tWrapped instanceof Error) {
+                // we must throw `tWrapped` for it to be caught by `UncaughtExceptionHandler`, if there is any
+                throw (Error) tWrapped;
+            } else {
+                throw fail(tWrapped);
+            }
         }
     }
 
     @Nullable
-    private static Throwable getException(final Runnable r, @Nullable final Throwable t) {
-        if (t != null) {
-            return t;
-        }
-        if (r instanceof Future<?>) {
-            Future<?> runnableFuture = (Future<?>) r;
+    private static Throwable unwrapThrowable(final Runnable maybeFuture) {
+        if (maybeFuture instanceof Future<?> && ((Future<?>) maybeFuture).isDone()) {
+            Future<?> runnableFuture = (Future<?>) maybeFuture;
             try {
                 runnableFuture.get();
             } catch (CancellationException e) {
-                return e;
+                // not a task failure
+                return null;
             } catch (ExecutionException e) {
                 return assertNotNull(e.getCause());
             } catch (InterruptedException e) {
-                // not else to do but to reinstate the interrupted status
+                // not a task failure
                 Thread.currentThread().interrupt();
             }
         }
