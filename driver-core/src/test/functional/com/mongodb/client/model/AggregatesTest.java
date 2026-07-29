@@ -47,12 +47,14 @@ import static com.mongodb.client.model.Aggregates.match;
 import static com.mongodb.client.model.Aggregates.project;
 import static com.mongodb.client.model.Aggregates.rerank;
 import static com.mongodb.client.model.Aggregates.scoreFusion;
+import static com.mongodb.client.model.Aggregates.score;
 import static com.mongodb.client.model.Aggregates.unset;
 import static com.mongodb.client.model.Aggregates.vectorSearch;
 import static com.mongodb.client.model.Filters.exists;
 import static com.mongodb.client.model.RerankQuery.rerankQuery;
 import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
 import static com.mongodb.client.model.ScoreFusionOptions.scoreFusionOptions;
+import static com.mongodb.client.model.ScoreOptions.scoreOptions;
 import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Windows.Bound.UNBOUNDED;
 import static com.mongodb.client.model.Windows.documents;
@@ -64,6 +66,7 @@ import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class AggregatesTest extends OperationTest {
@@ -490,6 +493,30 @@ public class AggregatesTest extends OperationTest {
                 .collect(toList());
     }
 
+    @Test
+    public void testScoreWithExpression() {
+        assertPipeline(
+                "{'$score': {'score': {'$multiply': ['$rating', 2]}}}",
+                score(new Document("$multiply", asList("$rating", 2))));
+    }
+
+    @Test
+    public void testScoreWithAllOptions() {
+        assertPipeline(
+                "{"
+                        + "  '$score': {"
+                        + "    'score': '$rating',"
+                        + "    'normalization': 'sigmoid',"
+                        + "    'weight': 0.5,"
+                        + "    'scoreDetails': true"
+                        + "  }"
+                        + "}",
+                score("$rating", scoreOptions()
+                        .normalization(ScoreNormalization.SIGMOID)
+                        .weight(0.5)
+                        .scoreDetails(true)));
+    }
+
     @ParameterizedTest
     @EnumSource(ScoreNormalization.class)
     public void shouldScoreFusionWithEachNormalization(final ScoreNormalization normalization) {
@@ -591,5 +618,58 @@ public class AggregatesTest extends OperationTest {
             // one entry per input pipeline
             assertEquals(2, scoreDetails.getArray("details").size());
         });
+    }
+    public void testScoreWithEachNormalization(final ScoreNormalization normalization) {
+        assertPipeline(
+                "{'$score': {'score': '$rating', 'normalization': '" + normalization.getValue() + "'}}",
+                score("$rating", scoreOptions().normalization(normalization)));
+    }
+
+    @Test
+    public void testScoreWeightValidation() {
+        assertThrows(IllegalArgumentException.class, () -> scoreOptions().weight(-0.1));
+        assertThrows(IllegalArgumentException.class, () -> scoreOptions().weight(1.1));
+        assertThrows(IllegalArgumentException.class, () -> scoreOptions().weight(Double.NaN));
+        assertPipeline(
+                "{'$score': {'score': '$rating', 'weight': 0.0}}",
+                score("$rating", scoreOptions().weight(0)));
+        assertPipeline(
+                "{'$score': {'score': '$rating', 'weight': 1.0}}",
+                score("$rating", scoreOptions().weight(1)));
+    }
+
+    @Test
+    public void testScore() {
+        assumeTrue(serverVersionAtLeast(8, 2));
+        getCollectionHelper().insertDocuments("[{_id: 1, rating: 2}, {_id: 2, rating: 4}]");
+
+        List<Bson> pipeline = asList(
+                score(new Document("$multiply", asList("$rating", 2)),
+                        scoreOptions().normalization(ScoreNormalization.SIGMOID)),
+                Aggregates.sort(ascending("_id")),
+                Aggregates.project(Projections.computed("score", new Document("$meta", "score"))));
+
+        List<BsonDocument> results = getCollectionHelper().aggregate(pipeline);
+        assertEquals(2, results.size());
+        // sigmoid normalization maps each score into the range (0, 1)
+        results.forEach(result -> {
+            double scoreValue = result.getNumber("score").doubleValue();
+            Assertions.assertTrue(scoreValue > 0 && scoreValue < 1);
+        });
+    }
+
+    @ParameterizedTest
+    @EnumSource(ScoreNormalization.class)
+    public void testScoreOnServerWithEachNormalization(final ScoreNormalization normalization) {
+        assumeTrue(serverVersionAtLeast(8, 2));
+        getCollectionHelper().insertDocuments("[{_id: 1, rating: 2}, {_id: 2, rating: 4}]");
+
+        List<Bson> pipeline = asList(
+                score("$rating", scoreOptions().normalization(normalization)),
+                Aggregates.project(Projections.computed("score", new Document("$meta", "score"))));
+
+        List<BsonDocument> results = getCollectionHelper().aggregate(pipeline);
+        assertEquals(2, results.size());
+        results.forEach(result -> Assertions.assertTrue(result.isNumber("score")));
     }
 }

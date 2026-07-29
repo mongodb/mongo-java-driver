@@ -39,6 +39,7 @@ import org.mongodb.scala.model.search.SearchFacet.stringFacet
 import org.mongodb.scala.model.search.SearchHighlight.paths
 import com.mongodb.client.model.{ Aggregates => JAggregates }
 import com.mongodb.client.model.RerankQuery
+import com.mongodb.client.model.ScoreOptions.scoreOptions
 import com.mongodb.client.model.search.VectorSearchQuery
 import org.bson.BinaryVector
 import org.mongodb.scala.model.search.SearchCollector
@@ -906,6 +907,52 @@ class AggregatesSpec extends BaseSpec {
       }"""
       )
     )
+  }
+
+  it should "render $score" in {
+    toBson(
+      Aggregates.score(Document("""{$multiply: ["$rating", 2]}"""))
+    ) should equal(
+      Document("""{ "$score": { "score": {"$multiply": ["$rating", 2]} } }""")
+    )
+  }
+
+  it should "render $score with options" in {
+    toBson(
+      Aggregates.score(
+        "$rating",
+        scoreOptions()
+          .normalization(ScoreNormalization.SIGMOID)
+          .weight(0.5)
+          .scoreDetails(true)
+      )
+    ) should equal(
+      Document(
+        """{
+        "$score": {
+            "score": "$rating",
+            "normalization": "sigmoid",
+            "weight": 0.5,
+            "scoreDetails": true
+        }
+      }"""
+      )
+    )
+  }
+
+  it should "render $score with each normalization type" in {
+    Seq(
+      (ScoreNormalization.NONE, "none"),
+      (ScoreNormalization.SIGMOID, "sigmoid"),
+      (ScoreNormalization.MIN_MAX_SCALER, "minMaxScaler")
+    ).foreach {
+      case (normalization, expected) =>
+        toBson(
+          Aggregates.score("$rating", scoreOptions().normalization(normalization))
+        ) should equal(
+          Document(s"""{ "$$score": { "score": "$$rating", "normalization": "$expected" } }""")
+        )
+    }
   }
 
   it should "render $scoreFusion" in {

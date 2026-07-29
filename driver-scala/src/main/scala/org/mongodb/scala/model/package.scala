@@ -1158,6 +1158,8 @@ package object model {
 
   type RerankQuery = com.mongodb.client.model.RerankQuery
 
+  type ScoreOptions = com.mongodb.client.model.ScoreOptions
+
   /**
    * @see `QuantileMethod.approximate()`
    */
