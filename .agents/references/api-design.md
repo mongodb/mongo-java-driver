@@ -1,6 +1,6 @@
 ---
 name: api-design
-description: API stability annotations, design principles, and patterns for the MongoDB Java Driver. Use when adding or modifying public API surface — new classes, methods, interfaces, or changing method signatures.
+description: API stability annotations, nullability and thread safety conventions, design principles, and patterns for the MongoDB Java Driver. Use when adding or modifying public API surface — new classes, methods, interfaces, or changing method signatures.
 ---
 # API Design
 
@@ -28,6 +28,24 @@ description: API stability annotations, design principles, and patterns for the 
 - Public API lives in `driver-sync`, `driver-reactive-streams`, and language wrappers (`driver-kotlin-sync`, `driver-kotlin-coroutine`, `driver-scala`)
 - `driver-core` owns shared internals, query builders (`Filters`, `Updates`, `Aggregates`), and the async execution layer
 - Sync wrappers delegate to async core — never add sync-only logic that diverges from the async path
+
+## Nullability
+
+Use `com.mongodb.lang.Nullable` / `NonNull` / `NonNullApi` annotations.
+
+- Packages with `@NonNullApi` in `package-info.java` are non-null by default — only annotate
+  exceptions with `@Nullable`.
+- New packages must include `@NonNullApi`.
+- Older packages without it are nullable by default and require explicit `@NonNull` where needed.
+
+## Thread Safety
+
+Use `com.mongodb.annotations`; `@ThreadSafe`, `@NotThreadSafe`, or `@Immutable`.
+
+- All public API classes must be thread-safe unless annotated otherwise.
+- Concurrent code — particularly in async `driver-core` paths — must use locks (via
+  `Locks.withLock()`), `volatile` fields, or `java.util.concurrent` atomics; never rely on
+  external synchronization.
 
 ## Design Principles
 
