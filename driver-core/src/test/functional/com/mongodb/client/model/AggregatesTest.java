@@ -464,9 +464,8 @@ public class AggregatesTest extends OperationTest {
                 ));
     }
 
-    // TODO JAVA-6202 replace the raw $score documents in these tests with the $score builder once available
-    private static final Bson SCORE_BY_X = BsonDocument.parse("{$score: {score: '$x'}}");
-    private static final Bson SCORE_BY_Y = BsonDocument.parse("{$score: {score: '$y'}}");
+    private static final Bson SCORE_BY_X = score("$x");
+    private static final Bson SCORE_BY_Y = score("$y");
 
     private void insertScoreFusionDocuments() {
         getCollectionHelper().insertDocuments(
