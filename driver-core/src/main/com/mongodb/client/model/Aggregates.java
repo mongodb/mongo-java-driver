@@ -54,6 +54,7 @@ import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
+import static com.mongodb.client.model.ScoreOptions.scoreOptions;
 import static com.mongodb.client.model.densify.DensifyOptions.densifyOptions;
 import static com.mongodb.client.model.search.SearchOptions.searchOptions;
 import static com.mongodb.internal.Iterables.concat;
@@ -1091,6 +1092,68 @@ public final class Aggregates {
         isTrueArgument("paths must not be empty", !paths.isEmpty());
         notNull("model", model);
         return new RerankBson(query, paths, numDocsToRerank, model);
+    }
+
+    /**
+     * Creates a {@code $score} pipeline stage that computes a new score for each document
+     * and attaches it as {@code score} metadata.
+     * You may use the {@code $meta: "score"} expression to extract the computed score.
+     *
+     * @param score the expression that computes the score. Must evaluate to a numeric value.
+     * @param <TExpression> the score expression type
+     * @return the {@code $score} pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/score/ $score
+     * @mongodb.server.release 8.2
+     * @since 5.10
+     */
+    public static <TExpression> Bson score(final TExpression score) {
+        return score(score, scoreOptions());
+    }
+
+    /**
+     * Creates a {@code $score} pipeline stage that computes a new score for each document
+     * and attaches it as {@code score} metadata, with optional normalization, weighting and score details.
+     * You may use the {@code $meta: "score"} expression to extract the computed score.
+     *
+     * @param score the expression that computes the score. Must evaluate to a numeric value.
+     * @param options optional {@code $score} pipeline stage fields
+     * @param <TExpression> the score expression type
+     * @return the {@code $score} pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/score/ $score
+     * @mongodb.server.release 8.2
+     * @since 5.10
+     */
+    public static <TExpression> Bson score(final TExpression score, final ScoreOptions options) {
+        notNull("score", score);
+        notNull("options", options);
+        return new Bson() {
+            @Override
+            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+                BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+                writer.writeStartDocument();
+                writer.writeStartDocument("$score");
+
+                writer.writeName("score");
+                BuildersHelper.encodeValue(writer, score, codecRegistry);
+
+                options.toBsonDocument(documentClass, codecRegistry).forEach((optionName, optionValue) -> {
+                    writer.writeName(optionName);
+                    BuildersHelper.encodeValue(writer, optionValue, codecRegistry);
+                });
+
+                writer.writeEndDocument();
+                writer.writeEndDocument();
+                return writer.getDocument();
+            }
+
+            @Override
+            public String toString() {
+                return "Stage{name='$score'"
+                        + ", score=" + score
+                        + ", options=" + options
+                        + '}';
+            }
+        };
     }
 
     /**

@@ -1095,6 +1095,10 @@ package object model {
 
   type RerankQuery = com.mongodb.client.model.RerankQuery
 
+  type ScoreOptions = com.mongodb.client.model.ScoreOptions
+
+  type ScoreNormalization = com.mongodb.client.model.ScoreNormalization
+
   /**
    * @see `QuantileMethod.approximate()`
    */

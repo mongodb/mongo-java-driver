@@ -852,6 +852,35 @@ object Aggregates {
     JAggregates.rerank(query, paths.toList.asJava, numDocsToRerank, model)
 
   /**
+   * Creates a `\$score` pipeline stage that computes a new score for each document
+   * and attaches it as `score` metadata.
+   * You may use the `\$meta: "score"` expression to extract the computed score.
+   *
+   * @param score the expression that computes the score. Must evaluate to a numeric value.
+   * @tparam TExpression the score expression type
+   * @return the `\$score` pipeline stage
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/score/ \$score]]
+   * @note Requires MongoDB 8.2 or greater
+   * @since 5.10
+   */
+  def score[TExpression](score: TExpression): Bson = JAggregates.score(score)
+
+  /**
+   * Creates a `\$score` pipeline stage that computes a new score for each document
+   * and attaches it as `score` metadata, with optional normalization, weighting and score details.
+   * You may use the `\$meta: "score"` expression to extract the computed score.
+   *
+   * @param score the expression that computes the score. Must evaluate to a numeric value.
+   * @param options optional `\$score` pipeline stage fields
+   * @tparam TExpression the score expression type
+   * @return the `\$score` pipeline stage
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/score/ \$score]]
+   * @note Requires MongoDB 8.2 or greater
+   * @since 5.10
+   */
+  def score[TExpression](score: TExpression, options: ScoreOptions): Bson = JAggregates.score(score, options)
+
+  /**
    * Creates an `\$unset` pipeline stage that removes/excludes fields from documents
    *
    * @param fields the fields to exclude. May use dot notation.
