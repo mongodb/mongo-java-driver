@@ -481,7 +481,7 @@ public class AggregatesTest extends OperationTest {
                 project(Projections.meta("score", "score"))));
     }
 
-    private List<Integer> idsFor(final List<BsonDocument> results) {
+    private List<Integer> getIdsFor(final List<BsonDocument> results) {
         return results.stream()
                 .map(doc -> doc.getInt32("_id").getValue())
                 .collect(toList());
@@ -553,7 +553,7 @@ public class AggregatesTest extends OperationTest {
                 ScoreNormalization.NONE,
                 scoreFusionOptions().combination(
                         ScoreFusionCombination.weighted(new Document("byX", 0).append("byY", 1)))));
-        assertEquals(asList(3, 2, 1), idsFor(results));
+        assertEquals(asList(3, 2, 1), getIdsFor(results));
         assertEquals(asList(1.5, 1.0, 0.5), scoresFor(results));
     }
 
@@ -569,7 +569,7 @@ public class AggregatesTest extends OperationTest {
                 ScoreNormalization.NONE,
                 scoreFusionOptions().combination(
                         ScoreFusionCombination.weighted(new Document("byX", 1).append("byY", 0)).avg())));
-        assertEquals(asList(1, 2, 3), idsFor(results));
+        assertEquals(asList(1, 2, 3), getIdsFor(results));
         assertEquals(asList(5.0, 2.5, 0.5), scoresFor(results));
     }
 
@@ -587,7 +587,7 @@ public class AggregatesTest extends OperationTest {
                         new Document("$sum", asList(
                                 new Document("$multiply", asList("$$byX", 0)),
                                 new Document("$multiply", asList("$$byY", 10))))))));
-        assertEquals(asList(3, 2, 1), idsFor(results));
+        assertEquals(asList(3, 2, 1), getIdsFor(results));
         assertEquals(asList(30.0, 20.0, 10.0), scoresFor(results));
     }
 
