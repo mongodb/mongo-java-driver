@@ -17,8 +17,8 @@
 package com.mongodb.internal.async;
 
 import com.mongodb.internal.async.function.AsyncCallbackLoop;
-import com.mongodb.internal.async.function.LoopState;
-import com.mongodb.internal.async.function.RetryState;
+import com.mongodb.internal.async.function.LoopControl;
+import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.async.function.RetryingAsyncCallbackSupplier;
 
 import java.util.function.BooleanSupplier;
@@ -233,9 +233,7 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
     default AsyncRunnable thenRunRetryingWhile(final AsyncRunnable runnable, final Predicate<Throwable> shouldRetry) {
         return thenRun(callback -> {
             new RetryingAsyncCallbackSupplier<Void>(
-                    new RetryState(),
-                    (previouslyChosenFailure, lastAttemptFailure) -> lastAttemptFailure,
-                    (rs, lastAttemptFailure) -> shouldRetry.test(lastAttemptFailure),
+                    new RetryControl<>(new SimpleRetryPolicy(shouldRetry)),
                     // `finish` is required here instead of `unsafeFinish`
                     // because only `finish` meets the contract of
                     // `AsyncCallbackSupplier.get`, which we implement here
@@ -255,10 +253,10 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
      */
     default AsyncRunnable thenRunWhileLoop(final BooleanSupplier whileCheck, final AsyncRunnable loopBodyRunnable) {
         return thenRun(finalCallback -> {
-            LoopState loopState = new LoopState();
-            new AsyncCallbackLoop(loopState, iterationCallback -> {
+            LoopControl loopControl = new LoopControl();
+            new AsyncCallbackLoop(loopControl, iterationCallback -> {
 
-                if (loopState.breakAndCompleteIf(() -> !whileCheck.getAsBoolean(), iterationCallback)) {
+                if (loopControl.breakAndCompleteIf(() -> !whileCheck.getAsBoolean(), iterationCallback)) {
                     return;
                 }
                 loopBodyRunnable.finish((result, t) -> {
@@ -284,15 +282,15 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
      */
     default AsyncRunnable thenRunDoWhileLoop(final AsyncRunnable loopBodyRunnable, final BooleanSupplier whileCheck) {
         return thenRun(finalCallback -> {
-            LoopState loopState = new LoopState();
-            new AsyncCallbackLoop(loopState, iterationCallback -> {
+            LoopControl loopControl = new LoopControl();
+            new AsyncCallbackLoop(loopControl, iterationCallback -> {
 
                 loopBodyRunnable.finish((result, t) -> {
                     if (t != null) {
                         iterationCallback.completeExceptionally(t);
                         return;
                     }
-                    if (loopState.breakAndCompleteIf(() -> !whileCheck.getAsBoolean(), iterationCallback)) {
+                    if (loopControl.breakAndCompleteIf(() -> !whileCheck.getAsBoolean(), iterationCallback)) {
                         return;
                     }
                     iterationCallback.complete(iterationCallback);

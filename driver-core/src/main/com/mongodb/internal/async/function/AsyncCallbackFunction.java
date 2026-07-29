@@ -35,8 +35,8 @@ import java.util.function.Function;
  * <a href="https://docs.oracle.com/javase/specs/jls/se8/html/jls-14.html#jls-14.1">"normal" and "abrupt completion"</a>
  * are used as they defined by the Java Language Specification, while the terms "successful" and "failed completion" are used to refer to a
  * situation when the function produces either a successful or a failed result respectively.
- *
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ * <p>
+ * This class is not part of the public API and may be removed or changed at any time.
  *
  * @param <P> The type of the first parameter to the function.
  * @param <R> The type of successful result. A failed result is of the {@link Throwable} type

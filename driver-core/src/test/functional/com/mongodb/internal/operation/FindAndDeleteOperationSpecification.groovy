@@ -299,7 +299,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         commandException == originalException
 
         where:
-        async << [false]
+        async << [true, false]
     }
 
     def 'should support collation'() {
