@@ -91,7 +91,7 @@ class AsyncOperationHelperSpecification extends Specification {
         when:
         executeRetryableWriteAsync(asyncWriteBinding, operationContext, dbName, primary(),
                 NoOpFieldNameValidator.INSTANCE, decoder, commandCreator, FindAndModifyHelper.asyncTransformer(),
-                { cmd -> cmd }, callback)
+                { cmd -> cmd }, true, callback)
 
         then:
         2 * connection.commandAsync(dbName, command, _, primary(), decoder, *_) >> { it.last().onResult(results.poll(), null) }

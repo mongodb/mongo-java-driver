@@ -40,6 +40,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * <p>The context for handling timeouts in relation to the Client Side Operation Timeout specification.</p>
  */
 public class TimeoutContext {
+    public static final String DEFAULT_TIMEOUT_MESSAGE = "Operation exceeded the timeout limit.";
     private static final int NO_ROUND_TRIP_TIME_MS = 0;
     private final TimeoutSettings timeoutSettings;
     /**
@@ -64,11 +65,11 @@ public class TimeoutContext {
         throw new MongoOperationTimeoutException(message);
     }
     public static <T> T throwMongoTimeoutException() {
-        throw new MongoOperationTimeoutException("The operation exceeded the timeout limit.");
+        throw new MongoOperationTimeoutException(DEFAULT_TIMEOUT_MESSAGE);
     }
 
     public static MongoOperationTimeoutException createMongoTimeoutException(final Throwable cause) {
-        return createMongoTimeoutException("Operation exceeded the timeout limit: " + cause.getMessage(), cause);
+        return createMongoTimeoutException(DEFAULT_TIMEOUT_MESSAGE, cause);
     }
 
     public static MongoOperationTimeoutException createMongoTimeoutException(final String message, @Nullable final Throwable cause) {
@@ -185,7 +186,7 @@ public class TimeoutContext {
             return timeout.call(MILLISECONDS,
                     () -> 0L,
                     (ms) -> ms,
-                    () -> throwMongoTimeoutException("The operation exceeded the timeout limit."));
+                    () -> throwMongoTimeoutException());
         }
     }
 
@@ -229,7 +230,7 @@ public class TimeoutContext {
         return Math.toIntExact(Timeout.nullAsInfinite(timeout).call(MILLISECONDS,
                 () -> connectTimeoutMS,
                 (ms) -> connectTimeoutMS == 0 ? ms : Math.min(ms, connectTimeoutMS),
-                () -> throwMongoTimeoutException("The operation exceeded the timeout limit.")));
+                () -> throwMongoTimeoutException()));
     }
 
     /**
@@ -250,13 +251,11 @@ public class TimeoutContext {
      * The override will be provided as the remaining value in
      * {@link #runMaxTimeMS}, where 0 is ignored. This is useful for setting timeout
      * in {@link CommandMessage} as an extra element before we send it to the server.
-     *
      * <p>
-     * NOTE: Suitable for static user-defined values only (i.e MaxAwaitTimeMS),
+     * Suitable for static user-defined values only (i.e. {@code MaxAwaitTimeMS}),
      * not for running timeouts that adjust dynamically (CSOT).
-     *
+     * <p>
      * If remaining CSOT timeout is less than this static timeout, then CSOT timeout will be used.
-     *
      */
     public TimeoutContext withMaxTimeOverride(final long maxTimeMS) {
         return new TimeoutContext(
@@ -480,10 +479,10 @@ public class TimeoutContext {
             timeout.run(MILLISECONDS, () -> {
                         onRemaining.accept(fixedMs);
                     },
-                    (renamingMs) -> {
-                        onRemaining.accept(Math.min(renamingMs, fixedMs));
+                    (remainingMs) -> {
+                        onRemaining.accept(Math.min(remainingMs, fixedMs));
                     }, () -> {
-                        throwMongoTimeoutException("The operation exceeded the timeout limit.");
+                        throwMongoTimeoutException();
                     });
         } else {
             onRemaining.accept(fixedMs);

@@ -17,80 +17,39 @@ package com.mongodb.internal.async.function;
 
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 
-import java.util.function.BiPredicate;
-import java.util.function.BinaryOperator;
-import java.util.function.Supplier;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 
 /**
  * A decorator that implements automatic retrying of failed executions of an {@link AsyncCallbackSupplier}.
  * {@link RetryingAsyncCallbackSupplier} may execute the original retryable asynchronous function multiple times sequentially,
  * while guaranteeing that the callback passed to {@link #get(SingleResultCallback)} is completed at most once.
  * <p>
- * The original function may additionally observe or control retrying via {@link RetryState}.
- * For example, the {@link RetryState#breakAndCompleteIfRetryAnd(Supplier, SingleResultCallback)} method may be used to
- * break retrying if the original function decides so.
- *
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ * The original function may additionally observe or control the retry loop via {@link RetryControl}.
+ * <p>
+ * This class is not part of the public API and may be removed or changed at any time.
  *
  * @see RetryingSyncSupplier
  */
 @NotThreadSafe
 public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupplier<R> {
-    private final RetryState state;
-    private final BiPredicate<RetryState, Throwable> retryPredicate;
-    private final BinaryOperator<Throwable> onAttemptFailureOperator;
+    private final RetryControl<?> control;
     private final AsyncCallbackSupplier<R> asyncFunction;
 
     /**
-     * @param state The {@link RetryState} to be deemed as initial for the purpose of the new {@link RetryingAsyncCallbackSupplier}.
-     * @param onAttemptFailureOperator The action that is called once per failed attempt before (in the happens-before order) the
-     * {@code retryPredicate}, regardless of whether the {@code retryPredicate} is called.
-     * This action is allowed to have side effects.
-     * <p>
-     * It also has to choose which exception to preserve as a prospective failed result of this {@link RetryingAsyncCallbackSupplier}.
-     * The {@code onAttemptFailureOperator} may mutate its arguments, choose from the arguments, or return a different exception,
-     * but it must return a {@code @}{@link NonNull} value.
-     * The choice is between</p>
-     * <ul>
-     *     <li>the previously chosen failed result or {@code null} if none has been chosen
-     *     (the first argument of the {@code onAttemptFailureOperator})</li>
-     *     <li>and the failed result from the most recent attempt (the second argument of the {@code onAttemptFailureOperator}).</li>
-     * </ul>
-     * The result of the {@code onAttemptFailureOperator} does not affect the exception passed to the {@code retryPredicate}.
-     * <p>
-     * If {@code onAttemptFailureOperator} completes abruptly, then the {@code asyncFunction} cannot be retried and the exception thrown by
-     * the {@code onAttemptFailureOperator} is used as a failed result of this {@link RetryingAsyncCallbackSupplier}.</p>
-     * @param retryPredicate {@code true} iff another attempt needs to be made. If it completes abruptly,
-     * then the {@code asyncFunction} cannot be retried and the exception thrown by the {@code retryPredicate}
-     * is used as a failed result of this {@link RetryingAsyncCallbackSupplier}. The {@code retryPredicate} is called not more than once
-     * per attempt and only if all the following is true:
-     * <ul>
-     *     <li>{@code onAttemptFailureOperator} completed normally;</li>
-     *     <li>the most recent attempt is not known to be the last one.</li>
-     * </ul>
-     * The {@code retryPredicate} accepts this {@link RetryState} and the exception from the most recent attempt,
-     * and may mutate the exception. The {@linkplain RetryState} advances to represent the state of a new attempt
-     * after (in the happens-before order) testing the {@code retryPredicate}, and only if the predicate completes normally.
+     * @param control The {@link RetryControl} to control the new {@link RetryingAsyncCallbackSupplier}.
      * @param asyncFunction The retryable {@link AsyncCallbackSupplier} to be decorated.
      */
-    public RetryingAsyncCallbackSupplier(
-            final RetryState state,
-            final BinaryOperator<Throwable> onAttemptFailureOperator,
-            final BiPredicate<RetryState, Throwable> retryPredicate,
-            final AsyncCallbackSupplier<R> asyncFunction) {
-        this.state = state;
-        this.retryPredicate = retryPredicate;
-        this.onAttemptFailureOperator = onAttemptFailureOperator;
+    public RetryingAsyncCallbackSupplier(final RetryControl<?> control, final AsyncCallbackSupplier<R> asyncFunction) {
+        this.control = control;
         this.asyncFunction = asyncFunction;
     }
 
     @Override
     public void get(final SingleResultCallback<R> callback) {
-        /* `asyncFunction` and `callback` are the only externally provided pieces of code for which we do not need to care about
-         * them throwing exceptions. If they do, that violates their contract and there is nothing we should do about it. */
+        // `asyncFunction` and `callback` are the only externally provided pieces of code for which we do not need to care about
+        // them throwing exceptions. If they do, that violates their contract and there is nothing we should do about it.
         asyncFunction.get(new RetryingCallback(callback));
     }
 
@@ -106,17 +65,21 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
         }
 
         @Override
-        public void onResult(@Nullable final R result, @Nullable final Throwable t) {
-            if (t != null) {
+        public void onResult(@Nullable final R attemptSuccessfulResult, @Nullable final Throwable attemptFailedResult) {
+            if (attemptFailedResult != null) {
+                if (attemptFailedResult instanceof Error) {
+                    wrapped.onResult(null, attemptFailedResult);
+                    return;
+                }
                 try {
-                    state.advanceOrThrow(t, onAttemptFailureOperator, retryPredicate);
-                } catch (Throwable failedResult) {
-                    wrapped.onResult(null, failedResult);
+                    assertNotNull(control.advanceOrThrow(attemptFailedResult));
+                } catch (Throwable retryingSupplierFailedResult) {
+                    wrapped.onResult(null, retryingSupplierFailedResult);
                     return;
                 }
                 asyncFunction.get(this);
             } else {
-                wrapped.onResult(result, null);
+                wrapped.onResult(attemptSuccessfulResult, null);
             }
         }
     }

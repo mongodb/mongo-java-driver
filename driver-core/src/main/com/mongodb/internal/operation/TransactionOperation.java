@@ -60,7 +60,7 @@ public abstract class TransactionOperation implements WriteOperation<Void> {
         TimeoutContext timeoutContext = operationContext.getTimeoutContext();
         return executeRetryableWrite(binding, operationContext,  "admin", null, NoOpFieldNameValidator.INSTANCE,
                                      new BsonDocumentCodec(), getCommandCreator(),
-                writeConcernErrorTransformer(timeoutContext), getRetryCommandModifier(timeoutContext));
+                writeConcernErrorTransformer(timeoutContext), getRetryCommandModifier(timeoutContext), true);
     }
 
     @Override
@@ -70,6 +70,7 @@ public abstract class TransactionOperation implements WriteOperation<Void> {
         executeRetryableWriteAsync(binding, operationContext, "admin", null, NoOpFieldNameValidator.INSTANCE,
                                    new BsonDocumentCodec(), getCommandCreator(),
                 writeConcernErrorTransformerAsync(timeoutContext), getRetryCommandModifier(timeoutContext),
+                                   true,
                                    errorHandlingCallback(callback, LOGGER));
     }
 

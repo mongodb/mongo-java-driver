@@ -37,7 +37,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableWriteAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
-import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
+import static com.mongodb.internal.operation.OperationHelper.isNonCommandWriteRetryRequirementsMet;
 import static com.mongodb.internal.operation.OperationHelper.validateHintForFindAndModify;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableWrite;
 
@@ -82,7 +82,8 @@ public abstract class BaseFindAndModifyOperation<T> implements WriteOperation<T>
                                      CommandResultDocumentCodec.create(getDecoder(), "value"),
                                      getCommandCreator(),
                                      FindAndModifyHelper.transformer(),
-                                     cmd -> cmd);
+                                     cmd -> cmd,
+                                     retryWrites);
     }
 
     @Override
@@ -90,7 +91,7 @@ public abstract class BaseFindAndModifyOperation<T> implements WriteOperation<T>
         executeRetryableWriteAsync(binding, operationContext, getDatabaseName(), null, getFieldNameValidator(),
                                    CommandResultDocumentCodec.create(getDecoder(), "value"),
                                    getCommandCreator(),
-                FindAndModifyHelper.asyncTransformer(), cmd -> cmd, callback);
+                FindAndModifyHelper.asyncTransformer(), cmd -> cmd, retryWrites, callback);
     }
 
     @Override
@@ -218,7 +219,7 @@ public abstract class BaseFindAndModifyOperation<T> implements WriteOperation<T>
             putIfNotNull(commandDocument, "comment", getComment());
             putIfNotNull(commandDocument, "let", getLet());
 
-            if (isRetryableWrite(isRetryWrites(), getWriteConcern(), connectionDescription, sessionContext)) {
+            if (isNonCommandWriteRetryRequirementsMet(isRetryWrites(), getWriteConcern(), connectionDescription, sessionContext)) {
                 commandDocument.put("txnNumber", new BsonInt64(sessionContext.advanceTransactionNumber()));
             }
             return commandDocument;
