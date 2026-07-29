@@ -22,33 +22,22 @@ import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNodeIsRecoveringException;
 import com.mongodb.MongoNotPrimaryException;
-import com.mongodb.MongoSecurityException;
-import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.WriteConcern;
-import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.internal.TimeoutContext;
-import com.mongodb.internal.async.function.RetryState;
+import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.connection.OperationContext;
-import com.mongodb.internal.connection.OperationContext.ServerDeprioritization;
-import com.mongodb.internal.operation.OperationHelper.ResourceSupplierInternalException;
-import com.mongodb.internal.operation.retry.AttachmentKeys;
+import com.mongodb.internal.operation.SpecRetryPolicy.ExplicitMaxRetries;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BinaryOperator;
-import java.util.function.Supplier;
 
-import static com.mongodb.assertions.Assertions.assertFalse;
-import static com.mongodb.assertions.Assertions.assertNotNull;
-import static com.mongodb.internal.async.function.RetryState.MAX_RETRIES;
-import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static java.lang.String.format;
+import static com.mongodb.internal.operation.SpecRetryPolicy.ExplicitMaxRetries.RETRIES_LIMITED_BY_INDIVIDUAL_POLICIES;
+import static com.mongodb.internal.operation.SpecRetryPolicy.ExplicitMaxRetries.NO_RETRIES_LIMIT;
 import static java.util.Arrays.asList;
 
 @SuppressWarnings("overloads")
@@ -78,55 +67,18 @@ public final class CommandOperationHelper {
                 ConnectionDescription connectionDescription);
     }
 
-    static BinaryOperator<Throwable> onRetryableReadAttemptFailure(final ServerDeprioritization serverDeprioritization) {
-        return (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) -> {
-            serverDeprioritization.onAttemptFailure(mostRecentAttemptException);
-            return chooseRetryableReadException(previouslyChosenException, mostRecentAttemptException);
-        };
-    }
-
-    private static Throwable chooseRetryableReadException(
-            @Nullable final Throwable previouslyChosenException, final Throwable mostRecentAttemptException) {
-        assertFalse(mostRecentAttemptException instanceof ResourceSupplierInternalException);
-        if (previouslyChosenException == null
-                || mostRecentAttemptException instanceof MongoSocketException
-                || mostRecentAttemptException instanceof MongoServerException) {
-            return mostRecentAttemptException;
-        } else {
-            return previouslyChosenException;
-        }
-    }
-
-    static BinaryOperator<Throwable> onRetryableWriteAttemptFailure(final ServerDeprioritization serverDeprioritization) {
-        return (@Nullable Throwable previouslyChosenException, Throwable mostRecentAttemptException) -> {
-            serverDeprioritization.onAttemptFailure(mostRecentAttemptException);
-            return chooseRetryableWriteException(previouslyChosenException, mostRecentAttemptException);
-        };
-    }
-
-    private static Throwable chooseRetryableWriteException(
-            @Nullable final Throwable previouslyChosenException, final Throwable mostRecentAttemptException) {
-        if (previouslyChosenException == null) {
-            if (mostRecentAttemptException instanceof ResourceSupplierInternalException) {
-                return mostRecentAttemptException.getCause();
-            }
-            return mostRecentAttemptException;
-        } else if (mostRecentAttemptException instanceof ResourceSupplierInternalException
-                || (mostRecentAttemptException instanceof MongoException
-                    && ((MongoException) mostRecentAttemptException).hasErrorLabel(NO_WRITES_PERFORMED_ERROR_LABEL))) {
-            return previouslyChosenException;
-        } else {
-            return mostRecentAttemptException;
-        }
-    }
-
     /* Read Binding Helpers */
 
-    static RetryState initialRetryState(final boolean retry, final TimeoutContext timeoutContext) {
-        if (retry) {
-            return timeoutContext.hasTimeoutMS() ? new RetryState() : new RetryState(MAX_RETRIES);
-        }
-        return new RetryState(0);
+    static RetryControl<SpecRetryPolicy> createSpecRetryControl(
+            final SpecRetryPolicy.IndividualPolicies policies,
+            final OperationContext operationContext) {
+        ExplicitMaxRetries explicitMaxRetries = operationContext.getTimeoutContext().hasTimeoutMS()
+                ? NO_RETRIES_LIMIT
+                : RETRIES_LIMITED_BY_INDIVIDUAL_POLICIES;
+        return new RetryControl<>(new SpecRetryPolicy(
+                policies,
+                explicitMaxRetries,
+                operationContext.getServerDeprioritization()));
     }
 
     private static final List<Integer> RETRYABLE_ERROR_CODES = asList(6, 7, 89, 91, 134, 189, 262, 9001, 13436, 13435, 11602, 11600, 10107);
@@ -165,59 +117,7 @@ public final class CommandOperationHelper {
         }
     }
 
-    static boolean loggingShouldAttemptToRetryRead(final RetryState retryState, final Throwable attemptFailure) {
-        assertFalse(attemptFailure instanceof ResourceSupplierInternalException);
-        boolean decision = isRetryableException(attemptFailure)
-                || (attemptFailure instanceof MongoSecurityException
-                && attemptFailure.getCause() != null && isRetryableException(attemptFailure.getCause()));
-        if (!decision) {
-            logUnableToRetryCommand(retryState, attemptFailure);
-        }
-        return decision;
-    }
-
-    static boolean loggingShouldAttemptToRetryWriteAndAddRetryableLabel(final RetryState retryState, final Throwable attemptFailure) {
-        Throwable attemptFailureNotToBeRetried = addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(retryState, attemptFailure);
-        boolean decision = attemptFailureNotToBeRetried == null;
-        if (!decision && retryState.attachment(AttachmentKeys.retryableWriteCommandFlag()).orElse(false)) {
-            logUnableToRetryCommand(retryState, assertNotNull(attemptFailureNotToBeRetried));
-        }
-        return decision;
-    }
-
-    /**
-     * Returns {@code null} if the failed attempt should be retried;
-     * in this case, also adds the {@value #RETRYABLE_WRITE_ERROR_LABEL} label if needed.
-     * Otherwise, returns a {@link Throwable} that must not be retried.
-     */
-    @Nullable
-    static Throwable addRetryableLabelOrGetWriteAttemptFailureNotToBeRetried(final RetryState retryState, final Throwable attemptFailure) {
-        Throwable failure = attemptFailure instanceof ResourceSupplierInternalException ? attemptFailure.getCause() : attemptFailure;
-        boolean decision = false;
-        MongoException exceptionRetryableRegardlessOfCommand = null;
-        if (failure instanceof MongoConnectionPoolClearedException
-                || (failure instanceof MongoSecurityException && failure.getCause() != null && isRetryableException(failure.getCause()))) {
-            decision = true;
-            exceptionRetryableRegardlessOfCommand = (MongoException) failure;
-        }
-        if (retryState.attachment(AttachmentKeys.retryableWriteCommandFlag()).orElse(false)) {
-            if (exceptionRetryableRegardlessOfCommand != null) {
-                /* We are going to retry even if `retryableWriteCommandFlag` is false,
-                 * but we add the retryable label only if `retryableWriteCommandFlag` is true. */
-                exceptionRetryableRegardlessOfCommand.addLabel(RETRYABLE_WRITE_ERROR_LABEL);
-            } else if (decideRetryableAndAddRetryableWriteErrorLabel(failure, retryState.attachment(AttachmentKeys.maxWireVersion())
-                    .orElse(null))) {
-                decision = true;
-            }
-        }
-        return decision ? null : assertNotNull(failure);
-    }
-
-    /**
-     * Returns {@code true} if the {@code command} is intended to be executed outside a transaction and supports being retried,
-     * or if the {@code command} is {@code commitTransaction}/{@code abortTransaction}; {@code false} otherwise.
-     */
-    static boolean isRetryableWriteCommand(final BsonDocument command) {
+    static boolean isWriteRetryRequirementsMet(final BsonDocument command) {
         // Given the requirement
         // https://github.com/mongodb/specifications/blame/7039e69945d463a14b1b727d16db063e21f48f53/source/transactions/transactions.md#L584-L586:
         //   When executing the `commitTransaction` and `abortTransaction` commands within a transaction
@@ -232,45 +132,11 @@ public final class CommandOperationHelper {
     public static final String RETRYABLE_WRITE_ERROR_LABEL = "RetryableWriteError";
     public static final String NO_WRITES_PERFORMED_ERROR_LABEL = "NoWritesPerformed";
 
-    private static boolean decideRetryableAndAddRetryableWriteErrorLabel(final Throwable t, @Nullable final Integer maxWireVersion) {
-        if (!(t instanceof MongoException)) {
-            return false;
-        }
-        MongoException exception = (MongoException) t;
-        if (maxWireVersion != null) {
-            addRetryableWriteErrorLabel(exception, maxWireVersion);
-        }
-        return exception.hasErrorLabel(RETRYABLE_WRITE_ERROR_LABEL);
-    }
-
-    static void addRetryableWriteErrorLabel(final MongoException exception, final int maxWireVersion) {
+    static void addRetryableWriteErrorLabelIfNeeded(final MongoException exception, final int maxWireVersion) {
         if (maxWireVersion >= 9 && exception instanceof MongoSocketException) {
             exception.addLabel(RETRYABLE_WRITE_ERROR_LABEL);
         } else if (maxWireVersion < 9 && isRetryableException(exception)) {
             exception.addLabel(RETRYABLE_WRITE_ERROR_LABEL);
-        }
-    }
-
-    static void logRetryCommand(final RetryState retryState, final OperationContext operationContext) {
-        if (LOGGER.isDebugEnabled() && !retryState.isFirstAttempt()) {
-            String commandDescription = retryState.attachment(AttachmentKeys.commandDescriptionSupplier()).map(Supplier::get).orElse(null);
-            Throwable exception = retryState.exception().orElseThrow(Assertions::fail);
-            int oneBasedAttempt = retryState.attempt() + 1;
-            long operationId = operationContext.getId();
-            LOGGER.debug(commandDescription == null
-                    ? format("Retrying a command within the operation with operation ID %s due to the error \"%s\". Attempt number: #%d",
-                            operationId, exception, oneBasedAttempt)
-                    : format("Retrying the command '%s' within the operation with operation ID %s due to the error \"%s\". Attempt number: #%d",
-                            commandDescription, operationId, exception, oneBasedAttempt));
-        }
-    }
-
-    private static void logUnableToRetryCommand(final RetryState retryState, final Throwable originalError) {
-        if (LOGGER.isDebugEnabled()) {
-            String commandDescription = retryState.attachment(AttachmentKeys.commandDescriptionSupplier()).map(Supplier::get).orElse(null);
-            LOGGER.debug(commandDescription == null
-                    ? format("Unable to retry a command due to the error \"%s\"", originalError)
-                    : format("Unable to retry the command '%s' due to the error \"%s\"", commandDescription, originalError));
         }
     }
 
