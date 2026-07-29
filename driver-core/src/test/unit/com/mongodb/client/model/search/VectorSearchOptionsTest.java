@@ -68,6 +68,34 @@ final class VectorSearchOptionsTest {
     }
 
     @Test
+    void parentFilterLastWriteWins() {
+        assertEquals(
+                new BsonDocument()
+                        .append("parentFilter", Filters.gt("year", 2000).toBsonDocument())
+                        .append("numCandidates", new BsonInt64(1)),
+                VectorSearchOptions.approximateVectorSearchOptions(1)
+                        .parentFilter(Filters.gt("year", 1900))
+                        .parentFilter(Filters.gt("year", 2000))
+                        .toBsonDocument()
+        );
+    }
+
+    @Test
+    void nestedOptionsLastWriteWins() {
+        assertEquals(
+                new BsonDocument()
+                        .append("nestedOptions", new BsonDocument("scoreMode", new BsonString("max")))
+                        .append("numCandidates", new BsonInt64(1)),
+                VectorSearchOptions.approximateVectorSearchOptions(1)
+                        .nestedOptions(VectorSearchNestedOptions.vectorSearchNestedOptions()
+                                .scoreMode(VectorSearchScoreMode.AVG))
+                        .nestedOptions(VectorSearchNestedOptions.vectorSearchNestedOptions()
+                                .scoreMode(VectorSearchScoreMode.MAX))
+                        .toBsonDocument()
+        );
+    }
+
+    @Test
     void parentFilterNull() {
         assertThrows(IllegalArgumentException.class, () ->
                 VectorSearchOptions.approximateVectorSearchOptions(1).parentFilter(null));
