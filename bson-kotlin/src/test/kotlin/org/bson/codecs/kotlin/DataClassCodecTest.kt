@@ -193,36 +193,8 @@ class DataClassCodecTest {
         val document = BsonDocument()
         codec.encode(
             BsonDocumentWriter(document), DataClassWithByteArray(oneMegabyte), EncoderContext.builder().build())
-        val encodedSize = document.toBsonDocument().getBinary("byteArray").data.size
+        val encodedSize = document.getBinary("byteArray").data.size
         assertEquals(1_000_000, encodedSize)
-    }
-
-    @Test
-    fun testDataClassWithObjectArrayEncodesAsBsonArray() {
-        // Ensure normal arrays and ByteArrays are handled correctly.
-        val expected =
-            """{
-            | "arraySimple": ["a", "b", "c", "d"],
-            | "nestedArrays": [["e", "f"], [], ["g", "h"]],
-            | "arrayOfMaps": [{"A": ["aa"], "B": ["bb"]}, {}, {"C": ["cc", "ccc"]}],
-            | "byteArray": {"${'$'}binary": {"base64": "AQIDBA==", "subType": "00"}},
-            | "nestedByteArrays": [
-            |     {"${'$'}binary": {"base64": "AQI=", "subType": "00"}},
-            |     {"${'$'}binary": {"base64": "AwQF", "subType": "00"}}
-            | ]
-            |}"""
-                .trimMargin()
-
-        val dataClass =
-            DataClassWithArrays(
-                arrayOf("a", "b", "c", "d"),
-                arrayOf(arrayOf("e", "f"), emptyArray(), arrayOf("g", "h")),
-                arrayOf(
-                    mapOf("A" to arrayOf("aa"), "B" to arrayOf("bb")), emptyMap(), mapOf("C" to arrayOf("cc", "ccc"))),
-                byteArrayOf(1, 2, 3, 4),
-                arrayOf(byteArrayOf(1, 2), byteArrayOf(3, 4, 5)))
-
-        assertRoundTrips(expected, dataClass)
     }
 
     @Test

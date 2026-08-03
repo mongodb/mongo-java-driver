@@ -392,6 +392,48 @@ data class DataClassWithByteArray(val byteArray: ByteArray) {
 
 @OptIn(ExperimentalSerializationApi::class)
 @Serializable
+data class DataClassWithByteArrayAsBsonBinary(
+    @Serializable(with = ByteArrayAsBsonBinary::class) val byteArray: ByteArray
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as DataClassWithByteArrayAsBsonBinary
+        return byteArray.contentEquals(other.byteArray)
+    }
+
+    override fun hashCode(): Int = byteArray.contentHashCode()
+}
+
+@Serializable
+data class DataClassWithContextualByteArray(@Contextual val byteArray: ByteArray) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as DataClassWithContextualByteArray
+        return byteArray.contentEquals(other.byteArray)
+    }
+
+    override fun hashCode(): Int = byteArray.contentHashCode()
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
+data class DataClassWithByteArrayAsBsonBinaryNullable(
+    @Serializable(with = ByteArrayAsBsonBinary::class) val byteArray: ByteArray?
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as DataClassWithByteArrayAsBsonBinaryNullable
+        return byteArray.contentEquals(other.byteArray)
+    }
+
+    override fun hashCode(): Int = byteArray?.contentHashCode() ?: 0
+}
+
+@OptIn(ExperimentalSerializationApi::class)
+@Serializable
 data class DataClassWithArrays(
     val arraySimple: Array<String>,
     val nestedArrays: Array<Array<String>>,

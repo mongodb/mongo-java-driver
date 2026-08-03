@@ -84,8 +84,11 @@ import org.bson.codecs.kotlinx.samples.DataClassWithBsonIgnore
 import org.bson.codecs.kotlinx.samples.DataClassWithBsonProperty
 import org.bson.codecs.kotlinx.samples.DataClassWithBsonRepresentation
 import org.bson.codecs.kotlinx.samples.DataClassWithByteArray
+import org.bson.codecs.kotlinx.samples.DataClassWithByteArrayAsBsonBinary
+import org.bson.codecs.kotlinx.samples.DataClassWithByteArrayAsBsonBinaryNullable
 import org.bson.codecs.kotlinx.samples.DataClassWithCamelCase
 import org.bson.codecs.kotlinx.samples.DataClassWithCollections
+import org.bson.codecs.kotlinx.samples.DataClassWithContextualByteArray
 import org.bson.codecs.kotlinx.samples.DataClassWithContextualDateValues
 import org.bson.codecs.kotlinx.samples.DataClassWithDataClassMapKey
 import org.bson.codecs.kotlinx.samples.DataClassWithDateValues
@@ -303,23 +306,55 @@ class KotlinSerializerCodecTest {
 
     @Test
     fun testDataClassWithByteArrayEncodesAsBsonArrayByDefault() {
-        // By default kotlinx.serialization encodes a ByteArray as a BSON array of int32 elements
-        // (one per byte).
-        // This differs from bson-kotlin's DataClassCodec, which encodes ByteArray as compact BSON
-        // Binary.
+        // kotlinx.serialization's built-in ByteArray serializer encodes one int32 element per byte.
         val expected = """{"byteArray": [1, 2, 3, 4]}"""
 
         assertRoundTrips(expected, DataClassWithByteArray(byteArrayOf(1, 2, 3, 4)))
     }
 
     @Test
+    fun testDataClassWithByteArrayAsBsonBinary() {
+        val expected = """{"byteArray": {"${'$'}binary": {"base64": "AQIDBA==", "subType": "00"}}}"""
+
+        assertRoundTrips(expected, DataClassWithByteArrayAsBsonBinary(byteArrayOf(1, 2, 3, 4)))
+    }
+
+    @Test
+    fun testDataClassWithEmptyByteArrayAsBsonBinary() {
+        val expected = """{"byteArray": {"${'$'}binary": {"base64": "", "subType": "00"}}}"""
+
+        assertRoundTrips(expected, DataClassWithByteArrayAsBsonBinary(byteArrayOf()))
+    }
+
+    @Test
+    fun testDataClassWithNullableByteArrayAsBsonBinary() {
+        // Nulls are omitted by default (explicitNulls = false).
+        assertRoundTrips("{}", DataClassWithByteArrayAsBsonBinaryNullable(null))
+        assertRoundTrips(
+            """{"byteArray": {"${'$'}binary": {"base64": "AQI=", "subType": "00"}}}""",
+            DataClassWithByteArrayAsBsonBinaryNullable(byteArrayOf(1, 2)))
+    }
+
+    @Test
+    fun testDataClassWithContextualByteArrayAsBsonBinary() {
+        val expected = """{"byteArray": {"${'$'}binary": {"base64": "AQIDBA==", "subType": "00"}}}"""
+
+        assertRoundTrips(
+            expected,
+            DataClassWithContextualByteArray(byteArrayOf(1, 2, 3, 4)),
+            serializersModule = ByteArrayAsBsonBinary.serializersModule)
+    }
+
+    @Test
+    fun testByteArrayAsBsonBinaryFailsToDecodeNonBinaryValue() {
+        assertThrows<BsonInvalidOperationException> {
+            deserialize<DataClassWithByteArrayAsBsonBinary>(BsonDocument.parse("""{"byteArray": [1, 2, 3, 4]}"""))
+        }
+    }
+
+    @Test
     fun testDataClassWithObjectArrayEncodesAsBsonArray() {
-        // Object arrays encode as BSON arrays, while ByteArray fields opted in via
-        // @Serializable(with = ByteArrayAsBsonBinary::class) encode as compact BSON Binary (subType
-        // 00),
-        // consistent with the standard ByteArrayCodec and bson-kotlin's DataClassCodec. The
-        // per-type-argument
-        // annotation on nestedByteArrays applies the serializer to each inner ByteArray element.
+        // The annotation inside `Array<@Serializable(...) ByteArray>` applies per element.
         val expected =
             """{
             | "arraySimple": ["a", "b", "c", "d"],

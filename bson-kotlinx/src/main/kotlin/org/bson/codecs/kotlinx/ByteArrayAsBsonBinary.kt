@@ -58,6 +58,14 @@ public object ByteArrayAsBsonBinary : KSerializer<ByteArray> {
         }
     }
 
+    /**
+     * A [SerializersModule] that registers [ByteArrayAsBsonBinary] as the contextual serializer for `ByteArray`.
+     *
+     * Register it on the codec (or combine it with an existing module) so that any `ByteArray` field annotated with
+     * `@Contextual` is encoded and decoded as a compact `BsonBinary` instead of a BSON array of int32 elements.
+     *
+     * @since 5.10
+     */
     public val serializersModule: SerializersModule = SerializersModule {
         contextual(ByteArray::class, ByteArrayAsBsonBinary)
     }
