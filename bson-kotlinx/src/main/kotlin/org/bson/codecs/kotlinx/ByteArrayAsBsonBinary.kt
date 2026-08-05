@@ -24,7 +24,10 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
+import org.bson.BsonArray
 import org.bson.BsonBinary
+import org.bson.BsonInvalidOperationException
+import org.bson.BsonValue
 
 /**
  * ByteArray KSerializer.
@@ -37,6 +40,12 @@ import org.bson.BsonBinary
  * array of int32 elements (one element per byte). To store a `ByteArray` field as `BsonBinary` instead, either annotate
  * the field with `@Serializable(with = ByteArrayAsBsonBinary::class)`, or annotate it with `@Contextual` and register
  * [ByteArrayAsBsonBinary.serializersModule] on the codec.
+ *
+ * To ease migration, decoding also accepts that legacy BSON array of int32 form — as written by the built-in
+ * `ByteArray` serializer, and by `bson-kotlin` 5.2.0 through 5.9.x. Encoding always produces
+ * `BsonBinary`, so re-saving a document migrates it. Every element of such an array must be an int32 within the signed
+ * byte range; otherwise `BsonInvalidOperationException` is thrown rather than silently decoding an unrelated BSON array
+ * into bytes.
  *
  * @since 5.10
  */
@@ -53,10 +62,35 @@ public object ByteArrayAsBsonBinary : KSerializer<ByteArray> {
 
     override fun deserialize(decoder: Decoder): ByteArray {
         return when (decoder) {
-            is BsonDecoder -> decoder.decodeBsonValue().asBinary().data
+            is BsonDecoder ->
+                when (val value = decoder.decodeBsonValue()) {
+                    // Legacy form: a BSON array of int32, one element per byte. See the class KDoc.
+                    is BsonArray -> value.toByteArray()
+                    else -> value.asBinary().data
+                }
             else -> throw SerializationException("ByteArray is not supported by ${decoder::class}")
         }
     }
+
+    private fun BsonArray.toByteArray(): ByteArray {
+        val bytes = ByteArray(size)
+        forEachIndexed { index, element ->
+            if (!element.isInt32) {
+                throw invalidElement(element)
+            }
+            val value = element.asInt32().value
+            if (value < Byte.MIN_VALUE || value > Byte.MAX_VALUE) {
+                throw invalidElement(element)
+            }
+            bytes[index] = value.toByte()
+        }
+        return bytes
+    }
+
+    private fun invalidElement(element: BsonValue) =
+        BsonInvalidOperationException(
+            "Invalid element while decoding a byte array from a BSON Array: " +
+                "expected an INT32 in the range -128..127, but found $element.")
 
     /**
      * A [SerializersModule] that registers [ByteArrayAsBsonBinary] as the contextual serializer for `ByteArray`.

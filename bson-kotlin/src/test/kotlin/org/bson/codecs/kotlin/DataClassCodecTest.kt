@@ -16,9 +16,11 @@
 package org.bson.codecs.kotlin
 
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import org.bson.BsonDocument
 import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
+import org.bson.BsonInvalidOperationException
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.configuration.CodecConfigurationException
@@ -195,6 +197,74 @@ class DataClassCodecTest {
             BsonDocumentWriter(document), DataClassWithByteArray(oneMegabyte), EncoderContext.builder().build())
         val encodedSize = document.getBinary("byteArray").data.size
         assertEquals(1_000_000, encodedSize)
+    }
+
+    @Test
+    fun testDataClassWithByteArrayDecodesLegacyBsonArray() {
+        // Versions 5.2.0 - 5.9.x encoded ByteArray as a BSON Array of Int32.
+        // Those documents must still decode.
+        assertDecodesTo(
+            BsonDocument.parse("""{"byteArray": [1, 2, 3, 4]}"""), DataClassWithByteArray(byteArrayOf(1, 2, 3, 4)))
+    }
+
+    @Test
+    fun testDataClassWithByteArrayDecodesLegacyBsonArrayWithFullByteRange() {
+        assertDecodesTo(
+            BsonDocument.parse("""{"byteArray": [-128, -1, 0, 127]}"""),
+            DataClassWithByteArray(byteArrayOf(-128, -1, 0, 127)))
+    }
+
+    @Test
+    fun testDataClassWithByteArrayDecodesEmptyLegacyBsonArray() {
+        assertDecodesTo(BsonDocument.parse("""{"byteArray": []}"""), DataClassWithByteArray(byteArrayOf()))
+    }
+
+    @Test
+    fun testDataClassWithArraysDecodesLegacyByteArrays() {
+        val data =
+            BsonDocument.parse(
+                """{
+                | "arraySimple": ["a", "b", "c", "d"],
+                | "nestedArrays":  [["e", "f"], [], ["g", "h"]],
+                | "arrayOfMaps":  [{"A": ["aa"], "B": ["bb"]}, {}, {"C": ["cc", "ccc"]}],
+                | "byteArray": [1, 2, 3, 4],
+                | "nestedByteArrays": [[1, 2], [3, 4, 5]],
+                |}"""
+                    .trimMargin())
+
+        val expected =
+            DataClassWithArrays(
+                arrayOf("a", "b", "c", "d"),
+                arrayOf(arrayOf("e", "f"), emptyArray(), arrayOf("g", "h")),
+                arrayOf(
+                    mapOf("A" to arrayOf("aa"), "B" to arrayOf("bb")), emptyMap(), mapOf("C" to arrayOf("cc", "ccc"))),
+                byteArrayOf(1, 2, 3, 4),
+                arrayOf(byteArrayOf(1, 2), byteArrayOf(3, 4, 5)))
+
+        assertDecodesTo(data, expected)
+    }
+
+    @Test
+    fun testDataClassWithByteArrayLegacyBsonArrayFailures() {
+        assertLegacyByteArrayDecodeFails("""{"byteArray": [1, 128]}""")
+        assertLegacyByteArrayDecodeFails("""{"byteArray": [1, -129]}""")
+        assertLegacyByteArrayDecodeFails("""{"byteArray": [1, 300]}""")
+        assertLegacyByteArrayDecodeFails("""{"byteArray": [1, "2"]}""")
+        assertLegacyByteArrayDecodeFails("""{"byteArray": [1, 2.0]}""")
+        assertLegacyByteArrayDecodeFails("""{"byteArray": [1, {"${'$'}numberLong": "2"}]}""")
+        assertLegacyByteArrayDecodeFails("""{"byteArray": [1, null]}""")
+    }
+
+    private fun assertLegacyByteArrayDecodeFails(json: String) {
+        val codec = DataClassCodec.create(DataClassWithByteArray::class, registry())!!
+        val exception =
+            assertThrows<CodecConfigurationException>(json) {
+                codec.decode(BsonDocumentReader(BsonDocument.parse(json)), DecoderContext.builder().build())
+            }
+        val cause = exception.cause
+        assertTrue(cause is BsonInvalidOperationException, json)
+        // Must fail on element validation, not on the absence of BSON Binary.
+        assertTrue(cause.message!!.contains("expected an INT32 in the range -128..127"), cause.message)
     }
 
     @Test

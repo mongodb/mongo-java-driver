@@ -19,6 +19,7 @@ import java.math.BigDecimal
 import java.util.Base64
 import java.util.stream.Stream
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -346,9 +347,58 @@ class KotlinSerializerCodecTest {
     }
 
     @Test
-    fun testByteArrayAsBsonBinaryFailsToDecodeNonBinaryValue() {
+    fun testByteArrayAsBsonBinaryDecodesLegacyBsonArray() {
+        // The built-in ByteArray serializer, and bson-kotlin 5.2.0 - 5.9.x,
+        // regressed abd encoded a ByteArray as a BSON Array of Int32. Those documents must still decode.
+        assertDecodesTo("""{"byteArray": [1, 2, 3, 4]}""", DataClassWithByteArrayAsBsonBinary(byteArrayOf(1, 2, 3, 4)))
+        assertDecodesTo(
+            """{"byteArray": [-128, -1, 0, 127]}""", DataClassWithByteArrayAsBsonBinary(byteArrayOf(-128, -1, 0, 127)))
+        assertDecodesTo("""{"byteArray": []}""", DataClassWithByteArrayAsBsonBinary(byteArrayOf()))
+    }
+
+    @Test
+    fun testContextualByteArrayAsBsonBinaryDecodesLegacyBsonArray() {
+        assertDecodesTo(
+            """{"byteArray": [1, 2, 3, 4]}""",
+            DataClassWithContextualByteArray(byteArrayOf(1, 2, 3, 4)),
+            serializersModule = ByteArrayAsBsonBinary.serializersModule)
+    }
+
+    @Test
+    fun testByteArrayAsBsonBinaryDecodesNestedLegacyBsonArrays() {
+        assertDecodesTo(
+            """{
+            | "arraySimple": ["a"],
+            | "nestedArrays": [["e"]],
+            | "arrayOfMaps": [{"A": ["aa"]}],
+            | "byteArray": [1, 2, 3, 4],
+            | "nestedByteArrays": [[1, 2], [3, 4, 5]]
+            |}"""
+                .trimMargin(),
+            DataClassWithArrays(
+                arrayOf("a"),
+                arrayOf(arrayOf("e")),
+                arrayOf(mapOf("A" to arrayOf("aa"))),
+                byteArrayOf(1, 2, 3, 4),
+                arrayOf(byteArrayOf(1, 2), byteArrayOf(3, 4, 5))))
+    }
+
+    @Test
+    fun testByteArrayAsBsonBinaryFailsToDecodeInvalidLegacyBsonArrayElements() {
+        listOf("[1, 128]", "[1, -129]", "[1, 300]", """[1, "2"]""", "[1, 2.0]", """[1, {"${'$'}numberLong": "2"}]""")
+            .forEach { array ->
+                val exception =
+                    assertThrows<BsonInvalidOperationException>(array) {
+                        deserialize<DataClassWithByteArrayAsBsonBinary>(BsonDocument.parse("""{"byteArray": $array}"""))
+                    }
+                assertTrue(exception.message!!.contains("expected an INT32 in the range -128..127"), exception.message)
+            }
+    }
+
+    @Test
+    fun testByteArrayAsBsonBinaryFailsToDecodeUnsupportedBsonType() {
         assertThrows<BsonInvalidOperationException> {
-            deserialize<DataClassWithByteArrayAsBsonBinary>(BsonDocument.parse("""{"byteArray": [1, 2, 3, 4]}"""))
+            deserialize<DataClassWithByteArrayAsBsonBinary>(BsonDocument.parse("""{"byteArray": "abc"}"""))
         }
     }
 
