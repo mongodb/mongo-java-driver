@@ -71,6 +71,9 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class AggregatesTest extends OperationTest {
 
+    private static final Bson SCORE_BY_X = score("$x");
+    private static final Bson SCORE_BY_Y = score("$y");
+
     private static Stream<Arguments> groupWithQuantileSource() {
         return Stream.of(
                 Arguments.of(percentile("result", "$x", MqlValues.ofNumberArray(0.95), QuantileMethod.approximate()), asList(3.0), asList(1.0)),
@@ -464,34 +467,6 @@ public class AggregatesTest extends OperationTest {
                 ));
     }
 
-    private static final Bson SCORE_BY_X = score("$x");
-    private static final Bson SCORE_BY_Y = score("$y");
-
-    private void insertScoreFusionDocuments() {
-        getCollectionHelper().insertDocuments(
-                BsonDocument.parse("{_id: 1, x: 10, y: 1}"),
-                BsonDocument.parse("{_id: 2, x: 5, y: 2}"),
-                BsonDocument.parse("{_id: 3, x: 1, y: 3}"));
-    }
-
-    private List<BsonDocument> resultsWithScoresFor(final Bson scoreFusionStage) {
-        return getCollectionHelper().aggregate(asList(
-                scoreFusionStage,
-                project(Projections.meta("score", "score"))));
-    }
-
-    private List<Integer> getIdsFor(final List<BsonDocument> results) {
-        return results.stream()
-                .map(doc -> doc.getInt32("_id").getValue())
-                .collect(toList());
-    }
-
-    private List<Double> scoresFor(final List<BsonDocument> results) {
-        return results.stream()
-                .map(doc -> doc.getNumber("score").doubleValue())
-                .collect(toList());
-    }
-
     @Test
     public void testScoreWithExpression() {
         assertPipeline(
@@ -518,7 +493,7 @@ public class AggregatesTest extends OperationTest {
 
     @ParameterizedTest
     @EnumSource(ScoreNormalization.class)
-    public void shouldScoreFusionWithEachNormalization(final ScoreNormalization normalization) {
+    public void testScoreFusionWithEachNormalization(final ScoreNormalization normalization) {
         assumeTrue(serverVersionAtLeast(8, 2));
         insertScoreFusionDocuments();
         List<BsonDocument> results = resultsWithScoresFor(scoreFusion(
@@ -539,7 +514,7 @@ public class AggregatesTest extends OperationTest {
     }
 
     @Test
-    public void shouldScoreFusionWithWeights() {
+    public void testScoreFusionWithWeights() {
         assumeTrue(serverVersionAtLeast(8, 2));
         insertScoreFusionDocuments();
         // weight only the "byY" pipeline: expected order is descending y, each score is y / 2
@@ -557,7 +532,7 @@ public class AggregatesTest extends OperationTest {
     }
 
     @Test
-    public void shouldScoreFusionWithWeightsAndAvgMethod() {
+    public void testScoreFusionWithWeightsAndAvgMethod() {
         assumeTrue(serverVersionAtLeast(8, 2));
         insertScoreFusionDocuments();
         // weight only the "byX" pipeline and average over the two pipelines: each score is x / 2
@@ -573,7 +548,7 @@ public class AggregatesTest extends OperationTest {
     }
 
     @Test
-    public void shouldScoreFusionWithExpressionCombination() {
+    public void testScoreFusionWithExpressionCombination() {
         assumeTrue(serverVersionAtLeast(8, 2));
         insertScoreFusionDocuments();
         // ignore byX, use 10 * byY: expected order is descending y, each score is exactly 10 * y
@@ -591,7 +566,7 @@ public class AggregatesTest extends OperationTest {
     }
 
     @Test
-    public void shouldScoreFusionWithScoreDetails() {
+    public void testScoreFusionWithScoreDetails() {
         assumeTrue(serverVersionAtLeast(8, 2));
         insertScoreFusionDocuments();
         List<BsonDocument> results = getCollectionHelper().aggregate(asList(
@@ -618,6 +593,9 @@ public class AggregatesTest extends OperationTest {
             assertEquals(2, scoreDetails.getArray("details").size());
         });
     }
+
+    @ParameterizedTest
+    @EnumSource(ScoreNormalization.class)
     public void testScoreWithEachNormalization(final ScoreNormalization normalization) {
         assertPipeline(
                 "{'$score': {'score': '$rating', 'normalization': '" + normalization.getValue() + "'}}",
@@ -670,5 +648,30 @@ public class AggregatesTest extends OperationTest {
         List<BsonDocument> results = getCollectionHelper().aggregate(pipeline);
         assertEquals(2, results.size());
         results.forEach(result -> Assertions.assertTrue(result.isNumber("score")));
+    }
+
+    private void insertScoreFusionDocuments() {
+        getCollectionHelper().insertDocuments(
+                BsonDocument.parse("{_id: 1, x: 10, y: 1}"),
+                BsonDocument.parse("{_id: 2, x: 5, y: 2}"),
+                BsonDocument.parse("{_id: 3, x: 1, y: 3}"));
+    }
+
+    private List<BsonDocument> resultsWithScoresFor(final Bson scoreFusionStage) {
+        return getCollectionHelper().aggregate(asList(
+                scoreFusionStage,
+                project(Projections.meta("score", "score"))));
+    }
+
+    private List<Integer> getIdsFor(final List<BsonDocument> results) {
+        return results.stream()
+                .map(doc -> doc.getInt32("_id").getValue())
+                .collect(toList());
+    }
+
+    private List<Double> scoresFor(final List<BsonDocument> results) {
+        return results.stream()
+                .map(doc -> doc.getNumber("score").doubleValue())
+                .collect(toList());
     }
 }

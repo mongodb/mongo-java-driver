@@ -32,6 +32,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @see ScoreFusionOptions#combination(ScoreFusionCombination)
  * @since 5.10
+ * @mongodb.driver.manual reference/operator/aggregation/scoreFusion/ $scoreFusion
  * @mongodb.server.release 8.2
  */
 @Sealed

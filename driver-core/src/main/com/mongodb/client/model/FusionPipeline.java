@@ -79,7 +79,7 @@ public final class FusionPipeline {
             notNull("stage", stage);
         }
         this.name = name;
-        this.pipeline = unmodifiableList(new ArrayList<Bson>(pipeline));
+        this.pipeline = unmodifiableList(new ArrayList<>(pipeline));
     }
 
     /**

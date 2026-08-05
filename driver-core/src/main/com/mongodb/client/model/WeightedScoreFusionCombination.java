@@ -22,6 +22,7 @@ import com.mongodb.annotations.Sealed;
  * A {@linkplain ScoreFusionCombination#weighted(org.bson.conversions.Bson) weighted} {@link ScoreFusionCombination}.
  *
  * @since 5.10
+ * @mongodb.driver.manual reference/operator/aggregation/scoreFusion/ $scoreFusion
  * @mongodb.server.release 8.2
  */
 @Sealed
