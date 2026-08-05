@@ -24,6 +24,7 @@ import com.mongodb.internal.thread.ThreadUtil;
 
 import java.time.Duration;
 
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.thread.ThreadUtil.sleepAsync;
 
@@ -71,7 +72,8 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
                 onAttemptSuccessCallback.complete(onAttemptSuccessCallback);
             }).onErrorIf(e -> true, (attemptFailedResult, onAttemptFailureCallback) -> {
                 if (attemptFailedResult instanceof Error) {
-                    onAttemptFailureCallback.completeExceptionally(attemptFailedResult);
+                    control.advanceOrThrow(attemptFailedResult);
+                    fail("Must not be reached");
                 } else {
                     RetryAttemptInfo retryAttemptInfo = control.advanceOrThrow(attemptFailedResult);
                     sleepAsync(retryAttemptInfo.getBackoff(), clientExecutor, onAttemptFailureCallback);

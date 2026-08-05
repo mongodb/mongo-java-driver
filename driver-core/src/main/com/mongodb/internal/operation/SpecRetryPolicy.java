@@ -60,6 +60,8 @@ import static java.util.Arrays.asList;
 
 /**
  * Implements all {@linkplain IndividualPolicies individual specification retry policies}.
+ * A new instance of {@link SpecRetryPolicy} must be used for each execution of a command
+ * (a command execution may involve multiple execution attempts).
  */
 final class SpecRetryPolicy implements RetryPolicy {
     private static final int INFINITE_ATTEMPTS = Integer.MAX_VALUE;
@@ -572,7 +574,7 @@ final class SpecRetryPolicy implements RetryPolicy {
                     return policies.getMaxAttempts();
                 }
                 default: {
-                    throw fail(this.toString());
+                    throw fail(toString());
                 }
             }
         }
