@@ -80,6 +80,7 @@ import com.mongodb.internal.connection.DualMessageSequences;
 import com.mongodb.internal.connection.IdHoldingBsonWriter;
 import com.mongodb.internal.connection.MongoWriteConcernWithResponseException;
 import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.internal.validator.ReplacingDocumentFieldNameValidator;
@@ -416,8 +417,10 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             return null;
         }
         ClientBulkWriteCommandOkResponse response = new ClientBulkWriteCommandOkResponse(okResponseDocument);
-        List<List<BsonDocument>> cursorExhaustBatches = retryControl.doWhileDisabled(() ->
-                exhaustBulkWriteCommandOkResponseCursor(connectionSource, operationContext, connection, response));
+        List<List<BsonDocument>> cursorExhaustBatches = retryControl.doWhileDisabled(() -> {
+            onNotTryingToStartTransaction(((BaseClientSessionImpl) operationContext.getSessionContext()).getOverloadRetryPolicyState());
+            return exhaustBulkWriteCommandOkResponseCursor(connectionSource, operationContext, connection, response);
+        });
         return createExhaustiveClientBulkWriteCommandOkResponse(
                 response,
                 cursorExhaustBatches,
@@ -453,6 +456,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             ClientBulkWriteCommandOkResponse response = new ClientBulkWriteCommandOkResponse(okResponseDocument);
             beginAsync().<List<List<BsonDocument>>>thenSupply(exhaustCallback -> {
                 retryControl.doWhileDisabledAsync((actionCallback) -> {
+                    onNotTryingToStartTransaction(((BaseClientSessionImpl) operationContext.getSessionContext()).getOverloadRetryPolicyState());
                     exhaustBulkWriteCommandOkResponseCursorAsync(connectionSource, connection, response, operationContext, actionCallback);
                 }, exhaustCallback);
             }).<ExhaustiveClientBulkWriteCommandOkResponse>thenApply((cursorExhaustBatches, transformExhaustionResultCallback) -> {
@@ -462,6 +466,14 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                         connection.getDescription()));
             }).finish(c);
         }).finish(callback);
+    }
+
+    private static void onNotTryingToStartTransaction(final BaseClientSessionImpl.OverloadRetryPolicyState sessionScopedOverloadRetryPolicyState) {
+        BaseClientSessionImpl.OverloadRetryPolicyState.CommandExecutionScoped commandExecutionScopedState =
+                sessionScopedOverloadRetryPolicyState.getCommandExecutionScoped();
+        if (commandExecutionScopedState != null) {
+            commandExecutionScopedState.onNotTryingToStartTransaction();
+        }
     }
 
     /**

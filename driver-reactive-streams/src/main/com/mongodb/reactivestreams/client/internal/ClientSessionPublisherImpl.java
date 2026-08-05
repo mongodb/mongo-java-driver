@@ -78,7 +78,10 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
         if (hasActiveTransaction()) {
             boolean firstMessageInCurrentTransaction = !messageSentInCurrentTransaction;
             messageSentInCurrentTransaction = true;
-            return firstMessageInCurrentTransaction;
+            OverloadRetryPolicyState.CommandExecutionScoped overloadRetryPolicyState = getOverloadRetryPolicyState().getCommandExecutionScoped();
+            return overloadRetryPolicyState == null
+                    ? firstMessageInCurrentTransaction
+                    : overloadRetryPolicyState.notifyMessageSent(firstMessageInCurrentTransaction);
         } else {
             if (transactionState == TransactionState.COMMITTED || transactionState == TransactionState.ABORTED) {
                 cleanupTransaction(TransactionState.NONE);

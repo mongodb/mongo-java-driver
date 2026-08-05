@@ -53,9 +53,9 @@ public interface SessionContext {
     long advanceTransactionNumber();
 
     /**
-     *  Notify the session context that a message has been sent.
+     *  Notify that a message is about to be sent.
      *
-     * @return true if this is the first message sent, false otherwise
+     * @return true Iff the message must bear {@code startTransaction: true}.
      */
     boolean notifyMessageSent();
 

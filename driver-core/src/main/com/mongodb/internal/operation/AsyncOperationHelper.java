@@ -330,10 +330,14 @@ final class AsyncOperationHelper {
             final RetryControl<SpecRetryPolicy> retryControl,
             final OperationContext operationContext,
             final AsyncCallbackSupplier<R> supplier) {
-        return new RetryingAsyncCallbackSupplier<>(operationContext.getClientExecutor(), retryControl, callback -> {
-            retryControl.getPolicy().onAttemptStart(retryControl, operationContext);
-            supplier.get(callback);
-        });
+        return (callback) -> {
+            beginAsync().<R>thenSupply(c -> {
+                new RetryingAsyncCallbackSupplier<R>(operationContext.getClientExecutor(), retryControl, supplierCallback -> {
+                    retryControl.getPolicy().onAttemptStart(retryControl, operationContext);
+                    supplier.get(supplierCallback);
+                }).get(c);
+            }).thenAlwaysRunAndFinish(() -> retryControl.getPolicy().onLastAttemptCompletion(), callback);
+        };
     }
 
     static CommandWriteTransformerAsync<BsonDocument, Void> writeConcernErrorTransformerAsync(final TimeoutContext timeoutContext) {

@@ -325,10 +325,16 @@ final class SyncOperationHelper {
             final RetryControl<SpecRetryPolicy> retryControl,
             final OperationContext operationContext,
             final Supplier<R> supplier) {
-        return new RetryingSyncSupplier<>(retryControl, () -> {
-            retryControl.getPolicy().onAttemptStart(retryControl, operationContext);
-            return supplier.get();
-        });
+        return () -> {
+            try {
+                return new RetryingSyncSupplier<>(retryControl, () -> {
+                    retryControl.getPolicy().onAttemptStart(retryControl, operationContext);
+                    return supplier.get();
+                }).get();
+            } finally {
+                retryControl.getPolicy().onLastAttemptCompletion();
+            }
+        };
     }
 
 

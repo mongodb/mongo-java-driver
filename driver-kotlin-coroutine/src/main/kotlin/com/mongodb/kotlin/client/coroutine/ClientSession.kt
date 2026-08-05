@@ -41,11 +41,11 @@ public class ClientSession(public val wrapped: reactiveClientSession) : jClientS
     public fun hasActiveTransaction(): Boolean = wrapped.hasActiveTransaction()
 
     /**
-     * Notify the client session that a message has been sent.
+     * Notify that a message is about to be sent.
      *
      * For internal use only
      *
-     * @return true if this is the first message sent, false otherwise
+     * @return true Iff the message must bear {@code startTransaction: true}.
      */
     public fun notifyMessageSent(): Boolean = wrapped.notifyMessageSent()
 
