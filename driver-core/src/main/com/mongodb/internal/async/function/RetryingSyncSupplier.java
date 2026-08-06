@@ -16,7 +16,6 @@
 package com.mongodb.internal.async.function;
 
 import com.mongodb.annotations.NotThreadSafe;
-import com.mongodb.internal.async.MutableValue;
 import com.mongodb.internal.async.function.RetryPolicy.Decision.RetryAttemptInfo;
 import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.lang.Nullable;
@@ -53,12 +52,9 @@ public final class RetryingSyncSupplier<R> implements Supplier<R> {
     @Override
     @Nullable
     public R get() {
-        MutableValue<MutableValue<R>> asyncFunctionSuccessfulResult = new MutableValue<>();
-        while (asyncFunctionSuccessfulResult.getNullable() == null) {
+        while (true) {
             try {
-                R attemptSuccessfulResult = syncFunction.get();
-                // `attemptSuccessfulResult` may be `null`, so we have to wrap it in `MutableValue` for the while check to notice it
-                asyncFunctionSuccessfulResult.set(new MutableValue<>(attemptSuccessfulResult));
+                return syncFunction.get();
             } catch (Error attemptFailedResult) {
                 throw attemptFailedResult;
             } catch (Throwable attemptFailedResult) {
@@ -66,7 +62,6 @@ public final class RetryingSyncSupplier<R> implements Supplier<R> {
                 sleep(retryAttemptInfo.getBackoff());
             }
         }
-        return asyncFunctionSuccessfulResult.get().getNullable();
     }
 
     private static void sleep(final Duration duration) {

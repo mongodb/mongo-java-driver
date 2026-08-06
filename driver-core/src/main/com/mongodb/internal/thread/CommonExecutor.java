@@ -94,7 +94,7 @@ public final class CommonExecutor {
                     },
                     delay.toNanos(), NANOSECONDS);
         } catch (RejectedExecutionException e) {
-            throw fail(e.toString());
+            throw fail(e);
         }
     }
 }
