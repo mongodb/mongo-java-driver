@@ -43,12 +43,17 @@ import static com.mongodb.client.model.Accumulators.median;
 import static com.mongodb.client.model.Accumulators.percentile;
 import static com.mongodb.client.model.Aggregates.geoNear;
 import static com.mongodb.client.model.Aggregates.group;
+import static com.mongodb.client.model.Aggregates.match;
+import static com.mongodb.client.model.Aggregates.project;
 import static com.mongodb.client.model.Aggregates.rerank;
+import static com.mongodb.client.model.Aggregates.scoreFusion;
 import static com.mongodb.client.model.Aggregates.score;
 import static com.mongodb.client.model.Aggregates.unset;
 import static com.mongodb.client.model.Aggregates.vectorSearch;
+import static com.mongodb.client.model.Filters.exists;
 import static com.mongodb.client.model.RerankQuery.rerankQuery;
 import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
+import static com.mongodb.client.model.ScoreFusionOptions.scoreFusionOptions;
 import static com.mongodb.client.model.ScoreOptions.scoreOptions;
 import static com.mongodb.client.model.Sorts.ascending;
 import static com.mongodb.client.model.Windows.Bound.UNBOUNDED;
@@ -57,6 +62,7 @@ import static com.mongodb.client.model.search.SearchPath.fieldPath;
 import static com.mongodb.client.model.search.VectorSearchOptions.approximateVectorSearchOptions;
 import static com.mongodb.client.model.search.VectorSearchQuery.textQuery;
 import static java.util.Arrays.asList;
+import static java.util.stream.Collectors.toList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -64,6 +70,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class AggregatesTest extends OperationTest {
+
+    private static final Bson SCORE_BY_X = score("$x");
+    private static final Bson SCORE_BY_Y = score("$y");
 
     private static Stream<Arguments> groupWithQuantileSource() {
         return Stream.of(
@@ -484,6 +493,109 @@ public class AggregatesTest extends OperationTest {
 
     @ParameterizedTest
     @EnumSource(ScoreNormalization.class)
+    public void testScoreFusionWithEachNormalization(final ScoreNormalization normalization) {
+        assumeTrue(serverVersionAtLeast(8, 2));
+        insertScoreFusionDocuments();
+        List<BsonDocument> results = resultsWithScoresFor(scoreFusion(
+                asList(
+                        FusionPipeline.of("byX", match(exists("x")), SCORE_BY_X),
+                        FusionPipeline.of("byY", match(exists("y")), SCORE_BY_Y)),
+                normalization));
+        assertEquals(3, results.size());
+        if (normalization == ScoreNormalization.NONE) {
+            // the server combines the scores of the two pipelines with avg by default: (x + y) / 2
+            // https://www.mongodb.com/docs/manual/reference/operator/aggregation/scoreFusion/
+            assertEquals(asList(5.5, 3.5, 2.0), scoresFor(results));
+        } else {
+            // sigmoid maps each pipeline score into (0, 1) and minMaxScaler into [0, 1],
+            // so the average of the two is within [0, 1]
+            scoresFor(results).forEach(score -> Assertions.assertTrue(score >= 0 && score <= 1));
+        }
+    }
+
+    @Test
+    public void testScoreFusionWithWeights() {
+        assumeTrue(serverVersionAtLeast(8, 2));
+        insertScoreFusionDocuments();
+        // weight only the "byY" pipeline: expected order is descending y, each score is y / 2
+        // because the server combines the weighted scores of the two pipelines with avg by default
+        // https://www.mongodb.com/docs/manual/reference/operator/aggregation/scoreFusion/
+        List<BsonDocument> results = resultsWithScoresFor(scoreFusion(
+                asList(
+                        FusionPipeline.of("byX", match(exists("x")), SCORE_BY_X),
+                        FusionPipeline.of("byY", match(exists("y")), SCORE_BY_Y)),
+                ScoreNormalization.NONE,
+                scoreFusionOptions().combination(
+                        ScoreFusionCombination.weighted(new Document("byX", 0).append("byY", 1)))));
+        assertEquals(asList(3, 2, 1), getIdsFor(results));
+        assertEquals(asList(1.5, 1.0, 0.5), scoresFor(results));
+    }
+
+    @Test
+    public void testScoreFusionWithWeightsAndAvgMethod() {
+        assumeTrue(serverVersionAtLeast(8, 2));
+        insertScoreFusionDocuments();
+        // weight only the "byX" pipeline and average over the two pipelines: each score is x / 2
+        List<BsonDocument> results = resultsWithScoresFor(scoreFusion(
+                asList(
+                        FusionPipeline.of("byX", match(exists("x")), SCORE_BY_X),
+                        FusionPipeline.of("byY", match(exists("y")), SCORE_BY_Y)),
+                ScoreNormalization.NONE,
+                scoreFusionOptions().combination(
+                        ScoreFusionCombination.weighted(new Document("byX", 1).append("byY", 0)).avg())));
+        assertEquals(asList(1, 2, 3), getIdsFor(results));
+        assertEquals(asList(5.0, 2.5, 0.5), scoresFor(results));
+    }
+
+    @Test
+    public void testScoreFusionWithExpressionCombination() {
+        assumeTrue(serverVersionAtLeast(8, 2));
+        insertScoreFusionDocuments();
+        // ignore byX, use 10 * byY: expected order is descending y, each score is exactly 10 * y
+        List<BsonDocument> results = resultsWithScoresFor(scoreFusion(
+                asList(
+                        FusionPipeline.of("byX", match(exists("x")), SCORE_BY_X),
+                        FusionPipeline.of("byY", match(exists("y")), SCORE_BY_Y)),
+                ScoreNormalization.NONE,
+                scoreFusionOptions().combination(ScoreFusionCombination.expression(
+                        new Document("$sum", asList(
+                                new Document("$multiply", asList("$$byX", 0)),
+                                new Document("$multiply", asList("$$byY", 10))))))));
+        assertEquals(asList(3, 2, 1), getIdsFor(results));
+        assertEquals(asList(30.0, 20.0, 10.0), scoresFor(results));
+    }
+
+    @Test
+    public void testScoreFusionWithScoreDetails() {
+        assumeTrue(serverVersionAtLeast(8, 2));
+        insertScoreFusionDocuments();
+        List<BsonDocument> results = getCollectionHelper().aggregate(asList(
+                scoreFusion(
+                        asList(
+                                FusionPipeline.of("byX", match(exists("x")), SCORE_BY_X),
+                                FusionPipeline.of("byY", match(exists("y")), SCORE_BY_Y)),
+                        ScoreNormalization.SIGMOID,
+                        scoreFusionOptions().scoreDetails(true)),
+                project(Projections.fields(
+                        Projections.meta("score", "score"),
+                        Projections.meta("scoreDetails", "scoreDetails")))));
+        assertEquals(3, results.size());
+        results.forEach(result -> {
+            double score = result.getNumber("score").doubleValue();
+            Assertions.assertTrue(score > 0);
+            BsonDocument scoreDetails = result.getDocument("scoreDetails");
+            // "value" holds the same combined score as the score metadata
+            assertEquals(score, scoreDetails.getNumber("value").doubleValue());
+            Assertions.assertFalse(scoreDetails.getString("description").getValue().isEmpty());
+            assertEquals("sigmoid", scoreDetails.getString("normalization").getValue());
+            Assertions.assertNotNull(scoreDetails.getDocument("combination"));
+            // one entry per input pipeline
+            assertEquals(2, scoreDetails.getArray("details").size());
+        });
+    }
+
+    @ParameterizedTest
+    @EnumSource(ScoreNormalization.class)
     public void testScoreWithEachNormalization(final ScoreNormalization normalization) {
         assertPipeline(
                 "{'$score': {'score': '$rating', 'normalization': '" + normalization.getValue() + "'}}",
@@ -536,5 +648,30 @@ public class AggregatesTest extends OperationTest {
         List<BsonDocument> results = getCollectionHelper().aggregate(pipeline);
         assertEquals(2, results.size());
         results.forEach(result -> Assertions.assertTrue(result.isNumber("score")));
+    }
+
+    private void insertScoreFusionDocuments() {
+        getCollectionHelper().insertDocuments(
+                BsonDocument.parse("{_id: 1, x: 10, y: 1}"),
+                BsonDocument.parse("{_id: 2, x: 5, y: 2}"),
+                BsonDocument.parse("{_id: 3, x: 1, y: 3}"));
+    }
+
+    private List<BsonDocument> resultsWithScoresFor(final Bson scoreFusionStage) {
+        return getCollectionHelper().aggregate(asList(
+                scoreFusionStage,
+                project(Projections.meta("score", "score"))));
+    }
+
+    private List<Integer> getIdsFor(final List<BsonDocument> results) {
+        return results.stream()
+                .map(doc -> doc.getInt32("_id").getValue())
+                .collect(toList());
+    }
+
+    private List<Double> scoresFor(final List<BsonDocument> results) {
+        return results.stream()
+                .map(doc -> doc.getNumber("score").doubleValue())
+                .collect(toList());
     }
 }
