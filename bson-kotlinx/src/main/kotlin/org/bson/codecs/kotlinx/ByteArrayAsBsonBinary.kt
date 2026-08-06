@@ -42,10 +42,9 @@ import org.bson.BsonValue
  * [ByteArrayAsBsonBinary.serializersModule] on the codec.
  *
  * To ease migration, decoding also accepts that legacy BSON array of int32 form — as written by the built-in
- * `ByteArray` serializer, and by `bson-kotlin` 5.2.0 through 5.9.x. Encoding always produces
- * `BsonBinary`, so re-saving a document migrates it. Every element of such an array must be an int32 within the signed
- * byte range; otherwise `BsonInvalidOperationException` is thrown rather than silently decoding an unrelated BSON array
- * into bytes.
+ * `ByteArray` serializer, and by `bson-kotlin` 5.2.0 through 5.9.x. Encoding always produces `BsonBinary`, so re-saving
+ * a document migrates it. Every element of such an array must be an int32 within the signed byte range; otherwise
+ * `BsonInvalidOperationException` is thrown rather than silently decoding an unrelated BSON array into bytes.
  *
  * @since 5.10
  */

@@ -25,9 +25,9 @@ import org.bson.codecs.DecoderContext
 /**
  * A [ByteArrayCodec] that also decodes the legacy BSON Array representation of a `ByteArray`.
  *
- * Versions 5.2.0 - 5.9.x encoded `ByteArray` data class fields as a BSON Array of Int32, one
- * element per byte, rather than as a compact BSON Binary. This codec still decodes those documents, so data written by
- * those versions remains readable.
+ * Versions 5.2.0 - 5.9.x encoded `ByteArray` data class fields as a BSON Array of Int32, one element per byte, rather
+ * than as a compact BSON Binary. This codec still decodes those documents, so data written by those versions remains
+ * readable.
  *
  * Encoding is inherited unchanged from [ByteArrayCodec] and always produces BSON Binary. Re-saving a document therefore
  * migrates it away from the legacy representation.

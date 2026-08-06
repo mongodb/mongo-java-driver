@@ -152,6 +152,17 @@ data class DataClassWithByteArray(val byteArray: ByteArray) {
     override fun hashCode(): Int = byteArray.contentHashCode()
 }
 
+data class DataClassWithNestedByteArrays(val nestedByteArrays: Array<ByteArray>) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as DataClassWithNestedByteArrays
+        return nestedByteArrays.contentDeepEquals(other.nestedByteArrays)
+    }
+
+    override fun hashCode(): Int = nestedByteArrays.contentDeepHashCode()
+}
+
 data class DataClassWithDefaults(
     val boolean: Boolean = false,
     val string: String = "String",

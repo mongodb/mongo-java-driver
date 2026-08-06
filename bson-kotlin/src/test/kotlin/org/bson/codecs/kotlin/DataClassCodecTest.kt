@@ -23,6 +23,7 @@ import org.bson.BsonDocumentWriter
 import org.bson.BsonInvalidOperationException
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
+import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.CodecConfigurationException
 import org.bson.codecs.configuration.CodecRegistries.fromProviders
 import org.bson.codecs.kotlin.samples.Box
@@ -62,6 +63,7 @@ import org.bson.codecs.kotlin.samples.DataClassWithMutableList
 import org.bson.codecs.kotlin.samples.DataClassWithMutableMap
 import org.bson.codecs.kotlin.samples.DataClassWithMutableSet
 import org.bson.codecs.kotlin.samples.DataClassWithNativeArrays
+import org.bson.codecs.kotlin.samples.DataClassWithNestedByteArrays
 import org.bson.codecs.kotlin.samples.DataClassWithNestedParameterized
 import org.bson.codecs.kotlin.samples.DataClassWithNestedParameterizedDataClass
 import org.bson.codecs.kotlin.samples.DataClassWithNullableGeneric
@@ -242,6 +244,22 @@ class DataClassCodecTest {
                 arrayOf(byteArrayOf(1, 2), byteArrayOf(3, 4, 5)))
 
         assertDecodesTo(data, expected)
+    }
+
+    @Test
+    fun testNestedByteArraysDecodeLegacyBsonArraysWithValueCodecProviderFirst() {
+        // MongoClientSettings.DEFAULT_CODEC_REGISTRY orders ValueCodecProvider ahead of
+        // ArrayCodecProvider, so resolving the element codec via the registry would find
+        // ByteArrayCodec
+        // rather than LenientByteArrayCodec.
+        val registry = fromProviders(ValueCodecProvider(), ArrayCodecProvider(), DataClassCodecProvider())
+        val codec = DataClassCodec.create(DataClassWithNestedByteArrays::class, registry)!!
+        val decoded =
+            codec.decode(
+                BsonDocumentReader(BsonDocument.parse("""{"nestedByteArrays": [[1, 2], [3, 4]]}""")),
+                DecoderContext.builder().build())
+
+        assertEquals(DataClassWithNestedByteArrays(arrayOf(byteArrayOf(1, 2), byteArrayOf(3, 4))), decoded)
     }
 
     @Test

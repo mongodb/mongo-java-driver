@@ -349,7 +349,8 @@ class KotlinSerializerCodecTest {
     @Test
     fun testByteArrayAsBsonBinaryDecodesLegacyBsonArray() {
         // The built-in ByteArray serializer, and bson-kotlin 5.2.0 - 5.9.x,
-        // regressed abd encoded a ByteArray as a BSON Array of Int32. Those documents must still decode.
+        // regressed abd encoded a ByteArray as a BSON Array of Int32. Those documents must still
+        // decode.
         assertDecodesTo("""{"byteArray": [1, 2, 3, 4]}""", DataClassWithByteArrayAsBsonBinary(byteArrayOf(1, 2, 3, 4)))
         assertDecodesTo(
             """{"byteArray": [-128, -1, 0, 127]}""", DataClassWithByteArrayAsBsonBinary(byteArrayOf(-128, -1, 0, 127)))
