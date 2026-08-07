@@ -269,7 +269,7 @@ package object search {
    * @see `SearchCollector.facet(SearchOperator, Iterable)`
    */
   @Sealed
-  @Beta(Array(Reason.CLIENT, Reason.SERVER))
+  @Beta(Array(Reason.CLIENT))
   type FacetSearchCollector = com.mongodb.client.model.search.FacetSearchCollector
 
   /**
@@ -360,21 +360,21 @@ package object search {
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/counting/ Counting]]
    */
   @Sealed
-  @Beta(Array(Reason.CLIENT, Reason.SERVER))
+  @Beta(Array(Reason.CLIENT))
   type SearchCount = com.mongodb.client.model.search.SearchCount
 
   /**
    * @see `SearchCount.total()`
    */
   @Sealed
-  @Beta(Array(Reason.CLIENT, Reason.SERVER))
+  @Beta(Array(Reason.CLIENT))
   type TotalSearchCount = com.mongodb.client.model.search.TotalSearchCount
 
   /**
    * @see `SearchCount.lowerBound()`
    */
   @Sealed
-  @Beta(Array(Reason.CLIENT, Reason.SERVER))
+  @Beta(Array(Reason.CLIENT))
   type LowerBoundSearchCount = com.mongodb.client.model.search.LowerBoundSearchCount
 
   /**
@@ -383,28 +383,28 @@ package object search {
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/facet/#facet-definition Facet definition]]
    */
   @Sealed
-  @Beta(Array(Reason.CLIENT, Reason.SERVER))
+  @Beta(Array(Reason.CLIENT))
   type SearchFacet = com.mongodb.client.model.search.SearchFacet
 
   /**
    * @see `SearchFacet.stringFacet(String, FieldSearchPath)`
    */
   @Sealed
-  @Beta(Array(Reason.CLIENT, Reason.SERVER))
+  @Beta(Array(Reason.CLIENT))
   type StringSearchFacet = com.mongodb.client.model.search.StringSearchFacet
 
   /**
    * @see `SearchFacet.numberFacet(String, FieldSearchPath, Iterable)`
    */
   @Sealed
-  @Beta(Array(Reason.CLIENT, Reason.SERVER))
+  @Beta(Array(Reason.CLIENT))
   type NumberSearchFacet = com.mongodb.client.model.search.NumberSearchFacet
 
   /**
    * @see `SearchFacet.dateFacet(String, FieldSearchPath, Iterable)`
    */
   @Sealed
-  @Beta(Array(Reason.CLIENT, Reason.SERVER))
+  @Beta(Array(Reason.CLIENT))
   type DateSearchFacet = com.mongodb.client.model.search.DateSearchFacet
 
   /**
