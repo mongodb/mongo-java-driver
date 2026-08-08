@@ -48,6 +48,7 @@ import java.util.function.BooleanSupplier;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -230,6 +231,9 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
                 boolean alreadyCommitted = commitInProgress || transactionState == TransactionState.COMMITTED;
+                if (!alreadyCommitted) {
+                    getOverloadRetryPolicyState().openCommitScope();
+                }
                 commitInProgress = true;
                 if (resetTimeout) {
                     resetTimeout();
@@ -367,7 +371,9 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
     private void cleanupTransaction(final TransactionState nextState) {
         messageSentInCurrentTransaction = false;
         transactionOptions = null;
+        assertFalse(nextState == TransactionState.COMMITTED);
         transactionState = nextState;
+        getOverloadRetryPolicyState().closeCommitScope();
         setTimeoutContext(null);
     }
 

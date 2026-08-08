@@ -39,6 +39,7 @@ import org.bson.BsonDocument;
 import java.util.List;
 
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.operation.CommandOperationHelper.RETRYABLE_WRITE_ERROR_LABEL;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -148,8 +149,8 @@ public class CommitTransactionOperation extends TransactionOperation {
     protected Function<BsonDocument, BsonDocument> getRetryCommandModifier(final OperationContext operationContext) {
         TimeoutContext timeoutContext = operationContext.getTimeoutContext();
         return command -> {
-            boolean observedOnlyRetryableOverloadErrors = false; // VAKOTODO get from `SessionContext`
-            if (!observedOnlyRetryableOverloadErrors) {
+            if (!assertNotNull(operationContext.getSessionContext().getOverloadRetryPolicyState().getCommitScoped())
+                    .observedErrorsAndTheyAreAllRetryableOverloadErrors()) {
                 WriteConcern retryWriteConcern = getWriteConcern().withW("majority");
                 if (retryWriteConcern.getWTimeout(MILLISECONDS) == null && !timeoutContext.hasTimeoutMS()) {
                     retryWriteConcern = retryWriteConcern.withWTimeout(10000, MILLISECONDS);

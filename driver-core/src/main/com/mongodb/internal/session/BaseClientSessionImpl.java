@@ -42,6 +42,7 @@ import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrue;
+import static java.lang.Boolean.TRUE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -289,6 +290,23 @@ public class BaseClientSessionImpl implements ClientSession {
         void closeCommandExecutionScope();
 
         /**
+         * @see #closeCommitScope()
+         */
+        void openCommitScope();
+
+        /**
+         * @see #openCommitScope()
+         * @see #closeCommitScope()
+         */
+        @Nullable
+        CommitScoped getCommitScoped();
+
+        /**
+         * @see #openCommitScope()
+         */
+        void closeCommitScope();
+
+        /**
          * A part of {@link DefaultOverloadRetryPolicyState} restricted to the execution of a command
          * (a command execution may involve multiple execution attempts).
          * <p>
@@ -323,14 +341,33 @@ public class BaseClientSessionImpl implements ClientSession {
 
             void onAnyAttemptFailure(boolean retryableOverloadError);
         }
+
+        /**
+         * A part of {@link OverloadRetryPolicyState} restricted to all adjacent executions of the commit transaction operation
+         * (each of those executions may involve the {@code commitTransaction} command execution,
+         * which may involve multiple command execution attempts),
+         * regardless of whether any of them is initiated directly by an application or internally by the driver.
+         * <p>
+         * This class is not part of the public API and may be removed or changed at any time.
+         *
+         * @see #getCommitScoped()
+         */
+        interface CommitScoped {
+            void onAnyAttemptFailure(boolean retryableOverloadError);
+
+            boolean observedErrorsAndTheyAreAllRetryableOverloadErrors();
+        }
     }
 
     private static final class DefaultOverloadRetryPolicyState implements OverloadRetryPolicyState {
         @Nullable
         private DefaultCommandExecutionScoped commandExecutionScoped;
+        @Nullable
+        private DefaultCommitScoped commitScoped;
 
         DefaultOverloadRetryPolicyState() {
             commandExecutionScoped = null;
+            commitScoped = null;
         }
 
         @Override
@@ -351,9 +388,27 @@ public class BaseClientSessionImpl implements ClientSession {
         }
 
         @Override
+        public void openCommitScope() {
+            assertNull(commitScoped);
+            commitScoped = new DefaultCommitScoped();
+        }
+
+        @Override
+        @Nullable
+        public CommitScoped getCommitScoped() {
+            return commitScoped;
+        }
+
+        @Override
+        public void closeCommitScope() {
+            commitScoped = null;
+        }
+
+        @Override
         public String toString() {
             return "DefaultOverloadRetryPolicyState{"
-                    + "commandExecutionScoped=" + commandExecutionScoped
+                    + ", commandExecutionScoped=" + commandExecutionScoped
+                    + ", commitScoped=" + commitScoped
                     + '}';
         }
 
@@ -402,6 +457,41 @@ public class BaseClientSessionImpl implements ClientSession {
                         + '}';
             }
         }
+
+        private static final class DefaultCommitScoped implements CommitScoped {
+            /**
+             * {@code null} iff no errors have been observed.
+             *
+             * @see MongoException#RETRYABLE_ERROR_LABEL
+             * @see MongoException#SYSTEM_OVERLOADED_ERROR_LABEL
+             */
+            private Boolean observedErrorsAndTheyAreAllRetryableOverloadErrors;
+
+            DefaultCommitScoped() {
+                observedErrorsAndTheyAreAllRetryableOverloadErrors = null;
+            }
+
+            @Override
+            public void onAnyAttemptFailure(final boolean retryableOverloadError) {
+                if (observedErrorsAndTheyAreAllRetryableOverloadErrors == null) {
+                    observedErrorsAndTheyAreAllRetryableOverloadErrors = retryableOverloadError;
+                } else {
+                    observedErrorsAndTheyAreAllRetryableOverloadErrors &= retryableOverloadError;
+                }
+            }
+
+            @Override
+            public boolean observedErrorsAndTheyAreAllRetryableOverloadErrors() {
+                return TRUE.equals(observedErrorsAndTheyAreAllRetryableOverloadErrors);
+            }
+
+            @Override
+            public String toString() {
+                return "DefaultCommitScoped{"
+                        + "observedErrorsAndTheyAreAllRetryableOverloadErrors=" + observedErrorsAndTheyAreAllRetryableOverloadErrors
+                        + '}';
+            }
+        }
     }
 
     private static final class NoOpOverloadRetryPolicyState implements OverloadRetryPolicyState {
@@ -421,6 +511,19 @@ public class BaseClientSessionImpl implements ClientSession {
         public void closeCommandExecutionScope() {
         }
 
+        @Override
+        public void openCommitScope() {
+        }
+
+        @Override
+        public CommitScoped getCommitScoped() {
+            return NoOpCommitScoped.INSTANCE;
+        }
+
+        @Override
+        public void closeCommitScope() {
+        }
+
         private static final class NoOpCommandExecutionScoped implements CommandExecutionScoped {
             static final NoOpCommandExecutionScoped INSTANCE = new NoOpCommandExecutionScoped();
 
@@ -438,6 +541,22 @@ public class BaseClientSessionImpl implements ClientSession {
 
             @Override
             public void onAnyAttemptFailure(final boolean retryableOverloadError) {
+            }
+        }
+
+        private static final class NoOpCommitScoped implements CommitScoped {
+            static final NoOpCommitScoped INSTANCE = new NoOpCommitScoped();
+
+            private NoOpCommitScoped() {
+            }
+
+            @Override
+            public void onAnyAttemptFailure(final boolean retryableOverloadError) {
+            }
+
+            @Override
+            public boolean observedErrorsAndTheyAreAllRetryableOverloadErrors() {
+                throw fail();
             }
         }
     }

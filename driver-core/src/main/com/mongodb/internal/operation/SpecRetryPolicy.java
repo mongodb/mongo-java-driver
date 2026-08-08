@@ -566,6 +566,10 @@ final class SpecRetryPolicy implements RetryPolicy {
                 private void onAnyAttemptFailure(final boolean retryableOverloadError) {
                     BaseClientSessionImpl.OverloadRetryPolicyState localSessionScopedState = assertNotNull(sessionScopedState);
                     assertNotNull(localSessionScopedState.getCommandExecutionScoped()).onAnyAttemptFailure(retryableOverloadError);
+                    BaseClientSessionImpl.OverloadRetryPolicyState.CommitScoped commitScopedState = localSessionScopedState.getCommitScoped();
+                    if (commitScopedState != null) {
+                        commitScopedState.onAnyAttemptFailure(retryableOverloadError);
+                    }
                 }
 
                 /**
