@@ -17,6 +17,7 @@
 package com.mongodb.internal.session;
 
 import com.mongodb.ReadConcern;
+import com.mongodb.internal.session.BaseClientSessionImpl.OverloadRetryPolicyState;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
@@ -114,4 +115,6 @@ public interface SessionContext {
     void markSessionDirty();
 
     boolean isSessionMarkedDirty();
+
+    OverloadRetryPolicyState getOverloadRetryPolicyState();
 }

@@ -418,7 +418,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         }
         ClientBulkWriteCommandOkResponse response = new ClientBulkWriteCommandOkResponse(okResponseDocument);
         List<List<BsonDocument>> cursorExhaustBatches = retryControl.doWhileDisabled(() -> {
-            onNotTryingToStartTransaction(((BaseClientSessionImpl) operationContext.getSessionContext()).getOverloadRetryPolicyState());
+            onNotTryingToStartTransaction(operationContext.getSessionContext().getOverloadRetryPolicyState());
             return exhaustBulkWriteCommandOkResponseCursor(connectionSource, operationContext, connection, response);
         });
         return createExhaustiveClientBulkWriteCommandOkResponse(
@@ -456,7 +456,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             ClientBulkWriteCommandOkResponse response = new ClientBulkWriteCommandOkResponse(okResponseDocument);
             beginAsync().<List<List<BsonDocument>>>thenSupply(exhaustCallback -> {
                 retryControl.doWhileDisabledAsync((actionCallback) -> {
-                    onNotTryingToStartTransaction(((BaseClientSessionImpl) operationContext.getSessionContext()).getOverloadRetryPolicyState());
+                    onNotTryingToStartTransaction(operationContext.getSessionContext().getOverloadRetryPolicyState());
                     exhaustBulkWriteCommandOkResponseCursorAsync(connectionSource, connection, response, operationContext, actionCallback);
                 }, exhaustCallback);
             }).<ExhaustiveClientBulkWriteCommandOkResponse>thenApply((cursorExhaustBatches, transformExhaustionResultCallback) -> {

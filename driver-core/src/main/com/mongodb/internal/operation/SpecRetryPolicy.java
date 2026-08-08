@@ -86,7 +86,8 @@ final class SpecRetryPolicy implements RetryPolicy {
     }
 
     void onAttemptStart(final RetryContext retryContext, final OperationContext operationContext) {
-        policies.overload().ifPresent(state -> state.onAttemptStart(retryContext, ((BaseClientSessionImpl) operationContext.getSessionContext()).getOverloadRetryPolicyState()));
+        policies.overload().ifPresent(state ->
+                state.onAttemptStart(retryContext, operationContext.getSessionContext().getOverloadRetryPolicyState()));
         if (LOGGER.isDebugEnabled() && !retryContext.isFirstAttempt()) {
             String commandDescription = commandDescriptionSupplier.get();
             long operationId = operationContext.getId();
