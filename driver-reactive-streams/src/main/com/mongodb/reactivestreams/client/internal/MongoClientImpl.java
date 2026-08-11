@@ -78,19 +78,21 @@ public final class MongoClientImpl implements MongoClient {
     private final MongoClusterImpl delegate;
     private final AtomicBoolean closed;
 
-    public MongoClientImpl(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation, final Cluster cluster,
+    public MongoClientImpl(
+            final Cluster cluster,
+            final MongoDriverInformation mongoDriverInformation,
+            final MongoClientSettings settings,
             final StreamFactoryFactory streamFactoryFactory) {
-        this(settings, mongoDriverInformation, cluster, null, streamFactoryFactory);
+        this(cluster, mongoDriverInformation, settings, streamFactoryFactory, null);
     }
 
     @VisibleForTesting(otherwise = PRIVATE)
-    MongoClientImpl(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation, final Cluster cluster,
-            final StreamFactoryFactory streamFactoryFactory, @Nullable final OperationExecutor executor) {
-        this(settings, mongoDriverInformation, cluster, executor, streamFactoryFactory);
-    }
-
-    private MongoClientImpl(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation, final Cluster cluster,
-                            @Nullable final OperationExecutor executor, final StreamFactoryFactory streamFactoryFactory) {
+    MongoClientImpl(
+            final Cluster cluster,
+            final MongoDriverInformation mongoDriverInformation,
+            final MongoClientSettings settings,
+            final StreamFactoryFactory streamFactoryFactory,
+            @Nullable final OperationExecutor executor) {
         notNull("settings", settings);
         notNull("cluster", cluster);
 

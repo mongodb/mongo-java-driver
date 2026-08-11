@@ -74,19 +74,21 @@ public final class MongoClientImpl implements MongoClient {
     private final AtomicBoolean closed;
     private final StreamFactoryFactory streamFactoryFactory;
 
-    public MongoClientImpl(final Cluster cluster,
-                           final MongoClientSettings settings,
-                           final MongoDriverInformation mongoDriverInformation,
-                           final StreamFactoryFactory streamFactoryFactory) {
+    public MongoClientImpl(
+            final Cluster cluster,
+            final MongoDriverInformation mongoDriverInformation,
+            final MongoClientSettings settings,
+            final StreamFactoryFactory streamFactoryFactory) {
         this(cluster, mongoDriverInformation, settings, streamFactoryFactory, null);
     }
 
     @VisibleForTesting(otherwise = PRIVATE)
-    public MongoClientImpl(final Cluster cluster,
-                            final MongoDriverInformation mongoDriverInformation,
-                            final MongoClientSettings settings,
-                            final StreamFactoryFactory streamFactoryFactory,
-                            @Nullable final OperationExecutor operationExecutor) {
+    public MongoClientImpl(
+            final Cluster cluster,
+            final MongoDriverInformation mongoDriverInformation,
+            final MongoClientSettings settings,
+            final StreamFactoryFactory streamFactoryFactory,
+            @Nullable final OperationExecutor operationExecutor) {
 
         this.streamFactoryFactory = streamFactoryFactory;
         this.settings = notNull("settings", settings);

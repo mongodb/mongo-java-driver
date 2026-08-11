@@ -126,7 +126,7 @@ public final class MongoClients {
                 driverInfo,
                 syncStreamFactoryFactory);
 
-        return new MongoClientImpl(cluster, settings, driverInfo, syncStreamFactoryFactory);
+        return new MongoClientImpl(cluster, driverInfo, settings, syncStreamFactoryFactory);
     }
 
     private MongoClients() {

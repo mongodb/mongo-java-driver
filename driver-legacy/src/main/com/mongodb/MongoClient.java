@@ -262,7 +262,7 @@ public class MongoClient implements Closeable {
                 wrappedMongoDriverInformation,
                 syncStreamFactoryFactory);
 
-        delegate = new MongoClientImpl(cluster, settings, wrappedMongoDriverInformation, syncStreamFactoryFactory);
+        delegate = new MongoClientImpl(cluster, wrappedMongoDriverInformation, settings, syncStreamFactoryFactory);
         this.options = options != null ? options : MongoClientOptions.builder(settings).build();
         cursorCleaningService = this.options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
         this.closed = new AtomicBoolean();

@@ -120,7 +120,7 @@ public final class MongoClients {
         StreamFactory heartbeatStreamFactory = getStreamFactory(streamFactoryFactory, settings, true);
         MongoDriverInformation wrappedMongoDriverInformation = wrapMongoDriverInformation(mongoDriverInformation);
         Cluster cluster = createCluster(settings, wrappedMongoDriverInformation, streamFactory, heartbeatStreamFactory, streamFactoryFactory.getClientExecutor());
-        return new MongoClientImpl(settings, wrappedMongoDriverInformation, cluster, streamFactoryFactory);
+        return new MongoClientImpl(cluster, wrappedMongoDriverInformation, settings, streamFactoryFactory);
     }
 
     /**

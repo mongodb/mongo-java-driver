@@ -89,8 +89,8 @@ class MongoClientTest {
 
         MongoClientImpl mongoClient = new MongoClientImpl(
                 cluster,
-                MongoClientSettings.builder().build(),
                 mongoDriverInformation,
+                MongoClientSettings.builder().build(),
                 streamFactoryFactory);
 
         //when
