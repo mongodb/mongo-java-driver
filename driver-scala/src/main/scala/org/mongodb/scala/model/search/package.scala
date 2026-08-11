@@ -310,7 +310,6 @@ package object search {
    * @since 4.11
    */
   @Sealed
-  @Beta(Array(Reason.SERVER))
   type VectorSearchOptions = com.mongodb.client.model.search.VectorSearchOptions
 
   /**
@@ -323,7 +322,6 @@ package object search {
    * @since 5.2
    */
   @Sealed
-  @Beta(Array(Reason.SERVER))
   type ApproximateVectorSearchOptions = com.mongodb.client.model.search.ApproximateVectorSearchOptions
 
   /**
@@ -337,8 +335,25 @@ package object search {
    * @since 5.2
    */
   @Sealed
-  @Beta(Array(Reason.SERVER))
   type ExactVectorSearchOptions = com.mongodb.client.model.search.ExactVectorSearchOptions
+
+  /**
+   * Represents the optional `nestedOptions` sub-document of the `\$vectorSearch` pipeline stage,
+   * used when searching against arrays of embeddings within nested (embedded) documents.
+   *
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
+   * @since 5.10
+   */
+  @Sealed
+  type VectorSearchNestedOptions = com.mongodb.client.model.search.VectorSearchNestedOptions
+
+  /**
+   * The score aggregation mode for a `\$vectorSearch` against arrays of embeddings in nested (embedded) documents.
+   *
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
+   * @since 5.10
+   */
+  type VectorSearchScoreMode = com.mongodb.client.model.search.VectorSearchScoreMode
 
   /**
    * Highlighting options.

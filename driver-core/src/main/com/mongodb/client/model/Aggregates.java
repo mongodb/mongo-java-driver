@@ -28,8 +28,10 @@ import com.mongodb.client.model.search.SearchCollector;
 import com.mongodb.client.model.search.SearchOperator;
 import com.mongodb.client.model.search.SearchOptions;
 import com.mongodb.client.model.search.TextVectorSearchQuery;
+import com.mongodb.client.model.search.VectorSearchNestedOptions;
 import com.mongodb.client.model.search.VectorSearchOptions;
 import com.mongodb.client.model.search.VectorSearchQuery;
+import com.mongodb.client.model.search.VectorSearchScoreMode;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -953,6 +955,13 @@ public final class Aggregates {
      * Creates a {@code $vectorSearch} pipeline stage supported by MongoDB Atlas.
      * You may use the {@code $meta: "vectorSearchScore"} expression, e.g., via {@link Projections#metaVectorSearchScore(String)},
      * to extract the relevance score assigned to each found document.
+     *
+     * <p>The {@code path} may reference a nested (embedded) field using dot notation, in which case the
+     * search is performed against embeddings in the embedded documents. For a nested search, use
+     * {@link VectorSearchOptions#filter(Bson)} to filter the leaf (embedded) documents,
+     * {@link VectorSearchOptions#parentFilter(Bson)} to filter the parent documents, and
+     * {@link VectorSearchOptions#nestedOptions(VectorSearchNestedOptions)} (e.g.
+     * {@link VectorSearchNestedOptions#scoreMode(VectorSearchScoreMode)}) to control score aggregation.</p>
      *
      * @param queryVector The query vector. The number of dimensions must match that of the {@code index}.
      * @param path The field to be searched.
