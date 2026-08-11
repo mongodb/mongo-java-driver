@@ -75,6 +75,9 @@ Packages with `@NonNullApi` in `package-info.java` are non-null by default — o
 with `@Nullable`. New packages must include `@NonNullApi`. Older packages without it are nullable by
 default and require explicit `@NonNull` where needed.
 
+**Secrets:** Never render credentials (usernames, passwords, tokens, keys) in `toString()` — emit
+`<hidden>` instead.
+
 **Thread safety:** Use `com.mongodb.annotations`; `@ThreadSafe`, `@NotThreadSafe`, or `@Immutable`.
 All public API classes must be thread-safe unless annotated otherwise. Concurrent code — particularly
 in async `driver-core` paths — must use locks (via `Locks.withLock()`), `volatile` fields, or
