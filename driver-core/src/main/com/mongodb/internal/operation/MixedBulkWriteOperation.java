@@ -62,7 +62,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.internal.operation.AsyncOperationHelper.exceptionTransformingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
 import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabel;
-import static com.mongodb.internal.operation.CommandOperationHelper.logRetryExecute;
+import static com.mongodb.internal.operation.CommandOperationHelper.logRetryCommand;
 import static com.mongodb.internal.operation.CommandOperationHelper.loggingShouldAttemptToRetryWriteAndAddRetryableLabel;
 import static com.mongodb.internal.operation.CommandOperationHelper.onRetryableWriteAttemptFailure;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
@@ -149,7 +149,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final Supplier<R> writeFunction) {
         return new RetryingSyncSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext),
                 this::shouldAttemptToRetryWrite, () -> {
-            logRetryExecute(retryState, operationContext);
+            logRetryCommand(retryState, operationContext);
             return writeFunction.get();
         });
     }
@@ -158,7 +158,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final AsyncCallbackSupplier<R> writeFunction) {
         return new RetryingAsyncCallbackSupplier<>(retryState, onRetryableWriteAttemptFailure(operationContext),
                 this::shouldAttemptToRetryWrite, callback -> {
-            logRetryExecute(retryState, operationContext);
+            logRetryCommand(retryState, operationContext);
             writeFunction.get(callback);
         });
     }
@@ -187,7 +187,6 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
 
     @Override
     public BulkWriteResult execute(final WriteBinding binding, final OperationContext operationContext) {
-        TimeoutContext timeoutContext = operationContext.getTimeoutContext();
         /* We cannot use the tracking of attempts built in the `RetryState` class because conceptually we have to maintain multiple attempt
          * counters while executing a single bulk write operation:
          * - a counter that limits attempts to select server and checkout a connection before we created a batch;
@@ -195,8 +194,8 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
          * Fortunately, these counters do not exist concurrently with each other. While maintaining the counters manually,
          * we must adhere to the contract of `RetryingSyncSupplier`. When the retry timeout is implemented, there will be no counters,
          * and the code related to the attempt tracking in `BulkWriteTracker` will be removed. */
-        RetryState retryState = new RetryState(timeoutContext);
-        BulkWriteTracker.attachNew(retryState, retryWrites, timeoutContext);
+        RetryState retryState = new RetryState();
+        BulkWriteTracker.attachNew(retryState, retryWrites, operationContext.getTimeoutContext());
         Supplier<BulkWriteResult> retryingBulkWrite = decorateWriteWithRetries(retryState, operationContext, () ->
             withSourceAndConnection(binding::getWriteConnectionSource, true, (source, connection, operationContextWithMinRTT) -> {
                 TimeoutContext timeoutContextWithMinRtt = operationContextWithMinRTT.getTimeoutContext();
@@ -215,7 +214,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                                     bypassDocumentValidation, retryWrites, writeRequests, operationContextWithMinRTT, comment, variables),
                             timeoutContextWithMinRtt);
                 }
-                return executeBulkWriteBatch(retryState, writeConcern, binding, operationContextWithMinRTT, connection);
+                return executeBulkWriteBatch(retryState, writeConcern, operationContextWithMinRTT, connection);
             }, operationContext)
         );
         try {
@@ -226,10 +225,9 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
     }
 
     public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<BulkWriteResult> callback) {
-        TimeoutContext timeoutContext = operationContext.getTimeoutContext();
         // see the comment in `execute(WriteBinding)` explaining the manual tracking of attempts
-        RetryState retryState = new RetryState(timeoutContext);
-        BulkWriteTracker.attachNew(retryState, retryWrites, timeoutContext);
+        RetryState retryState = new RetryState();
+        BulkWriteTracker.attachNew(retryState, retryWrites, operationContext.getTimeoutContext());
         binding.retain();
         AsyncCallbackSupplier<BulkWriteResult> retryingBulkWrite = this.<BulkWriteResult>decorateWriteWithRetries(retryState,
                 operationContext,
@@ -261,7 +259,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                     releasingCallback.onResult(null, t);
                     return;
                 }
-                executeBulkWriteBatchAsync(retryState, writeConcern, binding, operationContextWithMinRtt, connection, releasingCallback);
+                executeBulkWriteBatchAsync(retryState, writeConcern, operationContextWithMinRtt, connection, releasingCallback);
             })
         ).whenComplete(binding::release);
         retryingBulkWrite.get(exceptionTransformingCallback(errorHandlingCallback(callback, LOGGER)));
@@ -270,7 +268,6 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
     private BulkWriteResult executeBulkWriteBatch(
             final RetryState retryState,
             final WriteConcern effectiveWriteConcern,
-            final WriteBinding binding,
             final OperationContext operationContext,
             final Connection connection) {
         BulkWriteTracker currentBulkWriteTracker = retryState.attachment(AttachmentKeys.bulkWriteTracker())
@@ -318,7 +315,6 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
     private void executeBulkWriteBatchAsync(
             final RetryState retryState,
             final WriteConcern effectiveWriteConcern,
-            final AsyncWriteBinding binding,
             final OperationContext operationContext,
             final AsyncConnection connection,
             final SingleResultCallback<BulkWriteResult> callback) {
@@ -488,14 +484,14 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             retryState.attach(AttachmentKeys.bulkWriteTracker(), tracker, false);
             BulkWriteBatch batch = tracker.batch;
             if (batch != null) {
-                retryState.attach(AttachmentKeys.retryableCommandFlag(), batch.getRetryWrites(), false)
+                retryState.attach(AttachmentKeys.retryableWriteCommandFlag(), batch.getRetryWrites(), false)
                         .attach(AttachmentKeys.commandDescriptionSupplier(), () -> batch.getPayload().getPayloadType().toString(), false);
             }
         }
 
         private BulkWriteTracker(final boolean retry, @Nullable final BulkWriteBatch batch, final TimeoutContext timeoutContext) {
             attempt = 0;
-            attempts = retry ? RetryState.RETRIES + 1 : 1;
+            attempts = retry ? RetryState.MAX_RETRIES + 1 : 1;
             this.batch = batch;
             this.retryUntilTimeoutThrowsException = timeoutContext.hasTimeoutMS();
         }

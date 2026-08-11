@@ -52,7 +52,9 @@ data class DataClassWithCollections(
 data class DataClassWithArrays(
     val arraySimple: Array<String>,
     val nestedArrays: Array<Array<String>>,
-    val arrayOfMaps: Array<Map<String, Array<String>>>
+    val arrayOfMaps: Array<Map<String, Array<String>>>,
+    val byteArray: ByteArray,
+    val nestedByteArrays: Array<ByteArray>
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -70,6 +72,9 @@ data class DataClassWithArrays(
             map.keys.forEach { key -> if (!map[key].contentEquals(otherMap[key])) return false }
         }
 
+        if (!byteArray.contentEquals(other.byteArray)) return false
+        if (!nestedByteArrays.contentDeepEquals(other.nestedByteArrays)) return false
+
         return true
     }
 
@@ -77,6 +82,8 @@ data class DataClassWithArrays(
         var result = arraySimple.contentHashCode()
         result = 31 * result + nestedArrays.contentDeepHashCode()
         result = 31 * result + arrayOfMaps.contentHashCode()
+        result = 31 * result + byteArray.contentHashCode()
+        result = 31 * result + nestedByteArrays.contentDeepHashCode()
         return result
     }
 }
@@ -134,6 +141,28 @@ data class DataClassWithNativeArrays(
     }
 }
 
+data class DataClassWithByteArray(val byteArray: ByteArray) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as DataClassWithByteArray
+        return byteArray.contentEquals(other.byteArray)
+    }
+
+    override fun hashCode(): Int = byteArray.contentHashCode()
+}
+
+data class DataClassWithNestedByteArrays(val nestedByteArrays: Array<ByteArray>) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+        other as DataClassWithNestedByteArrays
+        return nestedByteArrays.contentDeepEquals(other.nestedByteArrays)
+    }
+
+    override fun hashCode(): Int = nestedByteArrays.contentDeepHashCode()
+}
+
 data class DataClassWithDefaults(
     val boolean: Boolean = false,
     val string: String = "String",
@@ -141,6 +170,12 @@ data class DataClassWithDefaults(
 )
 
 data class DataClassWithNulls(val boolean: Boolean?, val string: String?, val listSimple: List<String?>?)
+
+data class DataClassWithDefaultsAndNulls(
+    val required: String,
+    val optional: String = "default",
+    val nullable: String? = null
+)
 
 data class DataClassWithListThatLastItemDefaultsToNull(val elements: List<DataClassLastItemDefaultsToNull>)
 

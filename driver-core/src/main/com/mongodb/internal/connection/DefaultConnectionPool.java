@@ -1321,7 +1321,7 @@ final class DefaultConnectionPool implements ConnectionPool {
             boolean result = true;
             if (state == State.NEW) {
                 worker = Executors.newSingleThreadExecutor(new DaemonThreadFactory("AsyncGetter"));
-                worker.submit(() -> runAndLogUncaught(this::workerRun));
+                worker.execute(() -> runAndLogUncaught(this::workerRun));
                 state = State.INITIALIZED;
             } else if (state == State.CLOSED) {
                 result = false;

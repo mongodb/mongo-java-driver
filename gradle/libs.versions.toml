@@ -18,10 +18,10 @@ aws-sdk-v2 = "2.30.31"
 graal-sdk = "24.0.0"
 jna = "5.11.0"
 jnr-unixsocket = "0.38.17"
-netty-bom = "4.1.87.Final"
+netty-bom = "4.2.9.Final"
 project-reactor-bom = "2022.0.0"
 reactive-streams = "1.0.4"
-snappy = "1.1.10.3"
+snappy = "1.1.10.4"
 zstd = "1.5.5-3"
 jetbrains-annotations = "26.0.2"
 micrometer-tracing = "1.6.0-M3" # This version has a fix for https://github.com/micrometer-metrics/tracing/issues/1092
@@ -32,12 +32,14 @@ kotlinx-coroutines-bom = "1.6.4"
 kotlinx-datetime = "0.4.0"
 kotlinx-serialization = "1.5.0"
 
+scala-v3 = "3.3.7" # Scala 3 LTS
 scala-v2-v13 = "2.13.16"
 scala-v2-v12 = "2.12.20"
 scala-v2-v11 = "2.11.12"
 
 # Test
 assertj = "3.24.2"
+felix-framework = "7.0.5"
 aws-lambda-core = "1.2.2"
 aws-lambda-events = "3.11.1"
 cglib = "2.2.2"
@@ -46,7 +48,7 @@ findbugs-jsr = "1.3.9"
 groovy = "3.0.9"
 hamcrest = "1.3"
 jmh = "1.37"
-junit-bom = "5.10.2"
+junit-bom = "5.14.3"
 logback = "1.3.14"
 mockito = "5.11.0"
 mockito-java8 = "4.6.1"
@@ -55,7 +57,7 @@ objenesis = "1.3"
 reflections = "0.9.10"
 slf4j = "1.7.6"
 spock-bom = "2.1-groovy-3.0"
-scala-test = "3.2.18"
+scala-test = "3.2.19"
 scala-test-plus = "3.2.18.0"
 
 # Plugins
@@ -69,7 +71,7 @@ plugin-optional-base = "7.0.0"
 plugin-nexus-publish = "2.0.0"
 plugin-shadow = "8.3.6"
 plugin-spotbugs = "6.0.15"
-plugin-spotless = "6.14.0"
+plugin-spotless = "6.25.0"
 plugin-test-logger = "4.0.0"
 
 [libraries]
@@ -101,7 +103,7 @@ micrometer-observation = { module = "io.micrometer:micrometer-observation" }
 graal-sdk = { module = "org.graalvm.sdk:graal-sdk", version.ref = "graal-sdk" }
 graal-sdk-nativeimage = { module = "org.graalvm.sdk:nativeimage", version.ref = "graal-sdk" }
 
-kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom" }
+kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom", version.ref = "kotlin" }
 kotlin-stdlib-jdk8 = { module = "org.jetbrains.kotlin:kotlin-stdlib-jdk8" }
 kotlinx-coroutines-bom = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-bom", version.ref = "kotlinx-coroutines-bom" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core" }
@@ -111,6 +113,8 @@ kotlinx-serialization = { module = "org.jetbrains.kotlinx:kotlinx-serialization-
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json" }
 kotlinx-serialization-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
+
+scala-library-v3 = { module = "org.scala-lang:scala3-library_3", version.ref = "scala-v3" }
 
 scala-library-v2-v13 = { module = "org.scala-lang:scala-library", version.ref = "scala-v2-v13" }
 scala-reflect-v2-v13 = { module = "org.scala-lang:scala-reflect", version.ref = "scala-v2-v13" }
@@ -128,6 +132,7 @@ jmh-generator-annprocess = { module = "org.openjdk.jmh:jmh-generator-annprocess"
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit-bom" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params" }
+junit-jupiter-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
 junit-vintage-engine = { module = "org.junit.vintage:junit-vintage-engine" }
 junit-kotlin = { module = "org.jetbrains.kotlin:kotlin-test-junit5" }
@@ -143,6 +148,10 @@ mockito-core-java8 = { module = "org.mockito:mockito-core", version.ref = "mocki
 mockito-inline-java8 = { module = "org.mockito:mockito-inline", version.ref = "mockito-java8" }
 mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version.ref = "mockito-kotlin" }
 
+scala-test-flatspec-v3 = { module = "org.scalatest:scalatest-flatspec_3", version.ref = "scala-test" }
+scala-test-shouldmatchers-v3 = { module = "org.scalatest:scalatest-shouldmatchers_3", version.ref = "scala-test" }
+scala-test-mockito-v3 = { module = "org.scalatestplus:mockito-4-11_3", version.ref = "scala-test-plus" }
+scala-test-junit-runner-v3 = { module = "org.scalatestplus:junit-5-10_3", version.ref = "scala-test-plus" }
 
 scala-test-flatspec-v2-v13 = { module = "org.scalatest:scalatest-flatspec_2.13", version.ref = "scala-test" }
 scala-test-shouldmatchers-v2-v13 = { module = "org.scalatest:scalatest-shouldmatchers_2.13", version.ref = "scala-test" }
@@ -166,6 +175,7 @@ aws-lambda-core = { module = " com.amazonaws:aws-lambda-java-core", version.ref 
 aws-lambda-events = { module = " com.amazonaws:aws-lambda-java-events", version.ref = "aws-lambda-events" }
 cglib = { module = "cglib:cglib-nodep", version.ref = "cglib" }
 classgraph = { module = "io.github.classgraph:classgraph", version.ref = "classgraph" }
+felix-framework = { module = "org.apache.felix:org.apache.felix.framework", version.ref = "felix-framework" }
 findbugs-jsr = { module = "com.google.code.findbugs:jsr305", version.ref = "findbugs-jsr" }
 groovy = { module = "org.codehaus.groovy:groovy-all", version.ref = "groovy" }
 hamcrest-all = { module = "org.hamcrest:hamcrest-all", version.ref = "hamcrest" }
@@ -184,12 +194,13 @@ aws-java-sdk-v1 = ["aws-java-sdk-v1-core", "aws-java-sdk-v1-sts"]
 aws-java-sdk-v2 = ["aws-java-sdk-v2-auth", "aws-java-sdk-v2-sts"]
 netty = ["netty-buffer", "netty-handler", "netty-transport"]
 
+scala-v3 = ["scala-library-v3"]
 scala-v2-v13 = ["scala-library-v2-v13", "scala-reflect-v2-v13"]
 scala-v2-v12 = ["scala-library-v2-v12", "scala-reflect-v2-v12"]
 scala-v2-v11 = ["scala-library-v2-v11", "scala-reflect-v2-v11"]
 
 # Test
-junit = ["junit-jupiter", "junit-jupiter-params", "junit-jupiter-engine", "logback-classic", "hamcrest-all"]
+junit = ["junit-jupiter", "junit-jupiter-params", "junit-jupiter-engine", "junit-jupiter-platform-launcher", "logback-classic", "hamcrest-all"]
 junit-vintage = ["junit-vintage-engine", "junit-jupiter-params", "junit-jupiter-engine", "logback-classic", "hamcrest-all"]
 spock = ["spock-core", "spock-junit4"]
 
@@ -197,6 +208,8 @@ mockito = ["mockito-junit-jupiter", "mockito-core"]
 mockito-java8 = ["mockito-junit-jupiter-java8", "mockito-core-java8", "mockito-inline-java8"]
 mockito-kotlin = ["mockito-kotlin", "mockito-junit-jupiter-java8"]
 
+scala-test-v3 = ["scala-test-flatspec-v3", "scala-test-shouldmatchers-v3", "scala-test-mockito-v3",
+    "scala-test-junit-runner-v3", "reflections"]
 scala-test-v2-v13 = ["scala-test-flatspec-v2-v13", "scala-test-shouldmatchers-v2-v13", "scala-test-mockito-v2-v13",
     "scala-test-junit-runner-v2-v13", "reflections"]
 scala-test-v2-v12 = ["scala-test-flatspec-v2-v12", "scala-test-shouldmatchers-v2-v12", "scala-test-mockito-v2-v12",

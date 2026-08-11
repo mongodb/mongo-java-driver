@@ -575,6 +575,9 @@ public class MongoClientOptions {
      *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
      * </ul>
      *
+     *  <p>Note that this timeout does not limit socket writes, therefore there is a possibility that the
+     *  operation might not be timed out when expected.
+     *
      * @return the timeout in milliseconds
      * @since 5.2
      */
@@ -1369,6 +1372,9 @@ public class MongoClientOptions {
          *   <li>{@code 0} means infinite timeout.</li>
          *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
          * </ul>
+         *
+         *  <p>Note that this timeout does not limit socket writes, therefore there is a possibility that the
+         *  operation might not be timed out when expected.
          *
          * @param timeoutMS the timeout in milliseconds
          * @return this

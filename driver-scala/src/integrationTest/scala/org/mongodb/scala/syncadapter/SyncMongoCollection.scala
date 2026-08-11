@@ -29,7 +29,7 @@ import com.mongodb.{ MongoNamespace, ReadConcern, ReadPreference, WriteConcern }
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
-import org.mongodb.scala.MongoCollection
+import org.mongodb.scala.{ MongoCollection, ObservableFuture, SingleObservableFuture }
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.result.{ InsertManyResult, InsertOneResult }
 

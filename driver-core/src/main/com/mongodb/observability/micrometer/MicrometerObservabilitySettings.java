@@ -17,12 +17,11 @@
 package com.mongodb.observability.micrometer;
 
 import com.mongodb.MongoConfigurationException;
-import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
-import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 import com.mongodb.observability.ObservabilitySettings;
+import io.micrometer.observation.ObservationConvention;
 import io.micrometer.observation.ObservationRegistry;
 
 import java.util.Objects;
@@ -44,7 +43,6 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 5.7
  */
-@Alpha(Reason.CLIENT)
 @Immutable
 public final class MicrometerObservabilitySettings extends ObservabilitySettings {
 
@@ -64,6 +62,8 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
     private final ObservationRegistry observationRegistry;
     private final int maxQueryTextLength;
     private final boolean enableCommandPayloadTracing;
+    @Nullable
+    private final ObservationConvention<MongodbObservationContext> observationConvention;
 
     /**
      * Convenience method to create a Builder.
@@ -100,6 +100,14 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
     }
 
     /**
+     * @return the observation convention, or null to use the default
+     */
+    @Nullable
+    public ObservationConvention<MongodbObservationContext> getObservationConvention() {
+        return observationConvention;
+    }
+
+    /**
      * @return the maximum length of command payloads captured in tracing spans.
      */
     public int getMaxQueryTextLength() {
@@ -115,6 +123,8 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
         private ObservationRegistry observationRegistry;
         private boolean enableCommandPayloadTracing;
         private int maxQueryTextLength = Integer.MAX_VALUE;
+        @Nullable
+        private ObservationConvention<MongodbObservationContext> observationConvention;
 
         private Builder() {
             if (!OBSERVATION_REGISTRY_AVAILABLE) {
@@ -126,6 +136,7 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
             this.observationRegistry = settings.observationRegistry;
             this.enableCommandPayloadTracing = settings.enableCommandPayloadTracing;
             this.maxQueryTextLength = settings.maxQueryTextLength;
+            this.observationConvention = settings.observationConvention;
         }
 
         /**
@@ -141,6 +152,7 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
             observationRegistry = settings.observationRegistry;
             enableCommandPayloadTracing = settings.enableCommandPayloadTracing;
             maxQueryTextLength = settings.maxQueryTextLength;
+            observationConvention = settings.observationConvention;
             return this;
         }
 
@@ -151,7 +163,6 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
          * @return this
          * @since 5.7
          */
-        @Alpha(Reason.CLIENT)
         public Builder observationRegistry(@Nullable final ObservationRegistry observationRegistry) {
             this.observationRegistry = observationRegistry;
             return this;
@@ -165,7 +176,6 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
          * @return this
          * @since 5.7
          */
-        @Alpha(Reason.CLIENT)
         public Builder enableCommandPayloadTracing(final boolean enableCommandPayload) {
             this.enableCommandPayloadTracing = enableCommandPayload;
             return this;
@@ -178,9 +188,21 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
          * @return this
          * @since 5.7
          */
-        @Alpha(Reason.CLIENT)
         public Builder maxQueryTextLength(final int maxQueryTextLength) {
             this.maxQueryTextLength = maxQueryTextLength;
+            return this;
+        }
+
+        /**
+         * Sets a custom {@link ObservationConvention} to control the tag names and values produced by MongoDB observations.
+         * If not set, the driver uses {@link DefaultMongodbObservationConvention}.
+         *
+         * @param observationConvention the custom convention, or null to use the default
+         * @return this
+         * @since 5.7
+         */
+        public Builder observationConvention(@Nullable final ObservationConvention<MongodbObservationContext> observationConvention) {
+            this.observationConvention = observationConvention;
             return this;
         }
 
@@ -188,7 +210,8 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
          * @return the configured settings
          */
         public MicrometerObservabilitySettings build() {
-            return new MicrometerObservabilitySettings(observationRegistry, enableCommandPayloadTracing, maxQueryTextLength);
+            return new MicrometerObservabilitySettings(observationRegistry, enableCommandPayloadTracing, maxQueryTextLength,
+                    observationConvention);
         }
     }
 
@@ -199,18 +222,22 @@ public final class MicrometerObservabilitySettings extends ObservabilitySettings
         }
         final MicrometerObservabilitySettings that = (MicrometerObservabilitySettings) o;
         return enableCommandPayloadTracing == that.enableCommandPayloadTracing
-                && Objects.equals(observationRegistry, that.observationRegistry);
+                && maxQueryTextLength == that.maxQueryTextLength
+                && Objects.equals(observationRegistry, that.observationRegistry)
+                && Objects.equals(observationConvention, that.observationConvention);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(observationRegistry, enableCommandPayloadTracing);
+        return Objects.hash(observationRegistry, enableCommandPayloadTracing, maxQueryTextLength, observationConvention);
     }
 
     private MicrometerObservabilitySettings(@Nullable final ObservationRegistry observationRegistry,
-            final boolean enableCommandPayloadTracing, final int maxQueryTextLength) {
+            final boolean enableCommandPayloadTracing, final int maxQueryTextLength,
+            @Nullable final ObservationConvention<MongodbObservationContext> observationConvention) {
         this.observationRegistry = observationRegistry;
         this.enableCommandPayloadTracing = enableCommandPayloadTracing;
         this.maxQueryTextLength = maxQueryTextLength;
+        this.observationConvention = observationConvention;
     }
 }

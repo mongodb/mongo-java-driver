@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.internal
 
-import org.mongodb.scala.{ BaseSpec, Observable }
+import org.mongodb.scala.{ BaseSpec, Observable, ObservableFuture }
 import org.scalatest.concurrent.ScalaFutures
 
 class CollectObservableTest extends BaseSpec with ScalaFutures {

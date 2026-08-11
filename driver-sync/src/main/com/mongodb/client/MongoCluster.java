@@ -110,6 +110,9 @@ public interface MongoCluster {
      *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
      * </ul>
      *
+     *  <p>Note: This timeout does not limit socket writes, therefore there is a possibility that the
+     *  operation might not be timed out when expected.
+     *
      * @param timeUnit the time unit
      * @return the timeout in the given time unit
      * @since 5.2
@@ -168,6 +171,9 @@ public interface MongoCluster {
      *   <li>{@code 0} means infinite timeout.</li>
      *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
      * </ul>
+     *
+     *  <p>Note: This timeout does not limit socket writes, therefore there is a possibility that the
+     *  operation might not be timed out when expected.
      *
      * @param timeout the timeout, which must be greater than or equal to 0
      * @param timeUnit the time unit

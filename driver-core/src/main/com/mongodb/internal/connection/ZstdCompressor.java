@@ -17,7 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.github.luben.zstd.Zstd;
-import com.github.luben.zstd.ZstdInputStream;
+import com.github.luben.zstd.ZstdInputStreamNoFinalizer;
 import com.mongodb.MongoInternalException;
 import org.bson.ByteBuf;
 import org.bson.io.BsonOutput;
@@ -72,6 +72,6 @@ class ZstdCompressor extends Compressor {
 
     @Override
     InputStream getInputStream(final InputStream source) throws IOException {
-        return new ZstdInputStream(source);
+        return new ZstdInputStreamNoFinalizer(source);
     }
 }

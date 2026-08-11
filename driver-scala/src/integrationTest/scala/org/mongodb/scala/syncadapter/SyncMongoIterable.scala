@@ -16,12 +16,11 @@
 
 package org.mongodb.scala.syncadapter;
 
-import java.util.function.Consumer
-
 import com.mongodb.Function
 import com.mongodb.client.{ MongoCursor, MongoIterable }
 import org.mongodb.scala.Observable
 
+import java.util.function.Consumer
 import scala.concurrent.Await
 import scala.language.reflectiveCalls
 

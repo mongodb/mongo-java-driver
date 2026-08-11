@@ -41,7 +41,7 @@ public final class ThreadTestHelpers {
             CountDownLatch latch = new CountDownLatch(runnables.length);
             List<Throwable> failures = Collections.synchronizedList(new ArrayList<>());
             for (final Runnable runnable : runnables) {
-                service.submit(() -> {
+                service.execute(() -> {
                     try {
                         runnable.run();
                     } catch (Throwable e) {

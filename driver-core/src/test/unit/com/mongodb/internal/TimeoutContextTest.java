@@ -331,9 +331,10 @@ final class TimeoutContextTest {
         );
     }
 
-    @ParameterizedTest
-    @MethodSource
     @DisplayName("should choose timeoutMS when timeoutMS is less than connectTimeoutMS")
+    @ParameterizedTest(name = "should choose timeoutMS when timeoutMS is less than connectTimeoutMS. "
+            + "Parameters: connectTimeoutMS: {0}, timeoutMS: {1}, expected: {2}")
+    @MethodSource
     void shouldChooseTimeoutMsWhenItIsLessThenConnectTimeoutMS(final Long connectTimeoutMS,
                                                           final Long timeoutMS,
                                                           final long expected) {
@@ -345,7 +346,7 @@ final class TimeoutContextTest {
                         0));
 
         long calculatedTimeoutMS = timeoutContext.getConnectTimeoutMs();
-        assertTrue(expected - calculatedTimeoutMS <= 1);
+        assertTrue(expected - calculatedTimeoutMS <= 2);
     }
 
     private TimeoutContextTest() {

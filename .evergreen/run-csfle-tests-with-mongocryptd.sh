@@ -39,8 +39,16 @@ provision_ssl () {
   cp ${JAVA_HOME}/lib/security/cacerts mongo-truststore
   ${JAVA_HOME}/bin/keytool -importcert -trustcacerts -file ${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem -keystore mongo-truststore -storepass changeit -storetype JKS -noprompt
 
+  # Use native paths on Windows (cygwin paths like /cygdrive/c/... are not understood by the JDK)
+  local CURRENT_DIR
+  if [ "Windows_NT" == "$OS" ]; then
+    CURRENT_DIR=$(cygpath -m "$(pwd)")
+  else
+    CURRENT_DIR=$(pwd)
+  fi
+
   # We add extra gradle arguments for SSL
-  export GRADLE_EXTRA_VARS="-Pssl.enabled=true -Pssl.keyStoreType=pkcs12 -Pssl.keyStore=`pwd`/client.pkc -Pssl.keyStorePassword=bithere -Pssl.trustStoreType=jks -Pssl.trustStore=`pwd`/mongo-truststore -Pssl.trustStorePassword=changeit"
+  export GRADLE_EXTRA_VARS="-Pssl.enabled=true -Pssl.keyStoreType=pkcs12 -Pssl.keyStore=${CURRENT_DIR}/client.pkc -Pssl.keyStorePassword=bithere -Pssl.trustStoreType=jks -Pssl.trustStore=${CURRENT_DIR}/mongo-truststore -Pssl.trustStorePassword=changeit"
 }
 
 ############################################

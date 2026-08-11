@@ -17,6 +17,7 @@ package com.mongodb.client.model.search;
 
 import com.mongodb.annotations.Immutable;
 import com.mongodb.internal.client.model.AbstractConstructibleBson;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -45,7 +46,22 @@ final class VectorSearchConstructibleBson extends AbstractConstructibleBson<Vect
 
     @Override
     public VectorSearchOptions filter(final Bson filter) {
-        return newAppended("filter", notNull("name", filter));
+        return newAppended("filter", notNull("filter", filter));
+    }
+
+    @Override
+    public VectorSearchOptions parentFilter(final Bson parentFilter) {
+        return newAppended("parentFilter", notNull("parentFilter", parentFilter));
+    }
+
+    @Override
+    public VectorSearchOptions nestedOptions(final VectorSearchNestedOptions nestedOptions) {
+        return newAppended("nestedOptions", notNull("nestedOptions", nestedOptions));
+    }
+
+    @Override
+    public VectorSearchOptions returnStoredSource(final boolean returnStoredSource) {
+        return newAppended("returnStoredSource", new BsonBoolean(returnStoredSource));
     }
 
     @Override

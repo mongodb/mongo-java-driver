@@ -49,15 +49,13 @@ abstract class UnifiedTest extends JUnifiedTest {
   override def createClientEncryption(
       keyVaultClient: JMongoClient,
       clientEncryptionSettings: JClientEncryptionSettings
-  ): JClientEncryption = {
-    keyVaultClient match {
-      case client: SyncMongoClient =>
-        SyncClientEncryption(ClientEncryption(new ClientEncryptionImpl(
-          client.wrapped.wrapped,
-          clientEncryptionSettings
-        )))
-      case _ => throw new IllegalArgumentException(s"Invalid keyVaultClient type: ${keyVaultClient.getClass}")
-    }
+  ): JClientEncryption = keyVaultClient match {
+    case client: SyncMongoClient =>
+      SyncClientEncryption(ClientEncryption(new ClientEncryptionImpl(
+        client.wrapped.wrapped,
+        clientEncryptionSettings
+      )))
+    case _ => throw new IllegalArgumentException(s"Invalid keyVaultClient type: ${keyVaultClient.getClass}")
   }
 
   override protected def isReactive: Boolean = true

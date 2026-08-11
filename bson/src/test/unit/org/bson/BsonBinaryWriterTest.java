@@ -802,7 +802,34 @@ public class BsonBinaryWriterTest {
                 // expected
             }
         }
+    }
 
+    @Test
+    public void testPipeOfRawBytes() {
+        BasicOutputBuffer sourceBuffer = new BasicOutputBuffer();
+        try (BsonBinaryWriter sourceWriter = new BsonBinaryWriter(sourceBuffer)) {
+            sourceWriter.writeStartDocument();
+            sourceWriter.writeBoolean("a", true);
+            sourceWriter.writeEndDocument();
+        }
+        byte[] documentBytes = sourceBuffer.toByteArray();
+
+        BasicOutputBuffer destBuffer = new BasicOutputBuffer();
+        try (BsonBinaryWriter destWriter = new BsonBinaryWriter(destBuffer)) {
+            destWriter.pipe(documentBytes, 0, documentBytes.length);
+        }
+
+        assertArrayEquals(documentBytes, destBuffer.toByteArray());
+    }
+
+    @Test
+    public void testPipeOfRawBytesWithInvalidSize() {
+        byte[] bytes = {4, 0, 0, 0};  // minimum document size is 5
+
+        BasicOutputBuffer newBuffer = new BasicOutputBuffer();
+        try (BsonBinaryWriter newWriter = new BsonBinaryWriter(newBuffer)) {
+            assertThrows(BsonSerializationException.class, () -> newWriter.pipe(bytes, 0, bytes.length));
+        }
     }
 
     // CHECKSTYLE:OFF

@@ -181,7 +181,7 @@ class DefaultServerMonitor implements ServerMonitor {
         private volatile long lookupStartTimeNanos;
 
         ServerMonitor() {
-            super("cluster-" + serverId.getClusterId() + "-" + serverId.getAddress());
+            super("cluster-" + serverId.getClusterId().getValue() + "-" + serverId.getAddress());
             setDaemon(true);
         }
 

@@ -127,6 +127,19 @@ public interface BsonInput extends Closeable {
      */
     boolean hasRemaining();
 
+    /**
+     * Pipes the specified number of bytes from {@linkplain BsonInput this} input to the given {@linkplain BsonOutput output}.
+     *
+     * @param output the output to pipe to
+     * @param numBytes the number of bytes to pipe
+     * @since 5.8
+     */
+    default void pipe(BsonOutput output, int numBytes) {
+        byte[] bytes = new byte[numBytes];
+        readBytes(bytes);
+        output.writeBytes(bytes);
+    }
+
     @Override
     void close();
 }

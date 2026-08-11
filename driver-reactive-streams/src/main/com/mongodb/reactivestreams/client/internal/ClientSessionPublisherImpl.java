@@ -24,6 +24,8 @@ import com.mongodb.ReadConcern;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.observability.micrometer.TracingManager;
+import com.mongodb.internal.observability.micrometer.TransactionSpan;
 import com.mongodb.internal.operation.AbortTransactionOperation;
 import com.mongodb.internal.operation.CommitTransactionOperation;
 import com.mongodb.internal.operation.ReadOperation;
@@ -48,17 +50,21 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
 
     private final MongoClientImpl mongoClient;
     private final OperationExecutor executor;
+    private final TracingManager tracingManager;
     private TransactionState transactionState = TransactionState.NONE;
     private boolean messageSentInCurrentTransaction;
     private boolean commitInProgress;
     private TransactionOptions transactionOptions;
+    @Nullable
+    private TransactionSpan transactionSpan;
 
 
     ClientSessionPublisherImpl(final ServerSessionPool serverSessionPool, final MongoClientImpl mongoClient,
-            final ClientSessionOptions options, final OperationExecutor executor) {
+            final ClientSessionOptions options, final OperationExecutor executor, final TracingManager tracingManager) {
         super(serverSessionPool, mongoClient, options);
         this.executor = executor;
         this.mongoClient = mongoClient;
+        this.tracingManager = tracingManager;
     }
 
     @Override
@@ -128,6 +134,10 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
         if (!writeConcern.isAcknowledged()) {
             throw new MongoClientException("Transactions do not support unacknowledged write concern");
         }
+
+        if (tracingManager.isEnabled()) {
+            transactionSpan = new TransactionSpan(tracingManager);
+        }
         clearTransactionContext();
         setTimeoutContext(timeoutContext);
     }
@@ -152,6 +162,9 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
             }
             if (!messageSentInCurrentTransaction) {
                 cleanupTransaction(TransactionState.COMMITTED);
+                if (transactionSpan != null) {
+                    transactionSpan.finalizeTransactionSpan(TransactionState.COMMITTED.name());
+                }
                 return Mono.create(MonoSink::success);
             } else {
                 ReadConcern readConcern = transactionOptions.getReadConcern();
@@ -171,7 +184,17 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
                             commitInProgress = false;
                             transactionState = TransactionState.COMMITTED;
                         })
-                        .doOnError(MongoException.class, this::clearTransactionContextOnError);
+                        .doOnError(MongoException.class, e -> {
+                            clearTransactionContextOnError(e);
+                            if (transactionSpan != null) {
+                                transactionSpan.handleTransactionSpanError(e);
+                            }
+                        })
+                        .doOnSuccess(v -> {
+                            if (transactionSpan != null) {
+                                transactionSpan.finalizeTransactionSpan(TransactionState.COMMITTED.name());
+                            }
+                        });
             }
         });
     }
@@ -191,6 +214,9 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
             }
             if (!messageSentInCurrentTransaction) {
                 cleanupTransaction(TransactionState.ABORTED);
+                if (transactionSpan != null) {
+                    transactionSpan.finalizeTransactionSpan(TransactionState.ABORTED.name());
+                }
                 return Mono.create(MonoSink::success);
             } else {
                 ReadConcern readConcern = transactionOptions.getReadConcern();
@@ -208,6 +234,9 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
                         .doOnTerminate(() -> {
                             clearTransactionContext();
                             cleanupTransaction(TransactionState.ABORTED);
+                            if (transactionSpan != null) {
+                                transactionSpan.finalizeTransactionSpan(TransactionState.ABORTED.name());
+                            }
                         });
             }
         });
@@ -217,6 +246,12 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
         if (e.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL) || e.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
             clearTransactionContext();
         }
+    }
+
+    @Override
+    @Nullable
+    public TransactionSpan getTransactionSpan() {
+        return transactionSpan;
     }
 
     @Override

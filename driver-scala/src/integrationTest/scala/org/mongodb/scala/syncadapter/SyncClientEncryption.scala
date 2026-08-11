@@ -17,18 +17,19 @@
 package org.mongodb.scala.syncadapter
 
 import com.mongodb.ClusterFixture.TIMEOUT_DURATION
-import com.mongodb.client.model.{ CreateCollectionOptions, CreateEncryptedCollectionParams }
 import com.mongodb.client.model.vault.{
   DataKeyOptions,
   EncryptOptions,
   RewrapManyDataKeyOptions,
   RewrapManyDataKeyResult
 }
+import com.mongodb.client.model.{ CreateCollectionOptions, CreateEncryptedCollectionParams }
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.vault.{ ClientEncryption => JClientEncryption }
 import com.mongodb.client.{ MongoDatabase => JMongoDatabase }
-import org.bson.{ BsonBinary, BsonDocument, BsonValue }
 import org.bson.conversions.Bson
+import org.bson.{ BsonBinary, BsonDocument, BsonValue }
+import org.mongodb.scala.bsonDocumentToDocument
 import org.mongodb.scala.vault.ClientEncryption
 import reactor.core.publisher.Mono
 

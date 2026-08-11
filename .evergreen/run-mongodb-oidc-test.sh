@@ -41,6 +41,11 @@ if ! which java ; then
     echo "Installed java."
 fi
 
+if ! which gpg ; then
+    echo "Installing gpg..."
+    sudo apt install gnupg -y
+fi
+
 which java
 export OIDC_TESTS_ENABLED=true
 
@@ -49,18 +54,21 @@ TO_REPLACE="mongodb://"
 REPLACEMENT="mongodb://$OIDC_ADMIN_USER:$OIDC_ADMIN_PWD@"
 ADMIN_URI=${MONGODB_URI/$TO_REPLACE/$REPLACEMENT}
 
+# Limit memory for the containers
+GRADLE_EXTRA_VARS="--no-daemon -Dorg.gradle.jvmargs=-Xmx512m -PtestMaxHeapSize=1g"
+
 echo "Running gradle version"
-./gradlew -version
+./gradlew $GRADLE_EXTRA_VARS -version
 
 echo "Running gradle classes compile for driver-sync and driver-reactive-streams: ${FULL_DESCRIPTION}"
-./gradlew --parallel --stacktrace --info  \
+./gradlew $GRADLE_EXTRA_VARS --parallel --stacktrace --info  \
   driver-sync:classes driver-reactive-streams:classes
 
 echo "Running OIDC authentication tests against driver-sync: ${FULL_DESCRIPTION}"
-./gradlew -Dorg.mongodb.test.uri="$ADMIN_URI" \
+./gradlew $GRADLE_EXTRA_VARS -Dorg.mongodb.test.uri="$ADMIN_URI" \
   --stacktrace --debug --info \
   driver-sync:test --tests OidcAuthenticationProseTests --tests UnifiedAuthTest
 
 echo "Running OIDC authentication tests against driver-reactive-streams: ${FULL_DESCRIPTION}"
-./gradlew -Dorg.mongodb.test.uri="$ADMIN_URI" \
+./gradlew $GRADLE_EXTRA_VARS -Dorg.mongodb.test.uri="$ADMIN_URI" \
   --stacktrace --debug --info driver-reactive-streams:test --tests OidcAuthenticationAsyncProseTests

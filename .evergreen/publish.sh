@@ -29,3 +29,4 @@ SYSTEM_PROPERTIES="-Dorg.gradle.internal.publish.checksums.insecure=true"
 ./gradlew ${SYSTEM_PROPERTIES} --stacktrace --info  ${TASK} # Scala 2.13 is published as result of this gradle execution.
 ./gradlew ${SYSTEM_PROPERTIES} --stacktrace --info :bson-scala:${TASK} :driver-scala:${TASK} -PscalaVersion=2.12
 ./gradlew ${SYSTEM_PROPERTIES} --stacktrace --info :bson-scala:${TASK} :driver-scala:${TASK} -PscalaVersion=2.11
+./gradlew ${SYSTEM_PROPERTIES} --stacktrace --info :bson-scala:${TASK} :driver-scala:${TASK} -PscalaVersion=3

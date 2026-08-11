@@ -55,8 +55,14 @@ public final class TimeoutHelper {
 
     public static <T> Mono<MongoCollection<T>> collectionWithTimeoutMono(final MongoCollection<T> collection,
                                                                          @Nullable final Timeout timeout) {
+       return collectionWithTimeoutMono(collection, timeout, DEFAULT_TIMEOUT_MESSAGE);
+    }
+
+    public static <T> Mono<MongoCollection<T>> collectionWithTimeoutMono(final MongoCollection<T> collection,
+                                                                         @Nullable final Timeout timeout,
+                                                                         final String message) {
         try {
-            return Mono.just(collectionWithTimeout(collection, timeout));
+            return Mono.just(collectionWithTimeout(collection, timeout, message));
         } catch (MongoOperationTimeoutException e) {
             return Mono.error(e);
         }
@@ -64,9 +70,14 @@ public final class TimeoutHelper {
 
     public static <T> Mono<MongoCollection<T>> collectionWithTimeoutDeferred(final MongoCollection<T> collection,
                                                                              @Nullable final Timeout timeout) {
-        return Mono.defer(() -> collectionWithTimeoutMono(collection, timeout));
+        return collectionWithTimeoutDeferred(collection, timeout, DEFAULT_TIMEOUT_MESSAGE);
     }
 
+    public static <T> Mono<MongoCollection<T>> collectionWithTimeoutDeferred(final MongoCollection<T> collection,
+                                                                             @Nullable final Timeout timeout,
+                                                                             final String message) {
+        return Mono.defer(() -> collectionWithTimeoutMono(collection, timeout, message));
+    }
 
     public static MongoDatabase databaseWithTimeout(final MongoDatabase database,
                                                     @Nullable final Timeout timeout) {

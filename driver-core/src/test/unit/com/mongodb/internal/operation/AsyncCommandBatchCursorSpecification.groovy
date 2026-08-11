@@ -167,8 +167,9 @@ class AsyncCommandBatchCursorSpecification extends Specification {
     def 'should handle getMore when there are empty results but there is a cursor'() {
         given:
         def initialConnection = referenceCountedAsyncConnection()
-        def connection = referenceCountedAsyncConnection()
-        def connectionSource = getAsyncConnectionSource(connection)
+        def connectionA = referenceCountedAsyncConnection()
+        def connectionB = referenceCountedAsyncConnection()
+        def connectionSource = getAsyncConnectionSource(connectionA, connectionB)
 
         when:
         def firstBatch = createCommandResult([], CURSOR_ID)
@@ -177,14 +178,15 @@ class AsyncCommandBatchCursorSpecification extends Specification {
         def batch = nextBatch(cursor)
 
         then:
-        1 * connection.commandAsync(*_) >> {
-            connection.getCount() == 1
+        1 * connectionA.commandAsync(*_) >> {
+            connectionA.getCount() == 1
             connectionSource.getCount() == 1
             it.last().onResult(response, null)
         }
 
-        1 * connection.commandAsync(*_) >> {
-            connection.getCount() == 1
+        then:
+        1 * connectionB.commandAsync(*_) >> {
+            connectionB.getCount() == 1
             connectionSource.getCount() == 1
             it.last().onResult(response2, null)
         }
@@ -196,7 +198,10 @@ class AsyncCommandBatchCursorSpecification extends Specification {
         cursor.close()
 
         then:
-        0 * connection._
+        0 * connectionA._
+        0 * connectionB._
+        connectionA.getCount() == 0
+        connectionB.getCount() == 0
         initialConnection.getCount() == 0
         connectionSource.getCount() == 0
 

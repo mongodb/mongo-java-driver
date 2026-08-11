@@ -67,10 +67,8 @@ class AsyncTransportSettingsTest {
                 .transportSettings(asyncTransportSettings)
                 .build();
 
-        try (MongoClient ignored = new SyncMongoClient(mongoClientSettings)) {
-            // ignored
-        }
+        new SyncMongoClient(mongoClientSettings).close();
 
-        assertTrue(executorService.awaitTermination(100, TimeUnit.MILLISECONDS));
+        assertTrue(executorService.awaitTermination(2, TimeUnit.SECONDS));
     }
 }

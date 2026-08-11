@@ -655,9 +655,9 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         when:
         def cursor;
         if (async) {
-             cursor = execute(operation, ClusterFixture.getAsyncBinding(operationContext), operationContext)
+             cursor = execute(operation, ClusterFixture.getAsyncBinding(), operationContext)
         } else {
-             cursor = execute(operation, ClusterFixture.getBinding(operationContext), operationContext)
+             cursor = execute(operation, getBinding(), operationContext)
         }
 
         then:

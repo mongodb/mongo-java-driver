@@ -15,6 +15,7 @@
  */
 
 package org.mongodb.scala
+
 import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.reactivestreams.client.DistinctPublisher
 import org.mockito.Mockito.{ verify, verifyNoMoreInteractions }
@@ -24,12 +25,13 @@ import org.scalatestplus.mockito.MockitoSugar
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
+
 class DistinctObservableSpec extends BaseSpec with MockitoSugar {
 
   "DistinctObservable" should "have the same methods as the wrapped DistinctObservable" in {
-    val mongoPublisher: Set[String] = classOf[Publisher[Document]].getMethods.map(_.getName).toSet
-    val wrapped = classOf[DistinctPublisher[Document]].getMethods.map(_.getName).toSet -- mongoPublisher
-    val local = classOf[DistinctObservable[Document]].getMethods.map(_.getName).toSet
+    val exclusions: Set[String] = classOf[Publisher[Document]].getMethods.map(_.getName).toSet ++ DEFAULT_EXCLUSIONS
+    val wrapped = classOf[DistinctPublisher[Document]].getMethods.map(_.getName).toSet -- exclusions
+    val local = classOf[DistinctObservable[Document]].getMethods.map(_.getName).toSet -- DEFAULT_EXCLUSIONS
 
     wrapped.foreach((name: String) => {
       val cleanedName = name.stripPrefix("get")

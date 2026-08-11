@@ -34,13 +34,17 @@ class FiltersSpec extends BaseSpec {
     val wrapped = classOf[com.mongodb.client.model.Filters].getDeclaredMethods
       .filter(f => isPublic(f.getModifiers))
       .map(_.getName)
-      .toSet
-    val aliases = Set("equal", "notEqual", "bsonType")
-    val ignore = Set("$anonfun$geoWithinPolygon$1")
+      .toSet -- DEFAULT_EXCLUSIONS
+    val exclusions = DEFAULT_EXCLUSIONS ++ Set(
+      "equal",
+      "notEqual",
+      "bsonType"
+    )
     val local = model.Filters.getClass.getDeclaredMethods
       .filter(f => isPublic(f.getModifiers))
       .map(_.getName)
-      .toSet -- aliases -- ignore
+      .filterNot((name: String) => name.contains("$anonfun$"))
+      .toSet -- exclusions
 
     local should equal(wrapped)
   }

@@ -21,7 +21,6 @@ import com.mongodb.client.model.Collation
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
-import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerId
 import com.mongodb.internal.bulk.DeleteRequest
 import com.mongodb.internal.bulk.UpdateRequest
@@ -35,7 +34,6 @@ import spock.lang.Specification
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
-import static com.mongodb.connection.ServerConnectionState.CONNECTED
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.operation.OperationHelper.canRetryRead
@@ -108,8 +106,8 @@ class OperationHelperSpecification extends Specification {
         }
 
         expect:
-        canRetryRead(retryableServerDescription, OPERATION_CONTEXT.withSessionContext(noTransactionSessionContext))
-        !canRetryRead(retryableServerDescription, OPERATION_CONTEXT.withSessionContext(activeTransactionSessionContext))
+        canRetryRead(OPERATION_CONTEXT.withSessionContext(noTransactionSessionContext))
+        !canRetryRead(OPERATION_CONTEXT.withSessionContext(activeTransactionSessionContext))
     }
 
 
@@ -120,11 +118,6 @@ class OperationHelperSpecification extends Specification {
             REPLICA_SET_PRIMARY, 1000, 100000, 100000, [], new BsonArray(), 30)
     static ConnectionDescription threeFourConnectionDescription = new ConnectionDescription(connectionId, 5,
             STANDALONE, 1000, 100000, 100000, [], new BsonArray(), null)
-
-    static ServerDescription retryableServerDescription = ServerDescription.builder().address(new ServerAddress()).state(CONNECTED)
-            .logicalSessionTimeoutMinutes(1).build()
-    static ServerDescription nonRetryableServerDescription = ServerDescription.builder().address(new ServerAddress())
-            .state(CONNECTED).build()
 
     static Collation enCollation = Collation.builder().locale('en').build()
 }

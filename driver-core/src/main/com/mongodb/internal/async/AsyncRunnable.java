@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.async;
 
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.function.AsyncCallbackLoop;
 import com.mongodb.internal.async.function.LoopState;
 import com.mongodb.internal.async.function.RetryState;
@@ -39,7 +38,7 @@ import java.util.function.Supplier;
  * following "sync" method:
  *
  * <pre>
- * public T myMethod()
+ * public T myMethod() {
  *     method1();
  *     method2();
  * }</pre>
@@ -47,7 +46,7 @@ import java.util.function.Supplier;
  * <p>The async counterpart would be:
  *
  * <pre>
- * public void myMethodAsync(SingleResultCallback&lt;T> callback)
+ * public void myMethodAsync(SingleResultCallback&lt;T> callback) {
  *     beginAsync().thenRun(c -> {
  *         method1Async(c);
  *     }).thenRun(c -> {
@@ -229,17 +228,46 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
      * @return the composition of this, and the looping branch
      * @see RetryingAsyncCallbackSupplier
      */
-    default AsyncRunnable thenRunRetryingWhile(
-            final TimeoutContext timeoutContext, final AsyncRunnable runnable, final Predicate<Throwable> shouldRetry) {
+    default AsyncRunnable thenRunRetryingWhile(final AsyncRunnable runnable, final Predicate<Throwable> shouldRetry) {
         return thenRun(callback -> {
             new RetryingAsyncCallbackSupplier<Void>(
-                    new RetryState(timeoutContext),
+                    new RetryState(),
+                    (previouslyChosenFailure, lastAttemptFailure) -> lastAttemptFailure,
                     (rs, lastAttemptFailure) -> shouldRetry.test(lastAttemptFailure),
                     // `finish` is required here instead of `unsafeFinish`
                     // because only `finish` meets the contract of
                     // `AsyncCallbackSupplier.get`, which we implement here
                     cb -> runnable.finish(cb)
             ).get(callback);
+        });
+    }
+
+    /**
+     * This method is equivalent to a while loop, where the condition is checked before each iteration.
+     * If the condition returns {@code false} on the first check, the body is never executed.
+     *
+     * @param whileCheck a condition to check before each iteration; the loop continues as long as this condition returns true
+     * @param loopBodyRunnable the asynchronous task to be executed in each iteration of the loop
+     * @return the composition of this and the looping branch
+     * @see AsyncCallbackLoop
+     */
+    default AsyncRunnable thenRunWhileLoop(final BooleanSupplier whileCheck, final AsyncRunnable loopBodyRunnable) {
+        return thenRun(finalCallback -> {
+            LoopState loopState = new LoopState();
+            new AsyncCallbackLoop(loopState, iterationCallback -> {
+
+                if (loopState.breakAndCompleteIf(() -> !whileCheck.getAsBoolean(), iterationCallback)) {
+                    return;
+                }
+                loopBodyRunnable.finish((result, t) -> {
+                    if (t != null) {
+                        iterationCallback.completeExceptionally(t);
+                        return;
+                    }
+                    iterationCallback.complete(iterationCallback);
+                });
+
+            }).run(finalCallback);
         });
     }
 

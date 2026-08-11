@@ -17,12 +17,11 @@ package org.mongodb.scala.syncadapter
 
 import com.mongodb.ExplainVerbosity
 import com.mongodb.client.AggregateIterable
-import org.mongodb.scala.TimeoutMode
 import com.mongodb.client.model.Collation
 import org.bson.conversions.Bson
 import org.bson.{ BsonValue, Document }
-import org.mongodb.scala.AggregateObservable
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
+import org.mongodb.scala.{ documentToUntypedDocument, AggregateObservable, SingleObservableFuture, TimeoutMode }
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
@@ -49,7 +48,7 @@ case class SyncAggregateIterable[T](wrapped: AggregateObservable[T])
   }
 
   override def maxTime(maxTime: Long, timeUnit: TimeUnit): AggregateIterable[T] = {
-    wrapped.maxTime(maxTime, timeUnit)
+    wrapped.maxTime(Duration(maxTime, timeUnit))
     this
   }
 

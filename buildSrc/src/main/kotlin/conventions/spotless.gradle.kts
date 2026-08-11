@@ -36,12 +36,13 @@ spotless {
 
     scala {
         target("**/*.scala")
-        scalafmt().configFile(rootProject.file("config/scala/scalafmt.conf"))
+        targetExclude("**/scala-3/**")
+        scalafmt("3.10.7").configFile(rootProject.file("config/scala/scalafmt-2.conf"))
     }
 
     kotlin {
         target("**/*.kt")
-        ktfmt().dropboxStyle().configure { it.setMaxWidth(120) }
+        ktfmt("0.42").dropboxStyle().configure { it.setMaxWidth(120) }
         trimTrailingWhitespace()
         indentWithSpaces()
         endWithNewline()

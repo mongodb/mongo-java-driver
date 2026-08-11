@@ -44,7 +44,7 @@ import static org.bson.assertions.Assertions.isTrueArgument;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
- * An immutable BSON document that is represented using only the raw bytes.
+ * A BSON document that is represented using only the raw bytes.
  *
  * @since 3.0
  */
@@ -142,6 +142,40 @@ public final class RawBsonDocument extends BsonDocument {
         ByteBuffer buffer = ByteBuffer.wrap(bytes, offset, length);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         return new ByteBufNIO(buffer);
+    }
+
+    /**
+     * Returns the byte array backing this document. The returned array may be larger than the BSON document itself;
+     * only the range from {@link #getByteOffset()} to {@code getByteOffset() + }{@link #getByteLength()} contains
+     * valid document bytes. Changes to the returned array will be reflected in this document.
+     *
+     * @return the backing byte array
+     * @since 5.8
+     * @see #getByteOffset()
+     * @see #getByteLength()
+     */
+    public byte[] getBackingArray() {
+        return bytes;
+    }
+
+    /**
+     * Returns the offset into the {@linkplain #getBackingArray() backing byte array} where this document starts.
+     *
+     * @return the offset
+     * @since 5.8
+     */
+    public int getByteOffset() {
+        return offset;
+    }
+
+    /**
+     * Returns the length of this document within the {@linkplain #getBackingArray() backing byte array}.
+     *
+     * @return the length
+     * @since 5.8
+     */
+    public int getByteLength() {
+        return length;
     }
 
     /**

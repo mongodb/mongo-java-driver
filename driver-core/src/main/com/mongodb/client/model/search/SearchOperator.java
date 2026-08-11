@@ -634,6 +634,57 @@ public interface SearchOperator extends Bson {
     }
 
     /**
+     * Returns a {@link SearchOperator} that performs vector search within the {@code $search} pipeline stage.
+     * This is the approximate (ANN) variant with {@code numCandidates}.
+     *
+     * @param path The indexed vector field to search.
+     * @param queryVector The query vector. The number of dimensions must match the index field.
+     * @param limit The number of results to return.
+     * @param numCandidates The number of nearest neighbors to consider during ANN search.
+     *                      Must be greater than or equal to {@code limit}. The server may impose an upper bound.
+     * @return The requested {@link VectorSearchOperator}.
+     * @mongodb.atlas.manual atlas-search/vector-search/ vectorSearch operator
+     * @since 5.8
+     */
+    static VectorSearchOperator vectorSearch(
+            final FieldSearchPath path,
+            final Iterable<Double> queryVector,
+            final int limit,
+            final int numCandidates) {
+        notNull("path", path);
+        notNull("queryVector", queryVector);
+        isTrueArgument("numCandidates must be >= limit", numCandidates >= limit);
+        return new VectorSearchOperatorConstructibleBsonElement("vectorSearch",
+                new Document("path", path.toValue())
+                        .append("queryVector", queryVector)
+                        .append("limit", limit)
+                        .append("numCandidates", numCandidates));
+    }
+
+    /**
+     * Returns a {@link SearchOperator} that performs exact (ENN) vector search within the {@code $search} pipeline stage.
+     *
+     * @param path The indexed vector field to search.
+     * @param queryVector The query vector. The number of dimensions must match the index field.
+     * @param limit The number of results to return.
+     * @return The requested {@link VectorSearchOperator}.
+     * @mongodb.atlas.manual atlas-search/vector-search/ vectorSearch operator
+     * @since 5.8
+     */
+    static VectorSearchOperator vectorSearchExact(
+            final FieldSearchPath path,
+            final Iterable<Double> queryVector,
+            final int limit) {
+        notNull("path", path);
+        notNull("queryVector", queryVector);
+        return new VectorSearchOperatorConstructibleBsonElement("vectorSearch",
+                new Document("path", path.toValue())
+                        .append("queryVector", queryVector)
+                        .append("limit", limit)
+                        .append("exact", true));
+    }
+
+    /**
      * Creates a {@link SearchOperator} from a {@link Bson} in situations when there is no builder method that better satisfies your needs.
      * This method cannot be used to validate the syntax.
      * <p>

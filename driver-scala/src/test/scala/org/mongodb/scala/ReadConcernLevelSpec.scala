@@ -34,11 +34,7 @@ class ReadConcernLevelSpec extends BaseSpec {
     val exclusions = Set("$VALUES", "$values", "valueOf", "values")
 
     val wrapped = (wrappedFields ++ wrappedMethods) -- exclusions
-    val local = ReadConcernLevel.getClass.getDeclaredMethods.map(_.getName).toSet -- Set(
-      "apply",
-      "$deserializeLambda$",
-      "$anonfun$fromString$1"
-    )
+    val local = ReadConcernLevel.getClass.getDeclaredMethods.map(_.getName).toSet -- DEFAULT_EXCLUSIONS
 
     local should equal(wrapped)
   }

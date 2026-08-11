@@ -34,7 +34,7 @@ class ConnectionSpec extends BaseSpec with MockitoSugar {
   }
 
   it should "have a ConnectionPoolSettings companion" in {
-    val scalaSetting = ConnectionPoolSettings.builder.build()
+    val scalaSetting = ConnectionPoolSettings.builder().build()
     val javaSetting = com.mongodb.connection.ConnectionPoolSettings.builder().build()
 
     scalaSetting shouldBe a[com.mongodb.connection.ConnectionPoolSettings]
@@ -42,7 +42,7 @@ class ConnectionSpec extends BaseSpec with MockitoSugar {
   }
 
   it should "have a ServerSettings companion" in {
-    val scalaSetting = ServerSettings.builder.build()
+    val scalaSetting = ServerSettings.builder().build()
     val javaSetting = com.mongodb.connection.ServerSettings.builder().build()
 
     scalaSetting shouldBe a[com.mongodb.connection.ServerSettings]
@@ -50,7 +50,7 @@ class ConnectionSpec extends BaseSpec with MockitoSugar {
   }
 
   it should "have a SocketSettings companion" in {
-    val scalaSetting = SocketSettings.builder.build()
+    val scalaSetting = SocketSettings.builder().build()
     val javaSetting = com.mongodb.connection.SocketSettings.builder().build()
 
     scalaSetting shouldBe a[com.mongodb.connection.SocketSettings]
@@ -58,7 +58,7 @@ class ConnectionSpec extends BaseSpec with MockitoSugar {
   }
 
   it should "have a SslSettings companion" in {
-    val scalaSetting = SslSettings.builder.build()
+    val scalaSetting = SslSettings.builder().build()
     val javaSetting = com.mongodb.connection.SslSettings.builder().build()
 
     scalaSetting shouldBe a[com.mongodb.connection.SslSettings]

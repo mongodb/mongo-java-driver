@@ -37,12 +37,18 @@ import org.mongodb.scala.model.geojson.{ Point, Position }
 import org.mongodb.scala.model.search.SearchCount.total
 import org.mongodb.scala.model.search.SearchFacet.stringFacet
 import org.mongodb.scala.model.search.SearchHighlight.paths
+import com.mongodb.client.model.{ Aggregates => JAggregates }
+import com.mongodb.client.model.RerankQuery
+import com.mongodb.client.model.ScoreOptions.scoreOptions
+import com.mongodb.client.model.search.VectorSearchQuery
+import org.bson.BinaryVector
 import org.mongodb.scala.model.search.SearchCollector
 import org.mongodb.scala.model.search.SearchOperator.exists
 import org.mongodb.scala.model.search.SearchOptions.searchOptions
 import org.mongodb.scala.model.search.SearchPath.{ fieldPath, wildcardPath }
 import org.mongodb.scala.model.search.VectorSearchOptions.{ approximateVectorSearchOptions, exactVectorSearchOptions }
 import org.mongodb.scala.{ BaseSpec, MongoClient, MongoNamespace }
+import org.mongodb.scala.documentToUntypedDocument
 
 class AggregatesSpec extends BaseSpec {
   val registry = MongoClient.DEFAULT_CODEC_REGISTRY
@@ -809,6 +815,230 @@ class AggregatesSpec extends BaseSpec {
             "exact": true,
             "limit": {"$numberLong": "1"},
             "filter": {"fieldName": {"$ne": "fieldValue"}}
+        }
+      }"""
+      )
+    )
+  }
+
+  it should "render $vectorSearch with BinaryVector" in {
+    toBson(
+      Aggregates.vectorSearch(
+        fieldPath("fieldName"),
+        BinaryVector.int8Vector(Array[Byte](0, 1, 2, 3, 4)),
+        "indexName",
+        1,
+        approximateVectorSearchOptions(2)
+      )
+    ) should equal(
+      toBson(
+        JAggregates.vectorSearch(
+          fieldPath("fieldName"),
+          BinaryVector.int8Vector(Array[Byte](0, 1, 2, 3, 4)),
+          "indexName",
+          1,
+          approximateVectorSearchOptions(2)
+        )
+      )
+    )
+  }
+
+  it should "render $vectorSearch with VectorSearchQuery" in {
+    toBson(
+      Aggregates.vectorSearch(
+        fieldPath("fieldName"),
+        VectorSearchQuery.textQuery("sample text"),
+        "indexName",
+        1,
+        approximateVectorSearchOptions(2)
+      )
+    ) should equal(
+      toBson(
+        JAggregates.vectorSearch(
+          fieldPath("fieldName"),
+          VectorSearchQuery.textQuery("sample text"),
+          "indexName",
+          1,
+          approximateVectorSearchOptions(2)
+        )
+      )
+    )
+  }
+
+  it should "render $rerank with single path" in {
+    toBson(
+      Aggregates.rerank(
+        RerankQuery.rerankQuery("machine learning"),
+        "content",
+        25,
+        "rerank-2.5"
+      )
+    ) should equal(
+      Document(
+        """{
+        "$rerank": {
+            "query": {"text": "machine learning"},
+            "path": "content",
+            "numDocsToRerank": 25,
+            "model": "rerank-2.5"
+        }
+      }"""
+      )
+    )
+  }
+
+  it should "render $rerank with multiple paths" in {
+    toBson(
+      Aggregates.rerank(
+        RerankQuery.rerankQuery("machine learning"),
+        List("content", "title"),
+        50,
+        "rerank-2.5-lite"
+      )
+    ) should equal(
+      Document(
+        """{
+        "$rerank": {
+            "query": {"text": "machine learning"},
+            "path": ["content", "title"],
+            "numDocsToRerank": 50,
+            "model": "rerank-2.5-lite"
+        }
+      }"""
+      )
+    )
+  }
+
+  it should "render $score" in {
+    toBson(
+      Aggregates.score(Document("""{$multiply: ["$rating", 2]}"""))
+    ) should equal(
+      Document("""{ "$score": { "score": {"$multiply": ["$rating", 2]} } }""")
+    )
+  }
+
+  it should "render $score with options" in {
+    toBson(
+      Aggregates.score(
+        "$rating",
+        scoreOptions()
+          .normalization(ScoreNormalization.SIGMOID)
+          .weight(0.5)
+          .scoreDetails(true)
+      )
+    ) should equal(
+      Document(
+        """{
+        "$score": {
+            "score": "$rating",
+            "normalization": "sigmoid",
+            "weight": 0.5,
+            "scoreDetails": true
+        }
+      }"""
+      )
+    )
+  }
+
+  it should "render $score with each normalization type" in {
+    Seq(
+      (ScoreNormalization.NONE, "none"),
+      (ScoreNormalization.SIGMOID, "sigmoid"),
+      (ScoreNormalization.MIN_MAX_SCALER, "minMaxScaler")
+    ).foreach {
+      case (normalization, expected) =>
+        toBson(
+          Aggregates.score("$rating", scoreOptions().normalization(normalization))
+        ) should equal(
+          Document(s"""{ "$$score": { "score": "$$rating", "normalization": "$expected" } }""")
+        )
+    }
+  }
+
+  it should "render $scoreFusion" in {
+    toBson(
+      Aggregates.scoreFusion(
+        Seq(
+          FusionPipeline("p1", Aggregates.filter(Filters.equal("x", 1))),
+          FusionPipeline("p2", Aggregates.filter(Filters.equal("x", 2)))
+        ),
+        ScoreNormalization.SIGMOID
+      )
+    ) should equal(
+      Document(
+        """{
+        "$scoreFusion": {
+            "input": {
+                "pipelines": {
+                    "p1": [{"$match": {"x": 1}}],
+                    "p2": [{"$match": {"x": 2}}]
+                },
+                "normalization": "sigmoid"
+            }
+        }
+      }"""
+      )
+    )
+  }
+
+  it should "render $scoreFusion with options" in {
+    toBson(
+      Aggregates.scoreFusion(
+        Seq(
+          FusionPipeline("p1", Aggregates.filter(Filters.equal("x", 1))),
+          FusionPipeline("p2", Aggregates.filter(Filters.equal("x", 2)))
+        ),
+        ScoreNormalization.MIN_MAX_SCALER,
+        ScoreFusionOptions
+          .scoreFusionOptions()
+          .combination(ScoreFusionCombination.weighted(Document("p1" -> 0.3, "p2" -> 0.7)).avg())
+          .scoreDetails(true)
+      )
+    ) should equal(
+      Document(
+        """{
+        "$scoreFusion": {
+            "input": {
+                "pipelines": {
+                    "p1": [{"$match": {"x": 1}}],
+                    "p2": [{"$match": {"x": 2}}]
+                },
+                "normalization": "minMaxScaler"
+            },
+            "combination": {"weights": {"p1": 0.3, "p2": 0.7}, "method": "avg"},
+            "scoreDetails": true
+        }
+      }"""
+      )
+    )
+  }
+
+  it should "render $scoreFusion with expression combination" in {
+    toBson(
+      Aggregates.scoreFusion(
+        Seq(
+          FusionPipeline("p1", Aggregates.filter(Filters.equal("x", 1))),
+          FusionPipeline("p2", Aggregates.filter(Filters.equal("x", 2)))
+        ),
+        ScoreNormalization.NONE,
+        ScoreFusionOptions
+          .scoreFusionOptions()
+          .combination(
+            ScoreFusionCombination.expression(Document("""{$sum: ["$$p1", "$$p2"]}"""))
+          )
+      )
+    ) should equal(
+      Document(
+        """{
+        "$scoreFusion": {
+            "input": {
+                "pipelines": {
+                    "p1": [{"$match": {"x": 1}}],
+                    "p2": [{"$match": {"x": 2}}]
+                },
+                "normalization": "none"
+            },
+            "combination": {"method": "expression", "expression": {"$sum": ["$$p1", "$$p2"]}}
         }
       }"""
       )

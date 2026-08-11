@@ -334,6 +334,26 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
         pipeDocument(reader, null);
     }
 
+    /**
+     * Pipes an encoded BSON document from the given byte array to this writer.
+     *
+     * @param bytes the byte array containing the encoded BSON document
+     * @param offset the offset into the byte array
+     * @param length the length of the encoded BSON document
+     * @since 5.8
+     */
+    public void pipe(final byte[] bytes, final int offset, final int length) {
+        notNull("bytes", bytes);
+        checkMinDocumentSize(length);
+        if (getState() == State.VALUE) {
+            bsonOutput.writeByte(BsonType.DOCUMENT.getValue());
+            writeCurrentName();
+        }
+        int pipedDocumentStartPosition = bsonOutput.getPosition();
+        bsonOutput.writeBytes(bytes, offset, length);
+        completePipeDocument(pipedDocumentStartPosition);
+    }
+
     @Override
     public void pipe(final BsonReader reader, final List<BsonElement> extraElements) {
         notNull("reader", reader);
@@ -350,14 +370,10 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
             }
             BsonInput bsonInput = binaryReader.getBsonInput();
             int size = bsonInput.readInt32();
-            if (size < 5) {
-                throw new BsonSerializationException("Document size must be at least 5");
-            }
+            checkMinDocumentSize(size);
             int pipedDocumentStartPosition = bsonOutput.getPosition();
             bsonOutput.writeInt32(size);
-            byte[] bytes = new byte[size - 4];
-            bsonInput.readBytes(bytes);
-            bsonOutput.writeBytes(bytes);
+            bsonInput.pipe(bsonOutput, size - 4);
 
             binaryReader.setState(AbstractBsonReader.State.TYPE);
 
@@ -371,22 +387,25 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
                 setContext(getContext().getParentContext());
             }
 
-            if (getContext() == null) {
-                setState(State.DONE);
-            } else {
-                if (getContext().getContextType() == BsonContextType.JAVASCRIPT_WITH_SCOPE) {
-                    backpatchSize(); // size of the JavaScript with scope value
-                    setContext(getContext().getParentContext());
-                }
-                setState(getNextState());
-            }
-
-            validateSize(bsonOutput.getPosition() - pipedDocumentStartPosition);
+            completePipeDocument(pipedDocumentStartPosition);
         } else if (extraElements != null) {
             super.pipe(reader, extraElements);
         } else {
             super.pipe(reader);
         }
+    }
+
+    private void completePipeDocument(final int pipedDocumentStartPosition) {
+        if (getContext() == null) {
+            setState(State.DONE);
+        } else {
+            if (getContext().getContextType() == BsonContextType.JAVASCRIPT_WITH_SCOPE) {
+                backpatchSize(); // size of the JavaScript with scope value
+                setContext(getContext().getParentContext());
+            }
+            setState(getNextState());
+        }
+        validateSize(bsonOutput.getPosition() - pipedDocumentStartPosition);
     }
 
     /**
@@ -424,6 +443,12 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
 
         mark.reset();
         mark = null;
+    }
+
+    private static void checkMinDocumentSize(final int size) {
+        if (size < 5) {
+            throw new BsonSerializationException("Document size must be at least 5");
+        }
     }
 
     private void writeCurrentName() {

@@ -31,10 +31,11 @@ import com.mongodb.internal.binding.AsyncClusterBinding;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
+import com.mongodb.internal.observability.micrometer.Span;
+import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.operation.OperationHelper;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
-import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.ReactiveContextProvider;
@@ -63,13 +64,16 @@ public class OperationExecutorImpl implements OperationExecutor {
     @Nullable
     private final ReactiveContextProvider contextProvider;
     private final TimeoutSettings timeoutSettings;
+    private final TracingManager tracingManager;
 
     OperationExecutorImpl(final MongoClientImpl mongoClient, final ClientSessionHelper clientSessionHelper,
-            final TimeoutSettings timeoutSettings, @Nullable final ReactiveContextProvider contextProvider) {
+            final TimeoutSettings timeoutSettings, @Nullable final ReactiveContextProvider contextProvider,
+            final TracingManager tracingManager) {
         this.mongoClient = mongoClient;
         this.clientSessionHelper = clientSessionHelper;
         this.timeoutSettings = timeoutSettings;
         this.contextProvider = contextProvider;
+        this.tracingManager = tracingManager;
     }
 
     @Override
@@ -93,22 +97,37 @@ public class OperationExecutorImpl implements OperationExecutor {
                             OperationContext operationContext = getOperationContext(requestContext, actualClientSession, readConcern, operation.getCommandName())
                                     .withSessionContext(new ClientSessionBinding.AsyncClientSessionContext(actualClientSession,
                                             isImplicitSession(session), readConcern));
+                            Span span = tracingManager.createOperationSpan(actualClientSession.getTransactionSpan(),
+                                    operationContext, operation.getCommandName(), operation.getNamespace());
 
                             if (session != null && session.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
                                 binding.release();
-                                return Mono.error(new MongoClientException("Read preference in a transaction must be primary"));
+                                MongoClientException error = new MongoClientException("Read preference in a transaction must be primary");
+                                if (span != null) {
+                                    span.error(error);
+                                    span.end();
+                                }
+                                return Mono.error(error);
                             } else {
                                 return Mono.<T>create(sink -> operation.executeAsync(binding, operationContext, (result, t) -> {
                                     try {
                                         binding.release();
                                     } finally {
+                                        if (t != null) {
+                                            Throwable exceptionToHandle = t instanceof MongoException
+                                                    ? OperationHelper.unwrap((MongoException) t) : t;
+                                            labelException(session, exceptionToHandle);
+                                            unpinServerAddressOnTransientTransactionError(session, exceptionToHandle);
+                                            if (span != null) {
+                                                span.error(t);
+                                            }
+                                        }
+                                        if (span != null) {
+                                            span.end();
+                                        }
                                         sinkToCallback(sink).onResult(result, t);
                                     }
-                                })).doOnError((t) -> {
-                                    Throwable exceptionToHandle = t instanceof MongoException ? OperationHelper.unwrap((MongoException) t) : t;
-                                    labelException(session, exceptionToHandle);
-                                    unpinServerAddressOnTransientTransactionError(session, exceptionToHandle);
-                                });
+                                }));
                             }
                         }).subscribe(subscriber)
         );
@@ -133,18 +152,28 @@ public class OperationExecutorImpl implements OperationExecutor {
                                     OperationContext operationContext = getOperationContext(requestContext, actualClientSession, readConcern, operation.getCommandName())
                                             .withSessionContext(new ClientSessionBinding.AsyncClientSessionContext(actualClientSession,
                                                     isImplicitSession(session), readConcern));
+                                    Span span = tracingManager.createOperationSpan(actualClientSession.getTransactionSpan(),
+                                            operationContext, operation.getCommandName(), operation.getNamespace());
 
                                     return Mono.<T>create(sink -> operation.executeAsync(binding, operationContext, (result, t) -> {
                                     try {
                                         binding.release();
                                     } finally {
+                                        if (t != null) {
+                                            Throwable exceptionToHandle = t instanceof MongoException
+                                                    ? OperationHelper.unwrap((MongoException) t) : t;
+                                            labelException(session, exceptionToHandle);
+                                            unpinServerAddressOnTransientTransactionError(session, exceptionToHandle);
+                                            if (span != null) {
+                                                span.error(t);
+                                            }
+                                        }
+                                        if (span != null) {
+                                            span.end();
+                                        }
                                         sinkToCallback(sink).onResult(result, t);
                                     }
-                                })).doOnError((t) -> {
-                                    Throwable exceptionToHandle = t instanceof MongoException ? OperationHelper.unwrap((MongoException) t) : t;
-                                    labelException(session, exceptionToHandle);
-                                    unpinServerAddressOnTransientTransactionError(session, exceptionToHandle);
-                                    });
+                                }));
                                 }
                         ).subscribe(subscriber)
         );
@@ -155,7 +184,7 @@ public class OperationExecutorImpl implements OperationExecutor {
         if (Objects.equals(timeoutSettings, newTimeoutSettings)) {
             return this;
         }
-        return new OperationExecutorImpl(mongoClient, clientSessionHelper, newTimeoutSettings, contextProvider);
+        return new OperationExecutorImpl(mongoClient, clientSessionHelper, newTimeoutSettings, contextProvider, tracingManager);
     }
 
     @Override
@@ -214,7 +243,7 @@ public class OperationExecutorImpl implements OperationExecutor {
                 requestContext,
                 new ReadConcernAwareNoOpSessionContext(readConcern),
                 createTimeoutContext(session, timeoutSettings),
-                TracingManager.NO_OP,
+                tracingManager,
                 mongoClient.getSettings().getServerApi(),
                 commandName);
     }

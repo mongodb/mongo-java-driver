@@ -167,6 +167,7 @@ public final class MongoClientImpl implements MongoClient {
     }
 
     @Override
+    @Nullable
     public Long getTimeout(final TimeUnit timeUnit) {
         return delegate.getTimeout(timeUnit);
     }

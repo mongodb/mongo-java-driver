@@ -18,10 +18,12 @@ package org.mongodb.scala.model
 
 import com.mongodb.annotations.{ Beta, Reason }
 import com.mongodb.client.model.fill.FillOutputField
-import com.mongodb.client.model.search.FieldSearchPath
+import com.mongodb.client.model.search.{ FieldSearchPath, VectorSearchQuery }
+import org.bson.BinaryVector
 
 import scala.collection.JavaConverters._
 import com.mongodb.client.model.{ Aggregates => JAggregates }
+import com.mongodb.client.model.RerankQuery
 import org.mongodb.scala.MongoNamespace
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.densify.{ DensifyOptions, DensifyRange }
@@ -173,6 +175,39 @@ object Aggregates {
    * @note Requires MongoDB 3.4 or greater
    */
   def facet(facets: Facet*): Bson = JAggregates.facet(facets.asJava)
+
+  /**
+   * Creates a `\$scoreFusion` pipeline stage, which combines the results of the given input pipelines,
+   * normalizing and combining the scores they produce.
+   *
+   * @param pipelines     the non-empty input pipelines with unique names
+   * @param normalization the way in which the scores produced by the input pipelines are normalized
+   * @return the `\$scoreFusion` pipeline stage
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/scoreFusion/ \$scoreFusion]]
+   * @note Requires MongoDB 8.2 or greater
+   * @since 5.10
+   */
+  def scoreFusion(pipelines: Seq[FusionPipeline], normalization: ScoreNormalization): Bson =
+    JAggregates.scoreFusion(pipelines.asJava, normalization)
+
+  /**
+   * Creates a `\$scoreFusion` pipeline stage, which combines the results of the given input pipelines,
+   * normalizing and combining the scores they produce.
+   *
+   * @param pipelines     the non-empty input pipelines with unique names
+   * @param normalization the way in which the scores produced by the input pipelines are normalized
+   * @param options       optional `\$scoreFusion` pipeline stage fields
+   * @return the `\$scoreFusion` pipeline stage
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/scoreFusion/ \$scoreFusion]]
+   * @note Requires MongoDB 8.2 or greater
+   * @since 5.10
+   */
+  def scoreFusion(
+      pipelines: Seq[FusionPipeline],
+      normalization: ScoreNormalization,
+      options: ScoreFusionOptions
+  ): Bson =
+    JAggregates.scoreFusion(pipelines.asJava, normalization, options)
 
   /**
    * Creates a `\$graphLookup` pipeline stage for the specified filter
@@ -739,12 +774,144 @@ object Aggregates {
    */
   def vectorSearch(
       path: FieldSearchPath,
-      queryVector: Iterable[java.lang.Double],
+      queryVector: Iterable[Double],
       index: String,
       limit: Long,
       options: VectorSearchOptions
   ): Bson =
-    JAggregates.vectorSearch(path, queryVector.asJava, index, limit, options)
+    JAggregates.vectorSearch(
+      path,
+      queryVector.asInstanceOf[Iterable[java.lang.Double]].asJava,
+      index,
+      limit,
+      options
+    )
+
+  /**
+   * Creates a `\$vectorSearch` pipeline stage supported by MongoDB Atlas.
+   * You may use the `\$meta: "vectorSearchScore"` expression, e.g., via [[Projections.metaVectorSearchScore]],
+   * to extract the relevance score assigned to each found document.
+   *
+   * @param path The field to be searched.
+   * @param queryVector The `BinaryVector` query vector. The number of dimensions must match that of the `index`.
+   * @param index The name of the index to use.
+   * @param limit The limit on the number of documents produced by the pipeline stage.
+   * @param options Optional `\$vectorSearch` pipeline stage fields.
+   * @return The `\$vectorSearch` pipeline stage.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
+   * @note Requires MongoDB 6.0.10 or greater
+   * @since 5.8
+   */
+  def vectorSearch(
+      path: FieldSearchPath,
+      queryVector: BinaryVector,
+      index: String,
+      limit: Long,
+      options: VectorSearchOptions
+  ): Bson =
+    JAggregates.vectorSearch(path, queryVector, index, limit, options)
+
+  /**
+   * Creates a `\$vectorSearch` pipeline stage supported by MongoDB Atlas with automated embedding.
+   * You may use the `\$meta: "vectorSearchScore"` expression, e.g., via [[Projections.metaVectorSearchScore]],
+   * to extract the relevance score assigned to each found document.
+   *
+   * This overload is used for auto-embedding in Atlas. The server will automatically generate embeddings
+   * for the query using the model specified in the index definition or via
+   * `TextVectorSearchQuery.model`.
+   *
+   * @param path The field to be searched.
+   * @param query The query specification, typically created via `VectorSearchQuery.textQuery`.
+   * @param index The name of the index to use.
+   * @param limit The limit on the number of documents produced by the pipeline stage.
+   * @param options Optional `\$vectorSearch` pipeline stage fields.
+   * @return The `\$vectorSearch` pipeline stage.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
+   * @note Requires MongoDB 6.0.10 or greater
+   * @since 5.8
+   */
+  @Beta(Array(Reason.SERVER))
+  def vectorSearch(
+      path: FieldSearchPath,
+      query: VectorSearchQuery,
+      index: String,
+      limit: Long,
+      options: VectorSearchOptions
+  ): Bson =
+    JAggregates.vectorSearch(path, query, index, limit, options)
+
+  /**
+   * Creates a `\$rerank` pipeline stage supported by MongoDB Atlas.
+   * You may use the `\$meta: "score"` expression to extract the relevance score
+   * assigned to each reranked document.
+   *
+   * @param query           The query to rerank against.
+   * @param path            The document field to send to the reranker.
+   * @param numDocsToRerank The maximum number of documents to rerank (1-1000).
+   * @param model           The reranking model name.
+   * @return The `\$rerank` pipeline stage.
+   * @note Requires MongoDB on Atlas 8.3 or greater
+   * @since 5.8
+   */
+  @Beta(Array(Reason.SERVER))
+  def rerank(
+      query: RerankQuery,
+      path: String,
+      numDocsToRerank: Int,
+      model: String
+  ): Bson =
+    JAggregates.rerank(query, path, numDocsToRerank, model)
+
+  /**
+   * Creates a `\$rerank` pipeline stage supported by MongoDB Atlas.
+   * You may use the `\$meta: "score"` expression to extract the relevance score
+   * assigned to each reranked document.
+   *
+   * @param query           The query to rerank against.
+   * @param paths           The document field(s) to send to the reranker.
+   * @param numDocsToRerank The maximum number of documents to rerank (1-1000).
+   * @param model           The reranking model name.
+   * @return The `\$rerank` pipeline stage.
+   * @note Requires MongoDB on Atlas 8.3 or greater
+   * @since 5.8
+   */
+  @Beta(Array(Reason.SERVER))
+  def rerank(
+      query: RerankQuery,
+      paths: Seq[String],
+      numDocsToRerank: Int,
+      model: String
+  ): Bson =
+    JAggregates.rerank(query, paths.toList.asJava, numDocsToRerank, model)
+
+  /**
+   * Creates a `\$score` pipeline stage that computes a new score for each document
+   * and attaches it as `score` metadata.
+   * You may use the `\$meta: "score"` expression to extract the computed score.
+   *
+   * @param score the expression that computes the score. Must evaluate to a numeric value.
+   * @tparam TExpression the score expression type
+   * @return the `\$score` pipeline stage
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/score/ \$score]]
+   * @note Requires MongoDB 8.2 or greater
+   * @since 5.10
+   */
+  def score[TExpression](score: TExpression): Bson = JAggregates.score(score)
+
+  /**
+   * Creates a `\$score` pipeline stage that computes a new score for each document
+   * and attaches it as `score` metadata, with optional normalization, weighting and score details.
+   * You may use the `\$meta: "score"` expression to extract the computed score.
+   *
+   * @param score the expression that computes the score. Must evaluate to a numeric value.
+   * @param options optional `\$score` pipeline stage fields
+   * @tparam TExpression the score expression type
+   * @return the `\$score` pipeline stage
+   * @see [[https://www.mongodb.com/docs/manual/reference/operator/aggregation/score/ \$score]]
+   * @note Requires MongoDB 8.2 or greater
+   * @since 5.10
+   */
+  def score[TExpression](score: TExpression, options: ScoreOptions): Bson = JAggregates.score(score, options)
 
   /**
    * Creates an `\$unset` pipeline stage that removes/excludes fields from documents

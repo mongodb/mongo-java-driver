@@ -1740,6 +1740,12 @@ axes:
         display_name: "8.0"
         variables:
           VERSION: "8.0"
+      # 8.2 is used solely for Windows testing. MongoDB 8.0 binaries are affected by SERVER-116018 on Windows,
+      # and the fix is only available starting from 8.2.
+      - id: "8.2"
+        display_name: "8.2"
+        variables:
+          VERSION: "8.2"
       - id: "7.0"
         display_name: "7.0"
         variables:
@@ -1770,6 +1776,9 @@ axes:
       - id: "ubuntu"
         display_name: "Ubuntu"
         run_on: "ubuntu2004-small"
+      - id: "windows"
+        display_name: "Windows"
+        run_on: "windows-2022-latest-small"
 
   - id: "topology"
     display_name: "Topology"
@@ -1894,6 +1903,10 @@ axes:
         display_name: "Scala 2.13"
         variables:
           SCALA: "2.13"
+      - id: "3"
+        display_name: "Scala 3"
+        variables:
+          SCALA: "3"
 
   - id: "api-version"
     display_name: "API Version"
@@ -1939,16 +1952,18 @@ task_groups:
     setup_group:
       - func: "fetch-source"
       - func: "prepare-resources"
+      - func: "assume-aws-test-secrets-role"
       - command: subprocess.exec
         type: "setup"
         params:
           working_dir: "src"
           binary: bash
-          add_expansions_to_env: true
+          include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
           env:
+            CLUSTER_PREFIX: "dbx-java"
             MONGODB_VERSION: "8.0"
           args:
-            - ${DRIVERS_TOOLS}/.evergreen/atlas/setup-atlas-cluster.sh
+            - ${DRIVERS_TOOLS}/.evergreen/atlas/setup.sh
       - command: expansions.update
         params:
           file: src/atlas-expansion.yml
@@ -1960,7 +1975,7 @@ task_groups:
           binary: bash
           add_expansions_to_env: true
           args:
-            - ${DRIVERS_TOOLS}/.evergreen/atlas/teardown-atlas-cluster.sh
+            - ${DRIVERS_TOOLS}/.evergreen/atlas/teardown.sh
     tasks:
       - "atlas-search-index-management-task"
       - "aws-lambda-deployed-task"
@@ -2326,7 +2341,7 @@ buildvariants:
     #
 
   - matrix_name: "tests-zlib-compression"
-    matrix_spec: { compressor: "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: "*", topology: "standalone", os: "linux" }
+    matrix_spec: { compressor: "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: [ "4.2", "4.4", "5.0", "6.0", "7.0", "8.0", "latest" ], topology: "standalone", os: "linux" }
     display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
     tags: [ "tests-variant" ]
     tasks:
@@ -2336,7 +2351,7 @@ buildvariants:
       - name: "test-legacy-task"
 
   - matrix_name: "tests-snappy-compression"
-    matrix_spec: { compressor: "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: "*", topology: "standalone", os: "linux" }
+    matrix_spec: { compressor: "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: [ "4.2", "4.4", "5.0", "6.0", "7.0", "8.0", "latest" ], topology: "standalone", os: "linux" }
     display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
     tags: [ "tests-variant" ]
     tasks:
@@ -2396,6 +2411,22 @@ buildvariants:
       - name: "test-reactive-task"
       - name: "test-core-task"
       - name: "test-legacy-task"
+
+  - matrix_name: "tests-jdk-secure-windows"
+    matrix_spec: { auth: "auth", ssl: "ssl", jdk: "jdk17",
+                   version: [ "8.2" ],
+                   topology: "*", os: "windows" }
+    display_name: "${os}: ${version} ${topology} ${auth} ${ssl} ${jdk}"
+    tags: [ "tests-variant" ]
+    tasks:
+      - name: "test-sync-task"
+        exec_timeout_secs: 7200
+      - name: "test-reactive-task"
+        exec_timeout_secs: 7200
+      - name: "test-core-task"
+        exec_timeout_secs: 7200
+      - name: "test-legacy-task"
+        exec_timeout_secs: 7200
 
   - matrix_name: "tests-require-api-version"
     matrix_spec: { api-version: "required", auth: "auth", ssl: "nossl", jdk: [ "jdk21" ], version: [ "5.0", "6.0", "7.0", "8.0", "latest" ],
@@ -2503,7 +2534,7 @@ buildvariants:
 
   - matrix_name: "scala-tests"
     matrix_spec: { auth: "noauth", ssl: "nossl", jdk: [ "jdk8", "jdk17", "jdk21" ], version: [ "7.0" ], topology: "replicaset",
-                   scala: "*", os: "ubuntu" }
+                   scala: "*" , os: "ubuntu" }
     display_name: "${scala} ${jdk} ${version} ${topology} ${os}"
     tags: [ "test-scala-variant" ]
     tasks:
@@ -2533,6 +2564,15 @@ buildvariants:
     display_name: "CSFLE with mongocryptd: ${version}"
     tasks:
       - name: "csfle-tests-with-mongocryptd-task"
+
+  - matrix_name: "csfle-tests-with-mongocryptd-windows"
+    matrix_spec: { os: "windows",
+                   version: [ "8.0", "latest" ],
+                   topology: [ "replicaset" ] }
+    display_name: "${os} CSFLE with mongocryptd: ${version}"
+    tasks:
+      - name: "csfle-tests-with-mongocryptd-task"
+        exec_timeout_secs: 7200
 
   - matrix_name: "socks5-tests"
     matrix_spec: { os: "linux", ssl: [ "nossl", "ssl" ], version: [ "latest" ], topology: [ "replicaset" ], socks-auth: [ "auth", "noauth" ] }

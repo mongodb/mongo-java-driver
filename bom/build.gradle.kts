@@ -58,7 +58,12 @@ require(!scalaVersions.isNullOrEmpty()) {
 }
 
 scalaVersions?.forEach { version ->
-    require(version.matches(Regex("\\d\\.\\d{2}"))) { "Scala version '$version' must be in the format X.YY" }
+    require(version.matches(Regex("^[23].*"))) { "Scala version '$version' not supported." }
+    if (version.startsWith("3")) {
+        require(version.matches(Regex("^3$"))) { "Scala version '$version' must be in the format X" }
+    } else {
+        require(version.matches(Regex("\\d\\.\\d{2}"))) { "Scala version '$version' must be in the format X.YY" }
+    }
 }
 /*
  * Apply the Java Platform plugin to create the BOM

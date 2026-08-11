@@ -16,10 +16,8 @@
 
 package com.mongodb.client;
 
-import com.mongodb.internal.connection.FaasEnvironmentAccessor;
+import com.mongodb.internal.EnvironmentProvider;
 import com.mongodb.lang.Nullable;
-
-import java.util.Map;
 
 @FunctionalInterface
 public interface WithWrapper {
@@ -32,22 +30,12 @@ public interface WithWrapper {
 
     default WithWrapper withEnvironmentVariable(final String name, @Nullable final String value) {
         return runnable -> {
-            Map<String, String> innerMap = FaasEnvironmentAccessor.getFaasEnvMap();
-            String original = innerMap.get(name);
-            if (value == null) {
-                innerMap.remove(name);
-            } else {
-                innerMap.put(name, value);
-            }
-            try {
-                this.run(runnable);
-            } finally {
-                if (original == null) {
-                    innerMap.remove(name);
-                } else {
-                    innerMap.put(name, original);
+            this.run(() -> {
+                try (EnvironmentProvider.EnvironmentOverride env = EnvironmentProvider.envOverride()) {
+                    env.set(name, value);
+                    runnable.run();
                 }
-            }
+            });
         };
     }
 

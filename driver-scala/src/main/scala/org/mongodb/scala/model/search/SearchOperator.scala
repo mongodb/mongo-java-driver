@@ -496,6 +496,44 @@ object SearchOperator {
     JSearchOperator.regex(paths.asJava, queries.asJava)
 
   /**
+   * Returns a `SearchOperator` that performs vector search within the `\$search` pipeline stage.
+   * This is the approximate (ANN) variant with `numCandidates`.
+   *
+   * @param path The indexed vector field to search.
+   * @param queryVector The query vector. The number of dimensions must match the index field.
+   * @param limit The number of results to return.
+   * @param numCandidates The number of nearest neighbors to consider during ANN search.
+   *                      Must be greater than or equal to `limit`. The server may impose an upper bound.
+   * @return The requested `VectorSearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/vector-search/ vectorSearch operator]]
+   * @since 5.8
+   */
+  def vectorSearch(
+      path: FieldSearchPath,
+      queryVector: Iterable[Double],
+      limit: Int,
+      numCandidates: Int
+  ): VectorSearchOperator =
+    JSearchOperator.vectorSearch(path, queryVector.map(Double.box).asJava, limit, numCandidates)
+
+  /**
+   * Returns a `SearchOperator` that performs exact (ENN) vector search within the `\$search` pipeline stage.
+   *
+   * @param path The indexed vector field to search.
+   * @param queryVector The query vector. The number of dimensions must match the index field.
+   * @param limit The number of results to return.
+   * @return The requested `VectorSearchOperator`.
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-search/vector-search/ vectorSearch operator]]
+   * @since 5.8
+   */
+  def vectorSearchExact(
+      path: FieldSearchPath,
+      queryVector: Iterable[Double],
+      limit: Int
+  ): VectorSearchOperator =
+    JSearchOperator.vectorSearchExact(path, queryVector.map(Double.box).asJava, limit)
+
+  /**
    * Creates a `SearchOperator` from a `Bson` in situations when there is no builder method that better satisfies your needs.
    * This method cannot be used to validate the syntax.
    *

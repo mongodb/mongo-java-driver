@@ -19,10 +19,7 @@
  *
  * @since 5.7
  */
-@Alpha(Reason.CLIENT)
 @NonNullApi
 package com.mongodb.observability;
 
 import com.mongodb.lang.NonNullApi;
-import com.mongodb.annotations.Alpha;
-import com.mongodb.annotations.Reason;

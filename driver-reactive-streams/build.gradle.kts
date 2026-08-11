@@ -15,6 +15,7 @@
  */
 import ProjectExtensions.configureJarManifest
 import ProjectExtensions.configureMavenPublication
+import project.DEFAULT_JAVA_VERSION
 
 plugins {
     id("project.java")
@@ -36,6 +37,9 @@ dependencies {
     implementation(libs.project.reactor.core)
     compileOnly(project(path = ":mongodb-crypt", configuration = "default"))
 
+    optionalImplementation(platform(libs.micrometer.observation.bom))
+    optionalImplementation(libs.micrometer.observation)
+
     testImplementation(libs.project.reactor.test)
     testImplementation(project(path = ":driver-sync", configuration = "default"))
     testImplementation(project(path = ":bson", configuration = "testArtifacts"))
@@ -45,9 +49,18 @@ dependencies {
     // Reactive Streams TCK testing
     testImplementation(libs.reactive.streams.tck)
 
-    // Tracing
+    // Tracing testing
     testImplementation(platform(libs.micrometer.tracing.integration.test.bom))
     testImplementation(libs.micrometer.tracing.integration.test) { exclude(group = "org.junit.jupiter") }
+}
+
+tasks.withType<Test> {
+    // Needed for MicrometerProseTest to set env variable programmatically (calls
+    // `field.setAccessible(true)`)
+    val testJavaVersion: Int = findProperty("javaVersion")?.toString()?.toInt() ?: DEFAULT_JAVA_VERSION
+    if (testJavaVersion >= DEFAULT_JAVA_VERSION) {
+        jvmArgs("--add-opens=java.base/java.util=ALL-UNNAMED")
+    }
 }
 
 configureMavenPublication {
