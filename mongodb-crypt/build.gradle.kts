@@ -18,6 +18,7 @@ import ProjectExtensions.configureMavenPublication
 import de.undercouch.gradle.tasks.download.Download
 import java.io.ByteArrayOutputStream
 import java.io.File
+import java.util.Locale
 import javax.inject.Inject
 import org.gradle.api.GradleException
 import org.gradle.process.ExecOperations
@@ -177,14 +178,14 @@ abstract class VerifyLibmongocryptTask : DefaultTask() {
         // ("C:\dir" -> "/cygdrive/c/dir") on Windows so every path argument (homedir, key,
         // signatures, tarballs)
         // is parsed correctly; other platforms pass paths through unchanged.
-        val isWindows = System.getProperty("os.name").startsWith("Windows", ignoreCase = true)
+        val isWindows = System.getProperty("os.name", "").startsWith("Windows", ignoreCase = true)
         fun toGpgPath(path: String): String {
             if (!isWindows) {
                 return path
             }
             val driveLetter = Regex("^([A-Za-z]):[\\\\/](.*)$").matchEntire(path) ?: return path.replace('\\', '/')
             val (drive, rest) = driveLetter.destructured
-            return "/cygdrive/${drive.lowercase()}/${rest.replace('\\', '/')}"
+            return "/cygdrive/${drive.lowercase(Locale.ROOT)}/${rest.replace('\\', '/')}"
         }
 
         // Run gpg capturing both streams; on non-zero exit throw with the captured output appended
