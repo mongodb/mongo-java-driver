@@ -1003,8 +1003,14 @@ public class InternalStreamConnection implements InternalConnection {
 
     private void throwTranslatedWriteException(final Throwable e, final OperationContext operationContext) {
         rethrowIfError(e);
-        if (e instanceof MongoSocketWriteTimeoutException && operationContext.getTimeoutContext().hasTimeoutMS()) {
-            throw createMongoTimeoutException(e);
+        if (operationContext.getTimeoutContext().hasTimeoutMS()) {
+            if (e instanceof MongoSocketWriteTimeoutException) {
+                throw createMongoTimeoutException(e);
+            } else if (e instanceof SocketTimeoutException) {
+                // A blocking (SSL) write can surface the socket read-timeout as a bare SocketTimeoutException;
+                // mirror translateReadException so it is reported as a timeout rather than a generic write error.
+                throw createMongoTimeoutException(createWriteTimeoutException((SocketTimeoutException) e));
+            }
         }
 
         if (e instanceof MongoException) {
@@ -1030,6 +1036,10 @@ public class InternalStreamConnection implements InternalConnection {
             return e;
         }
         return translateReadException(e, operationContext);
+    }
+
+    private MongoSocketWriteTimeoutException createWriteTimeoutException(final SocketTimeoutException e) {
+        return new MongoSocketWriteTimeoutException("Timeout while sending message", getServerAddress(), e);
     }
 
     private MongoException translateReadException(final Throwable e, final OperationContext operationContext) {
