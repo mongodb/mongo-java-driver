@@ -225,6 +225,12 @@
     </Match>
     <Match>
         <!-- MongoDB status: "False Positive", SpotBugs rank: 17 -->
+        <!-- Reported against inlined Kotlin stdlib lambdas, at line numbers past the end of DataClassCodec.kt -->
+        <Class name="~org\.bson\.codecs\.kotlin\.DataClassCodec(\$Companion)?"/>
+        <Bug pattern="BC_BAD_CAST_TO_ABSTRACT_COLLECTION"/>
+    </Match>
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 17 -->
         <Class name="com.mongodb.kotlin.client.model.PropertiesKt$path$1"/>
         <Method name="~.*invoke.*"/>
         <Bug pattern="BC_BAD_CAST_TO_ABSTRACT_COLLECTION"/>

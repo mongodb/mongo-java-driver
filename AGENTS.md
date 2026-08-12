@@ -30,13 +30,10 @@ The default branch is `main` (not `master`). Always use `main` when comparing, d
 
 Gradle with Kotlin DSL. Build JDK: 17+. Source baseline: Java 8. Versions in `gradle/libs.versions.toml`.
 
-**Java 8 language constraint:** Most modules target Java 8. Do not use features from Java 9+ (`var`,
-records, text blocks, sealed classes, `Stream.toList()`, switch expressions, pattern matching, etc.)
-unless the module's `build.gradle.kts` explicitly sets a higher `sourceCompatibility`.
+- **Java 8 baseline:** no Java 9+ language features unless the module raises `sourceCompatibility`.
+- **Kotlin 1.8** with JVM target 1.8; all Kotlin modules enforce `explicitApi()`.
 
-**Kotlin language constraint:** Kotlin modules use Kotlin 1.8 with JVM target 1.8. All Kotlin modules
-enforce `explicitApi()` — all public declarations must have explicit visibility modifiers and types.
-Do not use Kotlin language features or standard library APIs introduced after 1.8.
+Details for both are in [`.agents/references/style-reference`](.agents/references/style-reference.md).
 
 ```bash
 ./gradlew check                        # Full validation (format + static checks + tests)
@@ -48,19 +45,15 @@ Do not use Kotlin language features or standard library APIs introduced after 1.
 
 `check` depends on `spotlessApply` to auto-fix formatting — run `./gradlew spotlessApply` independently when needed.
 Do not reformat outside your changes.
-See [`.agents/references/style-reference`](.agents/references/style-reference.md) for full rules.
-
-- No `System.out.println` / `System.err.println` — use SLF4J
-- No `e.printStackTrace()` — use proper error handling
-- Copyright header required: `Copyright 2008-present MongoDB, Inc.`
-- Every public package must have a `package-info.java`
+See [`.agents/references/style-reference`](.agents/references/style-reference.md) for prohibited
+patterns, required headers, and full formatting rules.
 
 ## Testing
 
 - Every code change must include tests.
   Do not reduce coverage.
-- Integration tests require a running MongoDB instance (see the test URI in Build section).
-  Do not attempt to run `integrationTest` without a configured server.
+- Integration tests require a running MongoDB instance (see the test URI in Build section) —
+  do not attempt to run `integrationTest` without a configured server.
 - See [`.agents/references/testing-guide`](.agents/references/testing-guide.md) for framework details and running specific
   tests.
 - See [`.agents/references/spec-tests`](.agents/references/spec-tests.md) for MongoDB specification test conventions.
@@ -68,17 +61,15 @@ See [`.agents/references/style-reference`](.agents/references/style-reference.md
 ## API
 
 All `com.mongodb.internal.*` / `org.bson.internal.*` is private API — never expose in public APIs.
-See [`.agents/references/api-design`](.agents/references/api-design.md) for stability annotations and design principles.
 
-**Java nullability:** Use `com.mongodb.lang.Nullable` / `NonNull` / `NonNullApi` annotations.
-Packages with `@NonNullApi` in `package-info.java` are non-null by default — only annotate exceptions
-with `@Nullable`. New packages must include `@NonNullApi`. Older packages without it are nullable by
-default and require explicit `@NonNull` where needed.
+**Nullability:** use `com.mongodb.lang` annotations; new packages must declare `@NonNullApi` in
+`package-info.java`.
 
-**Thread safety:** Use `com.mongodb.annotations`; `@ThreadSafe`, `@NotThreadSafe`, or `@Immutable`.
-All public API classes must be thread-safe unless annotated otherwise. Concurrent code — particularly
-in async `driver-core` paths — must use locks (via `Locks.withLock()`), `volatile` fields, or
-`java.util.concurrent` atomics; never rely on external synchronization.
+**Thread safety:** use `com.mongodb.annotations` (`@ThreadSafe` / `@NotThreadSafe` / `@Immutable`);
+public API classes must be thread-safe unless annotated otherwise.
+
+See [`.agents/references/api-design`](.agents/references/api-design.md) for stability annotations,
+design principles, and the full nullability and thread safety conventions.
 
 ## Do Not Modify Without Human Approval
 
