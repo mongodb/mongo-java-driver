@@ -73,13 +73,15 @@ public final class MongoClientImpl implements MongoClient {
     private final MongoClusterImpl delegate;
     private final AtomicBoolean closed;
     private final StreamFactoryFactory streamFactoryFactory;
+    private final AsyncClientExecutor clientExecutor;
 
     public MongoClientImpl(
             final Cluster cluster,
             final MongoDriverInformation mongoDriverInformation,
             final MongoClientSettings settings,
-            final StreamFactoryFactory streamFactoryFactory) {
-        this(cluster, mongoDriverInformation, settings, streamFactoryFactory, null);
+            final StreamFactoryFactory streamFactoryFactory,
+            final AsyncClientExecutor clientExecutor) {
+        this(cluster, mongoDriverInformation, settings, streamFactoryFactory, clientExecutor, null);
     }
 
     @VisibleForTesting(otherwise = PRIVATE)
@@ -88,9 +90,11 @@ public final class MongoClientImpl implements MongoClient {
             final MongoDriverInformation mongoDriverInformation,
             final MongoClientSettings settings,
             final StreamFactoryFactory streamFactoryFactory,
+            final AsyncClientExecutor clientExecutor,
             @Nullable final OperationExecutor operationExecutor) {
 
         this.streamFactoryFactory = streamFactoryFactory;
+        this.clientExecutor = clientExecutor;
         this.settings = notNull("settings", settings);
         this.mongoDriverInformation = mongoDriverInformation;
         AutoEncryptionSettings autoEncryptionSettings = settings.getAutoEncryptionSettings();
@@ -99,7 +103,6 @@ public final class MongoClientImpl implements MongoClient {
                     + SynchronousContextProvider.class.getName() + " when using the synchronous driver");
         }
 
-        AsyncClientExecutor clientExecutor = streamFactoryFactory.getClientExecutor();
         this.delegate = new MongoClusterImpl(autoEncryptionSettings, cluster,
                                              withUuidRepresentation(settings.getCodecRegistry(), settings.getUuidRepresentation()),
                                              (SynchronousContextProvider) settings.getContextProvider(),
@@ -125,8 +128,11 @@ public final class MongoClientImpl implements MongoClient {
             }
             delegate.getServerSessionPool().close();
             delegate.getCluster().close();
-            try {
-                streamFactoryFactory.close();
+            //noinspection EmptyTryBlock
+            try (AutoCloseable autoClosedStreamFactoryFactory = streamFactoryFactory;
+                 AutoCloseable autoClosedClientExecutor = clientExecutor) {
+                // `clientExecutor`, `streamFactoryFactory` must be the last resources closed,
+                // with `streamFactoryFactory` being the very last.
             } catch (Exception e) {
                 LOGGER.warn("Exception closing resource", e);
             }
@@ -334,10 +340,7 @@ public final class MongoClientImpl implements MongoClient {
         return mongoDriverInformation;
     }
 
-    /**
-     * @see StreamFactoryFactory#getClientExecutor()
-     */
     public AsyncClientExecutor getClientExecutor() {
-        return streamFactoryFactory.getClientExecutor();
+        return clientExecutor;
     }
 }

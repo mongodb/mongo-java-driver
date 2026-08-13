@@ -22,7 +22,6 @@ import com.mongodb.connection.SslSettings;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.connection.StreamFactory;
 import com.mongodb.internal.connection.StreamFactoryFactory;
-import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
 import io.netty.buffer.ByteBufAllocator;
@@ -50,7 +49,6 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
 
     private final EventLoopGroup eventLoopGroup;
     private final boolean ownsEventLoopGroup;
-    private final AsyncClientExecutor clientExecutor;
     private final Class<? extends SocketChannel> socketChannelClass;
     private final ByteBufAllocator allocator;
     @Nullable
@@ -207,25 +205,20 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
     }
 
     /**
-     * The {@linkplain AsyncClientExecutor} {@linkplain AsyncClientExecutor#backedBy(Executor) backed by} the same {@link EventLoopGroup}
-     * used by {@link #create(SocketSettings, SslSettings)} for a {@link StreamFactory}.
-     * That {@link EventLoopGroup} may be provided by an application via {@link NettyTransportSettings#getEventLoopGroup()}.
+     * @return The {@link EventLoopGroup} used by the {@link StreamFactory} created via {@link #create(SocketSettings, SslSettings)}.
+     * It may be provided by an application via {@link NettyTransportSettings#getEventLoopGroup()}.
      */
     @Override
-    public AsyncClientExecutor getClientExecutor() {
-        return clientExecutor;
+    public Executor getExecutor() {
+        return eventLoopGroup;
     }
 
     @Override
     public void close() {
-        try {
-            clientExecutor.close();
-        } finally {
-            if (ownsEventLoopGroup) {
-                // ignore the returned Future.  This is in line with MongoClient behavior to not block waiting for connections to be returned
-                // to the pool
-                eventLoopGroup.shutdownGracefully();
-            }
+        if (ownsEventLoopGroup) {
+            // ignore the returned Future.  This is in line with MongoClient behavior to not block waiting for connections to be returned
+            // to the pool
+            eventLoopGroup.shutdownGracefully();
         }
     }
 
@@ -253,7 +246,6 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
         socketChannelClass = builder.socketChannelClass == null ? NioSocketChannel.class : builder.socketChannelClass;
         eventLoopGroup = builder.eventLoopGroup == null ? new NioEventLoopGroup() : builder.eventLoopGroup;
         ownsEventLoopGroup = builder.eventLoopGroup == null;
-        clientExecutor = AsyncClientExecutor.backedBy(eventLoopGroup);
         sslContext = builder.sslContext;
         inetAddressResolver = builder.inetAddressResolver;
     }

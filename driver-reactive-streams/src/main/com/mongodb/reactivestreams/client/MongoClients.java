@@ -119,8 +119,9 @@ public final class MongoClients {
         StreamFactory streamFactory = getStreamFactory(streamFactoryFactory, settings, false);
         StreamFactory heartbeatStreamFactory = getStreamFactory(streamFactoryFactory, settings, true);
         MongoDriverInformation wrappedMongoDriverInformation = wrapMongoDriverInformation(mongoDriverInformation);
-        Cluster cluster = createCluster(settings, wrappedMongoDriverInformation, streamFactory, heartbeatStreamFactory, streamFactoryFactory.getClientExecutor());
-        return new MongoClientImpl(cluster, wrappedMongoDriverInformation, settings, streamFactoryFactory);
+        AsyncClientExecutor clientExecutor = AsyncClientExecutor.backedBy(streamFactoryFactory.getExecutor());
+        Cluster cluster = createCluster(settings, wrappedMongoDriverInformation, streamFactory, heartbeatStreamFactory, clientExecutor);
+        return new MongoClientImpl(cluster, wrappedMongoDriverInformation, settings, streamFactoryFactory, clientExecutor);
     }
 
     /**

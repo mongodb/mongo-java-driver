@@ -30,7 +30,6 @@ import com.mongodb.internal.connection.tlschannel.async.AsynchronousTlsChannel;
 import com.mongodb.internal.connection.tlschannel.async.AsynchronousTlsChannelGroup;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
-import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
 
@@ -71,7 +70,6 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
 
     private final SelectorMonitor selectorMonitor;
     private final AsynchronousTlsChannelGroup group;
-    private final AsyncClientExecutor clientExecutor;
     private final PowerOfTwoBufferPool bufferPool = PowerOfTwoBufferPool.DEFAULT;
     private final InetAddressResolver inetAddressResolver;
 
@@ -82,7 +80,6 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
             @Nullable final ExecutorService executorService) {
         this.inetAddressResolver = inetAddressResolver;
         this.group = new AsynchronousTlsChannelGroup(executorService);
-        clientExecutor = AsyncClientExecutor.backedBy(group);
         selectorMonitor = new SelectorMonitor();
         selectorMonitor.start();
     }
@@ -99,25 +96,20 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
     }
 
     /**
-     * The {@linkplain AsyncClientExecutor} {@linkplain AsyncClientExecutor#backedBy(Executor) backed by} the same {@link ExecutorService}
-     * used by {@link #create(SocketSettings, SslSettings)} for a {@link StreamFactory}.
-     * That {@link ExecutorService} may be provided by an application via {@link AsyncTransportSettings#getExecutorService()}.
+     * @return The {@link Executor} used by the {@link StreamFactory} created via {@link #create(SocketSettings, SslSettings)}.
+     * It may be backed by the {@link ExecutorService} provided by an application via {@link AsyncTransportSettings#getExecutorService()}.
      */
     @Override
-    public AsyncClientExecutor getClientExecutor() {
-        return clientExecutor;
+    public Executor getExecutor() {
+        return group;
     }
 
     @Override
     public void close() {
         try {
-            clientExecutor.close();
+            selectorMonitor.close();
         } finally {
-            try {
-                selectorMonitor.close();
-            } finally {
-                group.shutdown();
-            }
+            group.shutdown();
         }
     }
 

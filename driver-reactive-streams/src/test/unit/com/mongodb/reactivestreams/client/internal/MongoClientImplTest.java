@@ -204,15 +204,25 @@ public class MongoClientImplTest extends TestHelper {
                   });
     }
 
+    @Test
+    void close() {
+        com.mongodb.client.MongoClientTest.assertClose((cluster, mongoDriverInformation, streamFactoryFactory, clientExecutor) ->
+                new MongoClientImpl(
+                        cluster,
+                        mongoDriverInformation,
+                        MongoClientSettings.builder().build(),
+                        streamFactoryFactory,
+                        clientExecutor));
+    }
+
     private MongoClientImpl createMongoClient() {
         MongoDriverInformation mongoDriverInformation = MongoDriverInformation.builder().driverName("reactive-streams").build();
         Cluster cluster = MongoMockito.mock(Cluster.class, mock -> {
             when(mock.getClientMetadata())
                     .thenReturn(new ClientMetadata("test", mongoDriverInformation));
         });
-        StreamFactoryFactory streamFactoryFactory = MongoMockito.mock(StreamFactoryFactory.class, mock -> {
-            when(mock.getClientExecutor()).thenReturn(AsyncClientExecutor.NO_OP);
-        });
-        return new MongoClientImpl(cluster, mongoDriverInformation, MongoClientSettings.builder().build(), streamFactoryFactory, OPERATION_EXECUTOR);
+        StreamFactoryFactory streamFactoryFactory = MongoMockito.mock(StreamFactoryFactory.class);
+        return new MongoClientImpl(cluster, mongoDriverInformation, MongoClientSettings.builder().build(), streamFactoryFactory,
+                AsyncClientExecutor.NO_OP, OPERATION_EXECUTOR);
     }
 }

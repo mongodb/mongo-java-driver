@@ -19,7 +19,6 @@ package com.mongodb.internal.connection;
 import com.mongodb.connection.AsyncTransportSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.internal.thread.MongoThreadPoolExecutor;
 import com.mongodb.lang.Nullable;
@@ -41,7 +40,6 @@ public final class AsynchronousSocketChannelStreamFactoryFactory implements Stre
     @Nullable
     private final AsynchronousChannelGroup group;
     private final MongoThreadPoolExecutor ownedExecutorBackingClientExecutor;
-    private final AsyncClientExecutor clientExecutor;
 
     public AsynchronousSocketChannelStreamFactoryFactory(final InetAddressResolver inetAddressResolver) {
         this(inetAddressResolver, null);
@@ -57,7 +55,6 @@ public final class AsynchronousSocketChannelStreamFactoryFactory implements Stre
                 availableProcessors, availableProcessors, Duration.ofMinutes(5),
                 new LinkedBlockingQueue<>(), new DaemonThreadFactory("ClientExecutor"));
         ownedExecutorBackingClientExecutor.allowCoreThreadTimeOut(true);
-        clientExecutor = AsyncClientExecutor.backedBy(ownedExecutorBackingClientExecutor);
     }
 
     @Override
@@ -67,31 +64,24 @@ public final class AsynchronousSocketChannelStreamFactoryFactory implements Stre
     }
 
     /**
-     * VAKOTODO create ticket, leave a TODO
-     * To make things right, this should be
-     * the {@linkplain AsyncClientExecutor} {@linkplain AsyncClientExecutor#backedBy(Executor) backed by} same {@link ExecutorService} that
-     * the {@link AsynchronousChannelGroup} in {@link AsynchronousSocketChannelStreamFactory} uses
-     * (see {@link #create(SocketSettings, SslSettings)}).
-     * That {@link ExecutorService} may be provided by an application via {@link AsyncTransportSettings#getExecutorService()}.
-     * But currently it is a separate {@link MongoThreadPoolExecutor}.
+     * @return VAKOTODO create ticket, leave a TODO
+     * A dedicated {@link MongoThreadPoolExecutor}, which is suboptimal. To make things right, this should be
+     * The {@link ExecutorService} used by the {@link StreamFactory} created via {@link #create(SocketSettings, SslSettings)}.
+     * It may be provided by an application via {@link AsyncTransportSettings#getExecutorService()}.
      */
     @Override
-    public AsyncClientExecutor getClientExecutor() {
-        return clientExecutor;
+    public Executor getExecutor() {
+        return ownedExecutorBackingClientExecutor;
     }
 
     @Override
     public void close() {
         try {
-            clientExecutor.close();
-        } finally {
-            try {
-                if (group != null) {
-                    group.shutdown();
-                }
-            } finally {
-                ownedExecutorBackingClientExecutor.shutdown();
+            if (group != null) {
+                group.shutdown();
             }
+        } finally {
+            ownedExecutorBackingClientExecutor.shutdown();
         }
     }
 }

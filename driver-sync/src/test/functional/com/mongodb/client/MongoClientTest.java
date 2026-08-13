@@ -29,6 +29,7 @@ import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.internal.mockito.MongoMockito;
 import com.mongodb.internal.thread.AsyncClientExecutor;
 import org.junit.jupiter.api.Test;
+import org.mockito.InOrder;
 import org.mockito.Mockito;
 
 import java.util.concurrent.CompletableFuture;
@@ -37,11 +38,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 
-class MongoClientTest {
+public final class MongoClientTest {
 
     @SuppressWarnings("try")
     @Test
@@ -65,39 +67,45 @@ class MongoClientTest {
     }
 
     @Test
-    void shouldCloseStreamFactoryFactory() {
+    void close() {
+        assertClose((cluster, mongoDriverInformation, streamFactoryFactory, clientExecutor) ->
+                new MongoClientImpl(
+                        cluster,
+                        mongoDriverInformation,
+                        MongoClientSettings.builder().build(),
+                        streamFactoryFactory,
+                        clientExecutor));
+    }
 
-        //given
+    public static void assertClose(final MongoClientCreator clientCreator) {
         MongoDriverInformation mongoDriverInformation = MongoDriverInformation.builder().build();
-        Cluster cluster = MongoMockito.mock(
-                Cluster.class,
-                mockedCluster -> {
-                    doNothing().when(mockedCluster).close();
-                    when(mockedCluster.getClientMetadata())
-                            .thenReturn(new ClientMetadata("test", mongoDriverInformation));
-                });
-        StreamFactoryFactory streamFactoryFactory = MongoMockito.mock(
-                StreamFactoryFactory.class,
-                mock -> {
-                    when(mock.getClientExecutor()).thenReturn(AsyncClientExecutor.NO_OP);
-                    try {
-                        doNothing().when(mock).close();
-                    } catch (Exception e) {
-                        throw new RuntimeException(e);
-                    }
-                });
-
-        MongoClientImpl mongoClient = new MongoClientImpl(
+        Cluster cluster = MongoMockito.mock(Cluster.class, mock -> {
+            doNothing().when(mock).close();
+            when(mock.getClientMetadata()).thenReturn(new ClientMetadata("test", mongoDriverInformation));
+        });
+        StreamFactoryFactory streamFactoryFactory = MongoMockito.mock(StreamFactoryFactory.class, mock -> {
+            doNothing().when(mock).close();
+        });
+        AsyncClientExecutor clientExecutor = MongoMockito.mock(AsyncClientExecutor.class, mock -> {
+            doNothing().when(mock).close();
+        });
+        AutoCloseable mongoClient = clientCreator.create(
                 cluster,
                 mongoDriverInformation,
-                MongoClientSettings.builder().build(),
-                streamFactoryFactory);
+                streamFactoryFactory,
+                clientExecutor);
+        assertDoesNotThrow(() -> mongoClient.close());
+        InOrder inOrder = Mockito.inOrder(cluster, clientExecutor, streamFactoryFactory);
+        inOrder.verify(cluster).close();
+        inOrder.verify(clientExecutor).close();
+        inOrder.verify(streamFactoryFactory).close();
+    }
 
-        //when
-        mongoClient.close();
-
-        //then
-        Mockito.verify(streamFactoryFactory).close();
-        Mockito.verify(cluster).close();
+    public interface MongoClientCreator {
+        AutoCloseable create(
+                Cluster cluster,
+                MongoDriverInformation mongoDriverInformation,
+                StreamFactoryFactory streamFactoryFactory,
+                AsyncClientExecutor clientExecutor);
     }
 }

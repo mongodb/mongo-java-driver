@@ -43,6 +43,7 @@ import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.session.ServerSessionPool;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
@@ -256,13 +257,14 @@ public class MongoClient implements Closeable {
         StreamFactoryFactory syncStreamFactoryFactory = getSyncStreamFactoryFactory(
                 settings.getTransportSettings(),
                 getInetAddressResolver(settings));
-
+        AsyncClientExecutor clientExecutor = AsyncClientExecutor.NO_OP;
         Cluster cluster = Clusters.createCluster(
                 settings,
                 wrappedMongoDriverInformation,
-                syncStreamFactoryFactory);
+                syncStreamFactoryFactory,
+                clientExecutor);
 
-        delegate = new MongoClientImpl(cluster, wrappedMongoDriverInformation, settings, syncStreamFactoryFactory);
+        delegate = new MongoClientImpl(cluster, wrappedMongoDriverInformation, settings, syncStreamFactoryFactory, clientExecutor);
         this.options = options != null ? options : MongoClientOptions.builder(settings).build();
         cursorCleaningService = this.options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
         this.closed = new AtomicBoolean();

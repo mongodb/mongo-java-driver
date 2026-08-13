@@ -39,7 +39,6 @@ import java.util.concurrent.ScheduledExecutorService;
  * <p>
  * This class is not part of the public API and may be removed or changed at any time.
  *
- * @see StreamFactoryFactory#getClientExecutor()
  * @see CommonExecutor
  */
 @ThreadSafe
@@ -50,6 +49,7 @@ public interface AsyncClientExecutor extends AutoCloseable {
      * @param executor The executor to use for executing tasks.
      * If it is a {@link ScheduledExecutorService}, then it is also used for scheduling,
      * otherwise {@link CommonExecutor} is used for scheduling.
+     * @see StreamFactoryFactory#getExecutor()
      */
     static AsyncClientExecutor backedBy(final Executor executor) {
         return new DefaultAsyncClientExecutor(executor);

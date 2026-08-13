@@ -41,8 +41,10 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  * but must not be used to execute such scheduled tasks.
  * <p>
  * This class is not part of the public API and may be removed or changed at any time.
+ *
+ * @see AsyncClientExecutor
  */
-// VAKOTODO create a ticket and leave a TODO to use Cleaner when we are at Java SE 17 to shut down internal executors if the class is GCed.
+// VAKOTODO decide what to do with https://jira.mongodb.org/browse/JAVA-6279.
 public final class CommonExecutor {
     private static final Logger LOGGER = Loggers.getLogger("client");
     private static final CommonExecutor INSTANCE = new CommonExecutor();

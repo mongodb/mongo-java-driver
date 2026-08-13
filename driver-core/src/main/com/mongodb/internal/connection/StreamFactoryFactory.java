@@ -18,7 +18,10 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.internal.thread.AsyncClientExecutor;
+import com.mongodb.connection.TransportSettings;
+
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 /**
  * A factory of {@code StreamFactory} instances.
@@ -34,7 +37,13 @@ public interface StreamFactoryFactory extends AutoCloseable {
      */
     StreamFactory create(SocketSettings socketSettings, SslSettings sslSettings);
 
-    AsyncClientExecutor getClientExecutor();
+    /**
+     * The {@link Executor} that the {@link StreamFactoryFactory} uses for I/O.
+     * It is usually {@link ExecutorService#shutdown() shut down} by {@link #close()},
+     * but the behavior may be different if an application provides an executor via {@link TransportSettings}.
+     * See the documentation of the corresponding API for information about the lifecycle of an application-provided executor.
+     */
+    Executor getExecutor();
 
     @Override
     void close();
