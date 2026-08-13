@@ -47,6 +47,20 @@ Use `com.mongodb.annotations`; `@ThreadSafe`, `@NotThreadSafe`, or `@Immutable`.
   `Locks.withLock()`), `volatile` fields, or `java.util.concurrent` atomics; never rely on
   external synchronization.
 
+## Credentials in `toString()`
+
+Never include credentials or other secrets in `toString()` — the value ends up in logs, exception
+messages, and bug reports. This covers usernames, passwords, auth tokens, API keys, connection
+strings with embedded credentials, KMS provider options, and mechanism properties.
+
+- Render the field as `<hidden>` rather than omitting it, so the shape of the output stays stable
+  and it is obvious the value was redacted: `+ ", password=<hidden>"`.
+- Applies to any class holding secrets, e.g. `MongoCredential`, `ProxySettings`,
+  `AutoEncryptionSettings`.
+- `equals()` / `hashCode()` may still use these fields; only the string rendering is redacted.
+- When adding a settings class with credential-like fields, add a test asserting the secret does
+  not appear in `toString()`.
+
 ## Design Principles
 
 These guide the driver's API surface:
