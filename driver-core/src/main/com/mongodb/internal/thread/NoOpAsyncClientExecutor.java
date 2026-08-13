@@ -22,15 +22,12 @@ import java.time.Duration;
 
 import static com.mongodb.assertions.Assertions.fail;
 
+/**
+ * The only instance of this class is {@link AsyncClientExecutor#NO_OP}.
+ */
 @ThreadSafe
-final class UnimplementedAsyncClientExecutor implements AsyncClientExecutor {
-    private static final UnimplementedAsyncClientExecutor INSTANCE = new UnimplementedAsyncClientExecutor();
-
-    static UnimplementedAsyncClientExecutor instance() {
-        return INSTANCE;
-    }
-
-    private UnimplementedAsyncClientExecutor() {
+final class NoOpAsyncClientExecutor implements AsyncClientExecutor {
+    NoOpAsyncClientExecutor() {
     }
 
     /**

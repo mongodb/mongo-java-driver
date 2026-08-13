@@ -15,6 +15,7 @@
  */
 package com.mongodb.internal.thread;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
@@ -23,10 +24,16 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class UnimplementedAsyncClientExecutorTest {
+class NoOpAsyncClientExecutorTest {
+    @Test
+    void noOpConstantIsOfTheRightType() {
+        assertInstanceOf(NoOpAsyncClientExecutor.class, AsyncClientExecutor.NO_OP);
+    }
+
     @ParameterizedTest
     @ValueSource(longs = {0, 200})
     void sleepAsync(final long durationMs) {
@@ -37,8 +44,8 @@ class UnimplementedAsyncClientExecutorTest {
     private static void assertSleepAsync(final Duration duration) {
         CompletableFuture<Void> callbackExceptionFuture = new CompletableFuture<>();
         CompletableFuture<Thread> callbackThreadFuture = new CompletableFuture<>();
-        try (UnimplementedAsyncClientExecutor unimplementedClientExecutor = UnimplementedAsyncClientExecutor.instance()) {
-            unimplementedClientExecutor.sleepAsync(duration, (result, t) -> {
+        try (AsyncClientExecutor noOpClientExecutor = AsyncClientExecutor.NO_OP) {
+            noOpClientExecutor.sleepAsync(duration, (result, t) -> {
                 if (t != null) {
                     callbackExceptionFuture.completeExceptionally(t);
                 } else {

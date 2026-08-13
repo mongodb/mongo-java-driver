@@ -43,7 +43,7 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 @ThreadSafe
 public interface AsyncClientExecutor extends AutoCloseable {
-    AsyncClientExecutor NO_OP = UnimplementedAsyncClientExecutor.instance();
+    AsyncClientExecutor NO_OP = new NoOpAsyncClientExecutor();
 
     /**
      * @param executor The executor to use for executing tasks.
