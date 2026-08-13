@@ -1779,7 +1779,7 @@ axes:
         run_on: "rhel80-small"
       - id: "ubuntu"
         display_name: "Ubuntu"
-        run_on: "ubuntu2004-small"
+        run_on: "ubuntu2204-small"
       - id: "windows"
         display_name: "Windows"
         run_on: "windows-2022-latest-small"
@@ -2443,9 +2443,8 @@ buildvariants:
       - name: "test-core-task"
       - name: "test-legacy-task"
 
-  # TODO: 9.0 isn't published on ubuntu , but in RH
   - matrix_name: "tests-load-balancer-secure"
-    matrix_spec: { auth: "auth", ssl: "ssl", jdk: [ "jdk21" ], version: [ "5.0", "6.0", "7.0", "8.0", "latest" ], topology: "sharded-cluster",
+    matrix_spec: { auth: "auth", ssl: "ssl", jdk: [ "jdk21" ], version: [ "5.0", "6.0", "7.0", "8.0", "9.0", "latest" ], topology: "sharded-cluster",
                    os: "ubuntu" }
     display_name: "Load Balancer ${version} ${auth} ${ssl} ${jdk} ${os}"
     tasks:
@@ -2505,7 +2504,7 @@ buildvariants:
       - name: "gssapi-auth-test-task"
 
   - matrix_name: "aws-auth-test"
-    matrix_spec: { ssl: "nossl", jdk: [ "jdk8", "jdk17", "jdk21" ], version: [ "4.4", "5.0", "6.0", "7.0", "8.0", "latest" ], os: "ubuntu",
+    matrix_spec: { ssl: "nossl", jdk: [ "jdk8", "jdk17", "jdk21" ], version: [ "4.4", "5.0", "6.0", "7.0", "8.0", "9.0", "latest" ], os: "ubuntu",
                    aws-credential-provider: "*" }
     display_name: "MONGODB-AWS Basic Auth test ${version} ${jdk} ${aws-credential-provider}"
     run_on: "ubuntu2204-small"
@@ -2532,7 +2531,7 @@ buildvariants:
       - name: "accept-api-version-2-test-task"
 
   - matrix_name: "ocsp-test"
-    matrix_spec: { auth: "noauth", ssl: "ssl", jdk: "jdk21", version: [ "4.4", "5.0", "6.0", "7.0", "8.0", "latest" ], os: "ubuntu" }
+    matrix_spec: { auth: "noauth", ssl: "ssl", jdk: "jdk21", version: [ "4.4", "5.0", "6.0", "7.0", "8.0", "9.0", "latest" ], os: "ubuntu" }
     display_name: "OCSP test ${version} ${os}"
     tasks:
       - name: ".ocsp"
