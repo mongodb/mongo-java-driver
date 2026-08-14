@@ -27,7 +27,9 @@ import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
+import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.BatchCursor;
@@ -35,6 +37,7 @@ import com.mongodb.internal.operation.MapReduceStatistics;
 import com.mongodb.internal.operation.Operations;
 import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.internal.operation.ReadOperationMapReduceCursor;
+import com.mongodb.internal.operation.VoidWriteOperationThenCursorReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -203,25 +206,35 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             ReadOperationMapReduceCursor<TResult> operation = operations.mapReduce(mapFunction, reduceFunction, finalizeFunction,
                     resultClass, filter, limit, jsMode, scope, sort, verbose, collation);
             return new WrappedMapReduceReadOperation<>(operation);
-        } else {
-            getExecutor().execute(createMapReduceToCollectionOperation(), getReadConcern(), getClientSession());
-
-            String dbName = databaseName != null ? databaseName : namespace.getDatabaseName();
-
-            FindOptions findOptions = new FindOptions().collation(collation);
-            Integer batchSize = getBatchSize();
-            if (batchSize != null) {
-                findOptions.batchSize(batchSize);
-            }
-            return operations.find(new MongoNamespace(dbName, collectionName), new BsonDocument(), resultClass, findOptions);
         }
-
+        throw new IllegalStateException("Non-inline map-reduce uses the write-then-read path; "
+                + "asReadOperation must not be called.");
     }
 
-    private WriteOperation<MapReduceStatistics> createMapReduceToCollectionOperation() {
-        return operations.mapReduceToCollection(databaseName, collectionName, mapFunction, reduceFunction, finalizeFunction, filter,
-                limit, jsMode, scope, sort, verbose, action, bypassDocumentValidation, collation
-        );
+    @Override
+    BatchCursor<TResult> execute() {
+        if (inline) {
+            return super.execute();
+        }
+        return getExecutor().execute(
+                new VoidWriteOperationThenCursorReadOperation<>(createMapReduceToCollectionOperation(), createFindOperation()),
+                getReadConcern(), getClientSession());
+    }
+
+    private WriteOperation<Void> createMapReduceToCollectionOperation() {
+        return new WrappedMapReduceWriteOperation(
+                operations.mapReduceToCollection(databaseName, collectionName, mapFunction, reduceFunction, finalizeFunction, filter,
+                        limit, jsMode, scope, sort, verbose, action, bypassDocumentValidation, collation));
+    }
+
+    private ReadOperationCursor<TResult> createFindOperation() {
+        String dbName = databaseName != null ? databaseName : namespace.getDatabaseName();
+        FindOptions findOptions = new FindOptions().collation(collation);
+        Integer batchSize = getBatchSize();
+        if (batchSize != null) {
+            findOptions.batchSize(batchSize);
+        }
+        return operations.find(new MongoNamespace(dbName, collectionName), new BsonDocument(), resultClass, findOptions);
     }
 
     // this could be inlined, but giving it a name so that it's unit-testable
@@ -253,6 +266,39 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
         @Override
         public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<TResult>> callback) {
+            throw new UnsupportedOperationException("This operation is sync only");
+        }
+    }
+
+    static class WrappedMapReduceWriteOperation implements WriteOperation<Void> {
+        private final WriteOperation<MapReduceStatistics> operation;
+
+        WrappedMapReduceWriteOperation(final WriteOperation<MapReduceStatistics> operation) {
+            this.operation = operation;
+        }
+
+        WriteOperation<MapReduceStatistics> getOperation() {
+            return operation;
+        }
+
+        @Override
+        public String getCommandName() {
+            return operation.getCommandName();
+        }
+
+        @Override
+        public MongoNamespace getNamespace() {
+            return operation.getNamespace();
+        }
+
+        @Override
+        public Void execute(final WriteBinding binding, final OperationContext operationContext) {
+            operation.execute(binding, operationContext);
+            return null;
+        }
+
+        @Override
+        public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<Void> callback) {
             throw new UnsupportedOperationException("This operation is sync only");
         }
     }
