@@ -26,6 +26,8 @@ import org.bson.BsonNumber;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 
+import java.io.PrintStream;
+import java.lang.Thread.UncaughtExceptionHandler;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -44,6 +46,42 @@ public final class ExceptionUtils {
 
     public static boolean isOperationTimeoutFromSocketException(final Throwable e) {
         return e instanceof MongoOperationTimeoutException && e.getCause() instanceof MongoSocketException;
+    }
+
+    /**
+     * We must always propagate {@link Error}s, instead of wrapping them in / replacing them with {@link Exception}s, or swallowing them.
+     * <p>
+     * This enables an application to decide how to deal with {@link Error} via {@link UncaughtExceptionHandler}.
+     * An {@link Error} is more likely to cause an invariant violation than an {@link Exception},
+     * because it is less likely to be taken into account in code. An {@link AssertionError} outright informs about an invariant violation.
+     * Furthermore, a {@link VirtualMachineError} not only may happen in a peculiar situation,
+     * but also may be <a href="https://docs.oracle.com/javase/specs/jls/se17/html/jls-11.html#jls-11.1.3">asynchronous</a>.
+     * That is why it may be a good idea for an application to terminate on {@link Error}.
+     * We cannot make such a decision for an application, but we must do our best to give it an opportunity to react to an {@link Error}.
+     * <p>
+     * If there is no {@link UncaughtExceptionHandler}, then the uncaught exception is
+     * {@linkplain Throwable#printStackTrace(PrintStream) printed}
+     * to {@link System#err}, see {@link ThreadGroup#uncaughtException(Thread, Throwable)}.
+     *
+     * @throws Error Iff {@code t} is {@link Error}.
+     * @see #mapUnlessError(Throwable, Function)
+     */
+    public static void rethrowIfError(final Throwable t) {
+        if (t instanceof Error) {
+            throw (Error) t;
+        }
+    }
+
+    /**
+     * See {@link #rethrowIfError(Throwable)}.
+     *
+     * @param mapper Is used iff {@code t} is not {@link Error}.
+     */
+    public static Throwable mapUnlessError(final Throwable t, final Function<Throwable, ? extends Exception> mapper) {
+        if (t instanceof Error) {
+            return t;
+        }
+        return mapper.apply(t);
     }
 
     public static final class MongoCommandExceptionUtils {
