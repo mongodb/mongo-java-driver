@@ -100,7 +100,7 @@ class KeyManagementService implements Closeable {
                     handleError(t, operationContext, sink);
                 }
             });
-        }).onErrorMap(this::unWrapException);
+        }).onErrorMap(Exception.class, this::unWrapException);
     }
 
     private void streamWrite(final Stream stream, final MongoKeyDecryptor keyDecryptor,

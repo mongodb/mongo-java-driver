@@ -79,6 +79,8 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.ExceptionUtils.mapUnlessError;
+import static com.mongodb.internal.ExceptionUtils.rethrowIfError;
 import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -242,11 +244,8 @@ public class InternalStreamConnection implements InternalConnection {
             initAfterHandshakeFinish(initializationDescription);
         } catch (Throwable t) {
             close();
-            if (t instanceof MongoException) {
-                throw (MongoException) t;
-            } else {
-                throw new MongoException(t.toString(), t);
-            }
+            rethrowIfError(t);
+            throw MongoException.fromThrowableNonNull(t);
         }
     }
 
@@ -961,12 +960,12 @@ public class InternalStreamConnection implements InternalConnection {
                 @Override
                 public void failed(final Throwable t) {
                     close();
-                    callback.onResult(null, translateReadFailure(t, operationContext));
+                    callback.onResult(null, mapUnlessError(t, e -> translateReadException(e, operationContext)));
                 }
             });
         } catch (Throwable t) {
             close();
-            callback.onResult(null, translateReadFailure(t, operationContext));
+            callback.onResult(null, mapUnlessError(t, e -> translateReadException(e, operationContext)));
         }
     }
 
@@ -987,17 +986,6 @@ public class InternalStreamConnection implements InternalConnection {
             if (recoveryToken != null) {
                 sessionContext.setRecoveryToken(recoveryToken);
             }
-        }
-    }
-
-    /**
-     * Rethrows a fatal JVM {@link Error} (e.g. {@link OutOfMemoryError}) unchanged, so it is never downgraded to a
-     * catchable {@link MongoException}. Used by the paths that propagate a failure by throwing; the async read path
-     * delivers the failure as a callback value instead and uses {@link #translateReadFailure} for the same purpose.
-     */
-    private static void rethrowIfError(final Throwable t) {
-        if (t instanceof Error) {
-            throw (Error) t;
         }
     }
 
@@ -1024,18 +1012,6 @@ public class InternalStreamConnection implements InternalConnection {
         } else {
             throw new MongoInternalException("Unexpected exception", e);
         }
-    }
-
-    /**
-     * Translates a read failure for delivery to an async callback. {@link Error}s are passed through unchanged
-     * rather than wrapped in a {@link MongoException}, so a fatal JVM error (e.g. {@link OutOfMemoryError}) is not
-     * downgraded to a catchable exception. The sync read path uses {@link #rethrowIfError} for the same purpose.
-     */
-    private Throwable translateReadFailure(final Throwable e, final OperationContext operationContext) {
-        if (e instanceof Error) {
-            return e;
-        }
-        return translateReadException(e, operationContext);
     }
 
     private MongoSocketWriteTimeoutException createWriteTimeoutException(final SocketTimeoutException e) {

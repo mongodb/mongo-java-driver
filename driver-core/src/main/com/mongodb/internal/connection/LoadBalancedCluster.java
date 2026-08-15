@@ -61,6 +61,7 @@ import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
+import static com.mongodb.internal.ExceptionUtils.rethrowIfError;
 import static com.mongodb.internal.connection.BaseCluster.logServerSelectionStarted;
 import static com.mongodb.internal.connection.BaseCluster.logServerSelectionSucceeded;
 import static com.mongodb.internal.connection.BaseCluster.logTopologyMonitoringStopping;
@@ -445,16 +446,18 @@ final class LoadBalancedCluster implements Cluster {
         public void onSuccess(final ServerTuple serverTuple) {
             try {
                 callback.onResult(serverTuple, null);
-            } catch (Exception e) {
-                LOGGER.warn("Unanticipated exception thrown from callback", e);
+            } catch (Throwable t) {
+                LOGGER.error("Callback onResult call produced an error", t);
+                rethrowIfError(t);
             }
         }
 
         public void onError(final Throwable exception) {
             try {
                 callback.onResult(null, exception);
-            } catch (Exception e) {
-                LOGGER.warn("Unanticipated exception thrown from callback", e);
+            } catch (Throwable t) {
+                LOGGER.error("Callback onResult call produced an error", t);
+                rethrowIfError(t);
             }
         }
     }

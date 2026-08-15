@@ -62,6 +62,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.ExceptionUtils.mapUnlessError;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.capi.MongoCryptHelper.validateRewrapManyDataKeyOptions;
 import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.collectionWithTimeout;
@@ -304,9 +305,9 @@ public class ClientEncryptionImpl implements ClientEncryption {
                                 .createCollection(collectionName, new CreateCollectionOptions(createCollectionOptions)
                                         .encryptedFields(maybeUpdatedEncryptedFields))))
                         )
-                        .onErrorMap(e -> dataKeyMightBeCreated.get(), e ->
+                        .onErrorMap(t -> dataKeyMightBeCreated.get(), t -> mapUnlessError(t, e ->
                                 new MongoUpdatedEncryptedFieldsException(maybeUpdatedEncryptedFields,
-                                        format("Failed to create %s.", namespace), e)
+                                        format("Failed to create %s.", namespace), e))
                         )
                         .thenReturn(maybeUpdatedEncryptedFields);
             });

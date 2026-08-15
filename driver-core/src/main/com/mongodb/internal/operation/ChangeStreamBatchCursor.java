@@ -40,6 +40,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.internal.ExceptionUtils.rethrowIfError;
 import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isResumableError;
 import static com.mongodb.internal.operation.SyncOperationHelper.withReadConnectionSource;
 
@@ -239,6 +240,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
             try {
                 return function.apply(wrapped, operationContext);
             } catch (Throwable t) {
+                rethrowIfError(t);
                 if (!isResumableError(t, maxWireVersion)) {
                     throw MongoException.fromThrowableNonNull(t);
                 }
