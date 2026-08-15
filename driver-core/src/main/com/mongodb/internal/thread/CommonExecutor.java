@@ -27,6 +27,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.fail;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -60,9 +61,11 @@ public final class CommonExecutor {
     }
 
     /**
-     * @param task The task to be scheduled. If it is {@link Executor#execute(Runnable) executed}, then the execution is guaranteed
+     * @param task The task to be scheduled. It may not be executed if this method completes abruptly.
+     * If it is {@link Executor#execute(Runnable) executed}, then the execution is guaranteed
      * to be done via the {@code executor}. However, if the {@code executor} is shut down, then it does not execute the {@code task},
-     * and there is nothing we can do about that.
+     * and there is nothing {@link CommonExecutor} can do about that. The caller, on the other hand, may deal with such a situation,
+     * like {@link AsyncClientExecutor#schedule(AsyncClientExecutor.RejectableRunnable, Duration)} does, for example.
      * @param delay A non-{@linkplain Duration#isNegative() negative} delay.
      * @param executor The {@link Executor} to use for {@code task} {@linkplain Runnable#run() execution},
      * so that the {@code task} is not executed by a thread managed by {@link CommonExecutor}.
@@ -71,6 +74,7 @@ public final class CommonExecutor {
      * and not the execution part done by the {@code executor}.
      */
     ScheduledFuture<?> schedule(final Runnable task, final Duration delay, final Executor executor) {
+        assertFalse(delay.isNegative());
         try {
             return singleThreadScheduler.schedule(
                     () -> {

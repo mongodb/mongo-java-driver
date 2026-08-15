@@ -20,11 +20,9 @@ import com.mongodb.internal.async.function.RetryPolicy.Decision.RetryAttemptInfo
 import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.lang.Nullable;
 
-import java.time.Duration;
 import java.util.function.Supplier;
 
-import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static com.mongodb.internal.thread.ThreadUtil.sleep;
 
 /**
  * A decorator that implements automatic retrying of failed executions of a {@link Supplier}.
@@ -61,14 +59,6 @@ public final class RetryingSyncSupplier<R> implements Supplier<R> {
                 RetryAttemptInfo retryAttemptInfo = control.advanceOrThrow(attemptFailedResult);
                 sleep(retryAttemptInfo.getBackoff());
             }
-        }
-    }
-
-    private static void sleep(final Duration duration) {
-        try {
-            NANOSECONDS.sleep(duration.toNanos());
-        } catch (InterruptedException e) {
-            throw interruptAndCreateMongoInterruptedException(null, e);
         }
     }
 }

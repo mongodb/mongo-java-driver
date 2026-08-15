@@ -16,7 +16,6 @@
 package com.mongodb.internal.thread;
 
 import com.mongodb.annotations.ThreadSafe;
-import com.mongodb.internal.async.SingleResultCallback;
 
 import java.time.Duration;
 
@@ -30,14 +29,9 @@ final class NoOpAsyncClientExecutor implements AsyncClientExecutor {
     NoOpAsyncClientExecutor() {
     }
 
-    /**
-     * Must not be called with any {@link Duration} except {@linkplain Duration#isZero() zero}.
-     */
     @Override
-    public void sleepAsync(final Duration duration, final SingleResultCallback<Void> callback) {
-        DefaultAsyncClientExecutor.sleepAsync(false, duration, callback, () -> {
-            throw fail();
-        });
+    public void schedule(final RejectableRunnable task, final Duration delay) {
+        fail();
     }
 
     /**

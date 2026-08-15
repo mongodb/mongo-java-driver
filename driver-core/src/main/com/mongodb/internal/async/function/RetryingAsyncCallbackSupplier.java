@@ -20,10 +20,12 @@ import com.mongodb.internal.async.MutableValue;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.RetryPolicy.Decision.RetryAttemptInfo;
 import com.mongodb.internal.thread.AsyncClientExecutor;
+import com.mongodb.internal.thread.ThreadUtil;
 
 import java.time.Duration;
 
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
+import static com.mongodb.internal.thread.ThreadUtil.sleepAsync;
 
 /**
  * A decorator that implements automatic retrying of failed executions of an {@link AsyncCallbackSupplier}.
@@ -43,7 +45,7 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
     private final AsyncCallbackSupplier<R> asyncFunction;
 
     /**
-     * @param clientExecutor For {@linkplain AsyncClientExecutor#sleepAsync(Duration, SingleResultCallback) delaying} attempts
+     * @param clientExecutor For {@linkplain ThreadUtil#sleepAsync(Duration, AsyncClientExecutor, SingleResultCallback) delaying} attempts
      * according to {@link RetryAttemptInfo#getBackoff()}.
      * @param control The {@link RetryControl} to control the new {@link RetryingAsyncCallbackSupplier}.
      * @param asyncFunction The retryable {@link AsyncCallbackSupplier} to be decorated.
@@ -72,7 +74,7 @@ public final class RetryingAsyncCallbackSupplier<R> implements AsyncCallbackSupp
                     onAttemptFailureCallback.completeExceptionally(attemptFailedResult);
                 } else {
                     RetryAttemptInfo retryAttemptInfo = control.advanceOrThrow(attemptFailedResult);
-                    clientExecutor.sleepAsync(retryAttemptInfo.getBackoff(), onAttemptFailureCallback);
+                    sleepAsync(retryAttemptInfo.getBackoff(), clientExecutor, onAttemptFailureCallback);
                 }
             }).finish(iterationCallback);
         }).<R>thenSupply(c -> {

@@ -15,6 +15,7 @@
  */
 package com.mongodb.internal.thread;
 
+import com.mongodb.internal.thread.AsyncClientExecutor.RejectableRunnable;
 import com.mongodb.internal.time.StartTime;
 import io.netty.channel.EventLoopGroup;
 import org.junit.jupiter.api.AfterEach;
@@ -46,9 +47,10 @@ import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
 class DefaultAsyncClientExecutorTest {
-    private static final long SLEEP_DURATION_MILLIS = 200;
+    private static final long SCHEDULE_DELAY_MILLIS = 200;
 
     private ExecutorService executorService;
     private ScheduledExecutorService scheduledExecutorService;
@@ -70,53 +72,49 @@ class DefaultAsyncClientExecutorTest {
     }
 
     @ParameterizedTest
-    @ValueSource(longs = {0, SLEEP_DURATION_MILLIS})
-    void sleepAsync(final long durationMs) {
-        Duration duration = Duration.ofMillis(durationMs);
+    @ValueSource(longs = {0, SCHEDULE_DELAY_MILLIS})
+    void schedule(final long delayMs) {
+        Duration delay = Duration.ofMillis(delayMs);
         try (DefaultAsyncClientExecutor backedByExecutorService = new DefaultAsyncClientExecutor(executorService);
              DefaultAsyncClientExecutor backedByScheduledExecutorService = new DefaultAsyncClientExecutor(scheduledExecutorService)) {
             assertAll(
-                    () -> assertSleepAsync(backedByExecutorService, duration),
-                    () -> assertSleepAsync(backedByScheduledExecutorService, duration)
+                    () -> assertSchedule(backedByExecutorService, delay),
+                    () -> assertSchedule(backedByScheduledExecutorService, delay)
             );
         }
     }
 
-    private static void assertSleepAsync(
-            final DefaultAsyncClientExecutor clientExecutor, final Duration duration) throws Exception {
+    private static void assertSchedule(
+            final DefaultAsyncClientExecutor clientExecutor, final Duration delay) throws Exception {
         StartTime startTime = StartTime.now();
         CompletableFuture<Duration> callbackDelayFuture = new CompletableFuture<>();
         CompletableFuture<Thread> callbackThreadFuture = new CompletableFuture<>();
-        clientExecutor.sleepAsync(duration, (result, t) -> {
+        clientExecutor.schedule(RejectableRunnable.from((result, t) -> {
             if (t != null) {
                 callbackDelayFuture.completeExceptionally(t);
             } else {
                 callbackDelayFuture.complete(startTime.elapsed());
             }
             callbackThreadFuture.complete(Thread.currentThread());
-        });
-        // if `duration` is zero, the futures are expected to be completed synchronously
-        long timeoutMs = duration.toMillis() * 2;
+        }), delay);
+        long timeoutMs = delay.isZero() ? SCHEDULE_DELAY_MILLIS : delay.toMillis() * 2;
         Duration actualCallbackDelay = callbackDelayFuture.get(timeoutMs, MILLISECONDS);
         Thread actualCallbackThread = callbackThreadFuture.get(timeoutMs, MILLISECONDS);
-        assertTrue(actualCallbackDelay.compareTo(duration) >= 0);
-        if (duration.isZero()) {
-            assertSame(Thread.currentThread(), actualCallbackThread);
-        } else {
-            assertTrue(actualCallbackDelay.compareTo(duration.multipliedBy(2)) < 0);
-            assertNotSame(Thread.currentThread(), actualCallbackThread);
-        }
+        assertTrue(actualCallbackDelay.compareTo(delay) >= 0);
+        Duration expectedMaxDelay = delay.isZero() ? Duration.ofMillis(SCHEDULE_DELAY_MILLIS) : delay.multipliedBy(2);
+        assertTrue(actualCallbackDelay.compareTo(expectedMaxDelay) < 0);
+        assertNotSame(Thread.currentThread(), actualCallbackThread);
     }
 
     @ParameterizedTest
-    @ValueSource(longs = {0, SLEEP_DURATION_MILLIS})
-    void closeBeforeSleepAsync(final long durationMs) {
-        Duration duration = Duration.ofMillis(durationMs);
+    @ValueSource(longs = {0, SCHEDULE_DELAY_MILLIS})
+    void closeBeforeSchedule(final long delayMs) {
+        Duration delay = Duration.ofMillis(delayMs);
         try (DefaultAsyncClientExecutor backedByExecutorService = new DefaultAsyncClientExecutor(executorService);
              DefaultAsyncClientExecutor backedByScheduledExecutorService = new DefaultAsyncClientExecutor(scheduledExecutorService)) {
             assertAll(
-                    () -> assertCloseOrBackingExecutorShutdownBeforeSleepAsync(backedByExecutorService, duration, backedByExecutorService::close),
-                    () -> assertCloseOrBackingExecutorShutdownBeforeSleepAsync(backedByScheduledExecutorService, duration, backedByScheduledExecutorService::close)
+                    () -> assertCloseOrBackingExecutorShutdownBeforeSchedule(backedByExecutorService, delay, backedByExecutorService::close),
+                    () -> assertCloseOrBackingExecutorShutdownBeforeSchedule(backedByScheduledExecutorService, delay, backedByScheduledExecutorService::close)
             );
         }
     }
@@ -126,62 +124,62 @@ class DefaultAsyncClientExecutorTest {
      * forbit this scenario, but we still handle it.
      */
     @Test
-    void backingExecutorShutdownBeforeSleepAsync() {
-        Duration duration = Duration.ofMillis(SLEEP_DURATION_MILLIS);
+    void backingExecutorShutdownBeforeSchedule() {
+        Duration delay = Duration.ofMillis(SCHEDULE_DELAY_MILLIS);
         try (DefaultAsyncClientExecutor backedByExecutorService = new DefaultAsyncClientExecutor(executorService);
              DefaultAsyncClientExecutor backedByScheduledExecutorService = new DefaultAsyncClientExecutor(scheduledExecutorService)) {
             assertAll(
-                    () -> assertCloseOrBackingExecutorShutdownBeforeSleepAsync(backedByExecutorService, duration, executorService::shutdownNow),
-                    () -> assertCloseOrBackingExecutorShutdownBeforeSleepAsync(backedByScheduledExecutorService, duration, scheduledExecutorService::shutdownNow)
+                    () -> assertCloseOrBackingExecutorShutdownBeforeSchedule(backedByExecutorService, delay, executorService::shutdownNow),
+                    () -> assertCloseOrBackingExecutorShutdownBeforeSchedule(backedByScheduledExecutorService, delay, scheduledExecutorService::shutdownNow)
             );
         }
     }
 
-    private static void assertCloseOrBackingExecutorShutdownBeforeSleepAsync(
-            final DefaultAsyncClientExecutor clientExecutor, final Duration duration, final Runnable doBeforeSleepAsync) throws Exception {
-        doBeforeSleepAsync.run();
+    private static void assertCloseOrBackingExecutorShutdownBeforeSchedule(
+            final DefaultAsyncClientExecutor clientExecutor, final Duration delay, final Runnable doBeforeSchedule) throws Exception {
+        doBeforeSchedule.run();
         AtomicInteger completionCount = new AtomicInteger();
         CompletableFuture<Void> callbackFuture = new CompletableFuture<>();
-        clientExecutor.sleepAsync(duration, (result, t) -> {
+        clientExecutor.schedule(RejectableRunnable.from((result, t) -> {
             completionCount.incrementAndGet();
             if (t != null) {
                 callbackFuture.completeExceptionally(t);
             } else {
                 callbackFuture.complete(result);
             }
-        });
+        }), delay);
         Throwable callbackException = assertThrows(CompletionException.class, () -> callbackFuture.getNow(null)).getCause();
         assertInstanceOf(RejectedExecutionException.class, callbackException);
-        Thread.sleep(duration.toMillis() * 2);
+        Thread.sleep(delay.isZero() ? SCHEDULE_DELAY_MILLIS : delay.toMillis() * 2);
         assertEquals(1, completionCount.get());
     }
 
     @Test
-    void closeWhileSleepingInSleepAsync() {
-        Duration duration = Duration.ofMillis(SLEEP_DURATION_MILLIS);
+    void closeWhileTaskIsWaitingToBeExecutedAfterSchedule() {
+        Duration delay = Duration.ofMillis(SCHEDULE_DELAY_MILLIS);
         try (DefaultAsyncClientExecutor backedByExecutorService = new DefaultAsyncClientExecutor(executorService);
              DefaultAsyncClientExecutor backedByScheduledExecutorService = new DefaultAsyncClientExecutor(scheduledExecutorService)) {
             assertAll(
-                    () -> assertCloseWhileSleepingInSleepAsync(backedByExecutorService, duration),
-                    () -> assertCloseWhileSleepingInSleepAsync(backedByScheduledExecutorService, duration)
+                    () -> assertCloseWhileTaskIsWaitingToBeExecutedAfterSchedule(backedByExecutorService, delay),
+                    () -> assertCloseWhileTaskIsWaitingToBeExecutedAfterSchedule(backedByScheduledExecutorService, delay)
             );
         }
     }
 
-    private static void assertCloseWhileSleepingInSleepAsync(
-            final DefaultAsyncClientExecutor clientExecutor, final Duration duration) throws Exception {
+    private static void assertCloseWhileTaskIsWaitingToBeExecutedAfterSchedule(
+            final DefaultAsyncClientExecutor clientExecutor, final Duration delay) throws Exception {
         AtomicInteger completionCount = new AtomicInteger();
         CompletableFuture<Void> callbackFuture = new CompletableFuture<>();
-        clientExecutor.sleepAsync(duration, (result, t) -> {
+        clientExecutor.schedule(RejectableRunnable.from((result, t) -> {
             completionCount.incrementAndGet();
             if (t != null) {
                 callbackFuture.completeExceptionally(t);
             } else {
                 callbackFuture.complete(result);
             }
-        });
+        }), delay);
         clientExecutor.close();
-        long timeoutMs = duration.toMillis() * 2;
+        long timeoutMs = delay.toMillis() * 2;
         Throwable callbackException = assertThrows(ExecutionException.class, () -> callbackFuture.get(timeoutMs, MILLISECONDS)).getCause();
         assertInstanceOf(RejectedExecutionException.class, callbackException);
         Thread.sleep(timeoutMs);
@@ -189,38 +187,81 @@ class DefaultAsyncClientExecutorTest {
     }
 
     @Test
-    void closeWhileCallbackIsBeingCompletedInSleepAsync() {
-        Duration duration = Duration.ofMillis(SLEEP_DURATION_MILLIS);
+    void closeWhileTaskIsBeingExecutedAfterSchedule() {
+        Duration delay = Duration.ofMillis(SCHEDULE_DELAY_MILLIS);
         try (DefaultAsyncClientExecutor backedByExecutorService = new DefaultAsyncClientExecutor(executorService);
              DefaultAsyncClientExecutor backedByScheduledExecutorService = new DefaultAsyncClientExecutor(scheduledExecutorService)) {
             assertAll(
-                    () -> assertCloseWhileCallbackIsBeingCompletedInSleepAsync(backedByExecutorService, duration),
-                    () -> assertCloseWhileCallbackIsBeingCompletedInSleepAsync(backedByScheduledExecutorService, duration)
+                    () -> assertCloseWhileTaskIsBeingExecutedAfterSchedule(backedByExecutorService, delay),
+                    () -> assertCloseWhileTaskIsBeingExecutedAfterSchedule(backedByScheduledExecutorService, delay)
             );
         }
     }
 
-    private static void assertCloseWhileCallbackIsBeingCompletedInSleepAsync(
-            final DefaultAsyncClientExecutor clientExecutor, final Duration duration) throws Exception {
+    private static void assertCloseWhileTaskIsBeingExecutedAfterSchedule(
+            final DefaultAsyncClientExecutor clientExecutor, final Duration delay) throws Exception {
         AtomicInteger completionCount = new AtomicInteger();
         CompletableFuture<Void> callbackFuture = new CompletableFuture<>();
         CompletableFuture<Void> closeFuture = new CompletableFuture<>();
-        clientExecutor.sleepAsync(duration, (result, t) -> {
+        clientExecutor.schedule(RejectableRunnable.from((result, t) -> {
             completionCount.incrementAndGet();
             if (t != null) {
                 callbackFuture.completeExceptionally(t);
             } else {
                 callbackFuture.complete(result);
             }
-            waitForCompletion(closeFuture, duration);
-        });
-        waitForCompletion(callbackFuture, duration.multipliedBy(2));
+            waitForCompletion(closeFuture, delay);
+        }), delay);
+        waitForCompletion(callbackFuture, delay.multipliedBy(2));
         clientExecutor.close();
         closeFuture.complete(null);
-        long timeoutMs = duration.toMillis() * 2;
+        long timeoutMs = delay.toMillis() * 2;
         assertDoesNotThrow(() -> callbackFuture.get(timeoutMs, MILLISECONDS));
         Thread.sleep(timeoutMs);
         assertEquals(1, completionCount.get());
+    }
+
+    @Test
+    void closeWhileTaskIsWaitingToBeExecutedAfterScheduleExecutesAllTasksDespiteFailures() {
+        Duration delay = Duration.ofMillis(SCHEDULE_DELAY_MILLIS);
+        try (DefaultAsyncClientExecutor backedByExecutorService = new DefaultAsyncClientExecutor(executorService);
+             DefaultAsyncClientExecutor backedByScheduledExecutorService = new DefaultAsyncClientExecutor(scheduledExecutorService)) {
+            assertAll(
+                    () -> assertCloseWhileTaskIsWaitingToBeExecutedAfterScheduleExecutesAllTasksDespiteFailures(backedByExecutorService, delay),
+                    () -> assertCloseWhileTaskIsWaitingToBeExecutedAfterScheduleExecutesAllTasksDespiteFailures(backedByScheduledExecutorService, delay)
+            );
+        }
+    }
+
+    private static void assertCloseWhileTaskIsWaitingToBeExecutedAfterScheduleExecutesAllTasksDespiteFailures(
+            final DefaultAsyncClientExecutor clientExecutor, final Duration delay) {
+        AtomicInteger completionCount = new AtomicInteger();
+        RuntimeException exception = new RuntimeException("must not prevent task execution caused by `close`");
+        Error error = new Error("must not prevent task execution caused by `close`");
+        clientExecutor.schedule(RejectableRunnable.from((result, t) -> {
+            completionCount.incrementAndGet();
+            throw exception;
+        }), delay);
+        clientExecutor.schedule(RejectableRunnable.from((result, t) -> {
+            completionCount.incrementAndGet();
+            throw exception;
+        }), delay);
+        clientExecutor.schedule(RejectableRunnable.from((result, t) -> {
+            completionCount.incrementAndGet();
+            throw error;
+        }), delay);
+        Throwable actualThrowable = assertThrows(Throwable.class, clientExecutor::close);
+        // the order of task execution caused by `close` is indeterministic, so we handle all possibilities
+        if (actualThrowable instanceof RuntimeException) {
+            assertSame(exception, actualThrowable);
+            assertSame(error, actualThrowable.getSuppressed()[0]);
+        } else if (actualThrowable instanceof Error) {
+            assertSame(error, actualThrowable);
+            assertSame(exception, actualThrowable.getSuppressed()[0]);
+        } else {
+            fail(actualThrowable);
+        }
+        assertEquals(3, completionCount.get());
     }
 
     private static void waitForCompletion(final Future<Void> future, final Duration duration) {

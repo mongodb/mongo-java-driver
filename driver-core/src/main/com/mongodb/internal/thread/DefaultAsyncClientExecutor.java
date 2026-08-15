@@ -17,7 +17,6 @@ package com.mongodb.internal.thread;
 
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.annotations.ThreadSafe;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 
 import java.time.Duration;
@@ -35,7 +34,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.internal.Locks.withLock;
-import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.thread.CommonExecutor.commonExecutor;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
@@ -43,11 +41,11 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 @ThreadSafe
 final class DefaultAsyncClientExecutor implements AsyncClientExecutor {
     private final Executor backingExecutor;
-    private final Set<ScheduledCallbackCompletion> scheduledCallbackCompletions;
+    private final Set<ScheduledRejectableRunnable> scheduledTasks;
     /**
      * While holding this lock, no application code may be executed, and driver code external to {@link DefaultAsyncClientExecutor}
      * should be either avoided or carefully vetted. This is to avoid unexpected delays and deadlocks.
-     * For example, {@link ScheduledCallbackCompletion#reject(RejectedExecutionException)}, {@link ScheduledCallbackCompletion#run()}
+     * For example, {@link ScheduledRejectableRunnable#reject(RejectedExecutionException)}, {@link ScheduledRejectableRunnable#run()}
      * must not be executed while holding the lock.
      */
     private final ReentrantLock closeLock;
@@ -55,85 +53,34 @@ final class DefaultAsyncClientExecutor implements AsyncClientExecutor {
 
     DefaultAsyncClientExecutor(final Executor backingExecutor) {
         this.backingExecutor = backingExecutor;
-        scheduledCallbackCompletions = ConcurrentHashMap.newKeySet();
+        scheduledTasks = ConcurrentHashMap.newKeySet();
         closeLock = new ReentrantLock();
         closed = false;
     }
 
     @Override
-    public void sleepAsync(final Duration duration, final SingleResultCallback<Void> callback) {
-        sleepAsync(closed, duration, callback, () -> scheduleCompletion(callback, duration));
-    }
-
-    /**
-     * @param closed See {@link #closed}.
-     * @param onPositiveDurationDelayAndCompleteCallback Runs only if
-     * {@code duration} is {@linkplain Duration#isNegative() positive}.
-     * The {@link Runnable#run()} is allowed to complete abruptly and is guaranteed to run in the same thread that invoked this method.
-     */
-    static void sleepAsync(
-            final boolean closed,
-            final Duration duration,
-            final SingleResultCallback<Void> callback,
-            final Runnable onPositiveDurationDelayAndCompleteCallback) {
-        beginAsync().thenRun(c -> {
-            assertFalse(duration.isNegative());
-            if (closed) {
-                throw createClosedException();
-            }
-            if (duration.isZero()) {
-                c.complete(c);
-            } else {
-                onPositiveDurationDelayAndCompleteCallback.run();
-            }
-        }).finish(callback);
-    }
-
-    private void scheduleCompletion(final SingleResultCallback<Void> callback, final Duration delay) {
-        ScheduledCallbackCompletion scheduledCallbackCompletion = new ScheduledCallbackCompletion(callback);
-        RejectedExecutionException rejectionCause = withLock(closeLock, () -> {
-            scheduledCallbackCompletions.add(scheduledCallbackCompletion);
-            if (closed) {
-                return createClosedException();
-            }
-            ScheduledFuture<?> scheduledFuture;
-            // We handle `isShutdown`, `RejectedExecutionException` below merely
-            // as the best effort to improve the application experience.
-            // Either situation violates the contract of the `close` method.
-            if (backingExecutor instanceof ExecutorService && ((ExecutorService) backingExecutor).isShutdown()) {
-                return createBackingExecutorShutdownException();
-            }
-            if (backingExecutor instanceof ScheduledExecutorService) {
-                try {
-                    scheduledFuture = ((ScheduledExecutorService) backingExecutor).schedule(scheduledCallbackCompletion, delay.toNanos(), NANOSECONDS);
-                } catch (RejectedExecutionException rejected) {
-                    return rejected;
+    public void schedule(final RejectableRunnable task, final Duration delay) {
+        assertFalse(delay.isNegative());
+        ScheduledRejectableRunnable scheduledTask = new ScheduledRejectableRunnable(task);
+        try {
+            withLock(closeLock, () -> {
+                scheduledTasks.add(scheduledTask);
+                if (closed) {
+                    throw createClosedException();
                 }
-            } else {
-                scheduledFuture = commonExecutor().schedule(scheduledCallbackCompletion, delay, backingExecutor);
-            }
-            scheduledCallbackCompletion.onScheduled(scheduledFuture);
-            return null;
-        });
-        if (rejectionCause != null) {
-            scheduledCallbackCompletion.reject(rejectionCause);
-        }
-    }
-
-    @Override
-    public void close() {
-        Collection<ScheduledCallbackCompletion> localScheduledCallbackCompletions = new ArrayList<>();
-        withLock(closeLock, () -> {
-            if (closed) {
-                return;
-            }
-            closed = true;
-            // Here we do not care about any `ScheduledCallbackCompletion` added after the current critical section,
-            // because its `reject` is called by the method that added it.
-            localScheduledCallbackCompletions.addAll(scheduledCallbackCompletions);
-        });
-        for (ScheduledCallbackCompletion scheduledCallbackCompletion : localScheduledCallbackCompletions) {
-            scheduledCallbackCompletion.reject(createClosedException());
+                // We handle `backingExecutor.isShutdown` and `RejectedExecutionException` from `backingExecutor.schedule`
+                // merely as the best effort to improve the application experience.
+                // Either situation violates the contract of the `close` method.
+                if (backingExecutor instanceof ExecutorService && ((ExecutorService) backingExecutor).isShutdown()) {
+                    throw createBackingExecutorShutdownException();
+                }
+                ScheduledFuture<?> scheduledFuture = (backingExecutor instanceof ScheduledExecutorService)
+                        ? ((ScheduledExecutorService) backingExecutor).schedule(scheduledTask, delay.toNanos(), NANOSECONDS)
+                        : commonExecutor().schedule(scheduledTask, delay, backingExecutor);
+                scheduledTask.onScheduled(scheduledFuture);
+            });
+        } catch (RejectedExecutionException rejectionCause) {
+            scheduledTask.reject(rejectionCause);
         }
     }
 
@@ -146,21 +93,72 @@ final class DefaultAsyncClientExecutor implements AsyncClientExecutor {
     }
 
     @Override
+    public void close() {
+        Collection<ScheduledRejectableRunnable> localScheduledTasks = new ArrayList<>();
+        withLock(closeLock, () -> {
+            if (closed) {
+                return;
+            }
+            closed = true;
+            // Here we do not care about any `ScheduledRejectableRunnable` added after the current critical section,
+            // because its `reject` is called by the method that added it.
+            localScheduledTasks.addAll(scheduledTasks);
+        });
+        Throwable primaryException = null;
+        try {
+            for (ScheduledRejectableRunnable scheduledTask : localScheduledTasks) {
+                try {
+                    scheduledTask.reject(createClosedException());
+                } catch (Throwable t) {
+                    primaryException = suppressUnlessThereIsNoPrimary(primaryException, t);
+                }
+            }
+        } catch (Throwable t) {
+            primaryException = suppressUnlessThereIsNoPrimary(primaryException, t);
+        } finally {
+            rethrowAsUnchecked(primaryException);
+        }
+    }
+
+    private static Throwable suppressUnlessThereIsNoPrimary(
+            @Nullable final Throwable maybePrimary,
+            final Throwable suppressedUnlessThereIsNoPrimary) {
+        if (maybePrimary == null) {
+            return suppressedUnlessThereIsNoPrimary;
+        }
+        if (suppressedUnlessThereIsNoPrimary != maybePrimary) {
+            maybePrimary.addSuppressed(suppressedUnlessThereIsNoPrimary);
+        }
+        return maybePrimary;
+    }
+
+    private static void rethrowAsUnchecked(@Nullable final Throwable t) throws RuntimeException, Error {
+        if (t instanceof RuntimeException) {
+            throw (RuntimeException) t;
+        } else if (t instanceof Error) {
+            throw (Error) t;
+        } else if (t != null) {
+            throw new RuntimeException(null, t);
+        }
+    }
+
+    @Override
     public String toString() {
         return "DefaultAsyncClientExecutor{"
                 + "backingExecutor=" + backingExecutor
+                + ", scheduledTasks=" + scheduledTasks
                 + ", closed=" + closed
                 + '}';
     }
 
     @NotThreadSafe
-    private class ScheduledCallbackCompletion implements Runnable {
-        private final SingleResultCallback<Void> callback;
+    private class ScheduledRejectableRunnable implements RejectableRunnable {
+        private final RejectableRunnable task;
         @Nullable
         private ScheduledFuture<?> scheduledFuture;
 
-        ScheduledCallbackCompletion(final SingleResultCallback<Void> callback) {
-            this.callback = callback;
+        ScheduledRejectableRunnable(final RejectableRunnable task) {
+            this.task = task;
         }
 
         void onScheduled(final ScheduledFuture<?> scheduledFuture) {
@@ -168,23 +166,32 @@ final class DefaultAsyncClientExecutor implements AsyncClientExecutor {
             this.scheduledFuture = scheduledFuture;
         }
 
-        void reject(final RejectedExecutionException cause) {
-            if (scheduledCallbackCompletions.remove(this)) {
+        @Override
+        public void reject(final RejectedExecutionException cause) {
+            if (scheduledTasks.remove(this)) {
                 try {
                     if (scheduledFuture != null) {
                         scheduledFuture.cancel(false);
                     }
                 } finally {
-                    callback.completeExceptionally(cause);
+                    task.reject(cause);
                 }
             }
         }
 
         @Override
         public void run() {
-            if (scheduledCallbackCompletions.remove(this)) {
-                callback.complete(callback);
+            if (scheduledTasks.remove(this)) {
+                task.run();
             }
+        }
+
+        @Override
+        public String toString() {
+            return "ScheduledRejectableRunnable{"
+                    + "task=" + task
+                    + ", scheduledFuture=" + scheduledFuture
+                    + '}';
         }
     }
 }

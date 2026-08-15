@@ -23,7 +23,9 @@ import java.time.Duration;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 
 /**
  * An executor for a {@code MongoClient} (currently, only for an asynchronous one).
@@ -56,24 +58,51 @@ public interface AsyncClientExecutor extends AutoCloseable {
     }
 
     /**
-     * The callback-based counterpart to {@link Thread#sleep(long, int)}.
-     *
-     * @param duration A non-{@linkplain Duration#isNegative() negative} duration.
-     * If {@code duration} is {@linkplain Duration#isZero() zero},
-     * the {@code callback} is {@linkplain SingleResultCallback#complete(SingleResultCallback) completed}
-     * by the {@link Thread} that invoked the method.
-     * Regardless of the {@link Duration}, {@link #close()} causes the {@code callback} to be completed with
-     * {@link RejectedExecutionException}.
+     * @param task The task to execute. It may not be executed if this method completes abruptly, but is
+     * {@linkplain RejectableRunnable#reject(RejectedExecutionException) executed} if the executor is {@linkplain #close() closed}.
+     * @param delay A non-{@linkplain Duration#isNegative() negative} duration.
      */
-    void sleepAsync(Duration duration, SingleResultCallback<Void> callback);
+    void schedule(RejectableRunnable task, Duration delay);
 
     /**
      * Must be called before shutting down the {@linkplain #backedBy(Executor) backing executor},
      * to notify this {@link AsyncClientExecutor} that the backing executor may be about to shut down.
-     * This method guarantees exactly-once {@linkplain SingleResultCallback#onResult(Object, Throwable) completion}
-     * of all callbacks that may have not been completed otherwise if the backing executor shuts down.
-     * An example of such a callback is one scheduled via {@link #sleepAsync(Duration, SingleResultCallback)}.
+     * Guarantees exactly-once execution of all {@link RejectableRunnable} tasks,
+     * which may have not been executed otherwise if the backing executor shuts down.
      */
     @Override
     void close();
+
+    /**
+     * Either {@link #run()} or {@link #reject(RejectedExecutionException)} may be executed, but never both.
+     * Executing either means executing this {@link RejectableRunnable}.
+     */
+    interface RejectableRunnable extends Runnable {
+        /**
+         * Unlike {@link ScheduledThreadPoolExecutor}, which handles rejections based on the {@link RejectedExecutionHandler},
+         * and by default throws {@link RejectedExecutionException},
+         * {@link AsyncClientExecutor} delegates rejection handling to the scheduled tasks by invoking this method.
+         * This way, {@link #close()} does not have to return the list of tasks that never commenced execution,
+         * and its caller does not have to deal with them to make sure all the tasks are executed in some way
+         * (if a task must complete a callback, failing to execute it is a critical bug).
+         * Additionally, this method allows reacting to rejection differently than what {@link #run()} would have done.
+         *
+         * @see #close()
+         */
+        void reject(RejectedExecutionException cause);
+
+        static RejectableRunnable from(final SingleResultCallback<Void> callback) {
+            return new RejectableRunnable() {
+                @Override
+                public void reject(final RejectedExecutionException cause) {
+                    callback.completeExceptionally(cause);
+                }
+
+                @Override
+                public void run() {
+                    callback.complete(callback);
+                }
+            };
+        }
+    }
 }
