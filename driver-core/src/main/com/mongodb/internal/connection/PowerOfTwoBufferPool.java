@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.thread.DaemonThreadFactory;
+import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 
@@ -31,6 +32,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -63,7 +65,10 @@ public class PowerOfTwoBufferPool implements BufferProvider {
 
     private final Map<Integer, BufferPool> powerOfTwoToPoolMap = new HashMap<>();
     private final long maxIdleTimeNanos;
-    private final ScheduledExecutorService pruner;
+    private final Object prunerLock = new Object();
+    private final AtomicInteger pruneRetainCount = new AtomicInteger();
+    @Nullable
+    private ScheduledExecutorService pruner;
 
     /**
      * Construct an instance with a highest power of two of 24.
@@ -96,19 +101,79 @@ public class PowerOfTwoBufferPool implements BufferProvider {
             powerOfTwo = powerOfTwo << 1;
         }
         maxIdleTimeNanos = timeUnit.toNanos(maxIdleTime);
-        pruner = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory("BufferPoolPruner"));
     }
 
     /**
-     * Call this method at most once to enable a background thread that prunes idle buffers from the pool
+     * Enable a background thread that prunes idle buffers from the pool. Idempotent; safe to call again after
+     * {@link #disablePruning()}.
      */
     PowerOfTwoBufferPool enablePruning() {
-        pruner.scheduleAtFixedRate(this::prune, maxIdleTimeNanos, maxIdleTimeNanos / 2, TimeUnit.NANOSECONDS);
+        synchronized (prunerLock) {
+            enablePruningLocked();
+        }
         return this;
     }
 
+    /**
+     * Stop the pruning thread if it is running. Idempotent.
+     */
     void disablePruning() {
-        pruner.shutdownNow();
+        synchronized (prunerLock) {
+            disablePruningLocked();
+        }
+    }
+
+    /**
+     * Record that a MongoClient using this pool has been opened. Ensures pruning is running.
+     * <p>
+     * Used for {@link #DEFAULT} so the shared pruner stays alive while any client is open and is stopped when the
+     * last client is closed (avoids Tomcat webapp classloader leaks from an orphaned BufferPoolPruner thread).
+     */
+    public void retainPruning() {
+        synchronized (prunerLock) {
+            pruneRetainCount.incrementAndGet();
+            enablePruningLocked();
+        }
+    }
+
+    /**
+     * Record that a MongoClient using this pool has been closed. Stops pruning when no retainers remain.
+     */
+    public void releasePruning() {
+        synchronized (prunerLock) {
+            int remaining = pruneRetainCount.decrementAndGet();
+            if (remaining <= 0) {
+                pruneRetainCount.set(0);
+                disablePruningLocked();
+            }
+        }
+    }
+
+    boolean isPruningEnabled() {
+        synchronized (prunerLock) {
+            return pruner != null && !pruner.isShutdown();
+        }
+    }
+
+    private void enablePruningLocked() {
+        if (pruner == null || pruner.isShutdown()) {
+            pruner = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory("BufferPoolPruner"));
+            pruner.scheduleAtFixedRate(this::prune, maxIdleTimeNanos, maxIdleTimeNanos / 2, TimeUnit.NANOSECONDS);
+        }
+    }
+
+    private void disablePruningLocked() {
+        if (pruner != null) {
+            ScheduledExecutorService toShutdown = pruner;
+            pruner = null;
+            toShutdown.shutdownNow();
+            try {
+                // Ensure the BufferPoolPruner thread has exited so containers (e.g. Tomcat) can reclaim the classloader
+                toShutdown.awaitTermination(5, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        }
     }
 
     @Override

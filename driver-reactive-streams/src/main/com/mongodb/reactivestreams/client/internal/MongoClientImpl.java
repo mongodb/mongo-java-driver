@@ -31,6 +31,7 @@ import com.mongodb.connection.ClusterDescription;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.connection.ClientMetadata;
 import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.observability.micrometer.TracingManager;
@@ -123,6 +124,11 @@ public final class MongoClientImpl implements MongoClient {
 
         BsonDocument clientMetadataDocument = delegate.getCluster().getClientMetadata().getBsonDocument();
         LOGGER.info(format("MongoClient with metadata %s created with settings %s", clientMetadataDocument.toJson(), settings));
+        // Real clients always receive a StreamFactoryFactory as externalResourceCloser. Keep the shared
+        // buffer-pool pruner alive while any such client is open; stop it when the last one closes.
+        if (externalResourceCloser != null) {
+            PowerOfTwoBufferPool.DEFAULT.retainPruning();
+        }
     }
 
     Cluster getCluster() {
@@ -149,17 +155,23 @@ public final class MongoClientImpl implements MongoClient {
     @Override
     public void close() {
         if (!closed.getAndSet(true)) {
-            Crypt crypt = getCrypt();
-            if (crypt != null) {
-                crypt.close();
-            }
-            getServerSessionPool().close();
-            getCluster().close();
-            if (externalResourceCloser != null) {
-                try {
-                    externalResourceCloser.close();
-                } catch (Exception e) {
-                    LOGGER.warn("Exception closing resource", e);
+            try {
+                Crypt crypt = getCrypt();
+                if (crypt != null) {
+                    crypt.close();
+                }
+                getServerSessionPool().close();
+                getCluster().close();
+                if (externalResourceCloser != null) {
+                    try {
+                        externalResourceCloser.close();
+                    } catch (Exception e) {
+                        LOGGER.warn("Exception closing resource", e);
+                    }
+                }
+            } finally {
+                if (externalResourceCloser != null) {
+                    PowerOfTwoBufferPool.DEFAULT.releasePruning();
                 }
             }
         }
