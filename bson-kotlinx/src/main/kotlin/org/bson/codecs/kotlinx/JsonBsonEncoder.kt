@@ -25,6 +25,7 @@ import kotlinx.serialization.json.JsonEncoder
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.double
 import kotlinx.serialization.modules.SerializersModule
 import org.bson.BsonWriter
 import org.bson.codecs.kotlinx.utils.BsonCodecUtils.toJsonNamingStrategy
@@ -98,12 +99,12 @@ internal class JsonBsonEncoder(
             primitive.isString -> encodeString(content)
             content == "true" || content == "false" -> encodeBoolean(content.toBooleanStrict())
             else -> {
-                val decimal = BigDecimal(content).stripTrailingZeros()
+                val decimal = BigDecimal(content)
                 when {
-                    decimal.scale() > 0 -> {
+                    isFloatingLiteral(content, decimal) -> {
                         val abs = decimal.abs()
                         if ((decimal.signum() == 0 || abs >= DOUBLE_MIN_VALUE) && abs <= DOUBLE_MAX_VALUE) {
-                            encodeDouble(decimal.toDouble())
+                            encodeDouble(primitive.double)
                         } else {
                             writer.writeDecimal128(Decimal128(decimal))
                         }
@@ -115,6 +116,9 @@ internal class JsonBsonEncoder(
             }
         }
     }
+
+    private fun isFloatingLiteral(content: String, decimal: BigDecimal): Boolean =
+        content.contains('.') || decimal.scale() > 0
 
     private fun encodeJsonObject(obj: JsonObject) {
         writer.writeStartDocument()
