@@ -65,6 +65,9 @@ All `com.mongodb.internal.*` / `org.bson.internal.*` is private API — never ex
 **Nullability:** use `com.mongodb.lang` annotations; new packages must declare `@NonNullApi` in
 `package-info.java`.
 
+**Secrets:** Never render credentials (usernames, passwords, tokens, keys) in `toString()` — emit
+`<hidden>` instead.
+
 **Thread safety:** use `com.mongodb.annotations` (`@ThreadSafe` / `@NotThreadSafe` / `@Immutable`);
 public API classes must be thread-safe unless annotated otherwise.
 
