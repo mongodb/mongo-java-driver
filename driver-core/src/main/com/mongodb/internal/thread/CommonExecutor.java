@@ -45,8 +45,8 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  *
  * @see AsyncClientExecutor
  */
-// VAKOTODO decide what to do with https://jira.mongodb.org/browse/JAVA-6279.
-public final class CommonExecutor {
+// TODO-BACKPRESSURE Valentin decide what to do with https://jira.mongodb.org/browse/JAVA-6279.
+final class CommonExecutor {
     private static final Logger LOGGER = Loggers.getLogger("client");
     private static final CommonExecutor INSTANCE = new CommonExecutor();
 
