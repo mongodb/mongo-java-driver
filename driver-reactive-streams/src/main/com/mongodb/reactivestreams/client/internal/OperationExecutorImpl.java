@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoQueryException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
@@ -203,6 +204,7 @@ public class OperationExecutorImpl implements OperationExecutor {
     private void labelException(@Nullable final ClientSession session, @Nullable final Throwable t) {
         if (session != null && session.hasActiveTransaction()
                 && (t instanceof MongoSocketException || t instanceof MongoTimeoutException
+                || t instanceof MongoOperationTimeoutException
                 || (t instanceof MongoQueryException && ((MongoQueryException) t).getErrorCode() == 91))
                 && !((MongoException) t).hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
             ((MongoException) t).addLabel(TRANSIENT_TRANSACTION_ERROR_LABEL);

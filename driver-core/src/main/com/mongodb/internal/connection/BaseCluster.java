@@ -427,7 +427,7 @@ abstract class BaseCluster implements Cluster {
                 "Timed out while waiting for a server that matches %s. Client view of cluster state is %s",
                 serverSelector, clusterDescription.getShortDescription());
 
-        MongoTimeoutException exception = operationContext.getTimeoutContext().hasTimeoutMS()
+        MongoClientException exception = operationContext.getTimeoutContext().hasTimeoutMS()
                 ? new MongoOperationTimeoutException(message) : new MongoTimeoutException(message);
 
         logServerSelectionFailed(operationContext, clusterId, exception, serverSelector, clusterDescription);
@@ -590,7 +590,7 @@ abstract class BaseCluster implements Cluster {
             final ServerSelector serverSelector,
             final ClusterDescription clusterDescription) {
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
-            String failureDescription = failure instanceof MongoTimeoutException
+            String failureDescription = failure instanceof MongoTimeoutException || failure instanceof MongoOperationTimeoutException
                     // This hardcoded message guarantees that the `FAILURE` entry for `MongoTimeoutException` does not include
                     // any information that is specified via other entries, e.g., `SELECTOR` and `TOPOLOGY_DESCRIPTION`.
                     // The logging spec requires us to avoid such duplication of information.
