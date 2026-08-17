@@ -1,0 +1,3 @@
+com.mongodb.reactivestreams.client
+com.mongodb.reactivestreams.client.gridfs
+com.mongodb.reactivestreams.client.vault
