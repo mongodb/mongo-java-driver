@@ -44,6 +44,9 @@ class AsyncSocketChannelStreamSpecification extends Specification {
 
         then:
         !stream.isClosed()
+
+        cleanup:
+        factoryFactory.close()
     }
 
     @Slow
@@ -70,6 +73,9 @@ class AsyncSocketChannelStreamSpecification extends Specification {
 
         then:
         thrown(MongoSocketOpenException)
+
+        cleanup:
+        factoryFactory.close()
     }
 
     @IgnoreIf({ getSslSettings().isEnabled() })

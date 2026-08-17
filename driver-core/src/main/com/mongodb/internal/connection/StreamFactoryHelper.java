@@ -27,8 +27,6 @@ import com.mongodb.internal.connection.netty.NettyStreamFactoryFactory;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
 
-import java.io.IOException;
-import java.nio.channels.AsynchronousChannelGroup;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
@@ -79,15 +77,7 @@ public final class StreamFactoryHelper {
             if (settings.getSslSettings().isEnabled()) {
                 return new TlsChannelStreamFactoryFactory(inetAddressResolver, executorService);
             }
-            AsynchronousChannelGroup group = null;
-            if (executorService != null) {
-                try {
-                    group = AsynchronousChannelGroup.withThreadPool(executorService);
-                } catch (IOException e) {
-                    throw new MongoClientException("Unable to create an asynchronous channel group", e);
-                }
-            }
-            return new AsynchronousSocketChannelStreamFactoryFactory(inetAddressResolver, group);
+            return new AsynchronousSocketChannelStreamFactoryFactory(inetAddressResolver, executorService);
         } else  if (transportSettings instanceof NettyTransportSettings) {
             return getNettyStreamFactoryFactory(inetAddressResolver, (NettyTransportSettings) transportSettings);
         } else {
