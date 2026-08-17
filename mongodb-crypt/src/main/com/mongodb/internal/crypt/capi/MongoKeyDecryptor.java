@@ -70,7 +70,32 @@ public interface MongoKeyDecryptor {
      * returns 0.
      * </p>
      *
+     * <p>The driver uses {@link #feedWithRetry(ByteBuffer)}; this method is retained to mirror the libmongocrypt API.
+     *
      * @param bytes the received bytes
+     * @see #feedWithRetry(ByteBuffer)
      */
     void feed(ByteBuffer bytes);
+
+    /**
+     * Gets the number of microseconds to sleep before sending the next KMS request.
+     *
+     * @return the number of microseconds to sleep, or 0 if no delay is needed
+     */
+    long sleepMicroseconds();
+
+    /**
+     * Feed the received bytes to the decryptor, with retry support.
+     *
+     * @param bytes the received bytes
+     * @return true if the KMS request should be retried
+     */
+    boolean feedWithRetry(ByteBuffer bytes);
+
+    /**
+     * Signal to libmongocrypt that a network error occurred on this KMS request.
+     *
+     * @return true if the request should be retried, false if retries are exhausted
+     */
+    boolean fail();
 }
