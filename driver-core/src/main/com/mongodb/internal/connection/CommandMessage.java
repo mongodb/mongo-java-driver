@@ -25,6 +25,7 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.MongoNamespaceHelper;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
+import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -34,6 +35,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonElement;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.ByteBuf;
 import org.bson.FieldNameValidator;
 import org.bson.io.BsonOutput;
@@ -64,6 +66,7 @@ import static com.mongodb.internal.connection.BsonWriterHelper.writePayload;
 import static com.mongodb.internal.connection.ByteBufBsonDocument.createList;
 import static com.mongodb.internal.connection.ByteBufBsonDocument.createOne;
 import static com.mongodb.internal.connection.ReadConcernHelper.getReadConcernDocument;
+import static com.mongodb.internal.operation.ServerVersionHelper.NINE_DOT_ZERO_WIRE_VERSION;
 import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION;
 
 /**
@@ -80,6 +83,11 @@ public final class CommandMessage extends RequestMessage {
      * Specifies that the `OP_MSG` section payload is a sequence of BSON documents.
      */
     private static final byte PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE = 1;
+    /**
+     * Specifies that the `OP_MSG` section payload is a BSON telemetry document
+     * ({@code {otel: {traceparent: <string>}}}).
+     */
+    private static final byte PAYLOAD_TYPE_3_TELEMETRY = 3;
 
     private static final int UNINITIALIZED_POSITION = -1;
 
@@ -100,6 +108,14 @@ public final class CommandMessage extends RequestMessage {
     private Boolean dualMessageSequencesRequireResponse;
     private final ClusterConnectionMode clusterConnectionMode;
     private final ServerApi serverApi;
+
+    /**
+     * The command span to attach to the OP_MSG telemetry section during {@linkplain
+     * #encode(ByteBufferBsonOutput, OperationContext, Span) encoding}. Set for the duration of that overload's
+     * call and cleared afterward; {@code null} otherwise.
+     */
+    @Nullable
+    private Span commandSpanForEncoding;
 
     CommandMessage(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final ClusterConnectionMode clusterConnectionMode,
@@ -156,42 +172,66 @@ public final class CommandMessage extends RequestMessage {
                 byteBuf.position(firstDocumentPosition);
                 ByteBufBsonDocument byteBufBsonDocument = createOne(byteBuf);
 
-                // If true, it means there is at least one `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE` section in the OP_MSG
-                if (byteBuf.hasRemaining()) {
-                    BsonDocument commandBsonDocument = byteBufBsonDocument.toBaseBsonDocument();
+                // There may be more sections after the `PAYLOAD_TYPE_0_DOCUMENT` section: either one or more
+                // `PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE` sections, and/or a trailing `PAYLOAD_TYPE_3_TELEMETRY` section.
+                // The command document is materialized lazily, only when a document sequence has to be folded into
+                // it; otherwise (no sections, or only a telemetry section) the cheap lazy document is returned.
+                BsonDocument commandBsonDocument = null;
 
-                    // Each loop iteration processes one Document Sequence
-                    // When there are no more bytes remaining, there are no more Document Sequences
-                    while (byteBuf.hasRemaining()) {
-                        // skip reading the payload type, we know it is `PAYLOAD_TYPE_1`
-                        byteBuf.position(byteBuf.position() + 1);
-                        int sequenceStart = byteBuf.position();
-                        int sequenceSizeInBytes = byteBuf.getInt();
-                        int sectionEnd = sequenceStart + sequenceSizeInBytes;
-
-                        String fieldName = getSequenceIdentifier(byteBuf);
-                        // If this assertion fires, it means that the driver has started using document sequences for nested fields.  If
-                        // so, this method will need to change in order to append the value to the correct nested document.
-                        assertFalse(fieldName.contains("."));
-
-                        ByteBuf documentsByteBufSlice = byteBuf.duplicate().limit(sectionEnd);
-                        try {
-                            commandBsonDocument.append(fieldName, new BsonArray(createList(documentsByteBufSlice)));
-                        } finally {
-                            documentsByteBufSlice.release();
-                        }
-                        byteBuf.position(sectionEnd);
+                // Each loop iteration processes one Document Sequence
+                // When there are no more bytes remaining, there are no more Document Sequences
+                while (byteBuf.hasRemaining()) {
+                    byte payloadType = byteBuf.get();
+                    // Document-sequence sections always precede any trailing non-sequence section (e.g.
+                    // PAYLOAD_TYPE_3_TELEMETRY), and such sections carry no command-document fields, so stop here.
+                    if (payloadType != PAYLOAD_TYPE_1_DOCUMENT_SEQUENCE) {
+                        break;
                     }
-                    return commandBsonDocument;
-                } else {
-                    return byteBufBsonDocument;
+                    if (commandBsonDocument == null) {
+                        commandBsonDocument = byteBufBsonDocument.toBaseBsonDocument();
+                    }
+                    int sequenceStart = byteBuf.position();
+                    int sequenceSizeInBytes = byteBuf.getInt();
+                    int sectionEnd = sequenceStart + sequenceSizeInBytes;
+
+                    String fieldName = getSequenceIdentifier(byteBuf);
+                    // If this assertion fires, it means that the driver has started using document sequences for nested fields.  If
+                    // so, this method will need to change in order to append the value to the correct nested document.
+                    assertFalse(fieldName.contains("."));
+
+                    ByteBuf documentsByteBufSlice = byteBuf.duplicate().limit(sectionEnd);
+                    try {
+                        commandBsonDocument.append(fieldName, new BsonArray(createList(documentsByteBufSlice)));
+                    } finally {
+                        documentsByteBufSlice.release();
+                    }
+                    byteBuf.position(sectionEnd);
                 }
+                return commandBsonDocument != null ? commandBsonDocument : byteBufBsonDocument;
             } finally {
                 byteBuf.release();
             }
         } finally {
             byteBuffers.forEach(ByteBuf::release);
         }
+    }
+
+    /**
+     * The command name (the first key of the command document). Available before {@code encode()} runs, unlike
+     * {@link #getCommandDocument(ByteBufferBsonOutput)}; identical to the encoded document's first
+     * key, since encoding only appends fields.
+     */
+    public String getCommandName() {
+        return command.getFirstKey();
+    }
+
+    /**
+     * The cursor id if this is a {@code getMore} command, or {@code null} otherwise.
+     */
+    @Nullable
+    public BsonInt64 getGetMoreCursorId() {
+        BsonValue value = command.get("getMore");
+        return value instanceof BsonInt64 ? (BsonInt64) value : null;
     }
 
     /**
@@ -233,6 +273,21 @@ public final class CommandMessage extends RequestMessage {
     @Override
     protected void encodeMessageBody(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
         this.firstDocumentPosition = useOpMsg() ? writeOpMsg(bsonOutput, operationContext) : writeOpQuery(bsonOutput);
+    }
+
+    /**
+     * Encodes the message, attaching the OP_MSG telemetry section with {@code commandSpan}'s trace context when
+     * the gating conditions hold (see {@link #writeTelemetryContextSection}). The 2-arg {@link
+     * #encode(ByteBufferBsonOutput, OperationContext)} never attaches the section.
+     */
+    public void encode(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext,
+            @Nullable final Span commandSpan) {
+        this.commandSpanForEncoding = commandSpan;
+        try {
+            encode(bsonOutput, operationContext);
+        } finally {
+            this.commandSpanForEncoding = null;
+        }
     }
 
     @SuppressWarnings("try")
@@ -277,9 +332,33 @@ public final class CommandMessage extends RequestMessage {
             fail(sequences.toString());
         }
 
+        writeTelemetryContextSection(bsonOutput);
+
         // Write the flag bits
         bsonOutput.writeInt32(flagPosition, getOpMsgFlagBits());
         return commandStartPosition;
+    }
+
+    private void writeTelemetryContextSection(final ByteBufferBsonOutput bsonOutput) {
+        if (getSettings().getMaxWireVersion() < NINE_DOT_ZERO_WIRE_VERSION) {
+            return;
+        }
+        Span commandSpan = this.commandSpanForEncoding;
+        if (commandSpan == null) {
+            return;
+        }
+        String traceParent = commandSpan.context().traceParent();
+        if (traceParent == null) {
+            return;
+        }
+        bsonOutput.writeByte(PAYLOAD_TYPE_3_TELEMETRY);
+        // {otel: {traceparent: <value>}}
+        BsonBinaryWriter writer = new BsonBinaryWriter(bsonOutput);
+        writer.writeStartDocument();
+        writer.writeStartDocument("otel");
+        writer.writeString("traceparent", traceParent);
+        writer.writeEndDocument();
+        writer.writeEndDocument();
     }
 
     private int writeOpQuery(final ByteBufferBsonOutput bsonOutput) {
