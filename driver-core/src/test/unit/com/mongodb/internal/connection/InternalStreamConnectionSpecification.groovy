@@ -484,7 +484,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def (buffers, messageId) = helper.hello()
 
         when:
-        connection.sendMessage(buffers, messageId, OPERATION_CONTEXT.withTimeoutContext(
+        connection.sendMessage(buffers, messageId, createOperationContext().withTimeoutContext(
                 new TimeoutContext(TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT)))
 
         then:
