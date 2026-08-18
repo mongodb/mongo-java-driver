@@ -23,7 +23,7 @@ import org.mockito.stubbing.OngoingStubbing;
 
 import java.util.function.Consumer;
 
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.withSettings;
 
 /**
@@ -56,18 +56,19 @@ public final class MongoMockito {
      * Moreover, a mock object created with {@link ThrowsException} as its default answer cannot be stubbed:
      * stubbing requires calling methods of the mock object, but they all complete abruptly
      * (see {@link InsufficientStubbingDetectorDemoTest#stubbingWithThrowsException()}).
-     * Therefore, {@link ThrowsException} is not suitable for detecting insufficient stubbing.</p>
+     * Therefore, {@link ThrowsException} is not suitable for detecting insufficient stubbing.
      * <p>
      * This method overcomes both of the aforementioned limitations by using {@link InsufficientStubbingDetector} as the default answer
      * (see {@link InsufficientStubbingDetectorDemoTest#mockObjectWithInsufficientStubbingDetector()},
      * {@link InsufficientStubbingDetectorDemoTest#stubbingWithInsufficientStubbingDetector()}).
-     * Note also that for convenience, {@link InsufficientStubbingDetector} stubs the {@link Object#toString()} method by using
-     * {@link OngoingStubbing#thenCallRealMethod()}, unless this stubbing is overwritten by the {@code tuner}.</p>
+     * Note also that for convenience, {@link InsufficientStubbingDetector} {@linkplain Mockito#lenient() leniently}
+     * stubs the {@link Object#toString()} method by using
+     * {@link OngoingStubbing#thenCallRealMethod()}, unless this stubbing is overwritten by the {@code tuner}.
      */
     public static <T> T mock(final Class<T> classToMock, @Nullable final Consumer<T> tuner) {
         final InsufficientStubbingDetector insufficientStubbingDetector = new InsufficientStubbingDetector();
         final T mock = Mockito.mock(classToMock, withSettings().defaultAnswer(insufficientStubbingDetector));
-        when(mock.toString()).thenCallRealMethod();
+        lenient().when(mock.toString()).thenCallRealMethod();
         if (tuner != null) {
             tuner.accept(mock);
         }

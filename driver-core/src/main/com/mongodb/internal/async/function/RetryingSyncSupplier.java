@@ -16,10 +16,13 @@
 package com.mongodb.internal.async.function;
 
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.internal.async.function.RetryPolicy.Decision.RetryAttemptInfo;
+import com.mongodb.internal.thread.AsyncClientExecutor;
+import com.mongodb.lang.Nullable;
 
 import java.util.function.Supplier;
 
-import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.internal.thread.ThreadUtil.sleep;
 
 /**
  * A decorator that implements automatic retrying of failed executions of a {@link Supplier}.
@@ -37,7 +40,7 @@ public final class RetryingSyncSupplier<R> implements Supplier<R> {
     private final Supplier<R> syncFunction;
 
     /**
-     * See {@link RetryingAsyncCallbackSupplier#RetryingAsyncCallbackSupplier(RetryControl, AsyncCallbackSupplier)}.
+     * See {@link RetryingAsyncCallbackSupplier#RetryingAsyncCallbackSupplier(AsyncClientExecutor, RetryControl, AsyncCallbackSupplier)}.
      */
     public RetryingSyncSupplier(final RetryControl<?> control, final Supplier<R> syncFunction) {
         this.control = control;
@@ -45,6 +48,7 @@ public final class RetryingSyncSupplier<R> implements Supplier<R> {
     }
 
     @Override
+    @Nullable
     public R get() {
         while (true) {
             try {
@@ -52,7 +56,8 @@ public final class RetryingSyncSupplier<R> implements Supplier<R> {
             } catch (Error attemptFailedResult) {
                 throw attemptFailedResult;
             } catch (Throwable attemptFailedResult) {
-                assertNotNull(control.advanceOrThrow(attemptFailedResult));
+                RetryAttemptInfo retryAttemptInfo = control.advanceOrThrow(attemptFailedResult);
+                sleep(retryAttemptInfo.getBackoff());
             }
         }
     }

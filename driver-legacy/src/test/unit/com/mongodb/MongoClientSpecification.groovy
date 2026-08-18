@@ -23,6 +23,8 @@ import com.mongodb.client.model.geojson.MultiPolygon
 import com.mongodb.connection.ClusterSettings
 import com.mongodb.internal.connection.ClientMetadata
 import com.mongodb.internal.connection.Cluster
+import com.mongodb.internal.connection.StreamFactoryFactory
+import com.mongodb.internal.thread.AsyncClientExecutor
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.UuidCodec
@@ -36,6 +38,7 @@ import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
 import static com.mongodb.MongoCredential.createMongoX509Credential
 import static com.mongodb.ReadPreference.secondary
+import static com.mongodb.assertions.Assertions.fail
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -314,7 +317,9 @@ class MongoClientSpecification extends Specification {
         def clusterStub = Stub(Cluster)
         clusterStub.getClientMetadata() >> new ClientMetadata("test", MongoDriverInformation.builder().build())
 
-        def client = new MongoClientImpl(clusterStub, null, MongoClientSettings.builder().build(), null, executor)
+        def client = new MongoClientImpl(
+                clusterStub, null, MongoClientSettings.builder().build(), mockStreamFactoryFactory(),
+                AsyncClientExecutor.NO_OP, executor)
 
         when:
         client.watch((Class) null)
@@ -364,5 +369,13 @@ class MongoClientSpecification extends Specification {
 
         cleanup:
         client?.close()
+    }
+
+    def mockStreamFactoryFactory() {
+        Mock(StreamFactoryFactory) {
+            getExecutor() >> {
+                fail()
+            }
+        }
     }
 }

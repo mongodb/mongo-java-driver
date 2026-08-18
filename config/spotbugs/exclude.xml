@@ -15,9 +15,13 @@
   -->
 
 <!--
+    Every time you add an entry to this file, you must specify its MongoDB status and SpotBugs rank.
+
     To determine the rank of a newly-detected bug that you would like to exclude,
-    run spotbugsMain task with xml.enabled, then examine the XML report in
-    <module>/build/reports/spotbugs/main.xml, where the rankings are
+    run the `spotbugsMain` Gradle task with `xmlReports.enabled`
+    (example: `./gradlew spotbugsMain -PxmlReports.enabled=true`),
+    then examine the XML report in
+    `<module>/build/reports/spotbugs/main.xml`, where the rankings are
     included as part of the report, e.g.
 
     <BugInstance type="PA_PUBLIC_PRIMITIVE_ATTRIBUTE" priority="2" rank="16" ...
@@ -295,5 +299,22 @@
         <Class name="com.mongodb.internal.crypt.capi.CAPI$cstring"/>
         <Bug pattern="NM_CLASS_NAMING_CONVENTION"/>
     </Match>
-
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 18 -->
+        <!-- The second parameter of the Java SE API method we override is not annotated,
+             but we know the argument may be `null`, so we annotate the corresponding parameter
+             in the overriding method with `@Nullable`. -->
+        <Class name="com.mongodb.internal.thread.MongoScheduledThreadPoolExecutor"/>
+        <Method name="afterExecute"/>
+        <Bug pattern="NP_METHOD_PARAMETER_TIGHTENS_ANNOTATION"/>
+    </Match>
+    <Match>
+        <!-- MongoDB status: "False Positive", SpotBugs rank: 18 -->
+        <!-- The second parameter of the Java SE API method we override is not annotated,
+             but we know the argument may be `null`, so we annotate the corresponding parameter
+             in the overriding method with `@Nullable`. -->
+        <Class name="com.mongodb.internal.thread.MongoThreadPoolExecutor"/>
+        <Method name="afterExecute"/>
+        <Bug pattern="NP_METHOD_PARAMETER_TIGHTENS_ANNOTATION"/>
+    </Match>
 </FindBugsFilter>
