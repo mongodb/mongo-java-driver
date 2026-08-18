@@ -53,7 +53,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def serverId = new ServerId(new ClusterId(), new ServerAddress())
     def internalConnection = new TestInternalConnection(serverId, ServerType.STANDALONE)
-    def operationContext = simpleOperationContext(TimeoutSettings.DEFAULT, null)
+    def operationContext = simpleOperationContext(TimeoutSettings.DEFAULT)
 
     def 'should create correct description'() {
         given:

@@ -51,7 +51,7 @@ public interface AsyncCallbackFunction<P, R> {
      * @param callback A consumer of a result, {@link SingleResultCallback#onResult(Object, Throwable) completed} after
      * (in the happens-before order) the asynchronous function completes.
      * @throws RuntimeException Never. Exceptions must be relayed to the {@code callback}.
-     * @throws Error Never, on the best effort basis. Errors should be relayed to the {@code callback}.
+     * @throws Error Never, on the best-effort basis. Errors should be relayed to the {@code callback}.
      */
     void apply(P a, SingleResultCallback<R> callback);
 }

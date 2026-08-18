@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.ServerApi;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.lang.Nullable;
 
 import static com.mongodb.internal.connection.OperationContext.simpleOperationContext;
@@ -27,17 +28,22 @@ public final class InternalOperationContextFactory {
     private final TimeoutSettings timeoutSettings;
     @Nullable
     private final ServerApi serverApi;
+    private final AsyncClientExecutor clientExecutor;
 
-    public InternalOperationContextFactory(final TimeoutSettings timeoutSettings, @Nullable final ServerApi serverApi) {
+    public InternalOperationContextFactory(
+            final TimeoutSettings timeoutSettings,
+            @Nullable final ServerApi serverApi,
+            final AsyncClientExecutor clientExecutor) {
         this.timeoutSettings = timeoutSettings;
         this.serverApi = serverApi;
+        this.clientExecutor = clientExecutor;
     }
 
     /**
      * @return a simple operation context without timeoutMS
      */
     OperationContext create() {
-        return simpleOperationContext(timeoutSettings.connectionOnly(), serverApi);
+        return simpleOperationContext(timeoutSettings.connectionOnly(), serverApi, clientExecutor);
     }
 
     /**

@@ -59,6 +59,7 @@ import com.mongodb.internal.operation.Operations;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.ServerSessionPool;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -103,6 +104,7 @@ final class MongoClusterImpl implements MongoCluster {
     private final UuidRepresentation uuidRepresentation;
     private final WriteConcern writeConcern;
     private final Operations<BsonDocument> operations;
+    private final AsyncClientExecutor clientExecutor;
     private final TracingManager tracingManager;
 
     MongoClusterImpl(
@@ -111,7 +113,8 @@ final class MongoClusterImpl implements MongoCluster {
             @Nullable final OperationExecutor operationExecutor, final ReadConcern readConcern, final ReadPreference readPreference,
             final boolean retryReads, final boolean retryWrites, final boolean enableOverloadRetargeting,
             @Nullable final ServerApi serverApi, final ServerSessionPool serverSessionPool, final TimeoutSettings timeoutSettings,
-            final UuidRepresentation uuidRepresentation, final WriteConcern writeConcern, final TracingManager tracingManager) {
+            final UuidRepresentation uuidRepresentation, final WriteConcern writeConcern,
+            final AsyncClientExecutor clientExecutor, final TracingManager tracingManager) {
         this.autoEncryptionSettings = autoEncryptionSettings;
         this.cluster = cluster;
         this.codecRegistry = codecRegistry;
@@ -129,6 +132,7 @@ final class MongoClusterImpl implements MongoCluster {
         this.timeoutSettings = timeoutSettings;
         this.uuidRepresentation = uuidRepresentation;
         this.writeConcern = writeConcern;
+        this.clientExecutor = clientExecutor;
         this.tracingManager = tracingManager;
         operations = new Operations<>(
                 null,
@@ -174,35 +178,35 @@ final class MongoClusterImpl implements MongoCluster {
     public MongoCluster withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, enableOverloadRetargeting, serverApi, serverSessionPool, timeoutSettings,
-                uuidRepresentation, writeConcern, tracingManager);
+                uuidRepresentation, writeConcern, clientExecutor, tracingManager);
     }
 
     @Override
     public MongoCluster withReadPreference(final ReadPreference readPreference) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, enableOverloadRetargeting, serverApi, serverSessionPool, timeoutSettings,
-                uuidRepresentation, writeConcern, tracingManager);
+                uuidRepresentation, writeConcern, clientExecutor, tracingManager);
     }
 
     @Override
     public MongoCluster withWriteConcern(final WriteConcern writeConcern) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, enableOverloadRetargeting, serverApi, serverSessionPool, timeoutSettings,
-                uuidRepresentation, writeConcern, tracingManager);
+                uuidRepresentation, writeConcern, clientExecutor, tracingManager);
     }
 
     @Override
     public MongoCluster withReadConcern(final ReadConcern readConcern) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, enableOverloadRetargeting, serverApi, serverSessionPool, timeoutSettings,
-                uuidRepresentation, writeConcern, tracingManager);
+                uuidRepresentation, writeConcern, clientExecutor, tracingManager);
     }
 
     @Override
     public MongoCluster withTimeout(final long timeout, final TimeUnit timeUnit) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, enableOverloadRetargeting, serverApi, serverSessionPool,
-                timeoutSettings.withTimeout(timeout, timeUnit), uuidRepresentation, writeConcern, tracingManager);
+                timeoutSettings.withTimeout(timeout, timeUnit), uuidRepresentation, writeConcern, clientExecutor, tracingManager);
     }
 
     @Override
@@ -399,7 +403,7 @@ final class MongoClusterImpl implements MongoCluster {
         return operationExecutor.execute(operations.clientBulkWriteOperation(clientWriteModels, options), readConcern, clientSession);
     }
 
-    final class OperationExecutorImpl implements OperationExecutor {
+    private final class OperationExecutorImpl implements OperationExecutor {
         private final TimeoutSettings executorTimeoutSettings;
 
         OperationExecutorImpl(final TimeoutSettings executorTimeoutSettings) {
@@ -528,6 +532,7 @@ final class MongoClusterImpl implements MongoCluster {
                     getRequestContext(),
                     new ReadConcernAwareNoOpSessionContext(readConcern),
                     createTimeoutContext(session, executorTimeoutSettings),
+                    clientExecutor,
                     tracingManager,
                     serverApi,
                     commandName,

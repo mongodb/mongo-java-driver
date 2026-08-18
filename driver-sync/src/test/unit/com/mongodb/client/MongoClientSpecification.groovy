@@ -37,6 +37,8 @@ import com.mongodb.internal.TimeoutSettings
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import com.mongodb.internal.connection.ClientMetadata
 import com.mongodb.internal.connection.Cluster
+import com.mongodb.internal.connection.StreamFactoryFactory
+import com.mongodb.internal.thread.AsyncClientExecutor
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.UuidCodec
@@ -48,6 +50,7 @@ import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondary
+import static com.mongodb.assertions.Assertions.fail
 import static com.mongodb.client.internal.TestHelper.execute
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.bson.UuidRepresentation.C_SHARP_LEGACY
@@ -70,7 +73,8 @@ class MongoClientSpecification extends Specification {
                 .retryWrites(true)
                 .codecRegistry(CODEC_REGISTRY)
                 .build()
-        def client = new MongoClientImpl(Stub(Cluster), null, settings, null, new TestOperationExecutor([]))
+        def client = new MongoClientImpl(Stub(Cluster), null, settings, mockStreamFactoryFactory(),
+                AsyncClientExecutor.NO_OP, new TestOperationExecutor([]))
 
         when:
         def database = client.getDatabase('name')
@@ -87,7 +91,8 @@ class MongoClientSpecification extends Specification {
     def 'should use ListDatabasesIterableImpl correctly'() {
         given:
         def executor = new TestOperationExecutor([null, null])
-        def client = new MongoClientImpl(Stub(Cluster), null, MongoClientSettings.builder().build(), null, executor)
+        def client = new MongoClientImpl(Stub(Cluster), null, MongoClientSettings.builder().build(), mockStreamFactoryFactory(),
+                AsyncClientExecutor.NO_OP, executor)
         def listDatabasesMethod = client.&listDatabases
         def listDatabasesNamesMethod = client.&listDatabaseNames
 
@@ -132,7 +137,8 @@ class MongoClientSpecification extends Specification {
                 .build()
         def readPreference = settings.getReadPreference()
         def readConcern = settings.getReadConcern()
-        def client = new MongoClientImpl(Stub(Cluster), null, settings, null, executor)
+        def client = new MongoClientImpl(Stub(Cluster), null, settings, mockStreamFactoryFactory(),
+                AsyncClientExecutor.NO_OP, executor)
         def watchMethod = client.&watch
 
         when:
@@ -169,8 +175,8 @@ class MongoClientSpecification extends Specification {
     def 'should validate the ChangeStreamIterable pipeline data correctly'() {
         given:
         def executor = new TestOperationExecutor([])
-        def client = new MongoClientImpl(Stub(Cluster), null, MongoClientSettings.builder().build(), null,
-                executor)
+        def client = new MongoClientImpl(Stub(Cluster), null, MongoClientSettings.builder().build(), mockStreamFactoryFactory(),
+                AsyncClientExecutor.NO_OP, executor)
 
         when:
         client.watch((Class) null)
@@ -201,7 +207,8 @@ class MongoClientSpecification extends Specification {
             1 * getClientMetadata() >> new ClientMetadata("test", driverInformation)
         }
         def settings = MongoClientSettings.builder().build()
-        def client = new MongoClientImpl(cluster, driverInformation, settings, null, new TestOperationExecutor([]))
+        def client = new MongoClientImpl(cluster, driverInformation, settings, mockStreamFactoryFactory(),
+                AsyncClientExecutor.NO_OP, new TestOperationExecutor([]))
 
         expect:
         client.getClusterDescription() == clusterDescription
@@ -216,12 +223,21 @@ class MongoClientSpecification extends Specification {
                 .build()
 
         when:
-        def client = new MongoClientImpl(Stub(Cluster), null, settings, null, new TestOperationExecutor([]))
+        def client = new MongoClientImpl(Stub(Cluster), null, settings, mockStreamFactoryFactory(),
+                AsyncClientExecutor.NO_OP, new TestOperationExecutor([]))
 
         then:
         (client.getCodecRegistry().get(UUID) as UuidCodec).getUuidRepresentation() == C_SHARP_LEGACY
 
         cleanup:
         client?.close()
+    }
+
+    def mockStreamFactoryFactory() {
+        Mock(StreamFactoryFactory) {
+            getExecutor() >> {
+                fail()
+            }
+        }
     }
 }
