@@ -15,8 +15,12 @@
  */
 package com.mongodb.internal.async.function;
 
+import com.mongodb.internal.async.function.RetryPolicy.Decision;
 import com.mongodb.internal.async.function.RetryPolicy.Decision.RetryAttemptInfo;
+import com.mongodb.internal.time.StartTime;
 import org.junit.jupiter.api.Test;
+
+import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -96,6 +100,26 @@ final class RetryingSyncSupplierTest {
         assertTrue(retryControl.isFirstAttempt());
     }
 
+    @Test
+    void backoff() {
+        Duration backoff = Duration.ofMillis(50);
+        RetryControl<?> retryControl = new RetryControl<>((retryContext, attemptFailedResult) ->
+                new Decision(attemptFailedResult, new RetryAttemptInfo(backoff)));
+        RetryingSyncSupplier<Void> retryingSupplier = new RetryingSyncSupplier<>(
+                retryControl,
+                () -> {
+                    if (retryControl.isFirstAttempt()) {
+                        throw new RuntimeException();
+                    }
+                    return null;
+                });
+        StartTime startTime = StartTime.now();
+        retryingSupplier.get();
+        Duration duration = startTime.elapsed();
+        assertTrue(duration.compareTo(backoff) >= 0);
+        assertTrue(duration.compareTo(backoff.multipliedBy(2)) < 0);
+    }
+
     static final class AssertingUnusedRetryPolicy implements RetryPolicy {
         private final boolean skipFailingOnFirstAttempt;
 
@@ -106,7 +130,7 @@ final class RetryingSyncSupplierTest {
         @Override
         public Decision onAttemptFailure(final RetryContext retryContext, final Throwable attemptFailedResult) {
             if (skipFailingOnFirstAttempt && retryContext.isFirstAttempt()) {
-                return new Decision(attemptFailedResult, new RetryAttemptInfo());
+                return new Decision(attemptFailedResult, new RetryAttemptInfo(Duration.ZERO));
             }
             return fail();
         }

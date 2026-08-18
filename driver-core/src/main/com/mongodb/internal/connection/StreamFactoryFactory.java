@@ -18,6 +18,10 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
+import com.mongodb.connection.TransportSettings;
+
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 /**
  * A factory of {@code StreamFactory} instances.
@@ -29,9 +33,17 @@ public interface StreamFactoryFactory extends AutoCloseable {
      *
      * @param socketSettings the socket settings
      * @param sslSettings the SSL settings
-     * @return a stream factory that will apply the given settins
+     * @return a stream factory that will apply the given settings
      */
     StreamFactory create(SocketSettings socketSettings, SslSettings sslSettings);
+
+    /**
+     * The {@link Executor} that the {@link StreamFactoryFactory} uses for I/O.
+     * It is usually {@link ExecutorService#shutdown() shut down} by {@link #close()},
+     * but the behavior may be different if an application provides an executor via {@link TransportSettings}.
+     * See the documentation of the corresponding API for information about the lifecycle of an application-provided executor.
+     */
+    Executor getExecutor();
 
     @Override
     void close();

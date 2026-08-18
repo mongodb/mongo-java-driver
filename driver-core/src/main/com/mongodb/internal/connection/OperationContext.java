@@ -28,10 +28,12 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.operation.OperationHelper;
 import com.mongodb.internal.session.SessionContext;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
 
@@ -43,6 +45,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import static com.mongodb.MongoException.SYSTEM_OVERLOADED_ERROR_LABEL;
 import static com.mongodb.assertions.Assertions.assertFalse;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static java.util.stream.Collectors.toList;
 
 /**
@@ -60,19 +63,23 @@ public class OperationContext {
     private final ServerApi serverApi;
     @Nullable
     private final String operationName;
+    private final AsyncClientExecutor clientExecutor;
     @Nullable
     private Span tracingSpan;
 
+    @VisibleForTesting(otherwise = PRIVATE)
     public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
             @Nullable final ServerApi serverApi) {
-        this(requestContext, sessionContext, timeoutContext, TracingManager.NO_OP, serverApi, null);
+        this(requestContext, sessionContext, timeoutContext, AsyncClientExecutor.NO_OP, TracingManager.NO_OP, serverApi, null);
     }
 
     public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
+            final AsyncClientExecutor clientExecutor,
             final TracingManager tracingManager,
             @Nullable final ServerApi serverApi,
             @Nullable final String operationName) {
         this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, new ServerDeprioritization(),
+                clientExecutor,
                 tracingManager,
                 serverApi,
                 operationName,
@@ -80,52 +87,49 @@ public class OperationContext {
     }
 
     public OperationContext(final RequestContext requestContext, final SessionContext sessionContext, final TimeoutContext timeoutContext,
+            final AsyncClientExecutor clientExecutor,
             final TracingManager tracingManager,
             @Nullable final ServerApi serverApi,
             @Nullable final String operationName,
             final ServerDeprioritization serverDeprioritization) {
         this(NEXT_ID.incrementAndGet(), requestContext, sessionContext, timeoutContext, serverDeprioritization,
+                clientExecutor,
                 tracingManager,
                 serverApi,
                 operationName,
                 null);
     }
 
-    static OperationContext simpleOperationContext(
-            final TimeoutSettings timeoutSettings, @Nullable final ServerApi serverApi) {
+    public static OperationContext simpleOperationContext(
+            final TimeoutSettings timeoutSettings, @Nullable final ServerApi serverApi, final AsyncClientExecutor clientExecutor) {
         return new OperationContext(
                 IgnorableRequestContext.INSTANCE,
                 NoOpSessionContext.INSTANCE,
                 new TimeoutContext(timeoutSettings),
+                clientExecutor,
                 TracingManager.NO_OP,
                 serverApi,
-                null
-                );
-    }
-
-    public static OperationContext simpleOperationContext(final TimeoutContext timeoutContext) {
-        return new OperationContext(
-                IgnorableRequestContext.INSTANCE,
-                NoOpSessionContext.INSTANCE,
-                timeoutContext,
-                TracingManager.NO_OP,
-                null,
                 null);
     }
 
+    @VisibleForTesting(otherwise = PRIVATE)
+    static OperationContext simpleOperationContext(final TimeoutSettings timeoutSettings) {
+        return simpleOperationContext(timeoutSettings, null, AsyncClientExecutor.NO_OP);
+    }
+
     public OperationContext withSessionContext(final SessionContext sessionContext) {
-        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, tracingManager, serverApi,
-                operationName, tracingSpan);
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, clientExecutor,
+                tracingManager, serverApi, operationName, tracingSpan);
     }
 
     public OperationContext withTimeoutContext(final TimeoutContext timeoutContext) {
-        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, tracingManager, serverApi,
-                operationName, tracingSpan);
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, clientExecutor,
+                tracingManager, serverApi, operationName, tracingSpan);
     }
 
     public OperationContext withOperationName(final String operationName) {
-        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, tracingManager, serverApi,
-                operationName, tracingSpan);
+        return new OperationContext(id, requestContext, sessionContext, timeoutContext, serverDeprioritization, clientExecutor,
+                tracingManager, serverApi, operationName, tracingSpan);
     }
 
     /**
@@ -134,8 +138,8 @@ public class OperationContext {
      */
     public OperationContext withNewServerDeprioritization() {
         return new OperationContext(id, requestContext, sessionContext, timeoutContext,
-                new ServerDeprioritization(serverDeprioritization.enableOverloadRetargeting), tracingManager, serverApi,
-                operationName, tracingSpan);
+                new ServerDeprioritization(serverDeprioritization.enableOverloadRetargeting), clientExecutor,
+                tracingManager, serverApi, operationName, tracingSpan);
     }
 
     public long getId() {
@@ -168,6 +172,10 @@ public class OperationContext {
         return operationName;
     }
 
+    public AsyncClientExecutor getClientExecutor() {
+        return clientExecutor;
+    }
+
     @Nullable
     public Span getTracingSpan() {
         return tracingSpan;
@@ -182,6 +190,7 @@ public class OperationContext {
             final SessionContext sessionContext,
             final TimeoutContext timeoutContext,
             final ServerDeprioritization serverDeprioritization,
+            final AsyncClientExecutor clientExecutor,
             final TracingManager tracingManager,
             @Nullable final ServerApi serverApi,
             @Nullable final String operationName,
@@ -192,6 +201,7 @@ public class OperationContext {
         this.requestContext = requestContext;
         this.sessionContext = sessionContext;
         this.timeoutContext = timeoutContext;
+        this.clientExecutor = clientExecutor;
         this.tracingManager = tracingManager;
         this.serverApi = serverApi;
         this.operationName = operationName;
