@@ -221,7 +221,7 @@ final class SpecRetryPolicy implements RetryPolicy {
     private boolean decideRetryableAndUpdateMaxAttempts(final IndividualPolicies.State.Overload state, final Throwable exception) {
         IndividualPolicies.State.Overload.LabelInfo overloadLabelInfo = state.onAttemptFailure(exception);
         if (overloadLabelInfo.hasSystemOverloadErrorLabel() && policies.isRetrySettingEffectivelyTrue()) {
-            maxAttempts = state.getMaxAttempts();
+            maxAttempts = maxAttempts(state.getMaxRetries());
         }
         return state.isRequirementsMet() && overloadLabelInfo.hasRetryableErrorLabel() && overloadLabelInfo.hasSystemOverloadErrorLabel();
     }
@@ -378,18 +378,16 @@ final class SpecRetryPolicy implements RetryPolicy {
             assertNull(previous);
         }
 
-        private int getMaxAttempts() {
-            int maxRetries;
+        private int getMaxRetries() {
             if (policies.containsKey(Descriptor.WRITE)) {
-                maxRetries = Descriptor.WRITE.maxRetries;
+                return Descriptor.WRITE.maxRetries;
             } else if (policies.containsKey(Descriptor.READ)) {
-                maxRetries = Descriptor.READ.maxRetries;
+                return Descriptor.READ.maxRetries;
             } else if (policies.containsKey(Descriptor.OVERLOAD)) {
-                maxRetries = overload().orElseThrow(Assertions::fail).getMaxAttempts();
+                return overload().orElseThrow(Assertions::fail).getMaxRetries();
             } else {
                 throw fail(toString());
             }
-            return maxAttempts(maxRetries);
         }
 
         private Optional<State.Write> write() {
@@ -540,10 +538,10 @@ final class SpecRetryPolicy implements RetryPolicy {
                     sessionScopedState = null;
                 }
 
-                int getMaxAttempts() {
-                    return maxAttempts(maxAdaptiveRetriesSetting == null
+                int getMaxRetries() {
+                    return maxAdaptiveRetriesSetting == null
                             ? IndividualPolicies.Descriptor.OVERLOAD.maxRetries
-                            : maxAdaptiveRetriesSetting);
+                            : maxAdaptiveRetriesSetting;
                 }
 
                 void onAttemptStart(final RetryContext retryContext, final BaseClientSessionImpl.OverloadRetryPolicyState sessionScopedState) {
@@ -640,7 +638,7 @@ final class SpecRetryPolicy implements RetryPolicy {
                     return INFINITE_ATTEMPTS;
                 }
                 case RETRIES_LIMITED_BY_INDIVIDUAL_POLICIES: {
-                    return policies.getMaxAttempts();
+                    return SpecRetryPolicy.maxAttempts(policies.getMaxRetries());
                 }
                 default: {
                     throw fail(toString());
