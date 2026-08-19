@@ -385,7 +385,7 @@ final class SpecRetryPolicy implements RetryPolicy {
             } else if (policies.containsKey(Descriptor.READ)) {
                 maxRetries = Descriptor.READ.maxRetries;
             } else if (policies.containsKey(Descriptor.OVERLOAD)) {
-                maxRetries = overload().map(State.Overload::getMaxAttempts).orElse(Descriptor.OVERLOAD.maxRetries);
+                maxRetries = overload().orElseThrow(Assertions::fail).getMaxAttempts();
             } else {
                 throw fail(toString());
             }
