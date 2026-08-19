@@ -67,7 +67,7 @@ public final class ExponentialBackoff {
      * @param attemptNumber attempt number > 0
      * @return The calculated backoff in milliseconds.
      */
-    public static long calculateBackoffMs(final double baseMs, final double maxMs, final double growth, final int attemptNumber) {
+    private static long calculateBackoffMs(final double baseMs, final double maxMs, final double growth, final int attemptNumber) {
         assertTrue(attemptNumber > 0, String.valueOf(attemptNumber));
         double jitter = testJitterSupplier != null
                 ? testJitterSupplier.getAsDouble()
