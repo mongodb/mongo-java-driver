@@ -307,7 +307,7 @@ public class BaseClientSessionImpl implements ClientSession {
         void closeCommitScope();
 
         /**
-         * A part of {@link DefaultOverloadRetryPolicyState} restricted to the execution of a command
+         * A part of {@link OverloadRetryPolicyState} restricted to the execution of a command
          * (a command execution may involve multiple execution attempts).
          * <p>
          * This class is not part of the public API and may be removed or changed at any time.
