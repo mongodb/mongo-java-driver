@@ -91,7 +91,6 @@ public final class RetryControl<P extends RetryPolicy> implements RetryContext {
             Throwable prospectiveFailedResult = prospectiveFailedResult();
             if (attemptFailedResult instanceof Error) {
                 onAttemptFatalFailure(policy, prospectiveFailedResult, (Error) attemptFailedResult);
-                policy.onAttemptFatalFailure();
                 throw attemptFailedResult;
             }
             // this `RetryControl` must not be mutated before calling `onAttemptFatalFailure`/`onAttemptFailure`
