@@ -21,6 +21,7 @@ import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
+import com.mongodb.connection.ProxySettings;
 import com.mongodb.internal.crypt.capi.MongoCrypt;
 import com.mongodb.internal.crypt.capi.MongoCrypts;
 import com.mongodb.reactivestreams.client.MongoClient;
@@ -41,6 +42,7 @@ public final class Crypts {
     }
 
     public static Crypt createCrypt(final MongoClientSettings mongoClientSettings, final AutoEncryptionSettings autoEncryptionSettings) {
+        assertKmsProxyNotConfigured(autoEncryptionSettings.getProxySettings());
         MongoClient sharedInternalClient = null;
         MongoClientSettings keyVaultMongoClientSettings = autoEncryptionSettings.getKeyVaultMongoClientSettings();
         if (keyVaultMongoClientSettings == null || !autoEncryptionSettings.isBypassAutoEncryption()) {
@@ -67,12 +69,24 @@ public final class Crypts {
     }
 
     public static Crypt create(final MongoClient keyVaultClient, final ClientEncryptionSettings settings) {
+        assertKmsProxyNotConfigured(settings.getProxySettings());
         return new Crypt(MongoCrypts.create(createMongoCryptOptions(settings)),
                 createKeyRetriever(keyVaultClient, settings.getKeyVaultNamespace()),
                 createKeyManagementService(settings.getKmsProviderSslContextMap()),
                 settings.getKmsProviders(),
                 settings.getKmsProviderPropertySuppliers()
         );
+    }
+
+    /**
+     * Routing KMS requests through a proxy is currently implemented only for the synchronous driver, so fail rather
+     * than silently connecting to KMS hosts directly. This mirrors how a proxy configured for connections to a MongoDB
+     * server is rejected in {@link MongoClients#create(MongoClientSettings, com.mongodb.MongoDriverInformation)}.
+     */
+    private static void assertKmsProxyNotConfigured(final ProxySettings proxySettings) {
+        if (proxySettings.isProxyEnabled()) {
+            throw new MongoClientException("Routing KMS requests through a proxy is not supported for reactive clients");
+        }
     }
 
     private static KeyRetriever createKeyRetriever(final MongoClient keyVaultClient,

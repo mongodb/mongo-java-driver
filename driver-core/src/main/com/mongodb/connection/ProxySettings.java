@@ -23,6 +23,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.lang.Nullable;
 
+import javax.net.ssl.SSLContext;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
@@ -31,16 +32,36 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * This setting is only applicable when communicating with a MongoDB server using the synchronous variant of {@code MongoClient}.
- * <p>
- * This setting is furthermore ignored if:
+ * The settings for reaching a destination through a proxy server.
+ *
+ * <p>These settings are applied in two independent places, which support different
+ * {@linkplain ProxyProtocol protocols}:</p>
  * <ul>
- *     <li>the communication is via {@linkplain com.mongodb.UnixServerAddress Unix domain socket}.</li>
- *     <li>a {@link TransportSettings} is {@linkplain MongoClientSettings.Builder#transportSettings(TransportSettings)}
- *     configured}.</li>
+ *     <li><b>Connections to a MongoDB server</b>, configured through {@link SocketSettings#getProxySettings()}.
+ *     Only {@link ProxyProtocol#SOCKS5} is supported here; configuring any other protocol is rejected when the
+ *     connection is established. This is furthermore ignored if:
+ *     <ul>
+ *         <li>the communication is via {@linkplain com.mongodb.UnixServerAddress Unix domain socket}.</li>
+ *         <li>a {@link TransportSettings} is {@linkplain MongoClientSettings.Builder#transportSettings(TransportSettings)}
+ *         configured}.</li>
+ *     </ul>
+ *     </li>
+ *     <li><b>Key Management Service (KMS) requests made by in-use encryption</b>, configured through
+ *     {@link ClientEncryptionSettings#getProxySettings()} or {@link AutoEncryptionSettings#getProxySettings()}.
+ *     All {@linkplain ProxyProtocol protocols} are supported here. TLS is always negotiated end-to-end with the KMS
+ *     host, so a proxy relays the session without being able to read it.</li>
  * </ul>
  *
+ * <p>These settings are only applicable when using the synchronous variant of {@code MongoClient}. They are ignored by
+ * the reactive streams driver, which rejects a proxy configured for connections to a MongoDB server and does not
+ * currently route KMS requests through a proxy.</p>
+ *
+ * <p>A proxy configured for connections to a MongoDB server is not applied to KMS requests, and vice versa; each must
+ * be configured where it is needed.</p>
+ *
  * @see SocketSettings#getProxySettings()
+ * @see ClientEncryptionSettings#getProxySettings()
+ * @see AutoEncryptionSettings#getProxySettings()
  * @see ClientEncryptionSettings#getKeyVaultMongoClientSettings()
  * @see AutoEncryptionSettings#getKeyVaultMongoClientSettings()
  * @since 4.11
@@ -59,6 +80,9 @@ public final class ProxySettings {
     private final String username;
     @Nullable
     private final String password;
+    private final ProxyProtocol protocol;
+    @Nullable
+    private final SSLContext sslContext;
 
     /**
      * Creates a {@link Builder} for creating a new {@link ProxySettings} instance.
@@ -83,6 +107,9 @@ public final class ProxySettings {
      * A builder for an instance of {@code ProxySettings}.
      */
     public static final class Builder {
+        private ProxyProtocol protocol = ProxyProtocol.SOCKS5;
+        @Nullable
+        private SSLContext sslContext;
         private String host;
         private Integer port;
         private String username;
@@ -107,17 +134,21 @@ public final class ProxySettings {
             this.port = proxySettings.port;
             this.username = proxySettings.username;
             this.password = proxySettings.password;
+            this.protocol = proxySettings.protocol;
+            this.sslContext = proxySettings.sslContext;
             return this;
         }
 
         /**
-         * Sets the SOCKS5 proxy host to establish a connection through.
+         * Sets the proxy host to establish a connection through.
          *
          * <p>The host can be specified as an IPv4 address (e.g., "192.168.1.1"),
          * an IPv6 address (e.g., "2001:0db8:85a3:0000:0000:8a2e:0370:7334"),
          * or a domain name (e.g., "proxy.example.com"). </p>
          *
-         * @param host The SOCKS5 proxy host to set.
+         * <p>Setting a host is what {@linkplain #isProxyEnabled() enables} the proxy.</p>
+         *
+         * @param host The proxy host to set.
          * @return This ProxySettings.Builder instance, configured with the specified proxy host.
          * @throws IllegalArgumentException If the provided host is null or empty after trimming.
          * @see ProxySettings.Builder#port(int)
@@ -131,14 +162,15 @@ public final class ProxySettings {
         }
 
         /**
-         * Sets the port number for the SOCKS5 proxy server. The port should be a non-negative integer
-         * representing the port through which the SOCKS5 proxy connection will be established.
+         * Sets the port number for the proxy server. The port should be a non-negative integer
+         * representing the port through which the proxy connection will be established.
          * <p>
          * If a port is specified via this method, a corresponding host must be provided using the {@link #host(String)} method.
          * <p>
-         * If no port is provided, the default port 1080 will be used.
+         * If no port is provided, the default SOCKS5 port {@value #DEFAULT_PORT} is used. A port must be specified
+         * explicitly for {@link ProxyProtocol#HTTP} and {@link ProxyProtocol#HTTPS}, as neither has a standard port.
          *
-         * @param port The port number to set for the SOCKS5 proxy server.
+         * @param port The port number to set for the proxy server.
          * @return This ProxySettings.Builder instance, configured with the specified proxy port.
          * @throws IllegalArgumentException If the provided port is negative.
          * @see ProxySettings.Builder#host(String)
@@ -151,11 +183,16 @@ public final class ProxySettings {
         }
 
         /**
-         * Sets the username for authenticating with the SOCKS5 proxy server.
+         * Sets the username for authenticating with the proxy server.
          * The provided username should not be empty or null.
          * <p>
          * If a username is specified, the corresponding password and proxy host must also be specified using the
          * {@link #password(String)} and {@link #host(String)} methods, respectively.
+         * <p>
+         * The credentials are used for username/password authentication when the
+         * {@linkplain #protocol(ProxyProtocol) protocol} is {@link ProxyProtocol#SOCKS5}, and for {@code Basic}
+         * authentication via the {@code Proxy-Authorization} header for the HTTP protocols. Other proxy
+         * authentication schemes, such as {@code Digest}, {@code NTLM} and {@code Negotiate}, are not supported.
          *
          * @param username The username to set for proxy authentication.
          * @return This ProxySettings.Builder instance, configured with the specified username.
@@ -174,7 +211,7 @@ public final class ProxySettings {
         }
 
         /**
-         * Sets the password for authenticating with the SOCKS5 proxy server.
+         * Sets the password for authenticating with the proxy server.
          * The provided password should not be empty or null.
          * <p>
          * If a password is specified, the corresponding username and proxy host must also be specified using the
@@ -196,6 +233,40 @@ public final class ProxySettings {
             return this;
         }
 
+
+        /**
+         * Sets the protocol spoken to the proxy server.
+         *
+         * <p>Defaults to {@link ProxyProtocol#SOCKS5}.</p>
+         *
+         * @param protocol the proxy protocol, which may not be null.
+         * @return this {@link Builder} instance, configured with the specified proxy protocol.
+         * @see ProxySettings#getProtocol()
+         * @since 5.11
+         */
+        public ProxySettings.Builder protocol(final ProxyProtocol protocol) {
+            this.protocol = notNull("protocol", protocol);
+            return this;
+        }
+
+        /**
+         * Sets the {@link SSLContext} used for the TLS connection to the proxy server.
+         *
+         * <p>This is used only when the {@linkplain #protocol(ProxyProtocol) protocol} is
+         * {@link ProxyProtocol#HTTPS}. It configures TLS between the client and the proxy; it does not affect the
+         * separate TLS session negotiated end-to-end with the target host through the tunnel.</p>
+         *
+         * <p>Defaults to {@code null}, in which case the default {@link SSLContext} is used.</p>
+         *
+         * @param sslContext the SSL context for the connection to the proxy, or null to use the default.
+         * @return this {@link Builder} instance, configured with the specified SSL context.
+         * @see ProxySettings#getSslContext()
+         * @since 5.11
+         */
+        public ProxySettings.Builder sslContext(@Nullable final SSLContext sslContext) {
+            this.sslContext = sslContext;
+            return this;
+        }
 
         /**
          * Takes the proxy settings from the given {@code ConnectionString} and applies them to the {@link Builder}.
@@ -242,7 +313,7 @@ public final class ProxySettings {
     }
 
     /**
-     * Gets the SOCKS5 proxy host.
+     * Gets the proxy host.
      *
      * @return the proxy host value. {@code null} if and only if the {@linkplain #isProxyEnabled() proxy functionality is not enabled}.
      * @see Builder#host(String)
@@ -253,9 +324,9 @@ public final class ProxySettings {
     }
 
     /**
-     * Gets the SOCKS5 proxy port.
+     * Gets the proxy port.
      *
-     * @return The port number of the SOCKS5 proxy. If a custom port has been set using {@link Builder#port(int)},
+     * @return The port number of the proxy. If a custom port has been set using {@link Builder#port(int)},
      * that custom port value is returned. Otherwise, the default SOCKS5 port {@value #DEFAULT_PORT} is returned.
      * @see Builder#port(int)
      */
@@ -267,7 +338,7 @@ public final class ProxySettings {
     }
 
     /**
-     * Gets the SOCKS5 proxy username.
+     * Gets the proxy username.
      *
      * @return the proxy username value.
      * @see Builder#username(String)
@@ -278,7 +349,7 @@ public final class ProxySettings {
     }
 
     /**
-     * Gets the SOCKS5 proxy password.
+     * Gets the proxy password.
      *
      * @return the proxy password value.
      * @see Builder#password(String)
@@ -289,7 +360,30 @@ public final class ProxySettings {
     }
 
     /**
-     * Checks if the SOCKS5 proxy is enabled.
+     * Gets the protocol spoken to the proxy server.
+     *
+     * @return the proxy protocol. Defaults to {@link ProxyProtocol#SOCKS5}.
+     * @see Builder#protocol(ProxyProtocol)
+     * @since 5.11
+     */
+    public ProxyProtocol getProtocol() {
+        return protocol;
+    }
+
+    /**
+     * Gets the {@link SSLContext} used for the TLS connection to the proxy server.
+     *
+     * @return the SSL context for the connection to the proxy, or null to use the default.
+     * @see Builder#sslContext(SSLContext)
+     * @since 5.11
+     */
+    @Nullable
+    public SSLContext getSslContext() {
+        return sslContext;
+    }
+
+    /**
+     * Checks if the proxy is enabled.
      *
      * @return {@code true} if the proxy is enabled, {@code false} otherwise.
      * @see Builder#host(String)
@@ -310,12 +404,14 @@ public final class ProxySettings {
         return Objects.equals(host, that.host)
                 && Objects.equals(port, that.port)
                 && Objects.equals(username, that.username)
-                && Objects.equals(password, that.password);
+                && Objects.equals(password, that.password)
+                && protocol == that.protocol
+                && Objects.equals(sslContext, that.sslContext);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(host, port, username, password);
+        return Objects.hash(host, port, username, password, protocol, sslContext);
     }
 
     @Override
@@ -323,6 +419,7 @@ public final class ProxySettings {
         return "ProxySettings{"
                 + "host=" + host
                 + ", port=" + port
+                + ", protocol=" + protocol
                 + ", username=<hidden>"
                 + ", password=<hidden>"
                 + '}';
@@ -340,10 +437,17 @@ public final class ProxySettings {
         isTrue("Both proxyUsername and proxyPassword must be set together. They cannot be set individually",
                 (builder.username == null) == (builder.password == null));
 
+        if (builder.protocol != ProxyProtocol.SOCKS5) {
+            isTrue("proxyPort must be specified explicitly when the proxy protocol is " + builder.protocol,
+                    builder.port != null);
+        }
+
         this.host = builder.host;
         this.port = builder.port;
         this.username = builder.username;
         this.password = builder.password;
+        this.protocol = builder.protocol;
+        this.sslContext = builder.sslContext;
     }
 }
 

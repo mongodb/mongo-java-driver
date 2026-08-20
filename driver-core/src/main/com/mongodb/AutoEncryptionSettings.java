@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.connection.ProxySettings;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
@@ -69,6 +70,7 @@ public final class AutoEncryptionSettings {
     private final String keyVaultNamespace;
     private final Map<String, Map<String, Object>> kmsProviders;
     private final Map<String, SSLContext> kmsProviderSslContextMap;
+    private final ProxySettings proxySettings;
     private final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers;
     private final Map<String, BsonDocument> schemaMap;
     private final Map<String, Object> extraOptions;
@@ -88,6 +90,7 @@ public final class AutoEncryptionSettings {
         private String keyVaultNamespace;
         private Map<String, Map<String, Object>> kmsProviders;
         private Map<String, SSLContext> kmsProviderSslContextMap = new HashMap<>();
+        private ProxySettings proxySettings = ProxySettings.builder().build();
         private Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<>();
         private Map<String, BsonDocument> schemaMap = Collections.emptyMap();
         private Map<String, Object> extraOptions = Collections.emptyMap();
@@ -159,6 +162,26 @@ public final class AutoEncryptionSettings {
          */
         public Builder kmsProviderSslContextMap(final Map<String, SSLContext> kmsProviderSslContextMap) {
             this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", kmsProviderSslContextMap);
+            return this;
+        }
+
+        /**
+         * Sets the proxy to route Key Management Service (KMS) requests through.
+         *
+         * <p>Both {@link com.mongodb.connection.ProxyProtocol#HTTP HTTP} and
+         * {@link com.mongodb.connection.ProxyProtocol#SOCKS5 SOCKS5} proxies are supported. TLS is always negotiated
+         * end-to-end with the KMS host, so the proxy relays the session without being able to read it.</p>
+         *
+         * <p>Defaults to a {@link ProxySettings} with no host, in which case the driver connects to KMS hosts
+         * directly.</p>
+         *
+         * @param proxySettings the proxy settings, which may not be null.
+         * @return this
+         * @see #getProxySettings()
+         * @since 5.11
+         */
+        public Builder proxySettings(final ProxySettings proxySettings) {
+            this.proxySettings = notNull("proxySettings", proxySettings);
             return this;
         }
 
@@ -407,6 +430,16 @@ public final class AutoEncryptionSettings {
     }
 
     /**
+     * Gets the proxy that Key Management Service (KMS) requests are routed through.
+     *
+     * @return the proxy settings, never null. {@link ProxySettings#isProxyEnabled()} is false if no proxy is configured.
+     * @since 5.11
+     */
+    public ProxySettings getProxySettings() {
+        return proxySettings;
+    }
+
+    /**
      * Gets the map of namespace to local JSON schema.
      * <p>
      * Automatic encryption is configured with an "encrypt" field in a collection's JSONSchema. By default, a collection's JSONSchema is
@@ -529,6 +562,7 @@ public final class AutoEncryptionSettings {
         this.keyVaultNamespace = notNull("keyVaultNamespace", builder.keyVaultNamespace);
         this.kmsProviders = notNull("kmsProviders", builder.kmsProviders);
         this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", builder.kmsProviderSslContextMap);
+        this.proxySettings = builder.proxySettings;
         this.kmsProviderPropertySuppliers = notNull("kmsProviderPropertySuppliers", builder.kmsProviderPropertySuppliers);
         this.schemaMap = notNull("schemaMap", builder.schemaMap);
         this.extraOptions = notNull("extraOptions", builder.extraOptions);
