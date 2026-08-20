@@ -151,6 +151,6 @@ class ProxySettingsTest {
         String stringValue = proxySettings.toString();
 
         Assertions.assertEquals("ProxySettings{host=" + HOST + ", port=" + VALID_PORT
-                + ", username=<hidden>, password=<hidden>}", stringValue);
+                + ", protocol=SOCKS5, username=<hidden>, password=<hidden>}", stringValue);
     }
 }

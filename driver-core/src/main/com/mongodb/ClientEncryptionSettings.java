@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.connection.ProxySettings;
 import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 
@@ -49,6 +50,7 @@ public final class ClientEncryptionSettings {
     private final Map<String, Map<String, Object>> kmsProviders;
     private final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers;
     private final Map<String, SSLContext> kmsProviderSslContextMap;
+    private final ProxySettings proxySettings;
     @Nullable
     private final Long timeoutMS;
     @Nullable
@@ -65,6 +67,7 @@ public final class ClientEncryptionSettings {
         private Map<String, Map<String, Object>> kmsProviders;
         private Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<>();
         private Map<String, SSLContext> kmsProviderSslContextMap = new HashMap<>();
+        private ProxySettings proxySettings = ProxySettings.builder().build();
         @Nullable
         private Long timeoutMS;
         @Nullable
@@ -133,6 +136,26 @@ public final class ClientEncryptionSettings {
          */
         public Builder kmsProviderSslContextMap(final Map<String, SSLContext> kmsProviderSslContextMap) {
             this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", kmsProviderSslContextMap);
+            return this;
+        }
+
+        /**
+         * Sets the proxy to route Key Management Service (KMS) requests through.
+         *
+         * <p>Both {@link com.mongodb.connection.ProxyProtocol#HTTP HTTP} and
+         * {@link com.mongodb.connection.ProxyProtocol#SOCKS5 SOCKS5} proxies are supported. TLS is always negotiated
+         * end-to-end with the KMS host, so the proxy relays the session without being able to read it.</p>
+         *
+         * <p>Defaults to a {@link ProxySettings} with no host, in which case the driver connects to KMS hosts
+         * directly.</p>
+         *
+         * @param proxySettings the proxy settings, which may not be null.
+         * @return this
+         * @see #getProxySettings()
+         * @since 5.11
+         */
+        public Builder proxySettings(final ProxySettings proxySettings) {
+            this.proxySettings = notNull("proxySettings", proxySettings);
             return this;
         }
 
@@ -336,6 +359,16 @@ public final class ClientEncryptionSettings {
     }
 
     /**
+     * Gets the proxy that Key Management Service (KMS) requests are routed through.
+     *
+     * @return the proxy settings, never null. {@link ProxySettings#isProxyEnabled()} is false if no proxy is configured.
+     * @since 5.11
+     */
+    public ProxySettings getProxySettings() {
+        return proxySettings;
+    }
+
+    /**
      * Returns the cache expiration time for data encryption keys.
      *
      * <p>Defaults to {@code null} which defers to libmongocrypt's default which is currently {@code 60000 ms}.
@@ -399,6 +432,7 @@ public final class ClientEncryptionSettings {
         this.kmsProviders = notNull("kmsProviders", builder.kmsProviders);
         this.kmsProviderPropertySuppliers = notNull("kmsProviderPropertySuppliers", builder.kmsProviderPropertySuppliers);
         this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", builder.kmsProviderSslContextMap);
+        this.proxySettings = builder.proxySettings;
         this.timeoutMS = builder.timeoutMS;
         this.keyExpirationMS = builder.keyExpirationMS;
     }

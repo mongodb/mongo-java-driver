@@ -16,11 +16,13 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
+import com.mongodb.connection.ProxyProtocol;
 import com.mongodb.connection.ProxySettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
@@ -89,6 +91,13 @@ public class SocketStream implements Stream {
     protected Socket initializeSocket(final OperationContext operationContext) throws IOException {
         ProxySettings proxySettings = settings.getProxySettings();
         if (proxySettings.isProxyEnabled()) {
+            // An HTTP proxy is currently supported only for KMS requests made by in-use encryption, so reject it here
+            // rather than silently speaking SOCKS5 to a proxy that is not expecting it.
+            if (proxySettings.getProtocol() != ProxyProtocol.SOCKS5) {
+                throw new MongoClientException("The " + proxySettings.getProtocol() + " proxy protocol is not supported"
+                        + " for connections to a MongoDB server. It may be used for KMS requests via"
+                        + " ClientEncryptionSettings or AutoEncryptionSettings.");
+            }
             if (sslSettings.isEnabled()) {
                 assertTrue(socketFactory instanceof SSLSocketFactory);
                 SSLSocketFactory sslSocketFactory = (SSLSocketFactory) socketFactory;
