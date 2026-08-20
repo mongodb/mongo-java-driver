@@ -88,7 +88,7 @@ public final class RetryControl<P extends RetryPolicy> implements RetryContext {
             if (disabled) {
                 throw attemptFailedResult;
             }
-            Throwable prospectiveFailedResult = prospectiveFailedResult();
+            Throwable prospectiveFailedResult = getProspectiveFailedResult().orElse(null);
             if (attemptFailedResult instanceof Error) {
                 onAttemptFatalFailure(policy, prospectiveFailedResult, (Error) attemptFailedResult);
                 throw attemptFailedResult;
@@ -156,12 +156,9 @@ public final class RetryControl<P extends RetryPolicy> implements RetryContext {
     @Override
     public Optional<Throwable> getProspectiveFailedResult() {
         assertTrue(isFirstAttempt() ^ mostRecentDecision != null);
-        return Optional.ofNullable(prospectiveFailedResult());
-    }
-
-    @Nullable
-    private Throwable prospectiveFailedResult() {
-        return mostRecentDecision == null ? null : mostRecentDecision.getProspectiveFailedResult();
+        return mostRecentDecision == null
+                ? Optional.empty()
+                : Optional.of(mostRecentDecision.getProspectiveFailedResult());
     }
 
     /**
@@ -197,7 +194,7 @@ public final class RetryControl<P extends RetryPolicy> implements RetryContext {
         if (isFirstAttempt()) {
             return;
         }
-        Throwable prospectiveFailedResult = assertNotNull(prospectiveFailedResult());
+        Throwable prospectiveFailedResult = getProspectiveFailedResult().orElseThrow(Assertions::fail);
         try {
             if (predicate.get()) {
                 loopControl.markAsLastIteration();
