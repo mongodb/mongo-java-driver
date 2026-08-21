@@ -20,7 +20,6 @@ package com.mongodb.reactivestreams.client;
 import com.mongodb.MongoException;
 import com.mongodb.TransactionOptions;
 import com.mongodb.annotations.Internal;
-import com.mongodb.annotations.Sealed;
 import com.mongodb.internal.observability.micrometer.TransactionSpan;
 import com.mongodb.lang.Nullable;
 import org.reactivestreams.Publisher;
@@ -30,7 +29,6 @@ import org.reactivestreams.Publisher;
  *
  * @since 1.9
  */
-@Sealed
 public interface ClientSession extends com.mongodb.session.ClientSession {
     /**
      * Returns true if there is an active transaction on this session, and false otherwise

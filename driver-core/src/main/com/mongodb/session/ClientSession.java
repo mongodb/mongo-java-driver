@@ -20,7 +20,6 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Internal;
 import com.mongodb.annotations.NotThreadSafe;
-import com.mongodb.annotations.Sealed;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -36,7 +35,6 @@ import java.io.Closeable;
  * @see ClientSessionOptions
  */
 @NotThreadSafe
-@Sealed
 public interface ClientSession extends Closeable {
 
     /**

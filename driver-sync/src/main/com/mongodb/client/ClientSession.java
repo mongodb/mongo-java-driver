@@ -20,7 +20,6 @@ import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
 import com.mongodb.annotations.Internal;
-import com.mongodb.annotations.Sealed;
 import com.mongodb.internal.observability.micrometer.TransactionSpan;
 import com.mongodb.lang.Nullable;
 
@@ -29,7 +28,6 @@ import com.mongodb.lang.Nullable;
  *
  * @since 3.8
  */
-@Sealed
 public interface ClientSession extends com.mongodb.session.ClientSession {
     /**
      * Returns the server address of the pinned mongos on this session.
