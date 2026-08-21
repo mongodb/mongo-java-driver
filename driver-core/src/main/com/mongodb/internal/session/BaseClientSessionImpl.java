@@ -281,7 +281,8 @@ public class BaseClientSessionImpl implements ClientSession {
          * @see #openCommandExecutionScope()
          * @see #closeCommandExecutionScope()
          *
-         * @return Non-{@code null} iff a command execution is in progress in the session and the overload retry policy is in use.
+         * @return Non-{@code null} iff a command execution is in progress in the session
+         * and the overload retry policy is included in {@link RetryPolicy}.
          */
         @Nullable
         CommandExecutionScoped getCommandExecutionScoped();
