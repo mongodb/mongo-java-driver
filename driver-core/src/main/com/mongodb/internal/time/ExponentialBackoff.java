@@ -62,10 +62,7 @@ public final class ExponentialBackoff {
     }
 
     /**
-     * Calculate the backoff in milliseconds for transaction retries.
-     *
-     * @param attemptNumber attempt number > 0
-     * @return The calculated backoff in milliseconds.
+     * Calculate the backoff in milliseconds.
      */
     private static long calculateBackoffMs(final double baseMs, final double maxMs, final double growth, final int attemptNumber) {
         assertTrue(attemptNumber > 0, String.valueOf(attemptNumber));
