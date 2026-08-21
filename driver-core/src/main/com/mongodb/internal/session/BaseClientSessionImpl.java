@@ -280,6 +280,8 @@ public class BaseClientSessionImpl implements ClientSession {
         /**
          * @see #openCommandExecutionScope()
          * @see #closeCommandExecutionScope()
+         *
+         * @return Non-{@code null} iff a command execution is in progress in the session and the overload retry policy is in use.
          */
         @Nullable
         CommandExecutionScoped getCommandExecutionScoped();
@@ -297,6 +299,8 @@ public class BaseClientSessionImpl implements ClientSession {
         /**
          * @see #openCommitScope()
          * @see #closeCommitScope()
+         *
+         * @return Non-{@code null} iff a sequence of commit transaction operations has begun and has not ended.
          */
         @Nullable
         CommitScoped getCommitScoped();
@@ -326,10 +330,9 @@ public class BaseClientSessionImpl implements ClientSession {
              * {@link OverloadRetryPolicyState#closeCommandExecutionScope() closing} the command execution scope.
              * However, in those situations where {@link RetryControl#doWhileDisabled(Supplier)} is used to execute another command within
              * an execution attempt of the transaction-starting command,
-             * successful sending and receiving a response to the transaction-starting command implies neither
-             * a successful completion of the corresponding transaction-starting command execution attempt,
-             * nor, consequently, a successful completion of the corresponding transaction-starting command execution.
-             * In these situations, the {@link RetryPolicy} no has any way of knowing that transaction has been started successfully
+             * successful sending and receiving a response to the transaction-starting command does not imply
+             * a successful completion of the corresponding transaction-starting command execution.
+             * In these situations, the {@link RetryPolicy} has no way of knowing that transaction has been started successfully
              * and informing {@link CommandExecutionScoped} that the session is no longer trying to start a transaction.
              * The current method serves that purpose.
              * <p>
