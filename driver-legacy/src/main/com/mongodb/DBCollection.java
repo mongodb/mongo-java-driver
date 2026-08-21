@@ -680,8 +680,7 @@ public class DBCollection {
                 this,
                 query,
                 new DBCollectionFindOptions().readPreference(getReadPreference()),
-                retryReads,
-                maxAdaptiveRetriesSetting);
+                retryReads);
     }
 
     /**
@@ -698,8 +697,7 @@ public class DBCollection {
                 this,
                 query,
                 new DBCollectionFindOptions().projection(projection).readPreference(getReadPreference()),
-                retryReads,
-                maxAdaptiveRetriesSetting);
+                retryReads);
     }
 
     /**
@@ -723,7 +721,7 @@ public class DBCollection {
      * @since 3.4
      */
     public DBCursor find(@Nullable final DBObject query, final DBCollectionFindOptions options) {
-        return new DBCursor(this, query, options, retryReads, maxAdaptiveRetriesSetting);
+        return new DBCursor(this, query, options, retryReads);
     }
 
     /**
@@ -1260,7 +1258,7 @@ public class DBCollection {
                         .execute(operation, getReadPreference(), getReadConcern(), null);
                 result = new DBCursor(database.getCollection(outCollection.asString().getValue()), new BasicDBObject(),
                         new DBCollectionFindOptions().readPreference(primary()).collation(options.getCollation()),
-                        retryReads, maxAdaptiveRetriesSetting);
+                        retryReads);
             } catch (MongoWriteConcernException e) {
                 throw createWriteConcernException(e);
             }
@@ -2221,6 +2219,11 @@ public class DBCollection {
 
     TimeoutSettings getTimeoutSettings(){
        return database.getTimeoutSettings();
+    }
+
+    @Nullable
+    Integer getMaxAdaptiveRetriesSetting() {
+        return maxAdaptiveRetriesSetting;
     }
 
     static WriteConcernException createWriteConcernException(final MongoWriteConcernException e) {

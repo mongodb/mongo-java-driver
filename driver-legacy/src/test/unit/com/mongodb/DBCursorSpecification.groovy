@@ -164,7 +164,7 @@ class DBCursorSpecification extends Specification {
         def readConcern = ReadConcern.LOCAL
         def readPreference = ReadPreference.nearest()
         def findOptions = new DBCollectionFindOptions()
-        def cursor = new DBCursor(collection, filter, findOptions, true, null)
+        def cursor = new DBCursor(collection, filter, findOptions, true)
                 .setReadConcern(readConcern)
                 .setReadPreference(readPreference)
                 .setCollation(collation)
@@ -241,7 +241,7 @@ class DBCursorSpecification extends Specification {
                 .returnKey(true)
                 .showRecordId(true)
 
-        def cursor = new DBCursor(collection, filter, findOptions, true, null)
+        def cursor = new DBCursor(collection, filter, findOptions, true)
 
         when:
         cursor.toArray()
