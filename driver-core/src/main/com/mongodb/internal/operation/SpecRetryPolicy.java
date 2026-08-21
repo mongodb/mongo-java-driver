@@ -287,7 +287,9 @@ final class SpecRetryPolicy implements RetryPolicy {
     }
 
     private static int maxAttempts(final int maxRetries) {
-        assertTrue(maxRetries < INFINITE_ATTEMPTS - 1);
+        if (maxRetries == INFINITE_ATTEMPTS) {
+            return INFINITE_ATTEMPTS;
+        }
         return maxRetries + 1;
     }
 
