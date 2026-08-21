@@ -545,10 +545,10 @@ final class SpecRetryPolicy implements RetryPolicy {
                 }
 
                 void onAttemptStart(final RetryContext retryContext, final BaseClientSessionImpl.OverloadRetryPolicyState sessionScopedState) {
+                    this.sessionScopedState = sessionScopedState;
                     if (retryContext.isFirstAttempt()) {
                         sessionScopedState.openCommandExecutionScope();
                     }
-                    this.sessionScopedState = sessionScopedState;
                 }
 
                 void onAttemptFatalFailure() {
