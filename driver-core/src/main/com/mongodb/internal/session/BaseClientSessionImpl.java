@@ -519,8 +519,9 @@ public class BaseClientSessionImpl implements ClientSession {
         }
 
         @Override
+        @Nullable
         public CommitScoped getCommitScoped() {
-            return NoOpCommitScoped.INSTANCE;
+            return null;
         }
 
         @Override
@@ -544,22 +545,6 @@ public class BaseClientSessionImpl implements ClientSession {
 
             @Override
             public void onAnyAttemptFailure(final boolean retryableOverloadError) {
-            }
-        }
-
-        private static final class NoOpCommitScoped implements CommitScoped {
-            static final NoOpCommitScoped INSTANCE = new NoOpCommitScoped();
-
-            private NoOpCommitScoped() {
-            }
-
-            @Override
-            public void onAnyAttemptFailure(final boolean retryableOverloadError) {
-            }
-
-            @Override
-            public boolean observedErrorsAndTheyAreAllRetryableOverloadErrors() {
-                throw fail();
             }
         }
     }
