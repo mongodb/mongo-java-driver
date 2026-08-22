@@ -44,7 +44,7 @@ public class DistinctPublisherImplTest extends TestHelper {
                 new DistinctPublisherImpl<>(null, createMongoOperationPublisher(executor), fieldName, new Document());
 
         DistinctOperation<Document> expectedOperation = new DistinctOperation<>(NAMESPACE, fieldName,
-                                                                                getDefaultCodecRegistry().get(Document.class))
+                                                                                getDefaultCodecRegistry().get(Document.class), null)
                 .retryReads(true).filter(new BsonDocument());
 
         // default input should be as expected

@@ -61,6 +61,8 @@ public class MongoDatabaseImpl implements MongoDatabase {
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
     private final boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private final ReadConcern readConcern;
     private final UuidRepresentation uuidRepresentation;
     @Nullable
@@ -72,6 +74,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
 
     public MongoDatabaseImpl(final String name, final CodecRegistry codecRegistry, final ReadPreference readPreference,
             final WriteConcern writeConcern, final boolean retryWrites, final boolean retryReads,
+            @Nullable final Integer maxAdaptiveRetriesSetting,
             final ReadConcern readConcern, final UuidRepresentation uuidRepresentation,
             @Nullable final AutoEncryptionSettings autoEncryptionSettings, final TimeoutSettings timeoutSettings,
             final OperationExecutor executor) {
@@ -82,13 +85,14 @@ public class MongoDatabaseImpl implements MongoDatabase {
         this.writeConcern = notNull("writeConcern", writeConcern);
         this.retryWrites = retryWrites;
         this.retryReads = retryReads;
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
         this.readConcern = notNull("readConcern", readConcern);
         this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
         this.autoEncryptionSettings = autoEncryptionSettings;
         this.timeoutSettings = timeoutSettings;
         this.executor = notNull("executor", executor);
         this.operations = new Operations<>(new MongoNamespace(name, "_ignored"), BsonDocument.class, readPreference,
-                codecRegistry, readConcern, writeConcern, retryWrites, retryReads, timeoutSettings);
+                codecRegistry, readConcern, writeConcern, retryWrites, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
     }
 
     @Override
@@ -126,31 +130,31 @@ public class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public MongoDatabase withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoDatabaseImpl(name, withUuidRepresentation(codecRegistry, uuidRepresentation), readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
+                retryReads, maxAdaptiveRetriesSetting, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
     }
 
     @Override
     public MongoDatabase withReadPreference(final ReadPreference readPreference) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
-                uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads,
+                maxAdaptiveRetriesSetting, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
     }
 
     @Override
     public MongoDatabase withWriteConcern(final WriteConcern writeConcern) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
-                uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads,
+                maxAdaptiveRetriesSetting, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
     }
 
     @Override
     public MongoDatabase withReadConcern(final ReadConcern readConcern) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
-                uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads,
+                maxAdaptiveRetriesSetting, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
     }
 
     @Override
     public MongoDatabase withTimeout(final long timeout, final TimeUnit timeUnit) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
-                uuidRepresentation, autoEncryptionSettings, timeoutSettings.withTimeout(timeout, timeUnit), executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads,
+                maxAdaptiveRetriesSetting, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings.withTimeout(timeout, timeUnit), executor);
     }
 
     @Override
@@ -161,7 +165,8 @@ public class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public <TDocument> MongoCollection<TDocument> getCollection(final String collectionName, final Class<TDocument> documentClass) {
         return new MongoCollectionImpl<>(new MongoNamespace(name, collectionName), documentClass, codecRegistry, readPreference,
-                writeConcern, retryWrites, retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
+                writeConcern, retryWrites, retryReads, maxAdaptiveRetriesSetting, readConcern,
+                uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
     }
 
     @Override
@@ -270,7 +275,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
                                                                                      final Class<TResult> resultClass,
                                                                                      final boolean collectionNamesOnly) {
         return new ListCollectionsIterableImpl<>(clientSession, name, collectionNamesOnly, resultClass, codecRegistry,
-                ReadPreference.primary(), executor, retryReads, timeoutSettings);
+                ReadPreference.primary(), executor, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
     }
 
     @Override
@@ -393,14 +398,15 @@ public class MongoDatabaseImpl implements MongoDatabase {
                                                                          final List<? extends Bson> pipeline,
                                                                          final Class<TResult> resultClass) {
         return new AggregateIterableImpl<>(clientSession, name, Document.class, resultClass, codecRegistry,
-                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.DATABASE, retryReads, timeoutSettings);
+                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.DATABASE,
+                retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
     }
 
     private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,
                                                                                final List<? extends Bson> pipeline,
                                                                                final Class<TResult> resultClass) {
         return new ChangeStreamIterableImpl<>(clientSession, name, codecRegistry, readPreference, readConcern, executor,
-                pipeline, resultClass, ChangeStreamLevel.DATABASE, retryReads, timeoutSettings);
+                pipeline, resultClass, ChangeStreamLevel.DATABASE, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
     }
 
     private void executeCreateView(@Nullable final ClientSession clientSession, final String viewName, final String viewOn,

@@ -350,7 +350,7 @@ class MongoClientSpecification extends Specification {
 
         then:
         expect database, isTheSameAs(new MongoDatabaseImpl('name', client.getCodecRegistry(), secondary(),
-                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, STANDARD, null,
+                WriteConcern.MAJORITY, true, true, null, ReadConcern.MAJORITY, STANDARD, null,
                 TIMEOUT_SETTINGS.withMaxWaitTimeMS(120_000), client.getOperationExecutor()))
     }
 

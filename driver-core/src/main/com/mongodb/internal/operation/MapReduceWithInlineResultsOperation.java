@@ -175,7 +175,7 @@ public class MapReduceWithInlineResultsOperation<T> implements ReadOperationMapR
     public MapReduceBatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
         return executeRetryableRead(binding, operationContext, namespace.getDatabaseName(),
                 getCommandCreator(),
-                CommandResultDocumentCodec.create(decoder, "results"), transformer(), false);
+                CommandResultDocumentCodec.create(decoder, "results"), transformer(), false, null);
     }
 
     @Override
@@ -184,7 +184,7 @@ public class MapReduceWithInlineResultsOperation<T> implements ReadOperationMapR
         SingleResultCallback<MapReduceAsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         executeRetryableReadAsync(binding, operationContext,  namespace.getDatabaseName(),
                 getCommandCreator(), CommandResultDocumentCodec.create(decoder, "results"),
-                asyncTransformer(), false, errHandlingCallback);
+                asyncTransformer(), false, null, errHandlingCallback);
     }
 
     public ReadOperationSimple<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {

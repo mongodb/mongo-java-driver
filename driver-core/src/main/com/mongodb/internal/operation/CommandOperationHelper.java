@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoClientException;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.MongoException;
@@ -42,6 +43,11 @@ import static java.util.Arrays.asList;
 
 @SuppressWarnings("overloads")
 public final class CommandOperationHelper {
+    /**
+     * The value used when {@link MongoClientSettings#getMaxAdaptiveRetries()} is {@code null}.
+     */
+    public static final int DEFAULT_MAX_ADAPTIVE_RETRIES = 2;
+
     static WriteConcern validateAndGetEffectiveWriteConcern(final WriteConcern writeConcernSetting, final SessionContext sessionContext)
             throws MongoClientException {
         boolean activeTransaction = sessionContext.hasActiveTransaction();

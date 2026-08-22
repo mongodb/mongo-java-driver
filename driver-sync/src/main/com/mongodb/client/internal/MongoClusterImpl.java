@@ -96,6 +96,8 @@ final class MongoClusterImpl implements MongoCluster {
     private final ReadPreference readPreference;
     private final boolean retryReads;
     private final boolean retryWrites;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private final boolean enableOverloadRetargeting;
     @Nullable
     private final ServerApi serverApi;
@@ -111,7 +113,8 @@ final class MongoClusterImpl implements MongoCluster {
             @Nullable final AutoEncryptionSettings autoEncryptionSettings, final Cluster cluster, final CodecRegistry codecRegistry,
             @Nullable final SynchronousContextProvider contextProvider, @Nullable final Crypt crypt, final Object originator,
             @Nullable final OperationExecutor operationExecutor, final ReadConcern readConcern, final ReadPreference readPreference,
-            final boolean retryReads, final boolean retryWrites, final boolean enableOverloadRetargeting,
+            final boolean retryReads, final boolean retryWrites,
+            @Nullable final Integer maxAdaptiveRetriesSetting, final boolean enableOverloadRetargeting,
             @Nullable final ServerApi serverApi, final ServerSessionPool serverSessionPool, final TimeoutSettings timeoutSettings,
             final UuidRepresentation uuidRepresentation, final WriteConcern writeConcern,
             final AsyncClientExecutor clientExecutor, final TracingManager tracingManager) {
@@ -126,6 +129,7 @@ final class MongoClusterImpl implements MongoCluster {
         this.readPreference = readPreference;
         this.retryReads = retryReads;
         this.retryWrites = retryWrites;
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
         this.enableOverloadRetargeting = enableOverloadRetargeting;
         this.serverApi = serverApi;
         this.serverSessionPool = serverSessionPool;
@@ -143,6 +147,7 @@ final class MongoClusterImpl implements MongoCluster {
                 writeConcern,
                 retryWrites,
                 retryReads,
+                maxAdaptiveRetriesSetting,
                 timeoutSettings);
     }
 
@@ -177,42 +182,43 @@ final class MongoClusterImpl implements MongoCluster {
     @Override
     public MongoCluster withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
-                operationExecutor, readConcern, readPreference, retryReads, retryWrites, enableOverloadRetargeting, serverApi, serverSessionPool, timeoutSettings,
-                uuidRepresentation, writeConcern, clientExecutor, tracingManager);
+                operationExecutor, readConcern, readPreference, retryReads, retryWrites, maxAdaptiveRetriesSetting, enableOverloadRetargeting,
+                serverApi, serverSessionPool, timeoutSettings, uuidRepresentation, writeConcern, clientExecutor, tracingManager);
     }
 
     @Override
     public MongoCluster withReadPreference(final ReadPreference readPreference) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
-                operationExecutor, readConcern, readPreference, retryReads, retryWrites, enableOverloadRetargeting, serverApi, serverSessionPool, timeoutSettings,
-                uuidRepresentation, writeConcern, clientExecutor, tracingManager);
+                operationExecutor, readConcern, readPreference, retryReads, retryWrites, maxAdaptiveRetriesSetting, enableOverloadRetargeting,
+                serverApi, serverSessionPool, timeoutSettings, uuidRepresentation, writeConcern, clientExecutor, tracingManager);
     }
 
     @Override
     public MongoCluster withWriteConcern(final WriteConcern writeConcern) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
-                operationExecutor, readConcern, readPreference, retryReads, retryWrites, enableOverloadRetargeting, serverApi, serverSessionPool, timeoutSettings,
-                uuidRepresentation, writeConcern, clientExecutor, tracingManager);
+                operationExecutor, readConcern, readPreference, retryReads, retryWrites, maxAdaptiveRetriesSetting, enableOverloadRetargeting,
+                serverApi, serverSessionPool, timeoutSettings, uuidRepresentation, writeConcern, clientExecutor, tracingManager);
     }
 
     @Override
     public MongoCluster withReadConcern(final ReadConcern readConcern) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
-                operationExecutor, readConcern, readPreference, retryReads, retryWrites, enableOverloadRetargeting, serverApi, serverSessionPool, timeoutSettings,
-                uuidRepresentation, writeConcern, clientExecutor, tracingManager);
+                operationExecutor, readConcern, readPreference, retryReads, retryWrites, maxAdaptiveRetriesSetting, enableOverloadRetargeting,
+                serverApi, serverSessionPool, timeoutSettings, uuidRepresentation, writeConcern, clientExecutor, tracingManager);
     }
 
     @Override
     public MongoCluster withTimeout(final long timeout, final TimeUnit timeUnit) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
-                operationExecutor, readConcern, readPreference, retryReads, retryWrites, enableOverloadRetargeting, serverApi, serverSessionPool,
-                timeoutSettings.withTimeout(timeout, timeUnit), uuidRepresentation, writeConcern, clientExecutor, tracingManager);
+                operationExecutor, readConcern, readPreference, retryReads, retryWrites, maxAdaptiveRetriesSetting, enableOverloadRetargeting,
+                serverApi, serverSessionPool, timeoutSettings.withTimeout(timeout, timeUnit), uuidRepresentation, writeConcern, clientExecutor,
+                tracingManager);
     }
 
     @Override
     public MongoDatabase getDatabase(final String databaseName) {
-        return new MongoDatabaseImpl(databaseName, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
-                uuidRepresentation, autoEncryptionSettings, timeoutSettings, operationExecutor);
+        return new MongoDatabaseImpl(databaseName, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, maxAdaptiveRetriesSetting,
+                readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings, operationExecutor);
     }
 
     public Cluster getCluster() {
@@ -261,7 +267,7 @@ final class MongoClusterImpl implements MongoCluster {
                                             .readPreference(readPreference)
                                             .build()))
                     .build();
-            return new ClientSessionImpl(serverSessionPool, originator, mergedOptions, operationExecutor, tracingManager);
+            return new ClientSessionImpl(serverSessionPool, originator, mergedOptions, operationExecutor, tracingManager, maxAdaptiveRetriesSetting);
     }
 
     @Override
@@ -379,7 +385,8 @@ final class MongoClusterImpl implements MongoCluster {
     }
 
     private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {
-        return new ListDatabasesIterableImpl<>(clientSession, clazz, codecRegistry, ReadPreference.primary(), operationExecutor, retryReads, timeoutSettings);
+        return new ListDatabasesIterableImpl<>(clientSession, clazz, codecRegistry, ReadPreference.primary(), operationExecutor,
+                retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
     }
 
     private MongoIterable<String> createListDatabaseNamesIterable(@Nullable final ClientSession clientSession) {
@@ -392,7 +399,7 @@ final class MongoClusterImpl implements MongoCluster {
             final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
         return new ChangeStreamIterableImpl<>(clientSession, "admin", codecRegistry, readPreference,
                 readConcern, operationExecutor, pipeline, resultClass, ChangeStreamLevel.CLIENT,
-                retryReads, timeoutSettings);
+                retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
     }
 
     private ClientBulkWriteResult executeBulkWrite(

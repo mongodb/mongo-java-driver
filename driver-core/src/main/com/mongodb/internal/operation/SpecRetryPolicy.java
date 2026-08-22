@@ -29,6 +29,8 @@ import com.mongodb.internal.async.function.RetryPolicy;
 import com.mongodb.internal.async.function.RetryPolicy.Decision.RetryAttemptInfo;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.OperationContext.ServerDeprioritization;
+import com.mongodb.internal.session.BaseClientSessionImpl;
+import com.mongodb.internal.time.ExponentialBackoff;
 import com.mongodb.lang.Nullable;
 
 import java.time.Duration;
@@ -38,12 +40,15 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
+import static com.mongodb.MongoException.RETRYABLE_ERROR_LABEL;
+import static com.mongodb.MongoException.SYSTEM_OVERLOADED_ERROR_LABEL;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
+import static com.mongodb.internal.operation.CommandOperationHelper.DEFAULT_MAX_ADAPTIVE_RETRIES;
 import static com.mongodb.internal.operation.CommandOperationHelper.NO_WRITES_PERFORMED_ERROR_LABEL;
 import static com.mongodb.internal.operation.CommandOperationHelper.RETRYABLE_WRITE_ERROR_LABEL;
 import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabelIfNeeded;
@@ -56,12 +61,14 @@ import static java.util.Arrays.asList;
 
 /**
  * Implements all {@linkplain IndividualPolicies individual specification retry policies}.
+ * A new instance of {@link SpecRetryPolicy} must be used for each execution of a command
+ * (a command execution may involve multiple execution attempts).
  */
 final class SpecRetryPolicy implements RetryPolicy {
     private static final int INFINITE_ATTEMPTS = Integer.MAX_VALUE;
 
     private final IndividualPolicies policies;
-    private final int maxAttempts;
+    private int maxAttempts;
     private final ServerDeprioritization serverDeprioritization;
     private Supplier<String> commandDescriptionSupplier;
 
@@ -79,6 +86,8 @@ final class SpecRetryPolicy implements RetryPolicy {
     }
 
     void onAttemptStart(final RetryContext retryContext, final OperationContext operationContext) {
+        policies.overload().ifPresent(state ->
+                state.onAttemptStart(retryContext, operationContext.getSessionContext().getOverloadRetryPolicyState()));
         if (LOGGER.isDebugEnabled() && !retryContext.isFirstAttempt()) {
             String commandDescription = commandDescriptionSupplier.get();
             long operationId = operationContext.getId();
@@ -121,6 +130,11 @@ final class SpecRetryPolicy implements RetryPolicy {
     }
 
     @Override
+    public void onAttemptFatalFailure() {
+        policies.overload().ifPresent(IndividualPolicies.State.Overload::onAttemptFatalFailure);
+    }
+
+    @Override
     public Decision onAttemptFailure(final RetryContext retryContext, final Throwable maybeInternalAttemptFailedResult) {
         Throwable attemptFailedResult = stripResourceSupplierInternalException(maybeInternalAttemptFailedResult);
         serverDeprioritization.onAttemptFailure(attemptFailedResult);
@@ -132,6 +146,8 @@ final class SpecRetryPolicy implements RetryPolicy {
             decideRetryableAndAddRetryableWriteErrorLabelIfNeeded(state, attemptFailedResult)).orElse(false);
         retryableError |= policies.read().map(state ->
             decideRetryable(state, attemptFailedResult)).orElse(false);
+        retryableError |= policies.overload().map(state ->
+            decideRetryableAndUpdateMaxAttempts(state, attemptFailedResult)).orElse(false);
         boolean maxAttemptsReached = attempt >= maxAttempts - 1;
         if (policies.isRetrySettingEffectivelyTrue() && !retryableError) {
             logUnableToRetryError(attemptFailedResult);
@@ -139,9 +155,13 @@ final class SpecRetryPolicy implements RetryPolicy {
         boolean retry = retryableError && !maxAttemptsReached;
         Decision decision = new Decision(
                 decideProspectiveFailedResult(retryContext.getProspectiveFailedResult().orElse(null), maybeInternalAttemptFailedResult),
-                retry ? new RetryAttemptInfo(Duration.ZERO) : null);
+                retry ? new RetryAttemptInfo(calculateOverloadBackoff(attemptFailedResult, attempt + 1)) : null);
         policies.write().ifPresent(IndividualPolicies.State.Write::resetRequirementsInfo);
         return decision;
+    }
+
+    void onLastAttemptCompletion() {
+        policies.overload().ifPresent(state -> state.onLastAttemptCompletion());
     }
 
     private static Throwable stripResourceSupplierInternalException(final Throwable maybeInternal) {
@@ -195,6 +215,17 @@ final class SpecRetryPolicy implements RetryPolicy {
         return isRetryableMongoSecurityException(mongoException) || isRetryableException(mongoException);
     }
 
+    /**
+     * Returns {@code true} iff another attempt must be executed provided that {@link #maxAttempts} has not been reached.
+     */
+    private boolean decideRetryableAndUpdateMaxAttempts(final IndividualPolicies.State.Overload state, final Throwable exception) {
+        IndividualPolicies.State.Overload.LabelInfo overloadLabelInfo = state.onAttemptFailure(exception);
+        if (overloadLabelInfo.hasSystemOverloadErrorLabel() && policies.isRetrySettingEffectivelyTrue()) {
+            maxAttempts = maxAttempts(state.getMaxRetries());
+        }
+        return state.isRequirementsMet() && overloadLabelInfo.hasRetryableErrorLabel() && overloadLabelInfo.hasSystemOverloadErrorLabel();
+    }
+
     private void logUnableToRetryError(final Throwable exception) {
         assertFalse(exception instanceof OperationHelper.ResourceSupplierInternalException);
         if (LOGGER.isDebugEnabled()) {
@@ -246,8 +277,19 @@ final class SpecRetryPolicy implements RetryPolicy {
         }
     }
 
+    private static Duration calculateOverloadBackoff(final Throwable attemptFailedResult, final int immediateNextAttempt) {
+        assertFalse(attemptFailedResult instanceof OperationHelper.ResourceSupplierInternalException);
+        if (attemptFailedResult instanceof MongoException
+                && ((MongoException) attemptFailedResult).hasErrorLabel(SYSTEM_OVERLOADED_ERROR_LABEL)) {
+            return ExponentialBackoff.calculateOverloadBackoff(immediateNextAttempt);
+        }
+        return Duration.ZERO;
+    }
+
     private static int maxAttempts(final int maxRetries) {
-        assertTrue(maxRetries < INFINITE_ATTEMPTS - 1);
+        if (maxRetries == INFINITE_ATTEMPTS) {
+            return INFINITE_ATTEMPTS;
+        }
         return maxRetries + 1;
     }
 
@@ -271,6 +313,7 @@ final class SpecRetryPolicy implements RetryPolicy {
             CONFLICTS = new EnumMap<>(Descriptor.class);
             CONFLICTS.put(Descriptor.WRITE, EnumSet.of(Descriptor.READ));
             CONFLICTS.put(Descriptor.READ, EnumSet.of(Descriptor.WRITE));
+            CONFLICTS.put(Descriptor.OVERLOAD, EnumSet.noneOf(Descriptor.class));
             assertTrue(CONFLICTS.keySet().containsAll(asList(Descriptor.values())));
         }
 
@@ -322,21 +365,31 @@ final class SpecRetryPolicy implements RetryPolicy {
             return this;
         }
 
+        /**
+         * See
+         * <a href="https://github.com/mongodb/specifications/blob/master/source/client-backpressure/client-backpressure.md">Client Backpressure</a>,
+         * which specifies the overload retry policy.
+         */
+        IndividualPolicies includeOverload(@Nullable final Integer maxAdaptiveRetriesSetting) {
+            include(Descriptor.OVERLOAD, new State.Overload(effectiveRetrySetting, maxAdaptiveRetriesSetting));
+            return this;
+        }
+
         private void include(final Descriptor descriptor, final State state) {
             State previous = policies.put(descriptor, state);
             assertNull(previous);
         }
 
-        private int getMaxAttempts() {
-            int maxRetries;
+        private int getMaxRetries() {
             if (policies.containsKey(Descriptor.WRITE)) {
-                maxRetries = Descriptor.WRITE.maxRetries;
+                return Descriptor.WRITE.maxRetries;
             } else if (policies.containsKey(Descriptor.READ)) {
-                maxRetries = Descriptor.READ.maxRetries;
+                return Descriptor.READ.maxRetries;
+            } else if (policies.containsKey(Descriptor.OVERLOAD)) {
+                return overload().orElseThrow(Assertions::fail).getMaxRetries();
             } else {
                 throw fail(toString());
             }
-            return maxAttempts(maxRetries);
         }
 
         private Optional<State.Write> write() {
@@ -345,6 +398,10 @@ final class SpecRetryPolicy implements RetryPolicy {
 
         private Optional<State.Read> read() {
             return Optional.ofNullable((State.Read) policies.get(Descriptor.READ));
+        }
+
+        private Optional<State.Overload> overload() {
+            return Optional.ofNullable((State.Overload) policies.get(Descriptor.OVERLOAD));
         }
 
         @Override
@@ -363,7 +420,11 @@ final class SpecRetryPolicy implements RetryPolicy {
             /**
              * See {@link #includeRead(OperationContext)}.
              */
-            READ(1);
+            READ(1),
+            /**
+             * See {@link #includeOverload(Integer)}.
+             */
+            OVERLOAD(DEFAULT_MAX_ADAPTIVE_RETRIES);
 
             private final int maxRetries;
 
@@ -462,6 +523,107 @@ final class SpecRetryPolicy implements RetryPolicy {
                             + '}';
                 }
             }
+
+            static final class Overload extends State {
+                private final boolean requirementsMet;
+                @Nullable
+                private final Integer maxAdaptiveRetriesSetting;
+                @Nullable
+                private BaseClientSessionImpl.OverloadRetryPolicyState sessionScopedState;
+
+                Overload(
+                        final boolean effectiveRetrySetting,
+                        @Nullable
+                        final Integer maxAdaptiveRetriesSetting) {
+                    requirementsMet = effectiveRetrySetting;
+                    this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
+                    sessionScopedState = null;
+                }
+
+                int getMaxRetries() {
+                    return maxAdaptiveRetriesSetting == null
+                            ? IndividualPolicies.Descriptor.OVERLOAD.maxRetries
+                            : maxAdaptiveRetriesSetting;
+                }
+
+                void onAttemptStart(final RetryContext retryContext, final BaseClientSessionImpl.OverloadRetryPolicyState sessionScopedState) {
+                    this.sessionScopedState = sessionScopedState;
+                    if (retryContext.isFirstAttempt()) {
+                        sessionScopedState.openCommandExecutionScope();
+                    }
+                }
+
+                void onAttemptFatalFailure() {
+                    onAnyAttemptFailure(false);
+                }
+
+                LabelInfo onAttemptFailure(final Throwable exception) {
+                    LabelInfo labelInfo = new LabelInfo(exception);
+                    onAnyAttemptFailure(labelInfo.hasRetryableErrorLabel() && labelInfo.hasSystemOverloadErrorLabel());
+                    return labelInfo;
+                }
+
+                private void onAnyAttemptFailure(final boolean retryableOverloadError) {
+                    BaseClientSessionImpl.OverloadRetryPolicyState localSessionScopedState = assertNotNull(sessionScopedState);
+                    assertNotNull(localSessionScopedState.getCommandExecutionScoped()).onAnyAttemptFailure(retryableOverloadError);
+                    BaseClientSessionImpl.OverloadRetryPolicyState.CommitScoped commitScopedState = localSessionScopedState.getCommitScoped();
+                    if (commitScopedState != null) {
+                        commitScopedState.onAnyAttemptFailure(retryableOverloadError);
+                    }
+                }
+
+                /**
+                 * See {@link Read#isRequirementsMet()}.
+                 */
+                boolean isRequirementsMet() {
+                    return requirementsMet;
+                }
+
+                void onLastAttemptCompletion() {
+                    assertNotNull(sessionScopedState).closeCommandExecutionScope();
+                }
+
+                @Override
+                public String toString() {
+                    return "Overload{"
+                            + "requirementsMet=" + requirementsMet
+                            + ", maxAdaptiveRetriesSetting=" + maxAdaptiveRetriesSetting
+                            + ", sessionScopedState=" + sessionScopedState
+                            + '}';
+                }
+
+                static final class LabelInfo {
+                    private final boolean hasRetryableErrorLabel;
+                    private final boolean hasSystemOverloadErrorLabel;
+
+                    private LabelInfo(final Throwable exception) {
+                        if (exception instanceof MongoException) {
+                            MongoException mongoException = (MongoException) exception;
+                            hasRetryableErrorLabel = mongoException.hasErrorLabel(RETRYABLE_ERROR_LABEL);
+                            hasSystemOverloadErrorLabel = mongoException.hasErrorLabel(SYSTEM_OVERLOADED_ERROR_LABEL);
+                        } else {
+                            hasRetryableErrorLabel = false;
+                            hasSystemOverloadErrorLabel = false;
+                        }
+                    }
+
+                    boolean hasRetryableErrorLabel() {
+                        return hasRetryableErrorLabel;
+                    }
+
+                    boolean hasSystemOverloadErrorLabel() {
+                        return hasSystemOverloadErrorLabel;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "LabelInfo{"
+                                + "hasRetryableErrorLabel=" + hasRetryableErrorLabel
+                                + ", hasSystemOverloadErrorLabel=" + hasSystemOverloadErrorLabel
+                                + '}';
+                    }
+                }
+            }
         }
     }
 
@@ -478,10 +640,10 @@ final class SpecRetryPolicy implements RetryPolicy {
                     return INFINITE_ATTEMPTS;
                 }
                 case RETRIES_LIMITED_BY_INDIVIDUAL_POLICIES: {
-                    return policies.getMaxAttempts();
+                    return SpecRetryPolicy.maxAttempts(policies.getMaxRetries());
                 }
                 default: {
-                    throw fail(this.toString());
+                    throw fail(toString());
                 }
             }
         }

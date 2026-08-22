@@ -49,11 +49,11 @@ class ListCollectionsIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null, null, null])
         def listCollectionIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry,
-                readPreference, executor, true, TIMEOUT_SETTINGS)
+                readPreference, executor, true, null, TIMEOUT_SETTINGS)
                 .filter(new Document('filter', 1))
                 .batchSize(100)
         def listCollectionNamesIterable = new ListCollectionsIterableImpl<Document>(null, 'db', true, Document, codecRegistry,
-                readPreference, executor, true, TIMEOUT_SETTINGS)
+                readPreference, executor, true, null, TIMEOUT_SETTINGS)
 
         when: 'default input should be as expected'
         listCollectionIterable.iterator()
@@ -62,7 +62,7 @@ class ListCollectionsIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec())
+        expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec(), null)
                 .filter(new BsonDocument('filter', new BsonInt32(1))).batchSize(100)
                 .retryReads(true)
                 .authorizedCollections(false))
@@ -74,7 +74,7 @@ class ListCollectionsIterableSpecification extends Specification {
         operation = executor.getReadOperation() as ListCollectionsOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec())
+        expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec(), null)
                 .filter(new BsonDocument('filter', new BsonInt32(2))).batchSize(99)
                 .retryReads(true))
 
@@ -84,7 +84,7 @@ class ListCollectionsIterableSpecification extends Specification {
         operation = executor.getReadOperation() as ListCollectionsOperation<Document>
 
         then: 'should create operation with nameOnly'
-        expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec()).nameOnly(true)
+        expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec(), null).nameOnly(true)
                 .retryReads(true))
 
         when: 'requesting `authorizedCollections`'
@@ -92,7 +92,7 @@ class ListCollectionsIterableSpecification extends Specification {
         operation = executor.getReadOperation() as ListCollectionsOperation<Document>
 
         then: 'should create operation with `authorizedCollections`'
-        expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec())
+        expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec(), null)
                 .authorizedCollections(true)
                 .nameOnly(true)
                 .retryReads(true))
@@ -105,7 +105,7 @@ class ListCollectionsIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([batchCursor, batchCursor])
         def listCollectionIterable = new ListCollectionsIterableImpl<Document>(clientSession, 'db', false, Document, codecRegistry,
-                readPreference, executor, true, TIMEOUT_SETTINGS)
+                readPreference, executor, true, null, TIMEOUT_SETTINGS)
 
         when:
         listCollectionIterable.first()
@@ -146,7 +146,7 @@ class ListCollectionsIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()])
         def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry, readPreference,
-                executor, true, TIMEOUT_SETTINGS)
+                executor, true, null, TIMEOUT_SETTINGS)
 
         when:
         def results = mongoIterable.first()
@@ -190,7 +190,7 @@ class ListCollectionsIterableSpecification extends Specification {
         when:
         def batchSize = 5
         def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry, readPreference,
-                Stub(OperationExecutor), true, TIMEOUT_SETTINGS)
+                Stub(OperationExecutor), true, null, TIMEOUT_SETTINGS)
 
         then:
         mongoIterable.getBatchSize() == null

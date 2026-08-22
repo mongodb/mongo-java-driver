@@ -18,7 +18,6 @@ package com.mongodb.reactivestreams.client;
 
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.Document;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.TimeoutException;
@@ -77,7 +76,6 @@ final class RetryableWritesProseTest {
      * Case 1: Test that drivers return the correct error when receiving only errors without NoWritesPerformed</a>.
      */
     @Test
-    @Disabled("TODO-BACKPRESSURE Valentin Enable when implementing JAVA-6055")
     void errorPropagationAfterEncounteringMultipleErrorsCase1() throws Exception {
         com.mongodb.client.RetryableWritesProseTest.errorPropagationAfterEncounteringMultipleErrorsCase1(SyncMongoClient::new);
     }

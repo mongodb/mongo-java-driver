@@ -76,6 +76,8 @@ public class ListCollectionsOperation<T> implements ReadOperationCursor<T> {
     private final String databaseName;
     private final Decoder<T> decoder;
     private boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private BsonDocument filter;
     private int batchSize;
     private boolean nameOnly;
@@ -83,9 +85,13 @@ public class ListCollectionsOperation<T> implements ReadOperationCursor<T> {
     private BsonValue comment;
     private TimeoutMode timeoutMode = TimeoutMode.CURSOR_LIFETIME;
 
-    public ListCollectionsOperation(final String databaseName, final Decoder<T> decoder) {
+    public ListCollectionsOperation(
+            final String databaseName,
+            final Decoder<T> decoder,
+            @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.databaseName = notNull("databaseName", databaseName);
         this.decoder = notNull("decoder", decoder);
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     @Override
@@ -175,7 +181,7 @@ public class ListCollectionsOperation<T> implements ReadOperationCursor<T> {
         OperationContext listCollectionsOperationContext = applyTimeoutModeToOperationContext(timeoutMode, operationContext);
 
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
-                new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(listCollectionsOperationContext),
+                new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(listCollectionsOperationContext).includeOverload(maxAdaptiveRetriesSetting),
                 listCollectionsOperationContext);
         Supplier<BatchCursor<T>> read = decorateWithRetries(retryControl, listCollectionsOperationContext, () ->
             withSourceAndConnection(binding::getReadConnectionSource, false, listCollectionsOperationContext, (source, connection, operationContextWithMinRTT) -> {
@@ -197,7 +203,7 @@ public class ListCollectionsOperation<T> implements ReadOperationCursor<T> {
         OperationContext listCollectionsOperationContext = applyTimeoutModeToOperationContext(timeoutMode, operationContext);
 
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
-                new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(listCollectionsOperationContext),
+                new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(listCollectionsOperationContext).includeOverload(maxAdaptiveRetriesSetting),
                 listCollectionsOperationContext);
         binding.retain();
         AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = decorateWithRetriesAsync(

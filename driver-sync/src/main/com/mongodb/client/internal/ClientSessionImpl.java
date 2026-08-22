@@ -48,6 +48,7 @@ import java.util.function.BooleanSupplier;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
+import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -66,13 +67,17 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
     private boolean commitInProgress;
     private TransactionOptions transactionOptions;
     private final TracingManager tracingManager;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private TransactionSpan transactionSpan = null;
 
+
     ClientSessionImpl(final ServerSessionPool serverSessionPool, final Object originator, final ClientSessionOptions options,
-            final OperationExecutor operationExecutor, final TracingManager tracingManager) {
+            final OperationExecutor operationExecutor, final TracingManager tracingManager, @Nullable final Integer maxAdaptiveRetriesSetting) {
         super(serverSessionPool, originator, options);
         this.operationExecutor = operationExecutor;
         this.tracingManager = tracingManager;
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     @Override
@@ -85,7 +90,10 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         if (hasActiveTransaction()) {
             boolean firstMessageInCurrentTransaction = !messageSentInCurrentTransaction;
             messageSentInCurrentTransaction = true;
-            return firstMessageInCurrentTransaction;
+            OverloadRetryPolicyState.CommandExecutionScoped overloadRetryPolicyState = getOverloadRetryPolicyState().getCommandExecutionScoped();
+            return overloadRetryPolicyState == null
+                    ? firstMessageInCurrentTransaction
+                    : overloadRetryPolicyState.notifyMessageSent(firstMessageInCurrentTransaction);
         } else {
             if (transactionState == TransactionState.COMMITTED || transactionState == TransactionState.ABORTED) {
                 cleanupTransaction(TransactionState.NONE);
@@ -147,7 +155,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 TimeoutContext timeoutContext = getTimeoutContext();
                 WriteConcern writeConcern = assertNotNull(getWriteConcern(timeoutContext));
                 operationExecutor
-                        .execute(new AbortTransactionOperation(writeConcern)
+                        .execute(new AbortTransactionOperation(writeConcern, maxAdaptiveRetriesSetting)
                                 .recoveryToken(getRecoveryToken()), readConcern, this);
             }
         } catch (RuntimeException e) {
@@ -222,6 +230,10 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 if (readConcern == null) {
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
+                boolean alreadyCommitted = commitInProgress || transactionState == TransactionState.COMMITTED;
+                if (!alreadyCommitted) {
+                    getOverloadRetryPolicyState().openCommitScope();
+                }
                 commitInProgress = true;
                 if (resetTimeout) {
                     resetTimeout();
@@ -229,8 +241,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 TimeoutContext timeoutContext = getTimeoutContext();
                 WriteConcern writeConcern = assertNotNull(getWriteConcern(timeoutContext));
                 operationExecutor
-                        .execute(new CommitTransactionOperation(writeConcern,
-                                transactionState == TransactionState.COMMITTED)
+                        .execute(new CommitTransactionOperation(writeConcern, maxAdaptiveRetriesSetting, alreadyCommitted)
                                 .recoveryToken(getRecoveryToken()), readConcern, this);
             }
         } catch (MongoException e) {
@@ -320,7 +331,6 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                                 if (withTransactionTimeoutExpired.getAsBoolean()) {
                                     throw wrapInMongoTimeoutException(mongoException, timeoutMsConfigured);
                                 }
-                                applyMajorityWriteConcernToTransactionOptions();
                                 continue;
                             } else if (mongoException.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
                                 if (transactionSpan != null) {
@@ -358,27 +368,12 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         }
     }
 
-    // Apply majority write concern if the commit is to be retried.
-    private void applyMajorityWriteConcernToTransactionOptions() {
-        if (transactionOptions != null) {
-            TimeoutContext timeoutContext = getTimeoutContext();
-            WriteConcern writeConcern = getWriteConcern(timeoutContext);
-            if (writeConcern != null) {
-                transactionOptions = TransactionOptions.merge(TransactionOptions.builder()
-                        .writeConcern(writeConcern.withW("majority")).build(), transactionOptions);
-            } else {
-                transactionOptions = TransactionOptions.merge(TransactionOptions.builder()
-                        .writeConcern(WriteConcern.MAJORITY).build(), transactionOptions);
-            }
-        } else {
-            transactionOptions = TransactionOptions.builder().writeConcern(WriteConcern.MAJORITY).build();
-        }
-    }
-
     private void cleanupTransaction(final TransactionState nextState) {
         messageSentInCurrentTransaction = false;
         transactionOptions = null;
+        assertFalse(nextState == TransactionState.COMMITTED);
         transactionState = nextState;
+        getOverloadRetryPolicyState().closeCommitScope();
         setTimeoutContext(null);
     }
 

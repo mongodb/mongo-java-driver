@@ -55,7 +55,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should return empty set if database does not exist'() {
         given:
-        def operation = new ListCollectionsOperation(madeUpDatabase, new DocumentCodec())
+        def operation = new ListCollectionsOperation(madeUpDatabase, new DocumentCodec(), null)
 
 
         def binding = getBinding()
@@ -72,7 +72,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should return empty cursor if database does not exist asynchronously'() {
         given:
-        def operation = new ListCollectionsOperation(madeUpDatabase, new DocumentCodec())
+        def operation = new ListCollectionsOperation(madeUpDatabase, new DocumentCodec(), null)
 
         when:
         def cursor = executeAsync(operation)
@@ -88,7 +88,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should return collection names if a collection exists'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec(), null)
         def helper = getCollectionHelper()
         def helper2 = getCollectionHelper(new MongoNamespace(databaseName, 'collection2'))
         def codec = new DocumentCodec()
@@ -110,7 +110,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should filter collection names if a name filter is specified'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec(), null)
                 .filter(new BsonDocument('name', new BsonString('collection2')))
         def helper = getCollectionHelper()
         def helper2 = getCollectionHelper(new MongoNamespace(databaseName, 'collection2'))
@@ -133,7 +133,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should filter capped collections'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec(), null)
                 .filter(new BsonDocument('options.capped', BsonBoolean.TRUE))
         def helper = getCollectionHelper()
         getCollectionHelper().create('collection3', new CreateCollectionOptions().capped(true).sizeInBytes(1000))
@@ -154,7 +154,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should only get collection names when nameOnly is requested'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec(), null)
                 .nameOnly(true)
         getCollectionHelper().create('collection5', new CreateCollectionOptions())
 
@@ -170,7 +170,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should only get collection names when nameOnly and authorizedCollections are requested'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec(), null)
                 .nameOnly(true)
                 .authorizedCollections(true)
         getCollectionHelper().create('collection6', new CreateCollectionOptions())
@@ -187,7 +187,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should get all fields when authorizedCollections is requested and nameOnly is not requested'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec(), null)
                 .nameOnly(false)
                 .authorizedCollections(true)
         getCollectionHelper().create('collection8', new CreateCollectionOptions())
@@ -204,7 +204,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should return collection names if a collection exists asynchronously'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec())
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec(), null)
         def helper = getCollectionHelper()
         def helper2 = getCollectionHelper(new MongoNamespace(databaseName, 'collection2'))
         def codec = new DocumentCodec()
@@ -229,7 +229,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED)
                 .execute(binding, createOperationContext(binding.getReadPreference()))
         addSeveralIndexes()
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec(), null).batchSize(2)
 
 
         when:
@@ -249,7 +249,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED)
                 .execute(binding, createOperationContext(binding.getReadPreference()))
         addSeveralIndexes()
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec(), null).batchSize(2)
 
         when:
         binding = getBinding()
@@ -274,7 +274,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED)
                 .execute(binding, createOperationContext(binding.getReadPreference()))
         addSeveralIndexes()
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec(), null).batchSize(2)
 
 
         when:
@@ -300,7 +300,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED)
                 .execute(binding, createOperationContext(binding.getReadPreference()))
         addSeveralIndexes()
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec(), null).batchSize(2)
 
         when:
         binding = getBinding()
@@ -320,7 +320,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         new DropDatabaseOperation(databaseName, WriteConcern.ACKNOWLEDGED)
                 .execute(binding, createOperationContext(binding.getReadPreference()))
         addSeveralIndexes()
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec(), null).batchSize(2)
 
         when:
         def cursor = executeAsync(operation)
@@ -333,7 +333,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should use the set batchSize of collections'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec(), null).batchSize(2)
         def codec = new DocumentCodec()
         getCollectionHelper().insertDocuments(codec, ['a': 1] as Document)
         getCollectionHelper(new MongoNamespace(databaseName, 'collection2')).insertDocuments(codec, ['a': 1] as Document)
@@ -367,7 +367,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
 
     def 'should use the set batchSize of collections asynchronously'() {
         given:
-        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec()).batchSize(2)
+        def operation = new ListCollectionsOperation(databaseName, new DocumentCodec(), null).batchSize(2)
         def codec = new DocumentCodec()
         getCollectionHelper().insertDocuments(codec, ['a': 1] as Document)
         getCollectionHelper(new MongoNamespace(databaseName, 'collection2')).insertDocuments(codec, ['a': 1] as Document)
@@ -408,7 +408,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
             getReadConnectionSource(_) >> connectionSource
             getReadPreference() >> readPreference
         }
-        def operation = new ListCollectionsOperation(helper.dbName, helper.decoder)
+        def operation = new ListCollectionsOperation(helper.dbName, helper.decoder, null)
 
         when: '3.6.0'
         operation.execute(readBinding, operationContext)
@@ -437,7 +437,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
             getReadConnectionSource(_, _) >> { it[1].onResult(connectionSource, null) }
             getReadPreference() >> readPreference
         }
-        def operation = new ListCollectionsOperation(helper.dbName, helper.decoder)
+        def operation = new ListCollectionsOperation(helper.dbName, helper.decoder, null)
         when: '3.6.0'
         operation.executeAsync(readBinding, operationContext, Stub(SingleResultCallback))
 

@@ -158,7 +158,7 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
     def getIndexes() {
         def indexes = []
         def binding = getBinding()
-        def cursor = new ListIndexesOperation(getNamespace(), new DocumentCodec())
+        def cursor = new ListIndexesOperation(getNamespace(), new DocumentCodec(), null)
                 .execute(binding, ClusterFixture.createOperationContext(binding.getReadPreference()))
         while (cursor.hasNext()) {
             indexes.addAll(cursor.next())

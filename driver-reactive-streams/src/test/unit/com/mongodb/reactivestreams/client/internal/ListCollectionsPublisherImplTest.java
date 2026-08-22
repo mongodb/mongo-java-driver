@@ -43,7 +43,8 @@ public class ListCollectionsPublisherImplTest extends TestHelper {
                 .withDocumentClass(String.class), true);
 
         ListCollectionsOperation<String> expectedOperation = new ListCollectionsOperation<>(DATABASE_NAME,
-                                                                                            getDefaultCodecRegistry().get(String.class))
+                                                                                            getDefaultCodecRegistry().get(String.class),
+                null)
                 .batchSize(Integer.MAX_VALUE)
                 .nameOnly(true).retryReads(true);
 
@@ -60,7 +61,8 @@ public class ListCollectionsPublisherImplTest extends TestHelper {
                 .batchSize(100);
 
         expectedOperation = new ListCollectionsOperation<>(DATABASE_NAME,
-                                                           getDefaultCodecRegistry().get(String.class))
+                                                           getDefaultCodecRegistry().get(String.class),
+                null)
                 .nameOnly(true)
                 .retryReads(true)
                 .filter(new BsonDocument("filter", new BsonInt32(1)))

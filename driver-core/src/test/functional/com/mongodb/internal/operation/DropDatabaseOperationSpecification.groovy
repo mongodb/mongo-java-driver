@@ -90,8 +90,8 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
         async << [true, false]
     }
 
-    def databaseNameExists(String databaseName) {
-        new ListDatabasesOperation(new DocumentCodec()).execute(binding,
+    static databaseNameExists(String databaseName) {
+        new ListDatabasesOperation(new DocumentCodec(), null).execute(binding,
                 createOperationContext(binding.getReadPreference())).next()*.name.contains(databaseName)
     }
 
