@@ -197,7 +197,8 @@ class DBSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new ListCollectionsOperation(databaseName,
-                new DBObjectCodec(getDefaultCodecRegistry()))
+                new DBObjectCodec(getDefaultCodecRegistry()),
+                null)
                 .nameOnly(true))
 
         when:
@@ -206,7 +207,8 @@ class DBSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new ListCollectionsOperation(databaseName,
-                new DBObjectCodec(getDefaultCodecRegistry()))
+                new DBObjectCodec(getDefaultCodecRegistry()),
+                null)
                 .nameOnly(true))
     }
 

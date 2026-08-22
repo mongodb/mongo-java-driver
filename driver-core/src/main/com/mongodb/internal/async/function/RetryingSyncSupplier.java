@@ -22,6 +22,7 @@ import com.mongodb.lang.Nullable;
 
 import java.util.function.Supplier;
 
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.internal.thread.ThreadUtil.sleep;
 
 /**
@@ -54,7 +55,8 @@ public final class RetryingSyncSupplier<R> implements Supplier<R> {
             try {
                 return syncFunction.get();
             } catch (Error attemptFailedResult) {
-                throw attemptFailedResult;
+                control.advanceOrThrow(attemptFailedResult);
+                fail("Must not be reached");
             } catch (Throwable attemptFailedResult) {
                 RetryAttemptInfo retryAttemptInfo = control.advanceOrThrow(attemptFailedResult);
                 sleep(retryAttemptInfo.getBackoff());

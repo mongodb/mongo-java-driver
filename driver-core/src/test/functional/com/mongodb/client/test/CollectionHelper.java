@@ -286,7 +286,8 @@ public final class CollectionHelper<T> {
         for (BsonDocument document : documents) {
             insertRequests.add(new InsertRequest(document));
         }
-        new MixedBulkWriteOperation(namespace, insertRequests, true, writeConcern, false).execute(binding, ClusterFixture.createOperationContext());
+        new MixedBulkWriteOperation(namespace, insertRequests, true, writeConcern, false, null).execute(
+                binding, ClusterFixture.createOperationContext());
     }
 
     public void insertDocuments(final Document... documents) {
@@ -328,7 +329,7 @@ public final class CollectionHelper<T> {
 
     public Optional<T> listSearchIndex(final String indexName) {
         ListSearchIndexesOperation<T> listSearchIndexesOperation =
-                new ListSearchIndexesOperation<>(namespace, codec, indexName, null, null, null, null, true);
+                new ListSearchIndexesOperation<>(namespace, codec, indexName, null, null, null, null, true, null);
         BatchCursor<T> cursor = listSearchIndexesOperation.execute(getBinding(), ClusterFixture.createOperationContext());
 
         List<T> results = new ArrayList<>();
@@ -346,7 +347,8 @@ public final class CollectionHelper<T> {
     }
 
     public <D> List<D> find(final Codec<D> codec) {
-        BatchCursor<D> cursor = new FindOperation<>(namespace, codec)
+        BatchCursor<D> cursor = new FindOperation<>(namespace, codec,
+                null)
                 .sort(new BsonDocument("_id", new BsonInt32(1)))
                 .execute(getBinding(), ClusterFixture.createOperationContext());
         List<D> results = new ArrayList<>();
@@ -366,7 +368,7 @@ public final class CollectionHelper<T> {
                                                                     update.toBsonDocument(Document.class, registry),
                                                                     WriteRequest.Type.UPDATE)
                                                   .upsert(isUpsert)),
-                                    true, WriteConcern.ACKNOWLEDGED, false)
+                                    true, WriteConcern.ACKNOWLEDGED, false, null)
                 .execute(getBinding(), ClusterFixture.createOperationContext());
     }
 
@@ -376,7 +378,7 @@ public final class CollectionHelper<T> {
                         update.toBsonDocument(Document.class, registry),
                         WriteRequest.Type.REPLACE)
                         .upsert(isUpsert)),
-                                    true, WriteConcern.ACKNOWLEDGED, false)
+                                    true, WriteConcern.ACKNOWLEDGED, false, null)
                 .execute(getBinding(), ClusterFixture.createOperationContext());
     }
 
@@ -391,7 +393,7 @@ public final class CollectionHelper<T> {
     private void delete(final Bson filter, final boolean multi) {
         new MixedBulkWriteOperation(namespace,
                 singletonList(new DeleteRequest(filter.toBsonDocument(Document.class, registry)).multi(multi)),
-                true, WriteConcern.ACKNOWLEDGED, false)
+                true, WriteConcern.ACKNOWLEDGED, false, null)
                 .execute(getBinding(), ClusterFixture.createOperationContext());
     }
 
@@ -416,7 +418,7 @@ public final class CollectionHelper<T> {
         for (Bson cur : pipeline) {
             bsonDocumentPipeline.add(cur.toBsonDocument(Document.class, registry));
         }
-        BatchCursor<D> cursor = new AggregateOperation<>(namespace, bsonDocumentPipeline, decoder, level)
+        BatchCursor<D> cursor = new AggregateOperation<>(namespace, bsonDocumentPipeline, decoder, level, null)
                 .execute(getBinding(), ClusterFixture.createOperationContext());
         List<D> results = new ArrayList<>();
         while (cursor.hasNext()) {
@@ -451,7 +453,7 @@ public final class CollectionHelper<T> {
     }
 
     public <D> List<D> find(final BsonDocument filter, final BsonDocument sort, final BsonDocument projection, final Decoder<D> decoder) {
-        BatchCursor<D> cursor = new FindOperation<>(namespace, decoder).filter(filter).sort(sort)
+        BatchCursor<D> cursor = new FindOperation<>(namespace, decoder, null).filter(filter).sort(sort)
                 .projection(projection).execute(getBinding(), ClusterFixture.createOperationContext());
         List<D> results = new ArrayList<>();
         while (cursor.hasNext()) {
@@ -465,15 +467,15 @@ public final class CollectionHelper<T> {
     }
 
     public long count(final ReadBinding binding) {
-        return new CountDocumentsOperation(namespace).execute(binding, ClusterFixture.createOperationContext());
+        return new CountDocumentsOperation(namespace, null).execute(binding, ClusterFixture.createOperationContext());
     }
 
     public long count(final AsyncReadWriteBinding binding) throws Throwable {
-        return executeAsync(new CountDocumentsOperation(namespace), binding);
+        return executeAsync(new CountDocumentsOperation(namespace, null), binding);
     }
 
     public long count(final Bson filter) {
-        return new CountDocumentsOperation(namespace)
+        return new CountDocumentsOperation(namespace, null)
                 .filter(toBsonDocument(filter)).execute(getBinding(), ClusterFixture.createOperationContext());
     }
 
@@ -515,7 +517,7 @@ public final class CollectionHelper<T> {
 
     public List<BsonDocument> listIndexes(){
         List<BsonDocument> indexes = new ArrayList<>();
-        BatchCursor<BsonDocument> cursor = new ListIndexesOperation<>(namespace, new BsonDocumentCodec())
+        BatchCursor<BsonDocument> cursor = new ListIndexesOperation<>(namespace, new BsonDocumentCodec(), null)
                 .execute(getBinding(), ClusterFixture.createOperationContext());
         while (cursor.hasNext()) {
             indexes.addAll(cursor.next());

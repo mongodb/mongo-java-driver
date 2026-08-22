@@ -69,13 +69,19 @@ public class ListIndexesOperation<T> implements ReadOperationCursor<T> {
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private int batchSize;
     private BsonValue comment;
     private TimeoutMode timeoutMode = TimeoutMode.CURSOR_LIFETIME;
 
-    public ListIndexesOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
+    public ListIndexesOperation(
+            final MongoNamespace namespace,
+            final Decoder<T> decoder,
+            @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.namespace = notNull("namespace", namespace);
         this.decoder = notNull("decoder", decoder);
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     public Integer getBatchSize() {
@@ -132,7 +138,7 @@ public class ListIndexesOperation<T> implements ReadOperationCursor<T> {
         OperationContext listIndexesOperationContext = applyTimeoutModeToOperationContext(timeoutMode, operationContext);
 
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
-                new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(listIndexesOperationContext),
+                new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(listIndexesOperationContext).includeOverload(maxAdaptiveRetriesSetting),
                 listIndexesOperationContext);
         Supplier<BatchCursor<T>> read = decorateWithRetries(retryControl, listIndexesOperationContext, () ->
             withSourceAndConnection(binding::getReadConnectionSource, false, listIndexesOperationContext, (source, connection, operationContextWithMinRTT) -> {
@@ -153,7 +159,7 @@ public class ListIndexesOperation<T> implements ReadOperationCursor<T> {
         OperationContext listIndexesOperationContext = applyTimeoutModeToOperationContext(timeoutMode, operationContext);
 
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
-                new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(listIndexesOperationContext),
+                new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(listIndexesOperationContext).includeOverload(maxAdaptiveRetriesSetting),
                 listIndexesOperationContext);
         binding.retain();
         AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = decorateWithRetriesAsync(

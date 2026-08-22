@@ -122,6 +122,7 @@ class ClientBulkWriteOperationTest {
                 options,
                 WriteConcern.ACKNOWLEDGED,
                 false,
+                null,
                 getDefaultCodecRegistry());
         //when
         ClientBulkWriteResult result = op.execute(binding, ClusterFixture.createOperationContext());
@@ -174,6 +175,7 @@ class ClientBulkWriteOperationTest {
                 options,
                 WriteConcern.ACKNOWLEDGED,
                 false,
+                null,
                 getDefaultCodecRegistry());
         //when
         ClientBulkWriteResult result = op.execute(binding, ClusterFixture.createOperationContext());

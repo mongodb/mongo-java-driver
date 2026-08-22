@@ -123,7 +123,7 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
 
     def getCollectionInfo(String collectionName) {
         def binding = getBinding()
-        new ListCollectionsOperation(databaseName, new BsonDocumentCodec()).filter(new BsonDocument('name',
+        new ListCollectionsOperation(databaseName, new BsonDocumentCodec(), null).filter(new BsonDocument('name',
                 new BsonString(collectionName))).execute(binding, createOperationContext(binding.getReadPreference())).tryNext()?.head()
     }
 

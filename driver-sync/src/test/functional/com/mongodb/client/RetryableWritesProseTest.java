@@ -40,7 +40,6 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.Document;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -50,7 +49,6 @@ import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -72,6 +70,7 @@ import static com.mongodb.internal.operation.CommandOperationHelper.RETRYABLE_WR
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -118,7 +117,7 @@ public class RetryableWritesProseTest {
                          * As a result, the client has to wait for at least its heartbeat delay until it hears back from a server
                          * (while it waits for a response, calling `ServerMonitor.connect` has no effect).
                          * Thus, we want to use small heartbeat delay to reduce delays in the test. */
-                        .heartbeatFrequency(50, TimeUnit.MILLISECONDS))
+                        .heartbeatFrequency(50, MILLISECONDS))
                 .retryReads(true)
                 .retryWrites(true)
                 .addCommandListener(commandListener)
@@ -213,7 +212,7 @@ public class RetryableWritesProseTest {
                      .addCommandListener(commandListener)
                      .applyToServerSettings(builder ->
                              // see `poolClearedExceptionMustBeRetryable` for the explanation
-                             builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS))
+                             builder.heartbeatFrequency(50, MILLISECONDS))
                      .build());
              FailPoint ignored = FailPoint.enable(configureFailPoint, primaryServerAddress)) {
             MongoCollection<Document> collection = dropAndGetCollection("originalErrorMustBePropagatedIfNoWritesPerformed", client);
@@ -361,7 +360,6 @@ public class RetryableWritesProseTest {
      * Case 1: Test that drivers return the correct error when receiving only errors without NoWritesPerformed</a>.
      */
     @Test
-    @Disabled("TODO-BACKPRESSURE Valentin Enable when implementing JAVA-6055")
     void errorPropagationAfterEncounteringMultipleErrorsCase1() throws Exception {
         errorPropagationAfterEncounteringMultipleErrorsCase1(MongoClients::create);
     }
@@ -509,6 +507,7 @@ public class RetryableWritesProseTest {
              MongoClient client = clientCreator.apply(getMongoClientSettingsBuilder()
                      .retryWrites(true)
                      .addCommandListener(commandListener)
+                     .applyToServerSettings(builder -> builder.heartbeatFrequency(500, MILLISECONDS))
                      .build());
              FailPoint ignored = FailPoint.enable(configureFailPoint, primaryServerAddress)) {
             MongoCollection<Document> collection = dropAndGetCollection("errorPropagationAfterEncounteringMultipleErrors", client);

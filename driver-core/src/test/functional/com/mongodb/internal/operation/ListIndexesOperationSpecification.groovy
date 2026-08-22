@@ -52,7 +52,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should return empty list for nonexistent collection'() {
         given:
-        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec(), null)
 
 
         def binding = getBinding()
@@ -66,7 +66,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should return empty list for nonexistent collection asynchronously'() {
         given:
-        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec(), null)
 
         when:
         AsyncBatchCursor cursor = executeAsync(operation)
@@ -80,7 +80,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should return default index on Collection that exists'() {
         given:
-        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec(), null)
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
 
 
@@ -98,7 +98,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should return default index on Collection that exists asynchronously'() {
         given:
-        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec(), null)
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
 
         when:
@@ -114,7 +114,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should return created indexes on Collection'() {
         given:
-        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec(), null)
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('compound', new BsonInt32(1)).append('index', new BsonInt32(-1)))
 
@@ -138,7 +138,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should return created indexes on Collection asynchronously'() {
         given:
-        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec(), null)
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('compound', new BsonInt32(1)).append('index', new BsonInt32(-1)))
 
@@ -161,7 +161,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should use the set batchSize of collections'() {
         given:
-        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec()).batchSize(2)
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec(), null).batchSize(2)
         collectionHelper.createIndex(new BsonDocument('collection1', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('collection2', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('collection3', new BsonInt32(1)))
@@ -194,7 +194,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should use the set batchSize of collections asynchronously'() {
         given:
-        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec()).batchSize(2)
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec(), null).batchSize(2)
         collectionHelper.createIndex(new BsonDocument('collection1', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('collection2', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('collection3', new BsonInt32(1)))
@@ -234,7 +234,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
             getReadConnectionSource(_) >> connectionSource
             getReadPreference() >> readPreference
         }
-        def operation = new ListIndexesOperation(helper.namespace, helper.decoder)
+        def operation = new ListIndexesOperation(helper.namespace, helper.decoder, null)
 
         when: '3.6.0'
         operation.execute(readBinding, operationContext)
@@ -262,7 +262,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
             getReadPreference() >> readPreference
             getReadConnectionSource(_, _) >> { it[1].onResult(connectionSource, null) }
         }
-        def operation = new ListIndexesOperation(helper.namespace, helper.decoder)
+        def operation = new ListIndexesOperation(helper.namespace, helper.decoder, null)
 
         when: '3.6.0'
         operation.executeAsync(readBinding, createOperationContext(), Stub(SingleResultCallback))

@@ -57,7 +57,7 @@ final class ListCollectionsOperationTest {
     @BeforeEach
     void beforeEach() {
         MongoNamespace namespace = new MongoNamespace("db", "coll");
-        operation = new ListCollectionsOperation<>(namespace.getDatabaseName(), new BsonDocumentCodec());
+        operation = new ListCollectionsOperation<>(namespace.getDatabaseName(), new BsonDocumentCodec(), null);
         mocks = mocks(namespace);
     }
 
