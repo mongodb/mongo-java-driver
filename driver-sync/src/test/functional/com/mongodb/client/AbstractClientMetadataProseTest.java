@@ -24,6 +24,7 @@ import com.mongodb.internal.connection.InternalStreamConnection;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -45,6 +46,7 @@ import static com.mongodb.ClusterFixture.sleep;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static java.util.Optional.ofNullable;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 /**
@@ -330,6 +332,25 @@ public abstract class AbstractClientMetadataProseTest {
                     .orElseThrow(AbstractClientMetadataProseTest::failOnEmptyMetadata);
 
             assertEquals(clientMetaData, updatedClientMetadata);
+        }
+    }
+
+    @DisplayName("Test 9: Handshake documents include backpressure: true")
+    @Test
+    void testHandshakeDocumentsIncludeBackpressureTrue() {
+        try (MongoClient mongoClient = createMongoClient(null, getMongoClientSettings())) {
+            commandListener.reset();
+            mongoClient.getDatabase("admin").runCommand(BsonDocument.parse("{ping: 1}"));
+
+            List<CommandStartedEvent> handshakeEvents = commandListener.getCommandStartedEvents("isMaster");
+            assertFalse(handshakeEvents.isEmpty(), "Expected at least one handshake document to be captured");
+            for (CommandStartedEvent event : handshakeEvents) {
+                BsonDocument helloCommand = event.getCommand();
+                assertTrue(helloCommand.containsKey("backpressure"),
+                        "Handshake document is missing 'backpressure' field");
+                assertEquals(BsonBoolean.TRUE, helloCommand.getBoolean("backpressure"),
+                        "Handshake document 'backpressure' field is not true");
+            }
         }
     }
 

@@ -26,6 +26,7 @@ import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
+import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -509,6 +510,10 @@ abstract class ContextElement {
     }
 
     private static BsonDocument serverMonitorEventToDocument(final Object event) {
+        // ServerDescriptionChangedEvent is not a heartbeat event and has no 'awaited' field.
+        if (event instanceof ServerDescriptionChangedEvent) {
+            return new BsonDocument(EventMatcher.getEventType(event.getClass()), new BsonDocument());
+        }
         return new BsonDocument(EventMatcher.getEventType(event.getClass()),
                 new BsonDocument("awaited", BsonBoolean.valueOf(EventMatcher.getAwaitedFromServerMonitorEvent(event))));
     }

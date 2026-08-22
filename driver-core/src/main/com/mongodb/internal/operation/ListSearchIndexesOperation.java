@@ -59,11 +59,15 @@ public final class ListSearchIndexesOperation<T> implements ReadOperationExplain
     @Nullable
     private final String indexName;
     private final boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
 
     public ListSearchIndexesOperation(final MongoNamespace namespace, final Decoder<T> decoder, @Nullable final String indexName,
                                       @Nullable final Integer batchSize, @Nullable final Collation collation,
                                       @Nullable final BsonValue comment,
-                                      @Nullable final Boolean allowDiskUse, final boolean retryReads) {
+                                      @Nullable final Boolean allowDiskUse,
+                                      final boolean retryReads,
+                                      @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.namespace = namespace;
         this.decoder = decoder;
         this.allowDiskUse = allowDiskUse;
@@ -72,6 +76,7 @@ public final class ListSearchIndexesOperation<T> implements ReadOperationExplain
         this.comment = comment;
         this.indexName = indexName;
         this.retryReads = retryReads;
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     @Override
@@ -119,7 +124,7 @@ public final class ListSearchIndexesOperation<T> implements ReadOperationExplain
     private AggregateOperation<T> asAggregateOperation() {
         BsonDocument searchDefinition = getSearchDefinition();
         BsonDocument listSearchIndexesStage = new BsonDocument(STAGE_LIST_SEARCH_INDEXES, searchDefinition);
-        return new AggregateOperation<>(namespace, singletonList(listSearchIndexesStage), decoder)
+        return new AggregateOperation<>(namespace, singletonList(listSearchIndexesStage), decoder, maxAdaptiveRetriesSetting)
                 .retryReads(retryReads)
                 .collation(collation)
                 .comment(comment)

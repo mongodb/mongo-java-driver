@@ -27,7 +27,7 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
-import com.mongodb.internal.async.function.RetryState;
+import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.OperationContext;
@@ -46,20 +46,19 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.internal.connection.CommandHelper.applyMaxTimeMS;
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.createReadCommandAndExecuteAsync;
-import static com.mongodb.internal.operation.AsyncOperationHelper.decorateReadWithRetriesAsync;
+import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import static com.mongodb.internal.operation.CommandOperationHelper.initialRetryState;
+import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRetryControl;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNullOrEmpty;
 import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.canRetryRead;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.createReadCommandAndExecute;
-import static com.mongodb.internal.operation.SyncOperationHelper.decorateReadWithRetries;
+import static com.mongodb.internal.operation.SyncOperationHelper.decorateWithRetries;
 import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndConnection;
 
 /**
@@ -74,6 +73,8 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
     private boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private BsonDocument filter;
     private int batchSize;
     private int limit;
@@ -94,9 +95,13 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
     private Boolean allowDiskUse;
     private TimeoutMode timeoutMode;
 
-    public FindOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
+    public FindOperation(
+            final MongoNamespace namespace,
+            final Decoder<T> decoder,
+            @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.namespace = notNull("namespace", namespace);
         this.decoder = notNull("decoder", decoder);
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     @Override
@@ -299,19 +304,21 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
         }
 
         OperationContext findOperationContext = getFindOperationContext(operationContext);
-        RetryState retryState = initialRetryState(retryReads, findOperationContext.getTimeoutContext());
-        Supplier<BatchCursor<T>> read = decorateReadWithRetries(retryState, findOperationContext, () ->
-                withSourceAndConnection(binding::getReadConnectionSource, false,
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
+                new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(findOperationContext).includeOverload(maxAdaptiveRetriesSetting),
+                findOperationContext);
+        Supplier<BatchCursor<T>> read = decorateWithRetries(retryControl, findOperationContext, () ->
+                withSourceAndConnection(binding::getReadConnectionSource, false, findOperationContext,
                         (source, connection, commandOperationContext) -> {
-                            retryState.breakAndThrowIfRetryAnd(() -> !canRetryRead(commandOperationContext));
                 try {
-                    return createReadCommandAndExecute(retryState, commandOperationContext, source, namespace.getDatabaseName(),
+                    return createReadCommandAndExecute(retryControl, commandOperationContext, source,
+                                                       namespace.getDatabaseName(),
                                                        getCommandCreator(), CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
                                                        transformer(), connection);
                 } catch (MongoCommandException e) {
                     throw new MongoQueryException(e.getResponse(), e.getServerAddress());
                 }
-          }, findOperationContext)
+          })
         );
         return read.get();
     }
@@ -325,17 +332,16 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
         }
 
         OperationContext findOperationContext = getFindOperationContext(operationContext);
-        RetryState retryState = initialRetryState(retryReads, findOperationContext.getTimeoutContext());
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
+                new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(findOperationContext).includeOverload(maxAdaptiveRetriesSetting),
+                findOperationContext);
         binding.retain();
-        AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = decorateReadWithRetriesAsync(
-                retryState, operationContext, (AsyncCallbackSupplier<AsyncBatchCursor<T>>) funcCallback ->
+        AsyncCallbackSupplier<AsyncBatchCursor<T>> asyncRead = decorateWithRetriesAsync(
+                retryControl, operationContext, (AsyncCallbackSupplier<AsyncBatchCursor<T>>) funcCallback ->
                     withAsyncSourceAndConnection(binding::getReadConnectionSource, false, findOperationContext, funcCallback,
-                            (source, connection,   operationContextWithMinRTT, releasingCallback) -> {
-                                if (retryState.breakAndCompleteIfRetryAnd(() -> !canRetryRead(findOperationContext), releasingCallback)) {
-                                    return;
-                                }
+                            (source, connection, operationContextWithMinRTT, releasingCallback) -> {
                                 SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback = exceptionTransformingCallback(releasingCallback);
-                                createReadCommandAndExecuteAsync(retryState, operationContextWithMinRTT, source,
+                                createReadCommandAndExecuteAsync(retryControl, operationContextWithMinRTT, source,
                                         namespace.getDatabaseName(), getCommandCreator(),
                                         CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
                                         asyncTransformer(), connection, wrappedCallback);

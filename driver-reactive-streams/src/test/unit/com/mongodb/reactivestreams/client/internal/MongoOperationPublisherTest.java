@@ -54,7 +54,7 @@ public class MongoOperationPublisherTest {
 
     private static final MongoOperationPublisher<Document> DEFAULT_MOP = new MongoOperationPublisher<>(
             MONGO_NAMESPACE, Document.class, MongoClientSettings.getDefaultCodecRegistry(), ReadPreference.primary(),
-            ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, true, true, UuidRepresentation.STANDARD,
+            ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, true, true, null, UuidRepresentation.STANDARD,
             null, TIMEOUT_SETTINGS_WITH_TIMEOUT, OPERATION_EXECUTOR);
 
     @Test

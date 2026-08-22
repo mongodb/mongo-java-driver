@@ -68,14 +68,14 @@ public class CommandReadOperation<T> implements ReadOperationSimple<T> {
     @Override
     public T execute(final ReadBinding binding, final OperationContext operationContext) {
         return executeRetryableRead(binding, operationContext, databaseName, commandCreator, decoder,
-                transformer(), false);
+                transformer(), false, null);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext,
                              final SingleResultCallback<T> callback) {
         executeRetryableReadAsync(binding, operationContext,  databaseName, commandCreator, decoder,
-                asyncTransformer(), false, callback);
+                asyncTransformer(), false, null, callback);
     }
 
     private static <T> CommandReadTransformer<T, T> transformer() {

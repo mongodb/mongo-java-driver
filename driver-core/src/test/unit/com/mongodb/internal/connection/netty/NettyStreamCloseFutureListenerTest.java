@@ -20,6 +20,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
+import com.mongodb.internal.connection.OperationContext;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -39,7 +40,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
+import static com.mongodb.ClusterFixture.createOperationContext;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -99,7 +100,7 @@ public class NettyStreamCloseFutureListenerTest {
         };
         WeakReference<AsyncCompletionHandler<Void>> canary = new WeakReference<>(handler);
 
-        stream.openAsync(OPERATION_CONTEXT, handler);
+        stream.openAsync(createOperationContext(), handler);
         assertTrue(opened.await(10, TimeUnit.SECONDS), "open did not complete");
 
         // Nullify the test's own reference so the driver is the only thing that could still retain the handler.
@@ -117,12 +118,13 @@ public class NettyStreamCloseFutureListenerTest {
     @Test
     @DisplayName("pending read should be failed when the channel is closed")
     public void shouldFailPendingReadWhenChannelIsClosed() throws Exception {
-        Socket acceptedSocket = openAndAcceptConnection();
+        OperationContext operationContext = createOperationContext();
+        Socket acceptedSocket = openAndAcceptConnection(operationContext);
 
         // Create a read that 127.0.0.1 will never satisfy, then close the connection from the server side
         CountDownLatch readCompleted = new CountDownLatch(1);
         AtomicReference<Throwable> readFailure = new AtomicReference<>();
-        stream.readAsync(4, OPERATION_CONTEXT, new AsyncCompletionHandler<ByteBuf>() {
+        stream.readAsync(4, operationContext, new AsyncCompletionHandler<ByteBuf>() {
             @Override
             public void completed(final ByteBuf result) {
                 readCompleted.countDown();
@@ -166,7 +168,7 @@ public class NettyStreamCloseFutureListenerTest {
      * Opens {@link #stream} against the local {@link #serverSocket} and returns the server side of the accepted
      * connection, so the test can later close it to simulate the server dropping the connection.
      */
-    private Socket openAndAcceptConnection() throws Exception {
+    private Socket openAndAcceptConnection(final OperationContext operationContext) throws Exception {
         AtomicReference<Socket> acceptedSocket = new AtomicReference<>();
         Thread acceptor = new Thread(() -> {
             try {
@@ -177,7 +179,7 @@ public class NettyStreamCloseFutureListenerTest {
         });
         acceptor.start();
 
-        stream.open(OPERATION_CONTEXT);
+        stream.open(operationContext);
         acceptor.join(TimeUnit.SECONDS.toMillis(10));
         assertNotNull(acceptedSocket.get(), "the server never accepted the connection");
         return acceptedSocket.get();

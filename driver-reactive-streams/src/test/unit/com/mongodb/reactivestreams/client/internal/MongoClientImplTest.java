@@ -24,9 +24,11 @@ import com.mongodb.TransactionOptions;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.connection.ClientMetadata;
 import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.internal.mockito.MongoMockito;
 import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.session.ServerSessionPool;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.ListDatabasesPublisher;
@@ -202,13 +204,25 @@ public class MongoClientImplTest extends TestHelper {
                   });
     }
 
+    @Test
+    void close() {
+        com.mongodb.client.MongoClientTest.assertClose((cluster, mongoDriverInformation, streamFactoryFactory, clientExecutor) ->
+                new MongoClientImpl(
+                        cluster,
+                        mongoDriverInformation,
+                        MongoClientSettings.builder().build(),
+                        streamFactoryFactory,
+                        clientExecutor));
+    }
+
     private MongoClientImpl createMongoClient() {
         MongoDriverInformation mongoDriverInformation = MongoDriverInformation.builder().driverName("reactive-streams").build();
-        Cluster mock = MongoMockito.mock(Cluster.class, cluster -> {
-            when(cluster.getClientMetadata())
+        Cluster cluster = MongoMockito.mock(Cluster.class, mock -> {
+            when(mock.getClientMetadata())
                     .thenReturn(new ClientMetadata("test", mongoDriverInformation));
         });
-        return new MongoClientImpl(MongoClientSettings.builder().build(),
-                mongoDriverInformation, mock, OPERATION_EXECUTOR);
+        StreamFactoryFactory streamFactoryFactory = MongoMockito.mock(StreamFactoryFactory.class);
+        return new MongoClientImpl(cluster, mongoDriverInformation, MongoClientSettings.builder().build(), streamFactoryFactory,
+                AsyncClientExecutor.NO_OP, OPERATION_EXECUTOR);
     }
 }

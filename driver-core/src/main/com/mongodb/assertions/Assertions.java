@@ -205,7 +205,7 @@ public final class Assertions {
     }
 
     /**
-     * @throws AssertionError Always
+     * @throws AssertionError Always.
      * @return Never completes normally. The return type is {@link AssertionError} to allow writing {@code throw fail()}.
      * This may be helpful in non-{@code void} methods.
      */
@@ -215,12 +215,22 @@ public final class Assertions {
 
     /**
      * @param msg The failure message.
-     * @throws AssertionError Always
+     * @throws AssertionError Always.
      * @return Never completes normally. The return type is {@link AssertionError} to allow writing {@code throw fail("failure message")}.
      * This may be helpful in non-{@code void} methods.
      */
     public static AssertionError fail(final String msg) throws AssertionError {
         throw new AssertionError(assertNotNull(msg));
+    }
+
+    /**
+     * @param cause The {@linkplain AssertionError#getCause() cause}.
+     * @throws AssertionError Always.
+     * @return Never completes normally. The return type is {@link AssertionError} to allow writing {@code throw fail(cause)}.
+     * This may be helpful in non-{@code void} methods.
+     */
+    public static AssertionError fail(final Throwable cause) throws AssertionError {
+        throw new AssertionError(null, cause);
     }
 
     /**

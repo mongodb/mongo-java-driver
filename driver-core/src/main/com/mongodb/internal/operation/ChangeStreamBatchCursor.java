@@ -85,7 +85,9 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
                             final int maxWireVersion) {
         this.changeStreamOperation = changeStreamOperation;
         this.binding = binding.retain();
-        this.initialOperationContext = operationContext.withOverride(TimeoutContext::withMaxTimeAsMaxAwaitTimeOverride);
+        this.initialOperationContext = operationContext
+                .withOverride(TimeoutContext::withMaxTimeAsMaxAwaitTimeOverride)
+                .withNewServerDeprioritization();
         this.wrapped = wrapped;
         this.resumeToken = resumeToken;
         this.maxWireVersion = maxWireVersion;

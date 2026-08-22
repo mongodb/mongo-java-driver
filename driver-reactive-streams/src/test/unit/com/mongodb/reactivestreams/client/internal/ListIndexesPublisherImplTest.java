@@ -43,7 +43,7 @@ public class ListIndexesPublisherImplTest extends TestHelper {
         ListIndexesPublisher<Document> publisher = new ListIndexesPublisherImpl<>(null, createMongoOperationPublisher(executor));
 
         ListIndexesOperation<Document> expectedOperation =
-                new ListIndexesOperation<>(NAMESPACE, getDefaultCodecRegistry().get(Document.class))
+                new ListIndexesOperation<>(NAMESPACE, getDefaultCodecRegistry().get(Document.class), null)
                         .batchSize(Integer.MAX_VALUE)
                         .retryReads(true);
 
@@ -58,7 +58,7 @@ public class ListIndexesPublisherImplTest extends TestHelper {
                 .maxTime(100, MILLISECONDS);
 
         expectedOperation =
-                new ListIndexesOperation<>(NAMESPACE, getDefaultCodecRegistry().get(Document.class))
+                new ListIndexesOperation<>(NAMESPACE, getDefaultCodecRegistry().get(Document.class), null)
                         .batchSize(100)
                         .retryReads(true);
 

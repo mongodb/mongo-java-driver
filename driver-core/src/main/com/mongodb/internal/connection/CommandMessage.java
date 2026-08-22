@@ -344,12 +344,12 @@ public final class CommandMessage extends RequestMessage {
                 extraElements.add(new BsonElement("lsid", sessionContext.getSessionId()));
             }
         }
-        boolean firstMessageInTransaction = sessionContext.notifyMessageSent();
+        boolean startTransaction = sessionContext.notifyMessageSent();
 
         assertFalse(sessionContext.hasActiveTransaction() && sessionContext.isSnapshot());
         if (sessionContext.hasActiveTransaction()) {
             extraElements.add(new BsonElement("txnNumber", new BsonInt64(sessionContext.getTransactionNumber())));
-            if (firstMessageInTransaction) {
+            if (startTransaction) {
                 extraElements.add(new BsonElement("startTransaction", BsonBoolean.TRUE));
                 addReadConcernDocument(extraElements, sessionContext);
             }

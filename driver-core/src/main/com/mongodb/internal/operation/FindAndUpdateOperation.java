@@ -52,15 +52,20 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     private List<BsonDocument> arrayFilters;
 
     public FindAndUpdateOperation(final MongoNamespace namespace,
-            final WriteConcern writeConcern, final boolean retryWrites, final Decoder<T> decoder, final BsonDocument update) {
-        super(namespace, writeConcern, retryWrites, decoder);
+            final WriteConcern writeConcern,
+            final boolean retryWrites,
+            @Nullable final Integer maxAdaptiveRetriesSetting,
+            final Decoder<T> decoder, final BsonDocument update) {
+        super(namespace, writeConcern, retryWrites, maxAdaptiveRetriesSetting, decoder);
         this.update = notNull("update", update);
         this.updatePipeline = null;
     }
 
-    public FindAndUpdateOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
+    public FindAndUpdateOperation(final MongoNamespace namespace, final WriteConcern writeConcern,
+            final boolean retryWrites,
+            @Nullable final Integer maxAdaptiveRetriesSetting,
             final Decoder<T> decoder, final List<BsonDocument> update) {
-        super(namespace, writeConcern, retryWrites, decoder);
+        super(namespace, writeConcern, retryWrites, maxAdaptiveRetriesSetting, decoder);
         this.updatePipeline = update;
         this.update = null;
     }

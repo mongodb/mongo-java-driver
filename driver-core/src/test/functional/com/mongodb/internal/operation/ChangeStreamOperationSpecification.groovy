@@ -53,7 +53,7 @@ import org.bson.codecs.DocumentCodec
 import org.bson.codecs.ValueCodecProvider
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isStandalone
@@ -112,7 +112,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
                 .append('firstBatch', new BsonArrayWrapper([])))
 
         def operation = new ChangeStreamOperation<Document>(namespace, FullDocument.DEFAULT,
-                FullDocumentBeforeChange.DEFAULT, pipeline, new DocumentCodec(), changeStreamLevel as ChangeStreamLevel)
+                FullDocumentBeforeChange.DEFAULT, pipeline, new DocumentCodec(), changeStreamLevel as ChangeStreamLevel, null)
                 .batchSize(5)
                 .collation(defaultCollation)
                 .startAtOperationTime(new BsonTimestamp())
@@ -359,7 +359,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP,
                 FullDocumentBeforeChange.DEFAULT, pipeline,
                 createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())),
-                ChangeStreamLevel.DATABASE)
+                ChangeStreamLevel.DATABASE, null)
         helper.insertDocuments(BsonDocument.parse('{ _id : 2, x : 2, y : 3 }'))
 
         when:
@@ -635,7 +635,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
     def 'should set the startAtOperationTime on the sync cursor'() {
         given:
-        def operationContext = OPERATION_CONTEXT.withSessionContext(
+        def operationContext = createOperationContext().withSessionContext(
                 Stub(SessionContext) {
                     getReadConcern() >> ReadConcern.DEFAULT
                     getOperationTime() >> new BsonTimestamp()
@@ -690,7 +690,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
     def 'should set the startAtOperationTime on the async cursor'() {
         given:
-        def operationContext = OPERATION_CONTEXT.withSessionContext(
+        def operationContext = createOperationContext().withSessionContext(
                 Stub(SessionContext) {
                     getReadConcern() >> ReadConcern.DEFAULT
                     getOperationTime() >> new BsonTimestamp()

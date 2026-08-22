@@ -29,7 +29,7 @@ import java.nio.channels.InterruptibleChannel;
 
 /**
  * A driver-specific non-checked counterpart to {@link InterruptedException}.
- * Before this exception is thrown, the {@linkplain Thread#isInterrupted() interrupt status} of the thread will have been set
+ * Before this exception is thrown, the {@linkplain Thread#isInterrupted() interrupted status} of the thread will have been set
  * unless the {@linkplain #getCause() cause} is {@link InterruptedIOException}, in which case the driver leaves the status as is.
  * <p>
  * The Java SE API uses exceptions different from {@link InterruptedException} to communicate the same information:</p>

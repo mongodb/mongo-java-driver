@@ -14,28 +14,14 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.internal;
+package com.mongodb.client.unified;
 
-/**
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
- */
-public final class ClientSessionClock {
-    public static final ClientSessionClock INSTANCE = new ClientSessionClock(0L);
+import org.junit.jupiter.params.provider.Arguments;
 
-    private long currentTime;
+import java.util.Collection;
 
-    private ClientSessionClock(final long millis) {
-        currentTime = millis;
-    }
-
-    public long now() {
-        if (currentTime == 0L) {
-            return System.currentTimeMillis();
-        }
-        return currentTime;
-    }
-
-    public void setTime(final long millis) {
-        currentTime = millis;
+final class UnifiedClientBackpressureTest extends UnifiedSyncTest {
+    private static Collection<Arguments> data() {
+        return getTestData("client-backpressure");
     }
 }
