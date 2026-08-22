@@ -105,23 +105,25 @@ public final class Operations<T> {
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
     private final boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private final TimeoutSettings timeoutSettings;
 
     public Operations(final Class<T> documentClass, final ReadPreference readPreference, final CodecRegistry codecRegistry,
-            final boolean retryReads, final TimeoutSettings timeoutSettings) {
+            final boolean retryReads, @Nullable final Integer maxAdaptiveRetriesSetting, final TimeoutSettings timeoutSettings) {
         this(null, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED,
-                true, retryReads, timeoutSettings);
+                true, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
     }
 
     public Operations(@Nullable final MongoNamespace namespace, final Class<T> documentClass, final ReadPreference readPreference,
-            final CodecRegistry codecRegistry, final boolean retryReads, final TimeoutSettings timeoutSettings) {
+            final CodecRegistry codecRegistry, final boolean retryReads, @Nullable final Integer maxAdaptiveRetriesSetting, final TimeoutSettings timeoutSettings) {
         this(namespace, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED,
-                true, retryReads, timeoutSettings);
+                true, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
     }
 
     public Operations(@Nullable final MongoNamespace namespace, final Class<T> documentClass, final ReadPreference readPreference,
             final CodecRegistry codecRegistry, final ReadConcern readConcern, final WriteConcern writeConcern, final boolean retryWrites,
-            final boolean retryReads, final TimeoutSettings timeoutSettings) {
+            final boolean retryReads, @Nullable final Integer maxAdaptiveRetriesSetting, final TimeoutSettings timeoutSettings) {
         this.namespace = namespace;
         this.documentClass = documentClass;
         this.readPreference = readPreference;
@@ -129,6 +131,7 @@ public final class Operations<T> {
         this.readConcern = readConcern;
         this.retryWrites = retryWrites;
         this.retryReads = retryReads;
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
         this.timeoutSettings = timeoutSettings;
 
         WriteConcern writeConcernToUse = writeConcern;
@@ -225,7 +228,8 @@ public final class Operations<T> {
 
     public ReadOperationSimple<Long> countDocuments(final Bson filter, final CountOptions options) {
         CountDocumentsOperation operation = new CountDocumentsOperation(
-                assertNotNull(namespace))
+                assertNotNull(namespace),
+                maxAdaptiveRetriesSetting)
                 .retryReads(retryReads)
                 .filter(toBsonDocument(filter))
                 .skip(options.getSkip())
@@ -242,7 +246,7 @@ public final class Operations<T> {
 
     public ReadOperationSimple<Long> estimatedDocumentCount(final EstimatedDocumentCountOptions options) {
         return new EstimatedDocumentCountOperation(
-                assertNotNull(namespace))
+                assertNotNull(namespace), maxAdaptiveRetriesSetting)
                 .retryReads(retryReads)
                 .comment(options.getComment());
     }
@@ -265,7 +269,8 @@ public final class Operations<T> {
     private <R> FindOperation<R> createFindOperation(final MongoNamespace findNamespace, @Nullable final Bson filter,
                                                                  final Class<R> resultClass, final FindOptions options) {
         FindOperation<R> operation = new FindOperation<>(
-                findNamespace, codecRegistry.get(resultClass))
+                findNamespace, codecRegistry.get(resultClass),
+                maxAdaptiveRetriesSetting)
                 .retryReads(retryReads)
                 .filter(filter == null ? new BsonDocument() : filter.toBsonDocument(documentClass, codecRegistry))
                 .batchSize(options.getBatchSize())
@@ -297,7 +302,7 @@ public final class Operations<T> {
     public <R> ReadOperationCursor<R> distinct(final String fieldName, @Nullable final Bson filter, final Class<R> resultClass,
             final Collation collation, final BsonValue comment, @Nullable final Bson hint, @Nullable final String hintString) {
         DistinctOperation<R> operation = new DistinctOperation<>(assertNotNull(namespace),
-                fieldName, codecRegistry.get(resultClass))
+                fieldName, codecRegistry.get(resultClass), maxAdaptiveRetriesSetting)
                 .retryReads(retryReads)
                 .filter(filter == null ? null : filter.toBsonDocument(documentClass, codecRegistry))
                 .collation(collation)
@@ -316,7 +321,8 @@ public final class Operations<T> {
             final Collation collation, @Nullable final Bson hint, @Nullable final String hintString,
             final BsonValue comment, final Bson variables, final Boolean allowDiskUse, final AggregationLevel aggregationLevel) {
         return new AggregateOperation<>(assertNotNull(namespace),
-                assertNotNull(toBsonDocumentList(pipeline)), codecRegistry.get(resultClass), aggregationLevel)
+                assertNotNull(toBsonDocumentList(pipeline)), codecRegistry.get(resultClass), aggregationLevel,
+                maxAdaptiveRetriesSetting)
                 .retryReads(retryReads)
                 .allowDiskUse(allowDiskUse)
                 .batchSize(batchSize)
@@ -392,7 +398,7 @@ public final class Operations<T> {
 
     public WriteOperation<T> findOneAndDelete(final Bson filter, final FindOneAndDeleteOptions options) {
         return new FindAndDeleteOperation<>(
-                assertNotNull(namespace), writeConcern, retryWrites, getCodec())
+                assertNotNull(namespace), writeConcern, retryWrites, maxAdaptiveRetriesSetting, getCodec())
                 .filter(toBsonDocument(filter))
                 .projection(toBsonDocument(options.getProjection()))
                 .sort(toBsonDocument(options.getSort()))
@@ -406,7 +412,7 @@ public final class Operations<T> {
     public WriteOperation<T> findOneAndReplace(final Bson filter, final T replacement,
                                                                 final FindOneAndReplaceOptions options) {
         return new FindAndReplaceOperation<>(
-                assertNotNull(namespace), writeConcern, retryWrites, getCodec(), documentToBsonDocument(replacement))
+                assertNotNull(namespace), writeConcern, retryWrites, maxAdaptiveRetriesSetting, getCodec(), documentToBsonDocument(replacement))
                 .filter(toBsonDocument(filter))
                 .projection(toBsonDocument(options.getProjection()))
                 .sort(toBsonDocument(options.getSort()))
@@ -422,7 +428,7 @@ public final class Operations<T> {
 
     public WriteOperation<T> findOneAndUpdate(final Bson filter, final Bson update, final FindOneAndUpdateOptions options) {
         return new FindAndUpdateOperation<>(
-                assertNotNull(namespace), writeConcern, retryWrites, getCodec(), assertNotNull(toBsonDocument(update)))
+                assertNotNull(namespace), writeConcern, retryWrites, maxAdaptiveRetriesSetting, getCodec(), assertNotNull(toBsonDocument(update)))
                 .filter(toBsonDocument(filter))
                 .projection(toBsonDocument(options.getProjection()))
                 .sort(toBsonDocument(options.getSort()))
@@ -440,7 +446,7 @@ public final class Operations<T> {
     public WriteOperation<T> findOneAndUpdate(final Bson filter, final List<? extends Bson> update,
                                                        final FindOneAndUpdateOptions options) {
         return new FindAndUpdateOperation<>(
-                assertNotNull(namespace), writeConcern, retryWrites, getCodec(), assertNotNull(toBsonDocumentList(update)))
+                assertNotNull(namespace), writeConcern, retryWrites, maxAdaptiveRetriesSetting, getCodec(), assertNotNull(toBsonDocumentList(update)))
                 .filter(toBsonDocument(filter))
                 .projection(toBsonDocument(options.getProjection()))
                 .sort(toBsonDocument(options.getSort()))
@@ -516,7 +522,7 @@ public final class Operations<T> {
         }
 
         return new MixedBulkWriteOperation(assertNotNull(namespace),
-                requests, options.isOrdered(), writeConcern, retryWrites)
+                requests, options.isOrdered(), writeConcern, retryWrites, maxAdaptiveRetriesSetting)
                 .bypassDocumentValidation(options.getBypassDocumentValidation())
                 .comment(options.getComment());
     }
@@ -586,7 +592,7 @@ public final class Operations<T> {
         }
 
         return new MixedBulkWriteOperation(assertNotNull(namespace), writeRequests,
-                options.isOrdered(), writeConcern, retryWrites)
+                options.isOrdered(), writeConcern, retryWrites, maxAdaptiveRetriesSetting)
                 .bypassDocumentValidation(options.getBypassDocumentValidation())
                 .comment(options.getComment())
                 .let(toBsonDocument(options.getLet()));
@@ -738,7 +744,7 @@ public final class Operations<T> {
             @Nullable final String indexName, @Nullable final Integer batchSize, @Nullable final Collation collation,
             @Nullable final BsonValue comment, @Nullable final Boolean allowDiskUse) {
         return new ListSearchIndexesOperation<>(assertNotNull(namespace),
-                codecRegistry.get(resultClass), indexName, batchSize, collation, comment, allowDiskUse, retryReads);
+                codecRegistry.get(resultClass), indexName, batchSize, collation, comment, allowDiskUse, retryReads, maxAdaptiveRetriesSetting);
     }
 
     public WriteOperation<Void> dropIndex(final String indexName, final DropIndexOptions ignoredOptions) {
@@ -752,7 +758,7 @@ public final class Operations<T> {
     public <R> ReadOperationCursor<R> listCollections(final String databaseName, final Class<R> resultClass,
             final Bson filter, final boolean collectionNamesOnly, final boolean authorizedCollections, @Nullable final Integer batchSize,
             final BsonValue comment, @Nullable final TimeoutMode timeoutMode) {
-        return new ListCollectionsOperation<>(databaseName, codecRegistry.get(resultClass))
+        return new ListCollectionsOperation<>(databaseName, codecRegistry.get(resultClass), maxAdaptiveRetriesSetting)
                 .retryReads(retryReads)
                 .filter(toBsonDocument(filter))
                 .nameOnly(collectionNamesOnly)
@@ -765,7 +771,7 @@ public final class Operations<T> {
     public <R> ReadOperationCursor<R> listDatabases(final Class<R> resultClass, final Bson filter,
                                                             final Boolean nameOnly,
                                                             final Boolean authorizedDatabasesOnly, final BsonValue comment) {
-        return new ListDatabasesOperation<>(codecRegistry.get(resultClass))
+        return new ListDatabasesOperation<>(codecRegistry.get(resultClass), maxAdaptiveRetriesSetting)
                 .retryReads(retryReads)
                 .filter(toBsonDocument(filter))
                 .nameOnly(nameOnly)
@@ -776,7 +782,8 @@ public final class Operations<T> {
     public <R> ReadOperationCursor<R> listIndexes(final Class<R> resultClass, @Nullable final Integer batchSize,
             final BsonValue comment, @Nullable final TimeoutMode timeoutMode) {
         return new ListIndexesOperation<>(assertNotNull(namespace),
-                codecRegistry.get(resultClass))
+                codecRegistry.get(resultClass),
+                maxAdaptiveRetriesSetting)
                 .retryReads(retryReads)
                 .batchSize(batchSize == null ? 0 : batchSize)
                 .comment(comment)
@@ -792,7 +799,8 @@ public final class Operations<T> {
                 assertNotNull(namespace),
                 fullDocument,
                 fullDocumentBeforeChange,
-                assertNotNull(toBsonDocumentList(pipeline)), decoder, changeStreamLevel)
+                assertNotNull(toBsonDocumentList(pipeline)), decoder, changeStreamLevel,
+                maxAdaptiveRetriesSetting)
                 .batchSize(batchSize)
                 .collation(collation)
                 .comment(comment)
@@ -806,7 +814,7 @@ public final class Operations<T> {
     public WriteOperation<ClientBulkWriteResult> clientBulkWriteOperation(
             final List<? extends ClientNamespacedWriteModel> clientWriteModels,
             @Nullable final ClientBulkWriteOptions options) {
-        return new ClientBulkWriteOperation(clientWriteModels, options, writeConcern, retryWrites, codecRegistry);
+        return new ClientBulkWriteOperation(clientWriteModels, options, writeConcern, retryWrites, maxAdaptiveRetriesSetting, codecRegistry);
     }
 
     private Codec<T> getCodec() {

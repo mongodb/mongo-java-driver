@@ -68,8 +68,8 @@ class MongoDatabaseSpecification extends Specification {
 
     def 'should throw IllegalArgumentException if name is invalid'() {
         when:
-        new MongoDatabaseImpl('a.b', codecRegistry, readPreference, writeConcern, false, false, readConcern,
-                JAVA_LEGACY, null, TIMEOUT_SETTINGS, new TestOperationExecutor([]))
+        new MongoDatabaseImpl('a.b', codecRegistry, readPreference, writeConcern, false, false, null,
+                readConcern, JAVA_LEGACY, null, TIMEOUT_SETTINGS, new TestOperationExecutor([]))
 
         then:
         thrown(IllegalArgumentException)
@@ -77,8 +77,8 @@ class MongoDatabaseSpecification extends Specification {
 
     def 'should throw IllegalArgumentException from getCollection if collectionName is invalid'() {
         given:
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, readConcern,
-                JAVA_LEGACY, null, TIMEOUT_SETTINGS, new TestOperationExecutor([]))
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, null,
+                readConcern, JAVA_LEGACY, null, TIMEOUT_SETTINGS, new TestOperationExecutor([]))
 
         when:
         database.getCollection('')
@@ -89,8 +89,8 @@ class MongoDatabaseSpecification extends Specification {
 
     def 'should return the correct name from getName'() {
         given:
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, readConcern,
-                JAVA_LEGACY, null, TIMEOUT_SETTINGS, new TestOperationExecutor([]))
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, null,
+                readConcern, JAVA_LEGACY, null, TIMEOUT_SETTINGS, new TestOperationExecutor([]))
 
         expect:
         database.getName() == name
@@ -102,14 +102,15 @@ class MongoDatabaseSpecification extends Specification {
         def executor = new TestOperationExecutor([])
 
         when:
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, true, readConcern,
-                C_SHARP_LEGACY, null, TIMEOUT_SETTINGS, executor)
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, true, null,
+                readConcern, C_SHARP_LEGACY, null, TIMEOUT_SETTINGS, executor)
                 .withCodecRegistry(newCodecRegistry)
 
         then:
         (database.getCodecRegistry().get(UUID) as UuidCodec).getUuidRepresentation() == C_SHARP_LEGACY
         expect database, isTheSameAs(new MongoDatabaseImpl(name, database.getCodecRegistry(), readPreference, writeConcern,
-                false, true, readConcern, C_SHARP_LEGACY, null, TIMEOUT_SETTINGS, executor))
+                false, true, null,
+                readConcern, C_SHARP_LEGACY, null, TIMEOUT_SETTINGS, executor))
     }
 
     def 'should behave correctly when using withReadPreference'() {
@@ -118,13 +119,13 @@ class MongoDatabaseSpecification extends Specification {
         def executor = new TestOperationExecutor([])
 
         when:
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, null,
                 readConcern,  JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
                 .withReadPreference(newReadPreference)
 
         then:
         database.getReadPreference() == newReadPreference
-        expect database, isTheSameAs(new MongoDatabaseImpl(name, codecRegistry, newReadPreference, writeConcern, false, false,
+        expect database, isTheSameAs(new MongoDatabaseImpl(name, codecRegistry, newReadPreference, writeConcern, false, false, null,
                 readConcern,  JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor))
     }
 
@@ -134,13 +135,13 @@ class MongoDatabaseSpecification extends Specification {
         def executor = new TestOperationExecutor([])
 
         when:
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, null,
                 readConcern,  JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
                 .withWriteConcern(newWriteConcern)
 
         then:
         database.getWriteConcern() == newWriteConcern
-        expect database, isTheSameAs(new MongoDatabaseImpl(name, codecRegistry, readPreference, newWriteConcern, false, false,
+        expect database, isTheSameAs(new MongoDatabaseImpl(name, codecRegistry, readPreference, newWriteConcern, false, false, null,
                 readConcern,  JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor))
     }
 
@@ -150,20 +151,20 @@ class MongoDatabaseSpecification extends Specification {
         def executor = new TestOperationExecutor([])
 
         when:
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, null,
                 readConcern,  JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
                 .withReadConcern(newReadConcern)
 
         then:
         database.getReadConcern() == newReadConcern
-        expect database, isTheSameAs(new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
+        expect database, isTheSameAs(new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, null,
                 newReadConcern, JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor))
     }
 
     def 'should behave correctly when using withTimeout'() {
         given:
         def executor = new TestOperationExecutor([])
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, null,
                 readConcern,  JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
 
         when:
@@ -171,7 +172,7 @@ class MongoDatabaseSpecification extends Specification {
 
         then:
         newDatabase.getTimeout(TimeUnit.MILLISECONDS) == 10_000
-        expect newDatabase, isTheSameAs(new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
+        expect newDatabase, isTheSameAs(new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, null,
                 readConcern, JAVA_LEGACY, null, TIMEOUT_SETTINGS.withTimeout(10_000, TimeUnit.MILLISECONDS), executor))
 
         when:
@@ -185,7 +186,7 @@ class MongoDatabaseSpecification extends Specification {
         given:
         def command = new BsonDocument('command', new BsonInt32(1))
         def executor = new TestOperationExecutor([null, null, null, null])
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, null,
                 readConcern,  JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
         def runCommandMethod = database.&runCommand
 
@@ -228,7 +229,7 @@ class MongoDatabaseSpecification extends Specification {
     def 'should use DropDatabaseOperation correctly'() {
         given:
         def executor = new TestOperationExecutor([null])
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, null,
                 readConcern,  JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
         def dropMethod = database.&drop
 
@@ -247,7 +248,7 @@ class MongoDatabaseSpecification extends Specification {
     def 'should use ListCollectionsOperation correctly'() {
         given:
         def executor = new TestOperationExecutor([null, null, null])
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, null,
                 readConcern,  JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
         def listCollectionsMethod = database.&listCollections
         def listCollectionNamesMethod = database.&listCollectionNames
@@ -257,14 +258,14 @@ class MongoDatabaseSpecification extends Specification {
 
         then:
         expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<>(session, name, false,
-                Document, codecRegistry, primary(), executor, false, TIMEOUT_SETTINGS))
+                Document, codecRegistry, primary(), executor, false, null, TIMEOUT_SETTINGS))
 
         when:
         listCollectionIterable = execute(listCollectionsMethod, session, BsonDocument)
 
         then:
         expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<>(session, name, false,
-                BsonDocument, codecRegistry, primary(), executor, false, TIMEOUT_SETTINGS))
+                BsonDocument, codecRegistry, primary(), executor, false, null, TIMEOUT_SETTINGS))
 
         when:
         def listCollectionNamesIterable = execute(listCollectionNamesMethod, session)
@@ -272,7 +273,7 @@ class MongoDatabaseSpecification extends Specification {
         then:
         // `listCollectionNamesIterable` is an instance of a `ListCollectionNamesIterableImpl`, so have to get the wrapped iterable from it
         expect listCollectionNamesIterable.getWrapped(), isTheSameAs(new ListCollectionsIterableImpl<>(session, name,
-                true, BsonDocument, codecRegistry, primary(), executor, false, TIMEOUT_SETTINGS))
+                true, BsonDocument, codecRegistry, primary(), executor, false, null, TIMEOUT_SETTINGS))
 
         where:
         session << [null, Stub(ClientSession)]
@@ -282,7 +283,7 @@ class MongoDatabaseSpecification extends Specification {
         given:
         def collectionName = 'collectionName'
         def executor = new TestOperationExecutor([null, null])
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, null,
                 readConcern,  JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
         def createCollectionMethod = database.&createCollection
 
@@ -333,7 +334,7 @@ class MongoDatabaseSpecification extends Specification {
         def pipeline = [new Document('$match', new Document('x', true))]
         def writeConcern = WriteConcern.JOURNALED
         def executor = new TestOperationExecutor([null, null])
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, null,
                 readConcern,  JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
         def createViewMethod = database.&createView
 
@@ -363,7 +364,7 @@ class MongoDatabaseSpecification extends Specification {
         given:
         def viewName = 'view1'
         def viewOn = 'col1'
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, null,
                 readConcern, JAVA_LEGACY, null, TIMEOUT_SETTINGS, Stub(OperationExecutor))
 
         when:
@@ -383,7 +384,7 @@ class MongoDatabaseSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([])
         def namespace = new MongoNamespace(name, '_ignored')
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, null,
                 readConcern,  JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
         def watchMethod = database.&watch
 
@@ -392,7 +393,7 @@ class MongoDatabaseSpecification extends Specification {
 
         then:
         expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace, codecRegistry,
-                readPreference, readConcern, executor, [], Document, ChangeStreamLevel.DATABASE, false, TIMEOUT_SETTINGS),
+                readPreference, readConcern, executor, [], Document, ChangeStreamLevel.DATABASE, false, null, TIMEOUT_SETTINGS),
                 ['codec'])
 
         when:
@@ -401,7 +402,7 @@ class MongoDatabaseSpecification extends Specification {
         then:
         expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace, codecRegistry,
                 readPreference, readConcern, executor, [new Document('$match', 1)], Document,
-                ChangeStreamLevel.DATABASE, false, TIMEOUT_SETTINGS), ['codec'])
+                ChangeStreamLevel.DATABASE, false, null, TIMEOUT_SETTINGS), ['codec'])
 
         when:
         changeStreamIterable = execute(watchMethod, session, [new Document('$match', 1)], BsonDocument)
@@ -409,7 +410,7 @@ class MongoDatabaseSpecification extends Specification {
         then:
         expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace, codecRegistry,
                 readPreference, readConcern, executor, [new Document('$match', 1)], BsonDocument,
-                ChangeStreamLevel.DATABASE, false, TIMEOUT_SETTINGS), ['codec'])
+                ChangeStreamLevel.DATABASE, false, null, TIMEOUT_SETTINGS), ['codec'])
 
         where:
         session << [null, Stub(ClientSession)]
@@ -418,7 +419,7 @@ class MongoDatabaseSpecification extends Specification {
     def 'should validate the ChangeStreamIterable pipeline data correctly'() {
         given:
         def executor = new TestOperationExecutor([])
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, null,
                 readConcern,  JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
 
         when:
@@ -437,7 +438,7 @@ class MongoDatabaseSpecification extends Specification {
     def 'should create AggregateIterable correctly'() {
         given:
         def executor = new TestOperationExecutor([])
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, null,
                 readConcern,  JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
         def aggregateMethod = database.&aggregate
 
@@ -447,7 +448,7 @@ class MongoDatabaseSpecification extends Specification {
         then:
         expect aggregateIterable, isTheSameAs(new AggregateIterableImpl<>(session, name, Document, Document,
                 codecRegistry, readPreference, readConcern, writeConcern, executor, [], AggregationLevel.DATABASE,
-                false, TIMEOUT_SETTINGS), ['codec'])
+                false, null, TIMEOUT_SETTINGS), ['codec'])
 
         when:
         aggregateIterable = execute(aggregateMethod, session, [new Document('$match', 1)])
@@ -455,7 +456,7 @@ class MongoDatabaseSpecification extends Specification {
         then:
         expect aggregateIterable, isTheSameAs(new AggregateIterableImpl<>(session, name, Document, Document,
                 codecRegistry, readPreference, readConcern, writeConcern, executor, [new Document('$match', 1)],
-                AggregationLevel.DATABASE, false, TIMEOUT_SETTINGS), ['codec'])
+                AggregationLevel.DATABASE, false, null, TIMEOUT_SETTINGS), ['codec'])
 
         when:
         aggregateIterable = execute(aggregateMethod, session, [new Document('$match', 1)], BsonDocument)
@@ -463,7 +464,7 @@ class MongoDatabaseSpecification extends Specification {
         then:
         expect aggregateIterable, isTheSameAs(new AggregateIterableImpl<>(session, name, Document, BsonDocument,
                 codecRegistry, readPreference, readConcern, writeConcern, executor, [new Document('$match', 1)],
-                AggregationLevel.DATABASE, false, TIMEOUT_SETTINGS), ['codec'])
+                AggregationLevel.DATABASE, false, null, TIMEOUT_SETTINGS), ['codec'])
 
         where:
         session << [null, Stub(ClientSession)]
@@ -472,7 +473,7 @@ class MongoDatabaseSpecification extends Specification {
     def 'should validate the AggregationIterable pipeline data correctly'() {
         given:
         def executor = new TestOperationExecutor([])
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false,
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, null,
                 readConcern,  JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
 
         when:
@@ -497,7 +498,7 @@ class MongoDatabaseSpecification extends Specification {
     def 'should pass the correct options to getCollection'() {
         given:
         def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
-        def database = new MongoDatabaseImpl('databaseName', codecRegistry, secondary(), WriteConcern.MAJORITY, true, true,
+        def database = new MongoDatabaseImpl('databaseName', codecRegistry, secondary(), WriteConcern.MAJORITY, true, true, null,
                 ReadConcern.MAJORITY, JAVA_LEGACY, null, TIMEOUT_SETTINGS, new TestOperationExecutor([]))
 
         when:
@@ -509,14 +510,14 @@ class MongoDatabaseSpecification extends Specification {
         where:
         expectedCollection = new MongoCollectionImpl<Document>(new MongoNamespace('databaseName', 'collectionName'), Document,
                 fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()]), secondary(),
-                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, JAVA_LEGACY, null, TIMEOUT_SETTINGS,
+                WriteConcern.MAJORITY, true, true, null, ReadConcern.MAJORITY, JAVA_LEGACY, null, TIMEOUT_SETTINGS,
                 new TestOperationExecutor([]))
     }
 
     def 'should validate the client session correctly'() {
         given:
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false,
-                false, readConcern, JAVA_LEGACY, null, TIMEOUT_SETTINGS, Stub(OperationExecutor))
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, false, null,
+                readConcern, JAVA_LEGACY, null, TIMEOUT_SETTINGS, Stub(OperationExecutor))
 
         when:
         database.createCollection(null, 'newColl')

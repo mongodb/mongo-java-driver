@@ -19,6 +19,7 @@ package com.mongodb.reactivestreams.client;
 
 import com.mongodb.MongoException;
 import com.mongodb.TransactionOptions;
+import com.mongodb.annotations.Internal;
 import com.mongodb.internal.observability.micrometer.TransactionSpan;
 import com.mongodb.lang.Nullable;
 import org.reactivestreams.Publisher;
@@ -38,14 +39,14 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
     boolean hasActiveTransaction();
 
     /**
-     *  Notify the client session that a message has been sent.
+     *  Notify that a message is about to be sent.
      *  <p>
      *      For internal use only
      *  </p>
      *
-     * @return true if this is the first message sent, false otherwise
-     * @since 4.0
+     * @return true Iff the message must bear {@code startTransaction: true}.
      */
+    @Internal
     boolean notifyMessageSent();
 
     /**
@@ -55,6 +56,7 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      * </p>
      * @param operation the operation
      */
+    @Internal
     void notifyOperationInitiated(Object operation);
 
     /**

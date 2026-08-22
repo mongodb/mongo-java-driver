@@ -39,7 +39,7 @@ class CommitTransactionOperationUnitSpecification extends OperationUnitSpecifica
         def writeBinding = Stub(WriteBinding) {
             getWriteConnectionSource(_) >> { throw new MongoTimeoutException('Time out!') }
         }
-        def operation = new CommitTransactionOperation(WriteConcern.ACKNOWLEDGED)
+        def operation = new CommitTransactionOperation(WriteConcern.ACKNOWLEDGED, null, false)
 
         when:
         operation.execute(writeBinding, createOperationContext().withSessionContext(sessionContext))
@@ -60,7 +60,7 @@ class CommitTransactionOperationUnitSpecification extends OperationUnitSpecifica
                 it[1].onResult(null, new MongoTimeoutException('Time out!'))
             }
         }
-        def operation = new CommitTransactionOperation(WriteConcern.ACKNOWLEDGED)
+        def operation = new CommitTransactionOperation(WriteConcern.ACKNOWLEDGED, null, false)
         def callback = new FutureResultCallback()
 
         when:

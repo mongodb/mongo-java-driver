@@ -95,5 +95,7 @@ internal class SyncClientSession(internal val wrapped: ClientSession, private va
 
     override fun getTimeoutContext(): TimeoutContext = throw UnsupportedOperationException()
 
+    override fun getOverloadRetryPolicyState(): Any = delegate.getOverloadRetryPolicyState()
+
     override fun getTransactionSpan(): TransactionSpan? = null
 }

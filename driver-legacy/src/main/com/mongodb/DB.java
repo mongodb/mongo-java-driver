@@ -218,12 +218,13 @@ public class DB {
      * @mongodb.driver.manual reference/method/db.getCollectionNames/ getCollectionNames()
      */
     public Set<String> getCollectionNames() {
+        MongoClientOptions options = mongo.getMongoClientOptions();
         List<String> collectionNames =
                 new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT, primary(),
-                                                mongo.getMongoClientOptions().getRetryReads(), DB.this.getTimeoutSettings()) {
+                                                options.getRetryReads(), DB.this.getTimeoutSettings()) {
                     @Override
                     public ReadOperationCursor<DBObject> asReadOperation() {
-                        return new ListCollectionsOperation<>(name, commandCodec).nameOnly(true);
+                        return new ListCollectionsOperation<>(name, commandCodec, options.getMaxAdaptiveRetries()).nameOnly(true);
                     }
 
                     @Override

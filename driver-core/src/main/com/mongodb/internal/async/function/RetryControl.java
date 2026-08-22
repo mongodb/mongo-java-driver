@@ -80,15 +80,21 @@ public final class RetryControl<P extends RetryPolicy> implements RetryContext {
      * @return {@link RetryAttemptInfo} iff another attempt must be executed.
      * @throws RuntimeException If another attempt must not be executed.
      * The exception thrown represents the failed result of the retryable activity.
+     * @throws Error See above for {@link RuntimeException}.
      */
-    RetryAttemptInfo advanceOrThrow(final Throwable attemptFailedResult) throws RuntimeException {
+    RetryAttemptInfo advanceOrThrow(final Throwable attemptFailedResult) throws RuntimeException, Error {
         assertNotNull(attemptFailedResult);
         try {
             if (disabled) {
                 throw attemptFailedResult;
             }
-            // this `RetryControl` must not be mutated before calling `onAttemptFailure`
-            Decision decision = onAttemptFailure(policy, this, prospectiveFailedResult(), attemptFailedResult);
+            Throwable prospectiveFailedResult = getProspectiveFailedResult().orElse(null);
+            if (attemptFailedResult instanceof Error) {
+                onAttemptFatalFailure(policy, prospectiveFailedResult, (Error) attemptFailedResult);
+                throw attemptFailedResult;
+            }
+            // this `RetryControl` must not be mutated before calling `onAttemptFatalFailure`/`onAttemptFailure`
+            Decision decision = onAttemptFailure(policy, this, prospectiveFailedResult, attemptFailedResult);
             mostRecentDecision = decision;
             if (loopControl.isLastIteration() || !decision.getImmediateNextAttemptInfo().isPresent()) {
                 throw decision.getProspectiveFailedResult();
@@ -103,35 +109,56 @@ public final class RetryControl<P extends RetryPolicy> implements RetryContext {
         }
     }
 
+    private static <P extends RetryPolicy> void onAttemptFatalFailure(
+            final P policy,
+            @Nullable final Throwable prospectiveFailedResult,
+            final Error attemptFailedResult) throws RuntimeException, Error {
+        doAndHandleException(
+                () -> {
+                    policy.onAttemptFatalFailure();
+                    return null;
+                },
+                prospectiveFailedResult,
+                attemptFailedResult);
+    }
+
     private static <P extends RetryPolicy> Decision onAttemptFailure(
             final P policy,
             final RetryContext retryContext,
             @Nullable final Throwable prospectiveFailedResult,
-            final Throwable attemptFailedResult) throws RuntimeException {
-        Decision decision;
+            final Throwable attemptFailedResult) throws RuntimeException, Error {
+        return assertNotNull(doAndHandleException(
+                () -> policy.onAttemptFailure(retryContext, attemptFailedResult),
+                prospectiveFailedResult,
+                attemptFailedResult));
+    }
+
+    @Nullable
+    private static <T> T doAndHandleException(
+            final Supplier<T> action,
+            @Nullable final Throwable prospectiveFailedResult,
+            final Throwable attemptFailedResult) throws RuntimeException, Error {
+        T result;
         try {
-            decision = assertNotNull(policy.onAttemptFailure(retryContext, attemptFailedResult));
-        } catch (Throwable onAttemptFailureException) {
-            if (prospectiveFailedResult != null && prospectiveFailedResult != onAttemptFailureException) {
-                onAttemptFailureException.addSuppressed(prospectiveFailedResult);
+            result = action.get();
+        } catch (Throwable actionException) {
+            if (prospectiveFailedResult != null && prospectiveFailedResult != actionException) {
+                actionException.addSuppressed(prospectiveFailedResult);
             }
-            if (attemptFailedResult != onAttemptFailureException) {
-                onAttemptFailureException.addSuppressed(attemptFailedResult);
+            if (attemptFailedResult != actionException) {
+                actionException.addSuppressed(attemptFailedResult);
             }
-            throw onAttemptFailureException;
+            throw actionException;
         }
-        return decision;
+        return result;
     }
 
     @Override
     public Optional<Throwable> getProspectiveFailedResult() {
         assertTrue(isFirstAttempt() ^ mostRecentDecision != null);
-        return Optional.ofNullable(prospectiveFailedResult());
-    }
-
-    @Nullable
-    private Throwable prospectiveFailedResult() {
-        return mostRecentDecision == null ? null : mostRecentDecision.getProspectiveFailedResult();
+        return mostRecentDecision == null
+                ? Optional.empty()
+                : Optional.of(mostRecentDecision.getProspectiveFailedResult());
     }
 
     /**
@@ -162,12 +189,12 @@ public final class RetryControl<P extends RetryPolicy> implements RetryContext {
      *     <li>this method broke the retry loop.</li>
      * </ul>
      */
-    public void breakAndThrowIfRetryAnd(final Supplier<Boolean> predicate) throws RuntimeException {
+    public void breakAndThrowIfRetryAnd(final Supplier<Boolean> predicate) throws RuntimeException, Error {
         assertFalse(loopControl.isLastIteration());
         if (isFirstAttempt()) {
             return;
         }
-        Throwable prospectiveFailedResult = assertNotNull(prospectiveFailedResult());
+        Throwable prospectiveFailedResult = getProspectiveFailedResult().orElseThrow(Assertions::fail);
         try {
             if (predicate.get()) {
                 loopControl.markAsLastIteration();

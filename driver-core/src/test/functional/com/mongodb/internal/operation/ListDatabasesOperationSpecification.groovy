@@ -41,7 +41,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
     def 'should return a list of database names'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
-        def operation = new ListDatabasesOperation(codec)
+        def operation = new ListDatabasesOperation(codec, null)
 
         when:
         def names = executeAndCollectBatchCursorResults(operation, async)*.get('name')
@@ -79,7 +79,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
             getReadConnectionSource(_) >> connectionSource
             getReadPreference() >> readPreference
         }
-        def operation = new ListDatabasesOperation(helper.decoder)
+        def operation = new ListDatabasesOperation(helper.decoder, null)
 
         when:
         operation.execute(readBinding, createOperationContext())
@@ -104,7 +104,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
             getReadPreference() >> readPreference
             getReadConnectionSource(_, _) >> { it[1].onResult(connectionSource, null) }
         }
-        def operation = new ListDatabasesOperation(helper.decoder)
+        def operation = new ListDatabasesOperation(helper.decoder, null)
 
         when:
         operation.executeAsync(readBinding, createOperationContext(), Stub(SingleResultCallback))

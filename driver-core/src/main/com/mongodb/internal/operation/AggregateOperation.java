@@ -45,13 +45,14 @@ import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VE
 public class AggregateOperation<T> implements ReadOperationExplainable<T> {
     private final AggregateOperationImpl<T> wrapped;
 
-    public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder) {
-        this(namespace, pipeline, decoder, AggregationLevel.COLLECTION);
+    public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder,
+            @Nullable final Integer maxAdaptiveRetriesSetting) {
+        this(namespace, pipeline, decoder, AggregationLevel.COLLECTION, maxAdaptiveRetriesSetting);
     }
 
     public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder,
-            final AggregationLevel aggregationLevel) {
-        this.wrapped = new AggregateOperationImpl<>(namespace, pipeline, decoder, aggregationLevel);
+            final AggregationLevel aggregationLevel, @Nullable final Integer maxAdaptiveRetriesSetting) {
+        this.wrapped = new AggregateOperationImpl<>(namespace, pipeline, decoder, aggregationLevel, maxAdaptiveRetriesSetting);
     }
 
     public List<BsonDocument> getPipeline() {

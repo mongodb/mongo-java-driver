@@ -57,7 +57,7 @@ class GridFSFindIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null])
         def underlying = new FindIterableImpl(null, namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern, executor,
-                new Document(), true, TIMEOUT_SETTINGS)
+                new Document(), true, null, TIMEOUT_SETTINGS)
         def findIterable = new GridFSFindIterableImpl(underlying)
 
         when: 'default input should be as expected'
@@ -67,7 +67,8 @@ class GridFSFindIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new FindOperation<GridFSFile>(namespace, gridFSFileCodec)
+        expect operation, isTheSameAs(new FindOperation<GridFSFile>(namespace, gridFSFileCodec,
+                null)
                 .filter(new BsonDocument()).retryReads(true))
         readPreference == secondary()
 
@@ -85,7 +86,8 @@ class GridFSFindIterableSpecification extends Specification {
         operation = executor.getReadOperation() as FindOperation<GridFSFile>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new FindOperation<GridFSFile>(namespace, gridFSFileCodec)
+        expect operation, isTheSameAs(new FindOperation<GridFSFile>(namespace, gridFSFileCodec,
+                null)
                 .filter(new BsonDocument('filter', new BsonInt32(2)))
                 .sort(new BsonDocument('sort', new BsonInt32(2)))
                 .batchSize(99)
@@ -101,7 +103,7 @@ class GridFSFindIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null])
         def findIterable = new FindIterableImpl(null, namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern,
-                executor, new Document('filter', 1), true, TIMEOUT_SETTINGS)
+                executor, new Document('filter', 1), true, null, TIMEOUT_SETTINGS)
 
         when:
         findIterable.filter(new Document('filter', 1))
@@ -111,7 +113,8 @@ class GridFSFindIterableSpecification extends Specification {
         def operation = executor.getReadOperation() as FindOperation<GridFSFile>
 
         then:
-        expect operation, isTheSameAs(new FindOperation<GridFSFile>(namespace, gridFSFileCodec)
+        expect operation, isTheSameAs(new FindOperation<GridFSFile>(namespace, gridFSFileCodec,
+                null)
                 .filter(new BsonDocument('filter', new BsonInt32(1)))
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
                 .cursorType(CursorType.NonTailable)
@@ -130,7 +133,7 @@ class GridFSFindIterableSpecification extends Specification {
                         , null),
         ]
         def cursor = {
-            def batchToReturn = cannedResults.collect();
+            def batchToReturn = cannedResults.collect()
             Stub(BatchCursor) {
                 def count = 0
                 def results
@@ -149,7 +152,7 @@ class GridFSFindIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()])
         def underlying = new FindIterableImpl(null, namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern, executor,
-                new Document(), true, TIMEOUT_SETTINGS)
+                new Document(), true, null, TIMEOUT_SETTINGS)
         def mongoIterable = new GridFSFindIterableImpl(underlying)
 
         when:

@@ -95,6 +95,8 @@ import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentati
 public final class MongoOperationPublisher<T> {
 
     private final Operations<T> operations;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private final UuidRepresentation uuidRepresentation;
     @Nullable
     private final AutoEncryptionSettings autoEncryptionSettings;
@@ -102,24 +104,27 @@ public final class MongoOperationPublisher<T> {
 
     MongoOperationPublisher(
             final Class<T> documentClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-            final ReadConcern readConcern, final WriteConcern writeConcern, final boolean retryWrites, final boolean retryReads,
+            final ReadConcern readConcern, final WriteConcern writeConcern,
+            final boolean retryWrites, final boolean retryReads, @Nullable final Integer maxAdaptiveRetriesSetting,
             final UuidRepresentation uuidRepresentation, @Nullable final AutoEncryptionSettings autoEncryptionSettings,
             final TimeoutSettings timeoutSettings, final OperationExecutor executor) {
         this(new MongoNamespace("_ignored", "_ignored"), documentClass,
-             codecRegistry, readPreference, readConcern, writeConcern, retryWrites, retryReads,
+             codecRegistry, readPreference, readConcern, writeConcern, retryWrites, retryReads, maxAdaptiveRetriesSetting,
              uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
     }
 
     MongoOperationPublisher(
             final MongoNamespace namespace, final Class<T> documentClass, final CodecRegistry codecRegistry,
             final ReadPreference readPreference, final ReadConcern readConcern, final WriteConcern writeConcern,
-            final boolean retryWrites, final boolean retryReads, final UuidRepresentation uuidRepresentation,
+            final boolean retryWrites, final boolean retryReads, @Nullable final Integer maxAdaptiveRetriesSetting,
+            final UuidRepresentation uuidRepresentation,
             @Nullable final AutoEncryptionSettings autoEncryptionSettings, final TimeoutSettings timeoutSettings,
             final OperationExecutor executor) {
         this.operations = new Operations<>(namespace, notNull("documentClass", documentClass),
                                            notNull("readPreference", readPreference), notNull("codecRegistry", codecRegistry),
                                            notNull("readConcern", readConcern), notNull("writeConcern", writeConcern),
-                                           retryWrites, retryReads, timeoutSettings);
+                                           retryWrites, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
         this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
         this.autoEncryptionSettings = autoEncryptionSettings;
         this.executor = notNull("executor", executor);
@@ -194,14 +199,14 @@ public final class MongoOperationPublisher<T> {
         }
         return new MongoOperationPublisher<>(notNull("namespace", namespace), notNull("documentClass", documentClass),
                 getCodecRegistry(), getReadPreference(), getReadConcern(), getWriteConcern(), getRetryWrites(), getRetryReads(),
-                uuidRepresentation, autoEncryptionSettings, getTimeoutSettings(), executor);
+                maxAdaptiveRetriesSetting, uuidRepresentation, autoEncryptionSettings, getTimeoutSettings(), executor);
     }
 
     MongoOperationPublisher<T> withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(),
                 withUuidRepresentation(notNull("codecRegistry", codecRegistry), uuidRepresentation),
                 getReadPreference(), getReadConcern(), getWriteConcern(), getRetryWrites(), getRetryReads(),
-                uuidRepresentation, autoEncryptionSettings, getTimeoutSettings(), executor);
+                maxAdaptiveRetriesSetting, uuidRepresentation, autoEncryptionSettings, getTimeoutSettings(), executor);
     }
 
     MongoOperationPublisher<T> withReadPreference(final ReadPreference readPreference) {
@@ -210,7 +215,7 @@ public final class MongoOperationPublisher<T> {
         }
         return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(), getCodecRegistry(),
                 notNull("readPreference", readPreference), getReadConcern(), getWriteConcern(), getRetryWrites(), getRetryReads(),
-                uuidRepresentation, autoEncryptionSettings, getTimeoutSettings(), executor);
+                maxAdaptiveRetriesSetting, uuidRepresentation, autoEncryptionSettings, getTimeoutSettings(), executor);
     }
 
     MongoOperationPublisher<T> withWriteConcern(final WriteConcern writeConcern) {
@@ -218,8 +223,8 @@ public final class MongoOperationPublisher<T> {
             return this;
         }
         return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(), getCodecRegistry(), getReadPreference(), getReadConcern(),
-                notNull("writeConcern", writeConcern), getRetryWrites(), getRetryReads(), uuidRepresentation, autoEncryptionSettings,
-                getTimeoutSettings(), executor);
+                notNull("writeConcern", writeConcern), getRetryWrites(), getRetryReads(),
+                maxAdaptiveRetriesSetting, uuidRepresentation, autoEncryptionSettings, getTimeoutSettings(), executor);
     }
 
     MongoOperationPublisher<T> withReadConcern(final ReadConcern readConcern) {
@@ -228,7 +233,7 @@ public final class MongoOperationPublisher<T> {
         }
         return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(),
                 getCodecRegistry(), getReadPreference(), notNull("readConcern", readConcern),
-                getWriteConcern(), getRetryWrites(), getRetryReads(), uuidRepresentation,
+                getWriteConcern(), getRetryWrites(), getRetryReads(), maxAdaptiveRetriesSetting, uuidRepresentation,
                 autoEncryptionSettings, getTimeoutSettings(), executor);
     }
 
@@ -239,7 +244,7 @@ public final class MongoOperationPublisher<T> {
         }
         return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(),
                 getCodecRegistry(), getReadPreference(), getReadConcern(),
-                getWriteConcern(), getRetryWrites(), getRetryReads(), uuidRepresentation,
+                getWriteConcern(), getRetryWrites(), getRetryReads(), maxAdaptiveRetriesSetting, uuidRepresentation,
                 autoEncryptionSettings, timeoutSettings, executor);
     }
 

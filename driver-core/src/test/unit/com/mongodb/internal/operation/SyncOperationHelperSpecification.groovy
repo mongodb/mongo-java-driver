@@ -104,7 +104,7 @@ class SyncOperationHelperSpecification extends Specification {
         when:
         executeRetryableWrite(writeBinding, operationContext, dbName, primary(),
                 NoOpFieldNameValidator.INSTANCE, decoder, commandCreator, FindAndModifyHelper.transformer(),
-                { cmd -> cmd }, true)
+                { cmd -> cmd }, true, null)
 
         then:
         2 * connection.command(dbName, command, _, primary(), decoder, _) >> { results.poll() }
@@ -132,7 +132,7 @@ class SyncOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeRetryableRead(readBinding, createOperationContext(), dbName, commandCreator, decoder, function, false)
+        executeRetryableRead(readBinding, createOperationContext(), dbName, commandCreator, decoder, function, false, null)
 
         then:
         _ * connection.getDescription() >> connectionDescription

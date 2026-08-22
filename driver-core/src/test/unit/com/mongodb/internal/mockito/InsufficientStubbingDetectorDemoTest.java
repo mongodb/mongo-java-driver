@@ -34,7 +34,7 @@ final class InsufficientStubbingDetectorDemoTest {
 
     @BeforeEach
     void beforeEach() {
-        operation = new ListCollectionsOperation<>("db", new BsonDocumentCodec());
+        operation = new ListCollectionsOperation<>("db", new BsonDocumentCodec(), null);
     }
 
     @Test
