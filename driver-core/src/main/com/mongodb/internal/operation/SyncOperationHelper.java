@@ -203,9 +203,33 @@ final class SyncOperationHelper {
             final boolean retryReadsSetting,
             @Nullable
             final Integer maxAdaptiveRetriesSetting) {
-        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
-                new SpecRetryPolicy.IndividualPolicies(retryReadsSetting).includeRead(operationContext).includeOverload(maxAdaptiveRetriesSetting),
-                operationContext);
+        return executeRetryableRead(operationContext, readConnectionSourceSupplier, database, commandCreator, decoder, transformer,
+                new SpecRetryPolicy.IndividualPolicies(retryReadsSetting)
+                        .includeRead(operationContext)
+                        .includeOverload(maxAdaptiveRetriesSetting));
+    }
+
+    static <D, T> T executeRetryableRead(
+            final ReadBinding binding,
+            final OperationContext operationContext,
+            final String database,
+            final CommandCreator commandCreator,
+            final Decoder<D> decoder,
+            final CommandReadTransformer<D, T> transformer,
+            final SpecRetryPolicy.IndividualPolicies policies) {
+        return executeRetryableRead(operationContext, binding::getReadConnectionSource, database, commandCreator, decoder, transformer,
+                policies);
+    }
+
+    static <D, T> T executeRetryableRead(
+            final OperationContext operationContext,
+            final Function<OperationContext, ConnectionSource> readConnectionSourceSupplier,
+            final String database,
+            final CommandCreator commandCreator,
+            final Decoder<D> decoder,
+            final CommandReadTransformer<D, T> transformer,
+            final SpecRetryPolicy.IndividualPolicies policies) {
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(policies, operationContext);
 
         Supplier<T> read = decorateWithRetries(retryControl, operationContext, () ->
                 withSourceAndConnection(readConnectionSourceSupplier, false, operationContext, (source, connection, operationContextWithMinRtt) -> {

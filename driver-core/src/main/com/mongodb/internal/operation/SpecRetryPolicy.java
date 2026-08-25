@@ -239,7 +239,9 @@ final class SpecRetryPolicy implements RetryPolicy {
     private Throwable decideProspectiveFailedResult(
             @Nullable final Throwable currentProspectiveFailedResult, final Throwable mostRecentAttemptFailedResult) {
         Throwable newProspectiveFailedResult;
-        if (policies.write().isPresent()) {
+        boolean writePolicyErrorPropagation = policies.write().isPresent()
+                || policies.overload().map(IndividualPolicies.State.Overload::propagateAsWrite).orElse(false);
+        if (writePolicyErrorPropagation) {
             newProspectiveFailedResult = decideWriteProspectiveFailedResult(currentProspectiveFailedResult, mostRecentAttemptFailedResult);
         } else if (policies.read().isPresent()) {
             newProspectiveFailedResult = decideReadProspectiveFailedResult(currentProspectiveFailedResult, mostRecentAttemptFailedResult);
@@ -371,7 +373,17 @@ final class SpecRetryPolicy implements RetryPolicy {
          * which specifies the overload retry policy.
          */
         IndividualPolicies includeOverload(@Nullable final Integer maxAdaptiveRetriesSetting) {
-            include(Descriptor.OVERLOAD, new State.Overload(effectiveRetrySetting, maxAdaptiveRetriesSetting));
+            return includeOverload(maxAdaptiveRetriesSetting, false);
+        }
+
+        /**
+         * See {@link #includeOverload(Integer)}.
+         *
+         * @param writePolicyErrorPropagation When {@code true}, {@link SpecRetryPolicy#decideProspectiveFailedResult}
+         * uses the write policy's error propagation logic even when {@link #includeWrite()} is not called.
+         */
+        IndividualPolicies includeOverload(@Nullable final Integer maxAdaptiveRetriesSetting, final boolean writePolicyErrorPropagation) {
+            include(Descriptor.OVERLOAD, new State.Overload(effectiveRetrySetting, maxAdaptiveRetriesSetting, writePolicyErrorPropagation));
             return this;
         }
 
@@ -528,16 +540,23 @@ final class SpecRetryPolicy implements RetryPolicy {
                 private final boolean requirementsMet;
                 @Nullable
                 private final Integer maxAdaptiveRetriesSetting;
+                private final boolean writePolicyErrorPropagation;
                 @Nullable
                 private BaseClientSessionImpl.OverloadRetryPolicyState sessionScopedState;
 
                 Overload(
                         final boolean effectiveRetrySetting,
                         @Nullable
-                        final Integer maxAdaptiveRetriesSetting) {
+                        final Integer maxAdaptiveRetriesSetting,
+                        final boolean writePolicyErrorPropagation) {
                     requirementsMet = effectiveRetrySetting;
                     this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
+                    this.writePolicyErrorPropagation = writePolicyErrorPropagation;
                     sessionScopedState = null;
+                }
+
+                boolean propagateAsWrite() {
+                    return writePolicyErrorPropagation;
                 }
 
                 int getMaxRetries() {
@@ -588,6 +607,7 @@ final class SpecRetryPolicy implements RetryPolicy {
                     return "Overload{"
                             + "requirementsMet=" + requirementsMet
                             + ", maxAdaptiveRetriesSetting=" + maxAdaptiveRetriesSetting
+                            + ", writePolicyErrorPropagation=" + writePolicyErrorPropagation
                             + ", sessionScopedState=" + sessionScopedState
                             + '}';
                 }
