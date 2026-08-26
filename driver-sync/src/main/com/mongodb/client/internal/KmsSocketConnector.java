@@ -75,9 +75,7 @@ public final class KmsSocketConnector {
     private static SSLSocket connectDirectly(final SSLSocketFactory sslSocketFactory, final ServerAddress kmsAddress,
             final int soTimeoutMillis, final long connectTimeoutMillis) throws IOException {
         SSLSocket socket = (SSLSocket) sslSocketFactory.createSocket();
-        SSLParameters sslParameters = sslParameters(socket);
-        SslHelper.enableHostNameVerification(sslParameters);
-        socket.setSSLParameters(sslParameters);
+        enableHostNameVerification(socket, null);
         try {
             socket.setSoTimeout(soTimeoutMillis);
             socket.connect(new InetSocketAddress(InetAddress.getByName(kmsAddress.getHost()), kmsAddress.getPort()),
@@ -113,10 +111,7 @@ public final class KmsSocketConnector {
         try {
             // Even though the callback's connection is already established, the TLS handshake has not been performed
             // yet, so SSL parameters can still be set. They target the KMS host, not any intermediary.
-            SSLParameters sslParameters = sslParameters(socket);
-            SslHelper.enableSni(kmsAddress.getHost(), sslParameters);
-            SslHelper.enableHostNameVerification(sslParameters);
-            socket.setSSLParameters(sslParameters);
+            enableHostNameVerification(socket, kmsAddress.getHost());
             socket.setSoTimeout(soTimeoutMillis);
             // Handshake explicitly so that a TLS failure is reported here rather than on the first write.
             socket.startHandshake();
@@ -128,15 +123,22 @@ public final class KmsSocketConnector {
     }
 
     /**
-     * Some SSL socket implementations return null, contrary to the {@link SSLSocket#getSSLParameters()} contract.
-     * See <a href="https://jira.mongodb.org/browse/JAVA-2876">JAVA-2876</a>.
+     * Enables hostname verification, and Server Name Indication when {@code sniHost} is non-null, before the handshake
+     * is performed.
+     *
+     * <p>The null check on {@link SSLSocket#getSSLParameters()} is necessary despite its contract, as some
+     * implementations return null. See <a href="https://jira.mongodb.org/browse/JAVA-2876">JAVA-2876</a>.</p>
      */
-    private static SSLParameters sslParameters(final SSLSocket socket) {
+    private static void enableHostNameVerification(final SSLSocket socket, @Nullable final String sniHost) {
         SSLParameters sslParameters = socket.getSSLParameters();
         if (sslParameters == null) {
             sslParameters = new SSLParameters();
         }
-        return sslParameters;
+        if (sniHost != null) {
+            SslHelper.enableSni(sniHost, sslParameters);
+        }
+        SslHelper.enableHostNameVerification(sslParameters);
+        socket.setSSLParameters(sslParameters);
     }
 
     private static void closeSocket(final Socket socket) {
