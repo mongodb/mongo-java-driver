@@ -24,9 +24,6 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * The details of a Key Management Service (KMS) connection that a {@link KmsConnectCallback} is asked to establish.
  *
- * <p>Instances are created by the driver. Further properties may be added in future releases, so implementations of
- * {@link KmsConnectCallback} must not assume that this type is complete.</p>
- *
  * @see KmsConnectCallback
  * @since 5.11
  */
@@ -37,16 +34,16 @@ public final class KmsConnectContext {
     private final long timeoutMillis;
 
     /**
-     * This constructor is not part of the public API and may be removed or changed at any time.
+     * Construct a new instance.
      *
-     * @param kmsProvider the KMS provider
-     * @param serverAddress the address of the KMS host
-     * @param timeoutMillis the remaining time available, or 0 if no time limit applies
+     * @param kmsProvider the KMS provider, which may not be null
+     * @param serverAddress the address of the KMS host, which may not be null
+     * @param timeoutMillis the time available to establish the connection, which must be positive
      */
     public KmsConnectContext(final String kmsProvider, final ServerAddress serverAddress, final long timeoutMillis) {
         this.kmsProvider = notNull("kmsProvider", kmsProvider);
         this.serverAddress = notNull("serverAddress", serverAddress);
-        isTrueArgument("timeoutMillis >= 0", timeoutMillis >= 0);
+        isTrueArgument("timeoutMillis > 0", timeoutMillis > 0);
         this.timeoutMillis = timeoutMillis;
     }
 
@@ -78,10 +75,10 @@ public final class KmsConnectContext {
     /**
      * Gets the time available to establish the connection, in milliseconds.
      *
-     * <p>When a timeout is configured this is the time remaining in the operation, so it shrinks as the operation
-     * progresses. It is {@code 0} when no time limit applies.</p>
+     * <p>Implementations are encouraged to honor it, so that a connection attempt does not outlive the time the driver
+     * has allotted to it.</p>
      *
-     * @return the time available in milliseconds, or 0 if no time limit applies
+     * @return the time available in milliseconds, always positive
      */
     public long getTimeoutMillis() {
         return timeoutMillis;

@@ -17,6 +17,7 @@
 package com.mongodb.client;
 
 import com.mongodb.ClientEncryptionSettings;
+import com.mongodb.KmsConnectCallback;
 import com.mongodb.MongoClientException;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.vault.ClientEncryption;
@@ -32,6 +33,7 @@ import javax.net.ssl.SSLServerSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
@@ -126,6 +128,51 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
                             + "region: \"us-east-1\", "
                             + "key: \"arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0\","
                             + "endpoint: \"" + endpoint + "\"}")));
+            fail();
+        } catch (MongoClientException e) {
+            assertNotNull(expectedKmsTlsError.getCauseOfExpectedClass(e));
+            assertTrue(expectedKmsTlsError.causeContainsExpectedMessage(e));
+        }
+    }
+
+    /**
+     * The driver negotiates TLS with the KMS host over the socket a {@link KmsConnectCallback} returns, so certificate
+     * hostname verification must be applied on that path too. A callback that connects straight to the KMS host is
+     * enough to exercise it: the certificate served on port 9001 is issued for a different host, so the handshake the
+     * driver performs must fail.
+     */
+    @Test
+    public void testInvalidKmsCertificateWhenConnectingViaCallback() {
+        assumeTrue(System.getProperties().containsKey(SYSTEM_PROPERTY_KEY));
+        TlsErrorType expectedKmsTlsError = TlsErrorType.fromSystemPropertyValue(System.getProperty(SYSTEM_PROPERTY_KEY));
+        assumeTrue(expectedKmsTlsError == TlsErrorType.INVALID_HOSTNAME);
+
+        ClientEncryptionSettings clientEncryptionSettings = ClientEncryptionSettings.builder()
+                .keyVaultMongoClientSettings(getMongoClientSettings())
+                .keyVaultNamespace("keyvault.datakeys")
+                .kmsProviders(new HashMap<String, Map<String, Object>>() {{
+                    put("aws", new HashMap<String, Object>() {{
+                        put("accessKeyId", "fakeAccessKeyId");
+                        put("secretAccessKey", "fakeSecretAccessKey");
+                    }});
+                }})
+                // Connects directly, so that the only difference from testInvalidKmsCertificate is that the driver
+                // layers TLS on a socket it did not create itself.
+                .kmsConnectCallback(context -> {
+                    Socket socket = new Socket();
+                    socket.connect(new InetSocketAddress(context.getServerAddress().getHost(),
+                            context.getServerAddress().getPort()), (int) context.getTimeoutMillis());
+                    socket.setSoTimeout((int) context.getTimeoutMillis());
+                    return socket;
+                })
+                .build();
+
+        try (ClientEncryption clientEncryption = getClientEncryption(clientEncryptionSettings)) {
+            clientEncryption.createDataKey("aws", new DataKeyOptions().masterKey(
+                    BsonDocument.parse("{"
+                            + "region: \"us-east-1\", "
+                            + "key: \"arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0\","
+                            + "endpoint: \"mongodb://127.0.0.1:9001\"}")));
             fail();
         } catch (MongoClientException e) {
             assertNotNull(expectedKmsTlsError.getCauseOfExpectedClass(e));

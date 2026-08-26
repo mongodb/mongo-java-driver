@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.capi;
+package com.mongodb.client.internal;
 
 import com.mongodb.KmsConnectCallback;
 import com.mongodb.KmsConnectContext;
@@ -75,7 +75,7 @@ public final class KmsSocketConnector {
     private static SSLSocket connectDirectly(final SSLSocketFactory sslSocketFactory, final ServerAddress kmsAddress,
             final int soTimeoutMillis, final long connectTimeoutMillis) throws IOException {
         SSLSocket socket = (SSLSocket) sslSocketFactory.createSocket();
-        SSLParameters sslParameters = socket.getSSLParameters();
+        SSLParameters sslParameters = sslParameters(socket);
         SslHelper.enableHostNameVerification(sslParameters);
         socket.setSSLParameters(sslParameters);
         try {
@@ -113,7 +113,7 @@ public final class KmsSocketConnector {
         try {
             // Even though the callback's connection is already established, the TLS handshake has not been performed
             // yet, so SSL parameters can still be set. They target the KMS host, not any intermediary.
-            SSLParameters sslParameters = socket.getSSLParameters();
+            SSLParameters sslParameters = sslParameters(socket);
             SslHelper.enableSni(kmsAddress.getHost(), sslParameters);
             SslHelper.enableHostNameVerification(sslParameters);
             socket.setSSLParameters(sslParameters);
@@ -125,6 +125,18 @@ public final class KmsSocketConnector {
             throw e;
         }
         return socket;
+    }
+
+    /**
+     * Some SSL socket implementations return null, contrary to the {@link SSLSocket#getSSLParameters()} contract.
+     * See <a href="https://jira.mongodb.org/browse/JAVA-2876">JAVA-2876</a>.
+     */
+    private static SSLParameters sslParameters(final SSLSocket socket) {
+        SSLParameters sslParameters = socket.getSSLParameters();
+        if (sslParameters == null) {
+            sslParameters = new SSLParameters();
+        }
+        return sslParameters;
     }
 
     private static void closeSocket(final Socket socket) {

@@ -19,7 +19,6 @@ package com.mongodb.client.internal;
 import com.mongodb.KmsConnectCallback;
 import com.mongodb.ServerAddress;
 import com.mongodb.internal.TimeoutContext;
-import com.mongodb.internal.capi.KmsSocketConnector;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.time.Timeout;

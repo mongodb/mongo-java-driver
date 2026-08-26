@@ -443,6 +443,21 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
   type AutoEncryptionSettings = com.mongodb.AutoEncryptionSettings
 
   /**
+   * A callback that establishes the connection used for a Key Management Service (KMS) request made by in-use
+   * encryption.
+   *
+   * @since 5.11
+   */
+  type KmsConnectCallback = com.mongodb.KmsConnectCallback
+
+  /**
+   * The details of a Key Management Service (KMS) connection that a `KmsConnectCallback` is asked to establish.
+   *
+   * @since 5.11
+   */
+  type KmsConnectContext = com.mongodb.KmsConnectContext
+
+  /**
    * The client-side settings for data key creation and explicit encryption.
    *
    * Explicit encryption/decryption is a community feature, enabled with the new `com.mongodb.client.vault.ClientEncryption` type,
