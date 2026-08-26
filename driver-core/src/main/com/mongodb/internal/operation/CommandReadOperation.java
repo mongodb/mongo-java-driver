@@ -56,19 +56,31 @@ public final class CommandReadOperation<T> extends AbstractCommandReadOperation<
 
     @Override
     public T execute(final ReadBinding binding, final OperationContext operationContext) {
-        return executeRetryableRead(binding, operationContext, getDatabaseName(), getCommandCreator(), getDecoder(),
-                AbstractCommandReadOperation.transformer(), createRetryPolicy());
+        return executeRetryableRead(binding,
+                operationContext,
+                getDatabaseName(),
+                getCommandCreator(),
+                getDecoder(),
+                AbstractCommandReadOperation.transformer(),
+                createRetryPolicy());
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext,
                              final SingleResultCallback<T> callback) {
-        executeRetryableReadAsync(binding, operationContext, getDatabaseName(), getCommandCreator(), getDecoder(),
-                AbstractCommandReadOperation.<T>asyncTransformer(), createRetryPolicy(), callback);
+        executeRetryableReadAsync(binding,
+                operationContext,
+                getDatabaseName(),
+                getCommandCreator(),
+                getDecoder(),
+                AbstractCommandReadOperation.asyncTransformer(),
+                createRetryPolicy(),
+                callback);
     }
 
     private SpecRetryPolicy.IndividualPolicies createRetryPolicy() {
-        return new SpecRetryPolicy.IndividualPolicies(retryReads && retryWrites)
-                .includeOverload(maxAdaptiveRetriesSetting, true);
+        boolean retryPolicyEnabled = retryReads && retryWrites;
+        return new SpecRetryPolicy.IndividualPolicies(retryPolicyEnabled)
+                .includeOverload(maxAdaptiveRetriesSetting, SpecRetryPolicy.ErrorPropagation.AS_WRITE_POLICY);
     }
 }

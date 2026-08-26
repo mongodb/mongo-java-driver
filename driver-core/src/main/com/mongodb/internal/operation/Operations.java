@@ -598,7 +598,7 @@ public final class Operations<T> {
                 .let(toBsonDocument(options.getLet()));
     }
 
-    public <R> ReadOperationSimple<R> runCommand(final Bson command, final Class<R> resultClass) {
+    public <R> ReadOperationSimple<R> commandRead(final Bson command, final Class<R> resultClass) {
         notNull("command", command);
         notNull("resultClass", resultClass);
         return new CommandReadOperation<>(assertNotNull(namespace).getDatabaseName(),

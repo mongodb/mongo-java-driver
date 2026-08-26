@@ -275,7 +275,7 @@ public final class MongoOperationPublisher<T> {
         }
         return createReadOperationMono(
                 operations::getTimeoutSettings,
-                () -> operations.runCommand(command, clazz), clientSession, notNull("readPreference", readPreference));
+                () -> operations.commandRead(command, clazz), clientSession, notNull("readPreference", readPreference));
     }
 
 
