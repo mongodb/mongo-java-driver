@@ -51,7 +51,6 @@ public final class KmsSocketConnector {
      *
      * @param sslContext the SSL context configured for the KMS provider, or null to use the default
      * @param kmsConnectCallback the callback that establishes the connection, or null to connect directly
-     * @param kmsProvider the KMS provider that the request belongs to, passed on to {@code kmsConnectCallback}
      * @param kmsAddress the address of the KMS host
      * @param soTimeoutMillis the socket read timeout to apply
      * @param connectTimeoutMillis the time available to establish the connection, or 0 if no limit applies
@@ -59,16 +58,15 @@ public final class KmsSocketConnector {
      * @throws IOException if the connection or the TLS handshake fails
      */
     public static SSLSocket connect(@Nullable final SSLContext sslContext,
-            @Nullable final KmsConnectCallback kmsConnectCallback, final String kmsProvider,
-            final ServerAddress kmsAddress, final int soTimeoutMillis, final long connectTimeoutMillis)
-            throws IOException {
+            @Nullable final KmsConnectCallback kmsConnectCallback, final ServerAddress kmsAddress,
+            final int soTimeoutMillis, final long connectTimeoutMillis) throws IOException {
         SSLSocketFactory sslSocketFactory = sslContext == null
                 ? (SSLSocketFactory) SSLSocketFactory.getDefault() : sslContext.getSocketFactory();
 
         if (kmsConnectCallback == null) {
             return connectDirectly(sslSocketFactory, kmsAddress, soTimeoutMillis, connectTimeoutMillis);
         }
-        return connectViaCallback(sslSocketFactory, kmsConnectCallback, kmsProvider, kmsAddress, soTimeoutMillis,
+        return connectViaCallback(sslSocketFactory, kmsConnectCallback, kmsAddress, soTimeoutMillis,
                 connectTimeoutMillis);
     }
 
@@ -93,10 +91,10 @@ public final class KmsSocketConnector {
      * {@code kmsAddress} rather than from the address the socket is actually connected to.
      */
     private static SSLSocket connectViaCallback(final SSLSocketFactory sslSocketFactory,
-            final KmsConnectCallback kmsConnectCallback, final String kmsProvider, final ServerAddress kmsAddress,
+            final KmsConnectCallback kmsConnectCallback, final ServerAddress kmsAddress,
             final int soTimeoutMillis, final long connectTimeoutMillis) throws IOException {
         Socket connectedSocket = notNull("socket returned by KmsConnectCallback",
-                kmsConnectCallback.connect(new KmsConnectContext(kmsProvider, kmsAddress, connectTimeoutMillis)));
+                kmsConnectCallback.connect(new KmsConnectContext(kmsAddress, connectTimeoutMillis)));
 
         SSLSocket socket;
         try {

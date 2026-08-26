@@ -60,7 +60,7 @@ class KeyManagementService {
         LOGGER.info("Connecting to KMS server at " + serverAddress);
         SSLContext sslContext = kmsProviderSslContextMap.get(kmsProvider);
 
-        SSLSocket socket = KmsSocketConnector.connect(sslContext, kmsConnectCallback, kmsProvider, serverAddress,
+        SSLSocket socket = KmsSocketConnector.connect(sslContext, kmsConnectCallback, serverAddress,
                 timeoutMillis, remainingMillis(operationTimeout));
 
         // A KmsConnectCallback performs blocking I/O and may overrun the deadline it was given, which cannot be

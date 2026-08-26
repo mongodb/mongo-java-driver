@@ -29,35 +29,19 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 @Immutable
 public final class KmsConnectContext {
-    private final String kmsProvider;
     private final ServerAddress serverAddress;
     private final long timeoutMillis;
 
     /**
      * Construct a new instance.
      *
-     * @param kmsProvider the KMS provider, which may not be null
      * @param serverAddress the address of the KMS host, which may not be null
      * @param timeoutMillis the time available to establish the connection, which must be positive
      */
-    public KmsConnectContext(final String kmsProvider, final ServerAddress serverAddress, final long timeoutMillis) {
-        this.kmsProvider = notNull("kmsProvider", kmsProvider);
+    public KmsConnectContext(final ServerAddress serverAddress, final long timeoutMillis) {
         this.serverAddress = notNull("serverAddress", serverAddress);
         isTrueArgument("timeoutMillis > 0", timeoutMillis > 0);
         this.timeoutMillis = timeoutMillis;
-    }
-
-    /**
-     * Gets the KMS provider that this connection is being established for.
-     *
-     * <p>This is one of the keys of the configured {@code kmsProviders} map, so either a provider name such as
-     * {@code "aws"} or a named provider such as {@code "aws:myname"}. Implementations must accept arbitrary values for
-     * forward compatibility: rather than rejecting an unrecognized provider, connect using a default route.</p>
-     *
-     * @return the KMS provider, never null
-     */
-    public String getKmsProvider() {
-        return kmsProvider;
     }
 
     /**
@@ -87,8 +71,7 @@ public final class KmsConnectContext {
     @Override
     public String toString() {
         return "KmsConnectContext{"
-                + "kmsProvider='" + kmsProvider + '\''
-                + ", serverAddress=" + serverAddress
+                + "serverAddress=" + serverAddress
                 + ", timeoutMillis=" + timeoutMillis
                 + '}';
     }
