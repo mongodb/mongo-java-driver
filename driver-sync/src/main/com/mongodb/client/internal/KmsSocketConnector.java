@@ -75,7 +75,7 @@ public final class KmsSocketConnector {
     private static SSLSocket connectDirectly(final SSLSocketFactory sslSocketFactory, final ServerAddress kmsAddress,
             final int soTimeoutMillis, final long connectTimeoutMillis) throws IOException {
         SSLSocket socket = (SSLSocket) sslSocketFactory.createSocket();
-        enableHostNameVerification(socket);
+        enableHostNameVerification(socket, null);
         try {
             socket.setSoTimeout(soTimeoutMillis);
             socket.connect(new InetSocketAddress(InetAddress.getByName(kmsAddress.getHost()), kmsAddress.getPort()),
@@ -111,13 +111,7 @@ public final class KmsSocketConnector {
         try {
             // Even though the callback's connection is already established, the TLS handshake has not been performed
             // yet, so SSL parameters can still be set. They target the KMS host, not any intermediary.
-            SSLParameters sslParameters = socket.getSSLParameters();
-            if (sslParameters == null) {
-                sslParameters = new SSLParameters();
-            }
-            SslHelper.enableSni(kmsAddress.getHost(), sslParameters);
-            SslHelper.enableHostNameVerification(sslParameters);
-            socket.setSSLParameters(sslParameters);
+            enableHostNameVerification(socket, kmsAddress.getHost());
             socket.setSoTimeout(soTimeoutMillis);
             // Handshake explicitly so that a TLS failure is reported here rather than on the first write.
             socket.startHandshake();
@@ -128,10 +122,22 @@ public final class KmsSocketConnector {
         return socket;
     }
 
-    private static void enableHostNameVerification(final SSLSocket socket) {
+    /**
+     * Moved from {@code KeyManagementService}, with {@code sniHost} added for the callback path: the socket returned by
+     * a {@link KmsConnectCallback} may be connected to an intermediary, so the KMS host has to be named explicitly.
+     *
+     * <p>The null check is necessary despite the {@link SSLSocket#getSSLParameters()} contract, as some
+     * implementations return null. See <a href="https://jira.mongodb.org/browse/JAVA-2876">JAVA-2876</a>.</p>
+     *
+     * @param sniHost the host to announce via Server Name Indication, or null to leave it unset
+     */
+    private static void enableHostNameVerification(final SSLSocket socket, @Nullable final String sniHost) {
         SSLParameters sslParameters = socket.getSSLParameters();
         if (sslParameters == null) {
             sslParameters = new SSLParameters();
+        }
+        if (sniHost != null) {
+            SslHelper.enableSni(sniHost, sslParameters);
         }
         SslHelper.enableHostNameVerification(sslParameters);
         socket.setSSLParameters(sslParameters);
