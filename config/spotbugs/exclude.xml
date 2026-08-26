@@ -75,7 +75,10 @@
         <!-- Deliberately ignoring this, as the check for a null SSLParameters is actually necessary.
             See https://jira.mongodb.org/browse/JAVA-2876 for details. -->
         <Class name="com.mongodb.client.internal.KmsSocketConnector"/>
-        <Method name="enableHostNameVerification" params="javax.net.ssl.SSLSocket,java.lang.String"/>
+        <Or>
+            <Method name="enableHostNameVerification" params="javax.net.ssl.SSLSocket"/>
+            <Method name="connectViaCallback"/>
+        </Or>
         <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
     </Match>
 
