@@ -193,9 +193,37 @@ final class AsyncOperationHelper {
             final boolean retryReadsSetting,
             @Nullable final Integer maxAdaptiveRetriesSetting,
             final SingleResultCallback<T> callback) {
-        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
-                new SpecRetryPolicy.IndividualPolicies(retryReadsSetting).includeRead(operationContext).includeOverload(maxAdaptiveRetriesSetting),
-                operationContext);
+        executeRetryableReadAsync(binding, operationContext, sourceAsyncFunction, database, commandCreator, decoder, transformer,
+                new SpecRetryPolicy.IndividualPolicies(retryReadsSetting)
+                        .includeRead(operationContext)
+                        .includeOverload(maxAdaptiveRetriesSetting),
+                callback);
+    }
+
+    static <D, T> void executeRetryableReadAsync(
+            final AsyncReadBinding binding,
+            final OperationContext operationContext,
+            final String database,
+            final CommandCreator commandCreator,
+            final Decoder<D> decoder,
+            final CommandReadTransformerAsync<D, T> transformer,
+            final SpecRetryPolicy.IndividualPolicies policies,
+            final SingleResultCallback<T> callback) {
+        executeRetryableReadAsync(binding, operationContext, binding::getReadConnectionSource, database, commandCreator,
+                decoder, transformer, policies, callback);
+    }
+
+    static <D, T> void executeRetryableReadAsync(
+            final AsyncReadBinding binding,
+            final OperationContext operationContext,
+            final AsyncCallbackFunction<OperationContext, AsyncConnectionSource> sourceAsyncFunction,
+            final String database,
+            final CommandCreator commandCreator,
+            final Decoder<D> decoder,
+            final CommandReadTransformerAsync<D, T> transformer,
+            final SpecRetryPolicy.IndividualPolicies policies,
+            final SingleResultCallback<T> callback) {
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(policies, operationContext);
         binding.retain();
         AsyncCallbackSupplier<T> asyncRead = decorateWithRetriesAsync(retryControl, operationContext,
                 (AsyncCallbackSupplier<T>) funcCallback ->

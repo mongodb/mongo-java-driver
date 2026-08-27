@@ -239,9 +239,13 @@ final class SpecRetryPolicy implements RetryPolicy {
     private Throwable decideProspectiveFailedResult(
             @Nullable final Throwable currentProspectiveFailedResult, final Throwable mostRecentAttemptFailedResult) {
         Throwable newProspectiveFailedResult;
-        if (policies.write().isPresent()) {
+        boolean writePolicyErrorPropagation = policies.write().isPresent()
+                || policies.overload().map(overload -> overload.errorPropagation() == ErrorPropagation.AS_WRITE_POLICY).orElse(false);
+        boolean readPolicyErrorPropagation = policies.read().isPresent()
+                || policies.overload().map(overload -> overload.errorPropagation() == ErrorPropagation.AS_READ_POLICY).orElse(false);
+        if (writePolicyErrorPropagation) {
             newProspectiveFailedResult = decideWriteProspectiveFailedResult(currentProspectiveFailedResult, mostRecentAttemptFailedResult);
-        } else if (policies.read().isPresent()) {
+        } else if (readPolicyErrorPropagation) {
             newProspectiveFailedResult = decideReadProspectiveFailedResult(currentProspectiveFailedResult, mostRecentAttemptFailedResult);
         } else {
             throw fail(toString());
@@ -330,6 +334,14 @@ final class SpecRetryPolicy implements RetryPolicy {
         private IndividualPolicies assertValid() {
             assertFalse(policies.isEmpty());
             assertNoConflicts(policies.keySet());
+            overload().ifPresent(overload -> {
+                if (overload.errorPropagation() != null) {
+                    // Overload-only composition: no other policy may be included.
+                    assertTrue(policies.size() == 1);
+                } else {
+                    assertTrue(policies.containsKey(Descriptor.READ) || policies.containsKey(Descriptor.WRITE));
+                }
+            });
             return this;
         }
 
@@ -369,9 +381,25 @@ final class SpecRetryPolicy implements RetryPolicy {
          * See
          * <a href="https://github.com/mongodb/specifications/blob/master/source/client-backpressure/client-backpressure.md">Client Backpressure</a>,
          * which specifies the overload retry policy.
+         * <p>
+         * Use this overload when {@link #includeRead(OperationContext)} or {@link #includeWrite()} is also included;
          */
         IndividualPolicies includeOverload(@Nullable final Integer maxAdaptiveRetriesSetting) {
-            include(Descriptor.OVERLOAD, new State.Overload(effectiveRetrySetting, maxAdaptiveRetriesSetting));
+            include(Descriptor.OVERLOAD, new State.Overload(effectiveRetrySetting, maxAdaptiveRetriesSetting, null));
+            return this;
+        }
+
+        /**
+         * See {@link #includeOverload(Integer)}.
+         * <p>
+         * Use this overload only for overload-only compositions (no read or write policy included).
+         *
+         * @param errorPropagation selects the error propagation shape applied by
+         *                         {@link SpecRetryPolicy#decideProspectiveFailedResult}.
+         */
+        IndividualPolicies includeOverload(@Nullable final Integer maxAdaptiveRetriesSetting,
+                                           final ErrorPropagation errorPropagation) {
+            include(Descriptor.OVERLOAD, new State.Overload(effectiveRetrySetting, maxAdaptiveRetriesSetting, errorPropagation));
             return this;
         }
 
@@ -529,15 +557,25 @@ final class SpecRetryPolicy implements RetryPolicy {
                 @Nullable
                 private final Integer maxAdaptiveRetriesSetting;
                 @Nullable
+                private final ErrorPropagation errorPropagation;
+                @Nullable
                 private BaseClientSessionImpl.OverloadRetryPolicyState sessionScopedState;
 
                 Overload(
                         final boolean effectiveRetrySetting,
                         @Nullable
-                        final Integer maxAdaptiveRetriesSetting) {
+                        final Integer maxAdaptiveRetriesSetting,
+                        @Nullable
+                        final ErrorPropagation errorPropagation) {
                     requirementsMet = effectiveRetrySetting;
                     this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
+                    this.errorPropagation = errorPropagation;
                     sessionScopedState = null;
+                }
+
+                @Nullable
+                ErrorPropagation errorPropagation() {
+                    return errorPropagation;
                 }
 
                 int getMaxRetries() {
@@ -588,6 +626,7 @@ final class SpecRetryPolicy implements RetryPolicy {
                     return "Overload{"
                             + "requirementsMet=" + requirementsMet
                             + ", maxAdaptiveRetriesSetting=" + maxAdaptiveRetriesSetting
+                            + ", errorPropagation=" + errorPropagation
                             + ", sessionScopedState=" + sessionScopedState
                             + '}';
                 }
@@ -647,5 +686,14 @@ final class SpecRetryPolicy implements RetryPolicy {
                 }
             }
         }
+    }
+
+    /**
+     * Selects the error propagation shape for overload-only policy
+     * compositions (see {@link IndividualPolicies#includeOverload(Integer, ErrorPropagation)}).
+     */
+    enum ErrorPropagation {
+        AS_READ_POLICY,
+        AS_WRITE_POLICY
     }
 }

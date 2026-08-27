@@ -191,7 +191,7 @@ public class MapReduceWithInlineResultsOperation<T> implements ReadOperationMapR
         return createExplainableOperation(explainVerbosity);
     }
 
-    private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
+    private ExplainCommandOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
         return new ExplainCommandOperation<>(namespace.getDatabaseName(), getCommandName(),
                 (operationContext, serverDescription, connectionDescription) -> {
                     BsonDocument command = getCommandCreator().create(operationContext, serverDescription, connectionDescription);
