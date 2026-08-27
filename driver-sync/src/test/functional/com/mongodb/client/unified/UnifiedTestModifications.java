@@ -1015,8 +1015,6 @@ public final class UnifiedTestModifications {
             }
             if (match) {
                 testDef.modifiers.addAll(modifiersToApply);
-                LOGGER.info("Registered modifiers for test ["
-                        + testDef.testDescription + "]: " + reason + ". Modifiers: " + modifiersToApply);
                 if (matchesThrowable != null) {
                     testDef.matchesThrowable = matchesThrowable;
                 }
