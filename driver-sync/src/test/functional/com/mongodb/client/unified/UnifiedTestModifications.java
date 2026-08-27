@@ -597,14 +597,6 @@ public final class UnifiedTestModifications {
                         "collection.createChangeStream (read) does not retry if retryReads=false");
 
         // TODO-BACKPRESSURE enable the below tests when JAVA-5956 is done
-//        def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
-//                .test("client-backpressure", "tests that operations retry at most maxAttempts=2 times", "database.runCommand retries at most maxAttempts=2 times");
-//        def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
-//                .test("client-backpressure", "tests that operations respect overload backoff retry loop", "database.runCommand retries using operation loop");
-
-           def.skipNoncompliant("ff").onMatch(!(def.testDescription.equals("database.runCommand retries at most maxAttempts=2 times")
-                   || def.testDescription.equals("database.runCommand retries using operation loop")));
-
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
                 .test("client-backpressure", "tests that operations respect overload backoff retry loop", "collection.createIndex retries using operation loop");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
