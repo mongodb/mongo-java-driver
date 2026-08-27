@@ -601,9 +601,13 @@ public final class Operations<T> {
     public <R> ReadOperationSimple<R> commandRead(final Bson command, final Class<R> resultClass) {
         notNull("command", command);
         notNull("resultClass", resultClass);
-        return new CommandReadOperation<>(assertNotNull(namespace).getDatabaseName(),
-                                          assertNotNull(toBsonDocument(command)), codecRegistry.get(resultClass),
-                                          retryReads, retryWrites, maxAdaptiveRetriesSetting);
+        return new CommandReadOperation<>(
+                assertNotNull(namespace).getDatabaseName(),
+                assertNotNull(toBsonDocument(command)),
+                codecRegistry.get(resultClass),
+                retryReads,
+                retryWrites,
+                maxAdaptiveRetriesSetting);
     }
 
 

@@ -61,7 +61,7 @@ public final class CommandReadOperation<T> extends AbstractCommandReadOperation<
                 getDatabaseName(),
                 getCommandCreator(),
                 getDecoder(),
-                AbstractCommandReadOperation.transformer(),
+                transformer(),
                 createRetryPolicy());
     }
 
@@ -73,7 +73,7 @@ public final class CommandReadOperation<T> extends AbstractCommandReadOperation<
                 getDatabaseName(),
                 getCommandCreator(),
                 getDecoder(),
-                AbstractCommandReadOperation.asyncTransformer(),
+                asyncTransformer(),
                 createRetryPolicy(),
                 callback);
     }

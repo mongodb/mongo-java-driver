@@ -382,21 +382,23 @@ final class SpecRetryPolicy implements RetryPolicy {
          * <a href="https://github.com/mongodb/specifications/blob/master/source/client-backpressure/client-backpressure.md">Client Backpressure</a>,
          * which specifies the overload retry policy.
          * <p>
-         * Use this overload only when {@link #includeRead(OperationContext)} or {@link #includeWrite()} is also
-         * included; error propagation is derived from that sibling policy.
+         * Use this overload when {@link #includeRead(OperationContext)} or {@link #includeWrite()} is also included;
          */
         IndividualPolicies includeOverload(@Nullable final Integer maxAdaptiveRetriesSetting) {
-            return includeOverload(maxAdaptiveRetriesSetting, null);
+            include(Descriptor.OVERLOAD, new State.Overload(effectiveRetrySetting, maxAdaptiveRetriesSetting, null));
+            return this;
         }
 
         /**
          * See {@link #includeOverload(Integer)}.
          * <p>
-         * Use this overload only for overload-only compositions (no read or write policy included);
-         * {@code errorPropagation} must be non-{@code null} and drives {@link SpecRetryPolicy#decideProspectiveFailedResult}.
+         * Use this overload only for overload-only compositions (no read or write policy included).
+         *
+         * @param errorPropagation selects the error propagation shape applied by
+         *                         {@link SpecRetryPolicy#decideProspectiveFailedResult}.
          */
         IndividualPolicies includeOverload(@Nullable final Integer maxAdaptiveRetriesSetting,
-                                           @Nullable final ErrorPropagation errorPropagation) {
+                                           final ErrorPropagation errorPropagation) {
             include(Descriptor.OVERLOAD, new State.Overload(effectiveRetrySetting, maxAdaptiveRetriesSetting, errorPropagation));
             return this;
         }
@@ -687,11 +689,8 @@ final class SpecRetryPolicy implements RetryPolicy {
     }
 
     /**
-     * Selects the error propagation shape for overload-only
+     * Selects the error propagation shape for overload-only policy
      * compositions (see {@link IndividualPolicies#includeOverload(Integer, ErrorPropagation)}).
-     *
-     * When a read or write policy is also included, propagation is derived from that sibling and this
-     * value must not be set.
      */
     enum ErrorPropagation {
         AS_READ_POLICY,
