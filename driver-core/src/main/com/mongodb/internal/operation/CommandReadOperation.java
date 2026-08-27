@@ -46,7 +46,7 @@ public final class CommandReadOperation<T> extends AbstractCommandReadOperation<
         this.retryWrites = retryWrites;
         this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
-    
+
     public CommandReadOperation(final String databaseName, final BsonDocument command, final Decoder<T> decoder) {
         this(databaseName, command, decoder, false, false, null);
     }
