@@ -17,6 +17,7 @@
 package com.mongodb.client;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoCommandException;
 import com.mongodb.MongoServerException;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
@@ -262,6 +263,79 @@ public class BackpressureProseTest {
                     "Expected RetryableWriteError, got: " + exception);
             assertEquals(1, commandListener.getCommandStartedEvents("ping").size(),
                     "Expected exactly one ping attempt (runCommand overload-only policy does not retry RetryableWriteError)");
+        }
+    }
+
+    /**
+     * Coverage test (not part of the spec prose suite).
+     */
+    @Test
+    void runCommandPropagatesRetryableReadErrorAfterOverloadRetry() throws InterruptedException, ExecutionException {
+        assumeTrue(serverVersionAtLeast(4, 4));
+        BsonDocument overloadFailPoint = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: 'failCommand',\n"
+                + "    mode: {times: 1},\n"
+                + "    data: {\n"
+                + "        failCommands: ['ping'],\n"
+                + "        errorCode: 462,\n"
+                + "        errorLabels: ['" + SYSTEM_OVERLOADED_ERROR_LABEL + "', '" + RETRYABLE_ERROR_LABEL + "']\n"
+                + "    }\n"
+                + "}\n");
+        BsonDocument retryableReadErrorFailPoint = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: 'failCommand',\n"
+                + "    mode: {times: 1},\n"
+                + "    data: {\n"
+                + "        failCommands: ['ping'],\n"
+                + "        errorCode: 11602\n"
+                + "    }\n"
+                + "}\n");
+        TestCommandListener commandListener = new TestCommandListener();
+        try (ConfigureFailPointCommandListener swapListener = new ConfigureFailPointCommandListener(
+                retryableReadErrorFailPoint,
+                getPrimary(),
+                event -> event instanceof CommandFailedEvent && "ping".equals(event.getCommandName()));
+             MongoClient client = createClient(MongoClientSettings.builder(getMongoClientSettings())
+                     .addCommandListener(swapListener)
+                     .addCommandListener(commandListener)
+                     .build());
+             FailPoint ignored = FailPoint.enable(overloadFailPoint, getPrimary())) {
+            MongoServerException exception = assertThrows(MongoServerException.class,
+                    () -> client.getDatabase("admin").runCommand(BsonDocument.parse("{ping: 1}")));
+            assertEquals(11602, ((MongoCommandException) exception).getErrorCode(),
+                    "Expected propagated terminal retryable-read-style error code, got: " + exception);
+            assertEquals(2, commandListener.getCommandStartedEvents("ping").size(),
+                    "Expected exactly two ping attempts (overload retry + retryable-read-style terminal)");
+        }
+    }
+
+    /**
+     * Coverage test (not part of the spec prose suite).
+     */
+    @Test
+    void runCommandDoesNotRetryOnRetryableReadError() throws InterruptedException {
+        assumeTrue(serverVersionAtLeast(4, 4));
+        BsonDocument retryableReadErrorFailPoint = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: 'failCommand',\n"
+                + "    mode: {times: 1},\n"
+                + "    data: {\n"
+                + "        failCommands: ['ping'],\n"
+                + "        errorCode: 11602\n"
+                + "    }\n"
+                + "}\n");
+        TestCommandListener commandListener = new TestCommandListener();
+        try (MongoClient client = createClient(MongoClientSettings.builder(getMongoClientSettings())
+                .addCommandListener(commandListener)
+                .build());
+             FailPoint ignored = FailPoint.enable(retryableReadErrorFailPoint, getPrimary())) {
+            MongoServerException exception = assertThrows(MongoServerException.class,
+                    () -> client.getDatabase("admin").runCommand(BsonDocument.parse("{ping: 1}")));
+            assertEquals(11602, ((MongoCommandException) exception).getErrorCode(),
+                    "Expected retryable-read-style error, got: " + exception);
+            assertEquals(1, commandListener.getCommandStartedEvents("ping").size(),
+                    "Expected exactly one ping attempt (runCommand overload-only policy does not retry retryable-read codes)");
         }
     }
 
