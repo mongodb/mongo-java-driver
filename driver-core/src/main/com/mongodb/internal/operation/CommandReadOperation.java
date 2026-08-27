@@ -16,20 +16,15 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 
-import static com.mongodb.internal.MongoNamespaceHelper.COMMAND_COLLECTION_NAME;
-import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
-import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
 
 /**
@@ -37,52 +32,52 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class CommandReadOperation<T> implements ReadOperationSimple<T> {
-    private final String commandName;
-    private final String databaseName;
-    private final CommandCreator commandCreator;
-    private final Decoder<T> decoder;
+public final class CommandReadOperation<T> extends AbstractCommandReadOperation<T> {
+    private final boolean retryReads;
+    private final boolean retryWrites;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
 
-    public CommandReadOperation(final String databaseName,  final BsonDocument command, final Decoder<T> decoder) {
-        this(databaseName, command.getFirstKey(), (operationContext, serverDescription, connectionDescription) -> command, decoder);
+    public CommandReadOperation(final String databaseName, final BsonDocument command, final Decoder<T> decoder,
+                                final boolean retryReads, final boolean retryWrites,
+                                @Nullable final Integer maxAdaptiveRetriesSetting) {
+        super(databaseName, command, decoder);
+        this.retryReads = retryReads;
+        this.retryWrites = retryWrites;
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
-    public CommandReadOperation(final String databaseName, final String commandName, final CommandCreator commandCreator,
-                                final Decoder<T> decoder) {
-        this.commandName = notNull("commandName", commandName);
-        this.databaseName = notNull("databaseName", databaseName);
-        this.commandCreator = notNull("commandCreator", commandCreator);
-        this.decoder = notNull("decoder", decoder);
-    }
-
-    @Override
-    public String getCommandName() {
-        return commandName;
-    }
-
-    @Override
-    public MongoNamespace getNamespace() {
-        return new MongoNamespace(databaseName, COMMAND_COLLECTION_NAME);
+    public CommandReadOperation(final String databaseName, final BsonDocument command, final Decoder<T> decoder) {
+        this(databaseName, command, decoder, false, false, null);
     }
 
     @Override
     public T execute(final ReadBinding binding, final OperationContext operationContext) {
-        return executeRetryableRead(binding, operationContext, databaseName, commandCreator, decoder,
-                transformer(), false, null);
+        return executeRetryableRead(binding,
+                operationContext,
+                getDatabaseName(),
+                getCommandCreator(),
+                getDecoder(),
+                transformer(),
+                createRetryPolicy());
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext,
                              final SingleResultCallback<T> callback) {
-        executeRetryableReadAsync(binding, operationContext,  databaseName, commandCreator, decoder,
-                asyncTransformer(), false, null, callback);
+        executeRetryableReadAsync(binding,
+                operationContext,
+                getDatabaseName(),
+                getCommandCreator(),
+                getDecoder(),
+                asyncTransformer(),
+                createRetryPolicy(),
+                callback);
     }
 
-    private static <T> CommandReadTransformer<T, T> transformer() {
-        return (result, source, connection, operationContext) -> result;
-    }
-
-    private static <T> CommandReadTransformerAsync<T, T> asyncTransformer() {
-        return (result, source, connection, operationContext) -> result;
+    private SpecRetryPolicy.IndividualPolicies createRetryPolicy() {
+        boolean retryPolicyEnabled = retryReads && retryWrites;
+        return new SpecRetryPolicy.IndividualPolicies(retryPolicyEnabled)
+                .includeOverload(maxAdaptiveRetriesSetting, SpecRetryPolicy.ErrorPropagation.AS_WRITE_POLICY);
     }
 }

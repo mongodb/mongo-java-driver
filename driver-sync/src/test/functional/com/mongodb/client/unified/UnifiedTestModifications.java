@@ -598,8 +598,6 @@ public final class UnifiedTestModifications {
 
         // TODO-BACKPRESSURE enable the below tests when JAVA-5956 is done
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
-                .test("client-backpressure", "tests that operations respect overload backoff retry loop", "database.runCommand retries using operation loop");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
                 .test("client-backpressure", "tests that operations respect overload backoff retry loop", "collection.createIndex retries using operation loop");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
                 .test("client-backpressure", "tests that operations respect overload backoff retry loop", "collection.dropIndex retries using operation loop");
@@ -607,8 +605,6 @@ public final class UnifiedTestModifications {
                 .test("client-backpressure", "tests that operations respect overload backoff retry loop", "collection.dropIndexes retries using operation loop");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
                 .test("client-backpressure", "tests that operations respect overload backoff retry loop", "collection.aggregate write retries using operation loop");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
-                .test("client-backpressure", "tests that operations retry at most maxAttempts=2 times", "database.runCommand retries at most maxAttempts=2 times");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
                 .test("client-backpressure", "tests that operations retry at most maxAttempts=2 times", "collection.createIndex retries at most maxAttempts=2 times");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")

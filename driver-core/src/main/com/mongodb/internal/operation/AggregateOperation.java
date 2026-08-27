@@ -157,7 +157,7 @@ public class AggregateOperation<T> implements ReadOperationExplainable<T> {
         return createExplainableOperation(verbosity, resultDecoder);
     }
 
-    <R> CommandReadOperation<R> createExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
+    <R> ExplainCommandOperation<R> createExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
         return new ExplainCommandOperation<>(getNamespace().getDatabaseName(), getCommandName(),
                 (operationContext, serverDescription, connectionDescription) -> {
                     BsonDocument command = wrapped.getCommand(operationContext, UNKNOWN_WIRE_VERSION);
