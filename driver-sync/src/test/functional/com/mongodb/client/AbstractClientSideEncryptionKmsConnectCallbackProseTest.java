@@ -27,7 +27,6 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.Document;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -98,14 +97,11 @@ public abstract class AbstractClientSideEncryptionKmsConnectCallbackProseTest {
 
     protected abstract MongoClient createMongoClient(MongoClientSettings settings);
 
-    @BeforeEach
-    void requireAwsCredentials() {
-        assumeTrue(isClientSideEncryptionTest(), "Requires AWS KMS credentials");
-    }
 
     @Test
     @DisplayName("Case 1: plain HTTP proxy")
     void testPlainHttpProxy() throws IOException {
+        assumeTrue(isClientSideEncryptionTest(), "Requires AWS KMS credentials");
         assumeProxyIsRunning(false);
         resetMetrics(false);
 
@@ -121,6 +117,7 @@ public abstract class AbstractClientSideEncryptionKmsConnectCallbackProseTest {
     @Test
     @DisplayName("Case 2: HTTPS proxy")
     void testHttpsProxy() throws IOException {
+        assumeTrue(isClientSideEncryptionTest(), "Requires AWS KMS credentials");
         assumeTrue(caFile() != null, "Requires the proxy's CA file, e.g. $DRIVERS_TOOLS/.evergreen/x509gen/ca.pem");
         assumeProxyIsRunning(true);
         resetMetrics(true);
@@ -141,6 +138,7 @@ public abstract class AbstractClientSideEncryptionKmsConnectCallbackProseTest {
     @Test
     @DisplayName("Case 3: full auto encryption pipeline via proxy")
     void testAutoEncryptionPipelineViaProxy() throws IOException {
+        assumeTrue(isClientSideEncryptionTest(), "Requires AWS KMS credentials");
         assumeProxyIsRunning(false);
 
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder().build())) {
@@ -184,19 +182,23 @@ public abstract class AbstractClientSideEncryptionKmsConnectCallbackProseTest {
             assertInstanceOf(org.bson.types.Binary.class, stored.get("encrypted_string"));
         }
 
-        // only one KMS request is expected, since the decrypted key is cached
-        assertTrue(getConnectCount(false) >= 1, "expected KMS requests to be routed through the proxy");
+        // Exactly one KMS request is expected since the decrypted key is cached; more than one would indicate a
+        // data encryption key caching regression.
+        assertEquals(1, getConnectCount(false), "expected exactly one KMS request through the proxy");
     }
 
     @Test
     @DisplayName("Case 4: Error")
     void testCallbackError() {
+        // The callback fails before any KMS request is made, so no real credentials are needed and this case runs
+        // wherever a MongoDB deployment is available.
         String failureMessage = "Proxy refused the CONNECT request";
         KmsConnectCallback failingCallback = context -> {
             throw new IOException(failureMessage);
         };
 
         try (ClientEncryption clientEncryption = createClientEncryption(clientEncryptionSettingsBuilder(null)
+                .kmsProviders(placeholderAwsKmsProviders())
                 .kmsConnectCallback(failingCallback)
                 .build())) {
             RuntimeException e = assertThrows(RuntimeException.class, () -> createDataKey(clientEncryption));
@@ -206,18 +208,21 @@ public abstract class AbstractClientSideEncryptionKmsConnectCallbackProseTest {
     }
 
     @Test
-    @DisplayName("Case 5: operation timeout is honored through the proxy")
-    void testTimeoutThroughProxy() throws IOException {
-        // The spec asserts that the callback receives a non-zero timeout. With declarative configuration there is no
-        // callback to observe, so this instead asserts that an operation with a timeout configured still succeeds
-        // through the proxy, exercising the same CSOT plumbing.
+    @DisplayName("Case 5: callback receives timeout")
+    void testCallbackReceivesTimeout() throws IOException {
+        assumeTrue(isClientSideEncryptionTest(), "Requires AWS KMS credentials");
         assumeProxyIsRunning(false);
 
+        AtomicLong observedTimeout = new AtomicLong(-1);
+
         try (ClientEncryption clientEncryption = createClientEncryption(clientEncryptionSettingsBuilder(1000L)
-                .kmsConnectCallback(proxyConnectCallback(false, null))
+                .kmsConnectCallback(proxyConnectCallback(false, observedTimeout))
                 .build())) {
             assertNotNull(createDataKey(clientEncryption));
         }
+
+        assertTrue(observedTimeout.get() > 0,
+                () -> "expected the callback to receive a non-zero timeout, but got " + observedTimeout.get());
     }
 
     /**
@@ -290,6 +295,18 @@ public abstract class AbstractClientSideEncryptionKmsConnectCallbackProseTest {
             builder.timeout(timeoutMS, MILLISECONDS);
         }
         return builder;
+    }
+
+    /**
+     * Credentials that are never used, for the case whose callback fails before any KMS request is made.
+     */
+    private static Map<String, Map<String, Object>> placeholderAwsKmsProviders() {
+        Map<String, Object> aws = new HashMap<>();
+        aws.put("accessKeyId", "fakeAccessKeyId");
+        aws.put("secretAccessKey", "fakeSecretAccessKey");
+        Map<String, Map<String, Object>> kmsProviders = new HashMap<>();
+        kmsProviders.put("aws", aws);
+        return kmsProviders;
     }
 
     private static Map<String, Map<String, Object>> awsKmsProviders() {

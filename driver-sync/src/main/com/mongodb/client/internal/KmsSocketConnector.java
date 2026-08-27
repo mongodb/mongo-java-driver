@@ -66,8 +66,7 @@ public final class KmsSocketConnector {
         if (kmsConnectCallback == null) {
             return connectDirectly(sslSocketFactory, kmsAddress, soTimeoutMillis, connectTimeoutMillis);
         }
-        return connectViaCallback(sslSocketFactory, kmsConnectCallback, kmsAddress, soTimeoutMillis,
-                connectTimeoutMillis);
+        return connectViaCallback(sslSocketFactory, kmsConnectCallback, kmsAddress, connectTimeoutMillis);
     }
 
     private static SSLSocket connectDirectly(final SSLSocketFactory sslSocketFactory, final ServerAddress kmsAddress,
@@ -92,7 +91,7 @@ public final class KmsSocketConnector {
      */
     private static SSLSocket connectViaCallback(final SSLSocketFactory sslSocketFactory,
             final KmsConnectCallback kmsConnectCallback, final ServerAddress kmsAddress,
-            final int soTimeoutMillis, final long connectTimeoutMillis) throws IOException {
+            final long connectTimeoutMillis) throws IOException {
         Socket connectedSocket = notNull("socket returned by KmsConnectCallback",
                 kmsConnectCallback.connect(new KmsConnectContext(kmsAddress, connectTimeoutMillis)));
 
@@ -110,7 +109,9 @@ public final class KmsSocketConnector {
             // Even though the callback's connection is already established, the TLS handshake has not been performed
             // yet, so SSL parameters can still be set. They target the KMS host, not any intermediary.
             enableHostNameVerification(socket, kmsAddress.getHost());
-            socket.setSoTimeout(soTimeoutMillis);
+            // Bound the handshake by the time available to the operation rather than by the configured connect
+            // timeout, which may be much longer. KeyManagementService re-checks expiry once this returns.
+            socket.setSoTimeout(Math.toIntExact(connectTimeoutMillis));
             // Handshake explicitly so that a TLS failure is reported here rather than on the first write.
             socket.startHandshake();
         } catch (IOException | RuntimeException e) {
