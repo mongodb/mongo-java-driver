@@ -59,8 +59,9 @@ public final class KmsConnectContext {
     /**
      * Gets the time available to establish the connection, in milliseconds.
      *
-     * <p>Implementations are encouraged to honor it, so that a connection attempt does not outlive the time the driver
-     * has allotted to it.</p>
+     * <p>This is the timeout the driver applies to a KMS connection; it is not derived from any client-side operation
+     * timeout. Implementations are encouraged to honor it, so that a connection attempt does not outlive the time the
+     * driver has allotted to it.</p>
      *
      * @return the time available in milliseconds, always positive
      */

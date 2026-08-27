@@ -52,13 +52,11 @@ import java.security.cert.X509Certificate;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.mongodb.ClusterFixture.isClientSideEncryptionTest;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -75,7 +73,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
  * that this test does not fail when run outside that environment.</p>
  *
  * <p>Case 6, "Retry", is not implemented: it is to be skipped by drivers that do not implement DRIVERS-1541, and this
- * driver does not retry KMS requests.</p>
+ * driver does not retry KMS requests. TODO-JAVA-5391</p>
  *
  * @see <a href="https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/tests/README.md#28-kms-connect-callback">
  * Prose test 28</a>
@@ -105,8 +103,8 @@ public abstract class AbstractClientSideEncryptionKmsConnectCallbackProseTest {
         assumeProxyIsRunning(false);
         resetMetrics(false);
 
-        try (ClientEncryption clientEncryption = createClientEncryption(clientEncryptionSettingsBuilder(null)
-                .kmsConnectCallback(proxyConnectCallback(false, null))
+        try (ClientEncryption clientEncryption = createClientEncryption(clientEncryptionSettingsBuilder()
+                .kmsConnectCallback(proxyConnectCallback(false))
                 .build())) {
             assertNotNull(createDataKey(clientEncryption));
         }
@@ -126,8 +124,8 @@ public abstract class AbstractClientSideEncryptionKmsConnectCallbackProseTest {
         // proxy's CA, and its connection to the KMS host, carried end-to-end through the CONNECT tunnel and verified
         // against the real KMS host's certificate. Creating the data key confirms the driver verified the KMS host's
         // identity rather than the proxy's.
-        try (ClientEncryption clientEncryption = createClientEncryption(clientEncryptionSettingsBuilder(null)
-                .kmsConnectCallback(proxyConnectCallback(true, null))
+        try (ClientEncryption clientEncryption = createClientEncryption(clientEncryptionSettingsBuilder()
+                .kmsConnectCallback(proxyConnectCallback(true))
                 .build())) {
             assertNotNull(createDataKey(clientEncryption));
         }
@@ -146,8 +144,8 @@ public abstract class AbstractClientSideEncryptionKmsConnectCallbackProseTest {
             client.getDatabase("db").getCollection("coll").drop();
 
             BsonBinary dataKeyId;
-            try (ClientEncryption clientEncryption = createClientEncryption(clientEncryptionSettingsBuilder(null)
-                    .kmsConnectCallback(proxyConnectCallback(false, null))
+            try (ClientEncryption clientEncryption = createClientEncryption(clientEncryptionSettingsBuilder()
+                    .kmsConnectCallback(proxyConnectCallback(false))
                     .build())) {
                 dataKeyId = createDataKey(clientEncryption);
                 assertNotNull(dataKeyId);
@@ -162,7 +160,7 @@ public abstract class AbstractClientSideEncryptionKmsConnectCallbackProseTest {
                     .keyVaultNamespace(KEY_VAULT_NAMESPACE)
                     .kmsProviders(awsKmsProviders())
                     .schemaMap(schemaMap)
-                    .kmsConnectCallback(proxyConnectCallback(false, null))
+                    .kmsConnectCallback(proxyConnectCallback(false))
                     .build();
 
             try (MongoClient encryptedClient = createMongoClient(getMongoClientSettingsBuilder()
@@ -197,7 +195,7 @@ public abstract class AbstractClientSideEncryptionKmsConnectCallbackProseTest {
             throw new IOException(failureMessage);
         };
 
-        try (ClientEncryption clientEncryption = createClientEncryption(clientEncryptionSettingsBuilder(null)
+        try (ClientEncryption clientEncryption = createClientEncryption(clientEncryptionSettingsBuilder()
                 .kmsProviders(placeholderAwsKmsProviders())
                 .kmsConnectCallback(failingCallback)
                 .build())) {
@@ -207,23 +205,8 @@ public abstract class AbstractClientSideEncryptionKmsConnectCallbackProseTest {
         }
     }
 
-    @Test
-    @DisplayName("Case 5: callback receives timeout")
-    void testCallbackReceivesTimeout() throws IOException {
-        assumeTrue(isClientSideEncryptionTest(), "Requires AWS KMS credentials");
-        assumeProxyIsRunning(false);
-
-        AtomicLong observedTimeout = new AtomicLong(-1);
-
-        try (ClientEncryption clientEncryption = createClientEncryption(clientEncryptionSettingsBuilder(1000L)
-                .kmsConnectCallback(proxyConnectCallback(false, observedTimeout))
-                .build())) {
-            assertNotNull(createDataKey(clientEncryption));
-        }
-
-        assertTrue(observedTimeout.get() > 0,
-                () -> "expected the callback to receive a non-zero timeout, but got " + observedTimeout.get());
-    }
+    // Case 5 (callback receives timeout) is omitted because it requires the remaining timeoutMS of a client-side
+    // operation timeout, which this driver does not apply to KMS requests.
 
     /**
      * Returns a callback that tunnels to the KMS host through the proxy using HTTP CONNECT, as described in the Setup
@@ -236,11 +219,8 @@ public abstract class AbstractClientSideEncryptionKmsConnectCallbackProseTest {
      *     <li>Return the socket, over which the driver negotiates TLS with the KMS host.</li>
      * </ol>
      */
-    private KmsConnectCallback proxyConnectCallback(final boolean useTls, @Nullable final AtomicLong observedTimeout) {
+    private KmsConnectCallback proxyConnectCallback(final boolean useTls) {
         return context -> {
-            if (observedTimeout != null) {
-                observedTimeout.set(context.getTimeoutMillis());
-            }
             int timeout = (int) Math.min(context.getTimeoutMillis(), Integer.MAX_VALUE);
             Socket socket = useTls
                     ? proxySslContext().getSocketFactory().createSocket()
@@ -282,19 +262,11 @@ public abstract class AbstractClientSideEncryptionKmsConnectCallbackProseTest {
         return false;
     }
 
-    private ClientEncryptionSettings.Builder clientEncryptionSettingsBuilder(@Nullable final Long timeoutMS) {
-        MongoClientSettings.Builder keyVaultSettingsBuilder = getMongoClientSettingsBuilder();
-        if (timeoutMS != null) {
-            keyVaultSettingsBuilder.timeout(timeoutMS, MILLISECONDS);
-        }
-        ClientEncryptionSettings.Builder builder = ClientEncryptionSettings.builder()
-                .keyVaultMongoClientSettings(keyVaultSettingsBuilder.build())
+    private ClientEncryptionSettings.Builder clientEncryptionSettingsBuilder() {
+        return ClientEncryptionSettings.builder()
+                .keyVaultMongoClientSettings(getMongoClientSettingsBuilder().build())
                 .keyVaultNamespace(KEY_VAULT_NAMESPACE)
                 .kmsProviders(awsKmsProviders());
-        if (timeoutMS != null) {
-            builder.timeout(timeoutMS, MILLISECONDS);
-        }
-        return builder;
     }
 
     /**
@@ -391,20 +363,13 @@ public abstract class AbstractClientSideEncryptionKmsConnectCallbackProseTest {
 
     // --- the proxy's CA ----------------------------------------------------------------------------------------
 
-    private static volatile SSLContext proxySslContext;
+    private static SSLContext proxySslContext;
 
     private static SSLContext proxySslContext() {
-        SSLContext result = proxySslContext;
-        if (result == null) {
-            synchronized (AbstractClientSideEncryptionKmsConnectCallbackProseTest.class) {
-                result = proxySslContext;
-                if (result == null) {
-                    result = buildProxySslContext();
-                    proxySslContext = result;
-                }
-            }
+        if (proxySslContext == null) {
+            proxySslContext = buildProxySslContext();
         }
-        return result;
+        return proxySslContext;
     }
 
     private static SSLContext buildProxySslContext() {
