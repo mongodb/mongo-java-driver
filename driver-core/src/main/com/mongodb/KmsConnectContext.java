@@ -29,51 +29,49 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 @Immutable
 public final class KmsConnectContext {
-    private final ServerAddress serverAddress;
-    private final long timeoutMillis;
+    private final String host;
+    private final int port;
 
     /**
      * Construct a new instance.
      *
-     * @param serverAddress the address of the KMS host, which may not be null
-     * @param timeoutMillis the time available to establish the connection, which must be positive
+     * @param host the host name of the KMS host, which may not be null
+     * @param port the port of the KMS host, which must be positive
      */
-    public KmsConnectContext(final ServerAddress serverAddress, final long timeoutMillis) {
-        this.serverAddress = notNull("serverAddress", serverAddress);
-        isTrueArgument("timeoutMillis > 0", timeoutMillis > 0);
-        this.timeoutMillis = timeoutMillis;
+    public KmsConnectContext(final String host, final int port) {
+        this.host = notNull("host", host);
+        isTrueArgument("port > 0", port > 0);
+        this.port = port;
     }
 
     /**
-     * Gets the address of the KMS host that the connection must ultimately reach.
+     * Gets the host name of the KMS host that the connection must ultimately reach.
      *
-     * <p>This is not the address of any intermediary such as a proxy. It is the address that the driver negotiates TLS
+     * <p>This is not the host name of any intermediary such as a proxy. It is the host that the driver negotiates TLS
      * with once the callback returns.</p>
      *
-     * @return the address of the KMS host, never null
+     * @return the host name of the KMS host, never null
      */
-    public ServerAddress getServerAddress() {
-        return serverAddress;
+    public String getHost() {
+        return host;
     }
 
     /**
-     * Gets the time available to establish the connection, in milliseconds.
+     * Gets the port of the KMS host that the connection must ultimately reach.
      *
-     * <p>This is the timeout the driver applies to a KMS connection; it is not derived from any client-side operation
-     * timeout. Implementations are encouraged to honor it, so that a connection attempt does not outlive the time the
-     * driver has allotted to it.</p>
+     * <p>This is not the port of any intermediary such as a proxy.</p>
      *
-     * @return the time available in milliseconds, always positive
+     * @return the port of the KMS host, always positive
      */
-    public long getTimeoutMillis() {
-        return timeoutMillis;
+    public int getPort() {
+        return port;
     }
 
     @Override
     public String toString() {
         return "KmsConnectContext{"
-                + "serverAddress=" + serverAddress
-                + ", timeoutMillis=" + timeoutMillis
+                + "host='" + host + '\''
+                + ", port=" + port
                 + '}';
     }
 }

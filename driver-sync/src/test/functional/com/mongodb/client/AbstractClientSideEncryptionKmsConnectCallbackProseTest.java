@@ -83,6 +83,7 @@ public abstract class AbstractClientSideEncryptionKmsConnectCallbackProseTest {
     private static final String PROXY_HOST = "127.0.0.1";
     private static final int HTTP_PROXY_PORT = 9004;
     private static final int HTTPS_PROXY_PORT = 9005;
+    private static final int PROXY_TIMEOUT_MILLIS = 10000;
 
     private static final String KEY_VAULT_NAMESPACE = "keyvault.datakeys";
     private static final String MASTER_KEY = "{"
@@ -205,8 +206,8 @@ public abstract class AbstractClientSideEncryptionKmsConnectCallbackProseTest {
         }
     }
 
-    // Case 5 (callback receives timeout) is omitted because it requires the remaining timeoutMS of a client-side
-    // operation timeout, which this driver does not apply to KMS requests.
+    // Case 5 (callback receives timeout) is omitted because the callback is not given a deadline: the driver applies
+    // the operation's remaining time to its own connect and TLS handshake instead of exposing it to the callback.
 
     /**
      * Returns a callback that tunnels to the KMS host through the proxy using HTTP CONNECT, as described in the Setup
@@ -221,14 +222,15 @@ public abstract class AbstractClientSideEncryptionKmsConnectCallbackProseTest {
      */
     private KmsConnectCallback proxyConnectCallback(final boolean useTls) {
         return context -> {
-            int timeout = (int) Math.min(context.getTimeoutMillis(), Integer.MAX_VALUE);
+            // The context carries no deadline, so the callback chooses its own timeout for reaching the proxy.
+            int timeout = PROXY_TIMEOUT_MILLIS;
             Socket socket = useTls
                     ? proxySslContext().getSocketFactory().createSocket()
                     : new Socket();
             try {
                 socket.connect(new InetSocketAddress(PROXY_HOST, useTls ? HTTPS_PROXY_PORT : HTTP_PROXY_PORT), timeout);
                 socket.setSoTimeout(timeout);
-                String target = context.getServerAddress().getHost() + ":" + context.getServerAddress().getPort();
+                String target = context.getHost() + ":" + context.getPort();
                 socket.getOutputStream().write(("CONNECT " + target + " HTTP/1.1\r\nHost: " + target + "\r\n\r\n")
                         .getBytes(StandardCharsets.US_ASCII));
                 socket.getOutputStream().flush();

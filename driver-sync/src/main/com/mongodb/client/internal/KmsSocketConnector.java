@@ -52,31 +52,32 @@ public final class KmsSocketConnector {
      * @param sslContext the SSL context configured for the KMS provider, or null to use the default
      * @param kmsConnectCallback the callback that establishes the connection, or null to connect directly
      * @param kmsAddress the address of the KMS host
-     * @param timeoutMillis the connect and socket read timeout to apply. This driver does not apply a client-side
-     * operation timeout to KMS requests, so this is the configured KMS timeout rather than a remaining budget.
+     * @param soTimeoutMillis the socket read timeout to apply
+     * @param connectTimeoutMillis the time available to establish the connection, which is never larger than
+     * {@code soTimeoutMillis}
      * @return a connected socket with an established TLS session with the KMS host
      * @throws IOException if the connection or the TLS handshake fails
      */
     public static SSLSocket connect(@Nullable final SSLContext sslContext,
             @Nullable final KmsConnectCallback kmsConnectCallback, final ServerAddress kmsAddress,
-            final int timeoutMillis) throws IOException {
+            final int soTimeoutMillis, final long connectTimeoutMillis) throws IOException {
         SSLSocketFactory sslSocketFactory = sslContext == null
                 ? (SSLSocketFactory) SSLSocketFactory.getDefault() : sslContext.getSocketFactory();
 
         if (kmsConnectCallback == null) {
-            return connectDirectly(sslSocketFactory, kmsAddress, timeoutMillis);
+            return connectDirectly(sslSocketFactory, kmsAddress, soTimeoutMillis, connectTimeoutMillis);
         }
-        return connectViaCallback(sslSocketFactory, kmsConnectCallback, kmsAddress, timeoutMillis);
+        return connectViaCallback(sslSocketFactory, kmsConnectCallback, kmsAddress, connectTimeoutMillis);
     }
 
     private static SSLSocket connectDirectly(final SSLSocketFactory sslSocketFactory, final ServerAddress kmsAddress,
-            final int timeoutMillis) throws IOException {
+            final int soTimeoutMillis, final long connectTimeoutMillis) throws IOException {
         SSLSocket socket = (SSLSocket) sslSocketFactory.createSocket();
         enableHostNameVerification(socket, null);
         try {
-            socket.setSoTimeout(timeoutMillis);
+            socket.setSoTimeout(soTimeoutMillis);
             socket.connect(new InetSocketAddress(InetAddress.getByName(kmsAddress.getHost()), kmsAddress.getPort()),
-                    timeoutMillis);
+                    Math.toIntExact(connectTimeoutMillis));
         } catch (IOException | RuntimeException e) {
             closeSocket(socket);
             throw e;
@@ -91,9 +92,9 @@ public final class KmsSocketConnector {
      */
     private static SSLSocket connectViaCallback(final SSLSocketFactory sslSocketFactory,
             final KmsConnectCallback kmsConnectCallback, final ServerAddress kmsAddress,
-            final int timeoutMillis) throws IOException {
+            final long connectTimeoutMillis) throws IOException {
         Socket connectedSocket = notNull("socket returned by KmsConnectCallback",
-                kmsConnectCallback.connect(new KmsConnectContext(kmsAddress, timeoutMillis)));
+                kmsConnectCallback.connect(new KmsConnectContext(kmsAddress.getHost(), kmsAddress.getPort())));
 
         SSLSocket socket;
         try {
@@ -109,7 +110,9 @@ public final class KmsSocketConnector {
             // Even though the callback's connection is already established, the TLS handshake has not been performed
             // yet, so SSL parameters can still be set. They target the KMS host, not any intermediary.
             enableHostNameVerification(socket, kmsAddress.getHost());
-            socket.setSoTimeout(timeoutMillis);
+            // The callback is not given a deadline, so bound the driver's own handshake by the time the operation has
+            // left. KeyManagementService re-checks expiry once this returns.
+            socket.setSoTimeout(Math.toIntExact(connectTimeoutMillis));
             // Handshake explicitly so that a TLS failure is reported here rather than on the first write.
             socket.startHandshake();
         } catch (IOException | RuntimeException e) {
