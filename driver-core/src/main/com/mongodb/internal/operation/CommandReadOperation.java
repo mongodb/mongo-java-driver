@@ -46,10 +46,7 @@ public final class CommandReadOperation<T> extends AbstractCommandReadOperation<
         this.retryWrites = retryWrites;
         this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
-
-    /**
-     * Convenience constructor for callers (mostly tests) that do not require overload retry.
-     */
+    
     public CommandReadOperation(final String databaseName, final BsonDocument command, final Decoder<T> decoder) {
         this(databaseName, command, decoder, false, false, null);
     }
