@@ -31,6 +31,7 @@ import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Type;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -136,9 +137,19 @@ public class PojoCodecCyclicalLookupTest extends PojoTestCase {
 
         @Override
         public <T> Codec<T> get(final Class<T> clazz) {
+            return get(clazz, this);
+        }
+
+        @Override
+        public <T> Codec<T> get(final Class<T> clazz, final List<Type> typeArguments) {
+            return get(clazz, typeArguments, this);
+        }
+
+        @Override
+        public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
             incrementCount(clazz);
             for (CodecProvider provider : codecProviders) {
-                Codec<T> codec = provider.get(clazz, this);
+                Codec<T> codec = provider.get(clazz, registry);
                 if (codec != null) {
                     return codec;
                 }
@@ -146,10 +157,11 @@ public class PojoCodecCyclicalLookupTest extends PojoTestCase {
             return null;
         }
 
-        public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+        @Override
+        public <T> Codec<T> get(final Class<T> clazz, final List<Type> typeArguments, final CodecRegistry registry) {
             incrementCount(clazz);
             for (CodecProvider provider : codecProviders) {
-                Codec<T> codec = provider.get(clazz, registry);
+                Codec<T> codec = provider.get(clazz, typeArguments, registry);
                 if (codec != null) {
                     return codec;
                 }
