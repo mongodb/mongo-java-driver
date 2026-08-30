@@ -133,7 +133,7 @@ internal sealed class AbstractBsonDecoder(
 
         return name?.let {
             val index =
-                if (configuration.bsonNamingStrategy == BsonNamingStrategy.SNAKE_CASE) {
+                if (configuration.bsonNamingStrategy != null) {
                     getCachedElementNamesByDescriptor(descriptor)[it]?.let { name -> descriptor.getElementIndex(name) }
                         ?: UNKNOWN_NAME
                 } else {
