@@ -39,6 +39,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channel;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
 import java.nio.channels.SelectionKey;
@@ -167,9 +168,13 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
                     throw t;
                 } finally {
                     try {
-                        selector.close();
-                    } catch (IOException e) {
-                        // ignore
+                        closePendingSockets();
+                    } finally {
+                        try {
+                            selector.close();
+                        } catch (IOException e) {
+                            // ignore
+                        }
                     }
                 }
             });
@@ -177,9 +182,34 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
             selectorThread.start();
         }
 
+        private void closePendingSockets() {
+            for (SocketRegistration pendingRegistration : pendingRegistrations) {
+                close(pendingRegistration.socketChannel);
+            }
+            for (SelectionKey key : selector.keys()) {
+                close(key.channel());
+            }
+        }
+
+        private void close(final Channel channel) {
+            try {
+                channel.close();
+            } catch (IOException e) {
+                LOGGER.debug("Exception closing channel", e);
+            }
+        }
+
         void register(final SocketRegistration registration) {
             pendingRegistrations.add(registration);
             selector.wakeup();
+
+            // Selector could become closed while we were trying to register the socket.
+            // if it becomes closed, then no pending registrations will be cleaned up.
+            // Therefore, we might end up with a hanging socket channel.
+            if (!selector.isOpen()) {
+                pendingRegistrations.remove(registration);
+                close(registration.socketChannel);
+            }
         }
 
         @Override
