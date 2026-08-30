@@ -29,6 +29,7 @@ import kotlinx.serialization.MissingFieldException
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.JsonUnquotedLiteral
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
@@ -47,6 +48,7 @@ import org.bson.BsonInvalidOperationException
 import org.bson.BsonMaxKey
 import org.bson.BsonMinKey
 import org.bson.BsonString
+import org.bson.BsonType
 import org.bson.BsonUndefined
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
@@ -128,6 +130,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.params.ParameterizedTest
 import org.junit.jupiter.params.provider.MethodSource
+import org.junit.jupiter.params.provider.ValueSource
 
 @OptIn(ExperimentalSerializationApi::class)
 @Suppress("LargeClass")
@@ -231,21 +234,42 @@ class KotlinSerializerCodecTest {
         fun testJsonPrimitiveNumberEncoding(): Stream<Pair<String, String>> {
             return Stream.of(
                 """{"value": 0}""" to """{"value": 0}""",
-                """{"value": 0}""" to """{"value": 0.0}""",
+                """{"value": 0.0}""" to """{"value": 0.0}""",
                 """{"value": 1.1}""" to """{"value": 1.1E0}""",
-                """{"value": 11}""" to """{"value": 1.1E1}""",
-                """{"value": 110}""" to """{"value": 1.1E2}""",
-                """{"value": 1100}""" to """{"value": 1.1E3}""",
+                """{"value": 11.0}""" to """{"value": 1.1E1}""",
+                """{"value": 110.0}""" to """{"value": 1.1E2}""",
+                """{"value": 1100.0}""" to """{"value": 1.1E3}""",
                 """{"value": 0.1}""" to """{"value": 1E-1}""",
                 """{"value": 0.01}""" to """{"value": 1E-2}""",
                 """{"value": 0.001}""" to """{"value": 1E-3}""",
                 """{"value": -1.1}""" to """{"value": -1.1E0}""",
-                """{"value": -11}""" to """{"value": -1.1E1}""",
-                """{"value": -110}""" to """{"value": -1.1E2}""",
-                """{"value": -1100}""" to """{"value": -1.1E3}""",
+                """{"value": -11.0}""" to """{"value": -1.1E1}""",
+                """{"value": -110.0}""" to """{"value": -1.1E2}""",
+                """{"value": -1100.0}""" to """{"value": -1.1E3}""",
                 """{"value": -0.1}""" to """{"value": -1E-1}""",
                 """{"value": -0.01}""" to """{"value": -1E-2}""",
                 """{"value": -0.001}""" to """{"value": -1E-3}""",
+                """{"value": -0.0}""" to """{"value": -0.0}""",
+                """{"value": 3.0}""" to """{"value": 3.0}""",
+                """{"value": 1.0E20}""" to """{"value": 1.0E20}""",
+                """{"value": 30.0}""" to """{"value": 3.0E1}""",
+                // An exponent alone marks a literal as floating point, with or without a fraction,
+                // matching how org.bson.json.JsonScanner types numbers.
+                """{"value": 1.0E20}""" to """{"value": 1e20}""",
+                """{"value": -1.0E20}""" to """{"value": -1e20}""",
+                """{"value": 100000.0}""" to """{"value": 1E5}""",
+                """{"value": 1.0E20}""" to """{"value": 1e+20}""",
+                // A magnitude beyond Double widens to Decimal128.
+                """{"value": {"${'$'}numberDecimal": "1E+400"}}""" to """{"value": 1e400}""",
+                """{"value": {"${'$'}numberDecimal": "1E-330"}}""" to """{"value": 1e-330}""",
+                // The negative side of each threshold still encodes as a double.
+                """{"value": 1.7976931348623157E308}""" to """{"value": 1.7976931348623157E308}""",
+                """{"value": 1.0E-320}""" to """{"value": 1e-320}""",
+                // An integral literal takes the narrowest BSON type that holds it.
+                """{"value": 2147483647}""" to """{"value": 2147483647}""",
+                """{"value": 2147483648}""" to """{"value": 2147483648}""",
+                """{"value": -2147483648}""" to """{"value": -2147483648}""",
+                """{"value": -2147483649}""" to """{"value": -2147483649}""",
                 """{"value": 9223372036854775807}""" to """{"value": 9223372036854775807}""",
                 """{"value": {"${'$'}numberDecimal": "9223372036854775808"}}""" to """{"value": 9223372036854775808}""",
                 """{"value": -9223372036854775808}""" to """{"value": -9223372036854775808}""",
@@ -1038,9 +1062,9 @@ class KotlinSerializerCodecTest {
             |"short": 1,
             |"int":  22,
             |"long": {"$numberLong": "3000000000"},
-            |"decimal": {"$numberDecimal": "1E+19"}
-            |"decimal2": {"$numberDecimal": "3.123E+700"}
-            |"float": 4.1,
+            |"decimal": {"$numberDecimal": "10000000000000000000"}
+            |"decimal2": {"$numberDecimal": "3.1230E+700"}
+            |"float": 4.0,
             |"double": 4.2,
             |"boolean": true,
             |"string": "String"
@@ -1055,15 +1079,30 @@ class KotlinSerializerCodecTest {
                     put("short", 1)
                     put("int", 22)
                     put("long", 3_000_000_000)
-                    put("decimal", BigDecimal("1E+19"))
-                    put("decimal2", BigDecimal("3.123E+700"))
-                    put("float", 4.1)
+                    put("decimal", BigDecimal("10000000000000000000"))
+                    put("decimal2", BigDecimal("3.1230E+700"))
+                    put("float", 4.0)
                     put("double", 4.2)
                     put("boolean", true)
                     put("string", "String")
                 })
 
         assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithJsonElementBigDecimal() {
+        // A BigDecimal in a JsonObject is stored as its toString.
+        // It is indistinguishable from a hand-written literal.
+        // Within double range it encodes as a double, beyond it as a Decimal128.
+        // Neither round-trips textually, so this asserts encoding only.
+        assertEncodesTo(
+            """{"value": {"withinDouble": 1.0E19, "beyondDouble": {"$numberDecimal": "1E+400"}}}""",
+            DataClassWithJsonElement(
+                buildJsonObject {
+                    put("withinDouble", BigDecimal("1E+19"))
+                    put("beyondDouble", BigDecimal("1E+400"))
+                }))
     }
 
     @Test
@@ -1261,6 +1300,80 @@ class KotlinSerializerCodecTest {
     fun testJsonPrimitiveNumberEncoding(test: Pair<String, String>) {
         val (expected, actual) = test
         assertEncodesTo(expected, Json.parseToJsonElement(actual))
+    }
+
+    @ParameterizedTest
+    @ValueSource(
+        strings =
+            [
+                // Beyond Long and 34 digits: the integral branch.
+                "12345678901234567890123456789012345678901234",
+                // Beyond Double and 34 digits: the floating branch.
+                "1.2345678901234567890123456789012345678e400",
+                // Within 34 significant digits, but the exponent exceeds the Decimal128 range.
+                "1E+7000",
+                "1E-7000"])
+    fun testJsonPrimitiveNumberExceedingDecimal128(literal: String) {
+        val exception =
+            assertThrows<SerializationException> { serialize(Json.parseToJsonElement("""{"value": $literal}""")) }
+        assertTrue(exception.message!!.contains(literal), "Should name the literal: ${exception.message}")
+        assertTrue(exception.cause is NumberFormatException, "Should retain the cause: ${exception.cause}")
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = ["NaN", "Infinity", "-Infinity"])
+    fun testJsonPrimitiveNonFiniteDouble(literal: String) {
+        // Double.toString renders these in a form that is not a valid JSON number.
+        // Report that rather than leaking a NumberFormatException from BigDecimal.
+        val nonFinite = buildJsonObject { put("value", JsonPrimitive(literal.toDouble())) }
+        val exception = assertThrows<SerializationException> { serialize(nonFinite) }
+        assertTrue(exception.message!!.contains(literal), "Should name the literal: ${exception.message}")
+    }
+
+    @ParameterizedTest
+    // BigDecimal is more lenient than the JSON number grammar. Reject any invalid JSON number.
+    @ValueSource(
+        strings =
+            [
+                // JSON permits '+' only after an exponent letter.
+                "+1",
+                "+1e+5",
+                // JSON requires a digit on both sides of the decimal point.
+                "1.",
+                ".5",
+                // JSON forbids a leading zero.
+                "01",
+                // BigDecimal accepts any Unicode decimal digit, on the integral path as well as the
+                // floating one.
+                "\u0661\u0662\u0663",
+                "\u0661.\u0665",
+                // Double.parseDouble accepts a trailing type suffix, so a valid prefix is not
+                // enough.
+                "1d",
+                "abc",
+                "",
+                " "])
+    fun testJsonPrimitiveUnquotedLiteralIsNotANumber(literal: String) {
+        val notANumber = buildJsonObject { put("value", JsonUnquotedLiteral(literal)) }
+        val exception = assertThrows<SerializationException> { serialize(notANumber) }
+        assertTrue(exception.message!!.contains("not a valid JSON number"), "Got: ${exception.message}")
+    }
+
+    @ParameterizedTest
+    @MethodSource("testJsonPrimitiveNumberEncoding")
+    fun testJsonPrimitiveNumberMatchesJsonScanner(test: Pair<String, String>) {
+        // isFloatingLiteral keys off the literal text to agree with the driver's own JSON parser.
+        // Assert that agreement directly, not only against hand-written expectations.
+        // Literals outside the range of the matching BSON type are excluded:
+        // there the codec widens to Decimal128 where JsonScanner loses data or throws.
+        val literal = test.second
+        val viaScanner = runCatching { BsonDocument.parse(literal) }
+        val viaCodec = serialize(Json.parseToJsonElement(literal))
+        if (viaScanner.getOrNull() == viaCodec) return
+        assertEquals(
+            BsonType.DECIMAL128,
+            viaCodec["value"]!!.bsonType,
+            "Only a widening to Decimal128 may differ from JsonScanner: $literal gave $viaCodec")
     }
 
     @Test
