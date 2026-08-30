@@ -25,6 +25,7 @@ The default branch is `main` (not `master`). Always use `main` when comparing, d
 - Preserve existing comments — only remove if provably incorrect
 - No rewrites without explicit permission
 - When stuck or uncertain: stop, explain, propose alternatives, ask
+- When authoring or reviewing changes: consult the relevant `.agents/references/` file for each area the changes touch
 
 ## Build
 
@@ -73,6 +74,12 @@ public API classes must be thread-safe unless annotated otherwise.
 
 See [`.agents/references/api-design`](.agents/references/api-design.md) for stability annotations,
 design principles, and the full nullability and thread safety conventions.
+
+## Code Design
+
+Applies to implementation code — internal packages, method bodies, and private or package-access program elements.
+
+See [`.agents/references/code-design`](.agents/references/code-design.md) for the rules.
 
 ## Do Not Modify Without Human Approval
 
