@@ -22,6 +22,7 @@ import com.mongodb.internal.crypt.capi.CAPI.mongocrypt_binary_t;
 import com.mongodb.internal.crypt.capi.CAPI.mongocrypt_kms_ctx_t;
 import com.mongodb.internal.crypt.capi.CAPI.mongocrypt_status_t;
 import com.sun.jna.Pointer;
+import com.sun.jna.ptr.ByteByReference;
 import com.sun.jna.ptr.PointerByReference;
 
 import java.nio.ByteBuffer;
@@ -30,10 +31,13 @@ import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_binary_destroy;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_binary_new;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_kms_ctx_bytes_needed;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_kms_ctx_endpoint;
+import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_kms_ctx_fail;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_kms_ctx_feed;
+import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_kms_ctx_feed_with_retry;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_kms_ctx_get_kms_provider;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_kms_ctx_message;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_kms_ctx_status;
+import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_kms_ctx_usleep;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_status_code;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_status_destroy;
 import static com.mongodb.internal.crypt.capi.CAPI.mongocrypt_status_message;
@@ -94,6 +98,28 @@ class MongoKeyDecryptorImpl implements MongoKeyDecryptor {
                 throwExceptionFromStatus();
             }
         }
+    }
+
+    @Override
+    public long sleepMicroseconds() {
+        return mongocrypt_kms_ctx_usleep(wrapped);
+    }
+
+    @Override
+    public boolean feedWithRetry(final ByteBuffer bytes) {
+        try (BinaryHolder binaryHolder = toBinary(bytes)) {
+            ByteByReference shouldRetry = new ByteByReference();
+            boolean success = mongocrypt_kms_ctx_feed_with_retry(wrapped, binaryHolder.getBinary(), shouldRetry);
+            if (!success) {
+                throwExceptionFromStatus();
+            }
+            return shouldRetry.getValue() != 0;
+        }
+    }
+
+    @Override
+    public boolean fail() {
+        return mongocrypt_kms_ctx_fail(wrapped);
     }
 
     private void throwExceptionFromStatus() {
