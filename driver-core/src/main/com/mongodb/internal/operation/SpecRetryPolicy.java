@@ -385,7 +385,7 @@ final class SpecRetryPolicy implements RetryPolicy {
          * Use this overload when {@link #includeRead(OperationContext)} or {@link #includeWrite()} is also included;
          */
         IndividualPolicies includeOverload(@Nullable final Integer maxAdaptiveRetriesSetting) {
-            include(Descriptor.OVERLOAD, new State.Overload(effectiveRetrySetting, maxAdaptiveRetriesSetting, null));
+            include(Descriptor.OVERLOAD, new State.Overload(effectiveRetrySetting, maxAdaptiveRetriesSetting, null, false));
             return this;
         }
 
@@ -396,10 +396,22 @@ final class SpecRetryPolicy implements RetryPolicy {
          *
          * @param errorPropagation selects the error propagation shape applied by
          *                         {@link SpecRetryPolicy#decideProspectiveFailedResult}.
+         * @param sessionScopeUpdatesSuspended when {@code true}, this retry policy will not open, mutate, or close
+         *                                     the session's
+         *                                     {@link BaseClientSessionImpl.OverloadRetryPolicyState.CommandExecutionScoped command execution scope}.
+         *                                     Set for child retry controls executed inside another retry supplier's
+         *                                     execution (e.g. the cursor {@code getMore} retry in
+         *                                     {@link CommandCursor} / {@link AsyncCommandCursor} invoked while
+         *                                     iterating a bulk-write cursor inside
+         *                                     {@link com.mongodb.internal.async.function.RetryControl#doWhileDisabled(java.util.function.Supplier)}
+         *                                     where the parent {@link ClientBulkWriteOperation} attempt's scope is
+         *                                     still open).
          */
         IndividualPolicies includeOverload(@Nullable final Integer maxAdaptiveRetriesSetting,
-                                           final ErrorPropagation errorPropagation) {
-            include(Descriptor.OVERLOAD, new State.Overload(effectiveRetrySetting, maxAdaptiveRetriesSetting, errorPropagation));
+                                           final ErrorPropagation errorPropagation,
+                                           final boolean sessionScopeUpdatesSuspended) {
+            include(Descriptor.OVERLOAD, new State.Overload(
+                    effectiveRetrySetting, maxAdaptiveRetriesSetting, errorPropagation, sessionScopeUpdatesSuspended));
             return this;
         }
 
@@ -558,6 +570,17 @@ final class SpecRetryPolicy implements RetryPolicy {
                 private final Integer maxAdaptiveRetriesSetting;
                 @Nullable
                 private final ErrorPropagation errorPropagation;
+                /**
+                 * When {@code true}, this policy does not open, mutate, or close the session's
+                 * {@link BaseClientSessionImpl.OverloadRetryPolicyState.CommandExecutionScoped command execution scope}.
+                 * Set for child retry controls executed inside another retry supplier's execution — for example, the
+                 * cursor {@code getMore} retry loop in {@link CommandCursor} / {@link AsyncCommandCursor} invoked
+                 * while iterating a bulk-write cursor inside
+                 * {@link com.mongodb.internal.async.function.RetryControl#doWhileDisabled(java.util.function.Supplier)}
+                 * where the parent {@link ClientBulkWriteOperation} attempt still holds an open command execution
+                 * scope on the session.
+                 */
+                private final boolean sessionScopeUpdatesSuspended;
                 @Nullable
                 private BaseClientSessionImpl.OverloadRetryPolicyState sessionScopedState;
 
@@ -566,10 +589,12 @@ final class SpecRetryPolicy implements RetryPolicy {
                         @Nullable
                         final Integer maxAdaptiveRetriesSetting,
                         @Nullable
-                        final ErrorPropagation errorPropagation) {
+                        final ErrorPropagation errorPropagation,
+                        final boolean sessionScopeUpdatesSuspended) {
                     requirementsMet = effectiveRetrySetting;
                     this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
                     this.errorPropagation = errorPropagation;
+                    this.sessionScopeUpdatesSuspended = sessionScopeUpdatesSuspended;
                     sessionScopedState = null;
                 }
 
@@ -586,7 +611,7 @@ final class SpecRetryPolicy implements RetryPolicy {
 
                 void onAttemptStart(final RetryContext retryContext, final BaseClientSessionImpl.OverloadRetryPolicyState sessionScopedState) {
                     this.sessionScopedState = sessionScopedState;
-                    if (retryContext.isFirstAttempt()) {
+                    if (retryContext.isFirstAttempt() && !sessionScopeUpdatesSuspended) {
                         sessionScopedState.openCommandExecutionScope();
                     }
                 }
@@ -602,6 +627,9 @@ final class SpecRetryPolicy implements RetryPolicy {
                 }
 
                 private void onAnyAttemptFailure(final boolean retryableOverloadError) {
+                    if (sessionScopeUpdatesSuspended) {
+                        return;
+                    }
                     BaseClientSessionImpl.OverloadRetryPolicyState localSessionScopedState = assertNotNull(sessionScopedState);
                     assertNotNull(localSessionScopedState.getCommandExecutionScoped()).onAnyAttemptFailure(retryableOverloadError);
                     BaseClientSessionImpl.OverloadRetryPolicyState.CommitScoped commitScopedState = localSessionScopedState.getCommitScoped();
@@ -618,7 +646,9 @@ final class SpecRetryPolicy implements RetryPolicy {
                 }
 
                 void onLastAttemptCompletion() {
-                    assertNotNull(sessionScopedState).closeCommandExecutionScope();
+                    if (!sessionScopeUpdatesSuspended) {
+                        assertNotNull(sessionScopedState).closeCommandExecutionScope();
+                    }
                 }
 
                 @Override
@@ -690,7 +720,7 @@ final class SpecRetryPolicy implements RetryPolicy {
 
     /**
      * Selects the error propagation shape for overload-only policy
-     * compositions (see {@link IndividualPolicies#includeOverload(Integer, ErrorPropagation)}).
+     * compositions (see {@link IndividualPolicies#includeOverload(Integer, ErrorPropagation, boolean)}).
      */
     enum ErrorPropagation {
         AS_READ_POLICY,

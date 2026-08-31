@@ -145,6 +145,7 @@ class CommandMessageTest {
                         clientBulkWriteOptions(),
                         WriteConcern.MAJORITY,
                         retryWrites,
+                        false,
                         null,
                         getDefaultCodecRegistry()
                 ).new BatchEncoder(),

@@ -194,12 +194,14 @@ public class ListIndexesOperation<T> implements ReadOperationCursor<T> {
 
     private CommandReadTransformer<BsonDocument, BatchCursor<T>> transformer() {
         return (result, source, connection, operationContext) ->
-                cursorDocumentToBatchCursor(timeoutMode, result, batchSize, decoder, comment, source, connection, operationContext);
+                cursorDocumentToBatchCursor(timeoutMode, result, batchSize, decoder, comment, source, connection, operationContext,
+                        retryReads, maxAdaptiveRetriesSetting);
     }
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
         return (result, source, connection, operationContext) ->
-                cursorDocumentToAsyncBatchCursor(timeoutMode, result, batchSize, decoder, comment, source, connection, operationContext);
+                cursorDocumentToAsyncBatchCursor(timeoutMode, result, batchSize, decoder, comment, source, connection, operationContext,
+                        retryReads, maxAdaptiveRetriesSetting);
     }
 
     private Codec<BsonDocument> createCommandDecoder() {

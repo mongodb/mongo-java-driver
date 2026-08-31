@@ -28,6 +28,7 @@ import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerType;
 import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.binding.ConnectionSource;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.OperationContext;
@@ -47,6 +48,8 @@ import java.util.function.Supplier;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
+import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRetryControl;
+import static com.mongodb.internal.operation.SyncOperationHelper.decorateWithRetries;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.FIRST_BATCH;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CLOSED_AS_CURSOR;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CLOSED_AS_ITERATOR;
@@ -65,6 +68,9 @@ class CommandCursor<T> implements Cursor<T> {
     private final int maxWireVersion;
     private final boolean firstBatchEmpty;
     private final ResourceManager resourceManager;
+    private final boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
 
     private int batchSize;
     private CommandCursorResult<T> commandCursorResult;
@@ -77,7 +83,9 @@ class CommandCursor<T> implements Cursor<T> {
             final Decoder<T> decoder,
             @Nullable final BsonValue comment,
             final ConnectionSource connectionSource,
-            final Connection connection) {
+            final Connection connection,
+            final boolean retryReads,
+            @Nullable final Integer maxAdaptiveRetriesSetting) {
         ConnectionDescription connectionDescription = connection.getDescription();
         this.commandCursorResult = toCommandCursorResult(connectionDescription.getServerAddress(), FIRST_BATCH, commandCursorDocument);
         this.namespace = commandCursorResult.getNamespace();
@@ -89,6 +97,8 @@ class CommandCursor<T> implements Cursor<T> {
 
         Connection connectionToPin = connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER ? connection : null;
         resourceManager = new ResourceManager(namespace, connectionSource, connectionToPin, commandCursorResult.getServerCursor());
+        this.retryReads = retryReads;
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     @Override
@@ -221,24 +231,32 @@ class CommandCursor<T> implements Cursor<T> {
 
     private void getMore(final OperationContext operationContext) {
         ServerCursor serverCursor = assertNotNull(resourceManager.getServerCursor());
-        resourceManager.executeWithConnection(connection -> {
-            ServerCursor nextServerCursor;
-            try {
-                this.commandCursorResult = toCommandCursorResult(connection.getDescription().getServerAddress(), NEXT_BATCH,
-                        assertNotNull(
-                                connection.command(namespace.getDatabaseName(),
-                                        getMoreCommandDocument(serverCursor.getId(), connection.getDescription(), namespace, batchSize,
-                                                comment),
-                                        NoOpFieldNameValidator.INSTANCE,
-                                        ReadPreference.primary(),
-                                        CommandResultDocumentCodec.create(decoder, NEXT_BATCH),
-                                        operationContext)));
-                nextServerCursor = commandCursorResult.getServerCursor();
-            } catch (MongoCommandException e) {
-                throw translateCommandException(e, serverCursor);
-            }
-            resourceManager.setServerCursor(nextServerCursor);
-        }, operationContext);
+        SpecRetryPolicy.IndividualPolicies policies = new SpecRetryPolicy.IndividualPolicies(retryReads)
+                .includeOverload(maxAdaptiveRetriesSetting, SpecRetryPolicy.ErrorPropagation.AS_READ_POLICY, true);
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(policies, operationContext);
+        decorateWithRetries(retryControl, operationContext, () -> {
+            resourceManager.executeWithConnection(connection -> {
+                ServerCursor nextServerCursor;
+                BsonDocument command = getMoreCommandDocument(serverCursor.getId(), connection.getDescription(), namespace, batchSize,
+                        comment);
+                retryControl.getPolicy().onCommand(command::getFirstKey);
+                try {
+                    this.commandCursorResult = toCommandCursorResult(connection.getDescription().getServerAddress(), NEXT_BATCH,
+                            assertNotNull(
+                                    connection.command(namespace.getDatabaseName(),
+                                            command,
+                                            NoOpFieldNameValidator.INSTANCE,
+                                            ReadPreference.primary(),
+                                            CommandResultDocumentCodec.create(decoder, NEXT_BATCH),
+                                            operationContext)));
+                    nextServerCursor = commandCursorResult.getServerCursor();
+                } catch (MongoCommandException e) {
+                    throw translateCommandException(e, serverCursor);
+                }
+                resourceManager.setServerCursor(nextServerCursor);
+            }, operationContext);
+            return null;
+        }).get();
     }
 
     private CommandCursorResult<T> toCommandCursorResult(final ServerAddress serverAddress, final String fieldNameContainingBatch,

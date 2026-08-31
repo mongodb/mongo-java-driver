@@ -613,8 +613,6 @@ public final class UnifiedTestModifications {
                 .test("client-backpressure", "tests that operations retry at most maxAttempts=2 times", "collection.dropIndexes retries at most maxAttempts=2 times");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
                 .test("client-backpressure", "tests that operations retry at most maxAttempts=2 times", "collection.aggregate write retries at most maxAttempts=2 times");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
-                .file("client-backpressure", "getMore-retried-backpressure");
 
         // valid-pass
 

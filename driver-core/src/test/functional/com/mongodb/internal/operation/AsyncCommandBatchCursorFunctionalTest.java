@@ -112,7 +112,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
         // given
         BsonDocument commandResult = executeFindCommand(0, 3); // Fetch in batches of size 3
         cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, 0, ClusterFixture.createOperationContext(),
-                new AsyncCommandCursor<>(commandResult, 3, DOCUMENT_DECODER, null, connectionSource, connection));
+                new AsyncCommandCursor<>(commandResult, 3, DOCUMENT_DECODER, null, connectionSource, connection, false, null));
 
        // when
         FutureResultCallback<List<List<Document>>> futureCallback = new FutureResultCallback<>();
@@ -134,7 +134,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
         // given
         BsonDocument commandResult = executeFindCommand(0, 3);
         cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, 0, ClusterFixture.createOperationContext(),
-                new AsyncCommandCursor<>(commandResult, 3, DOCUMENT_DECODER, null, connectionSource, connection));
+                new AsyncCommandCursor<>(commandResult, 3, DOCUMENT_DECODER, null, connectionSource, connection, false, null));
 
         cursor.close();
 
@@ -157,7 +157,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
 
         BsonDocument commandResult = executeFindCommand(0, 3); // No documents to fetch
         cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, 0, ClusterFixture.createOperationContext(),
-                new AsyncCommandCursor<>(commandResult, 3, DOCUMENT_DECODER, null, connectionSource, connection));
+                new AsyncCommandCursor<>(commandResult, 3, DOCUMENT_DECODER, null, connectionSource, connection, false, null));
 
         // when
         FutureResultCallback<List<List<Document>>> futureCallback = new FutureResultCallback<>();
@@ -174,7 +174,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
     void theServerCursorShouldNotBeNull() {
         BsonDocument commandResult = executeFindCommand(2);
         AsyncCommandCursor<Document> coreCursor =
-                new AsyncCommandCursor<>(commandResult, 0, DOCUMENT_DECODER, null, connectionSource, connection);
+                new AsyncCommandCursor<>(commandResult, 0, DOCUMENT_DECODER, null, connectionSource, connection, false, null);
         cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, 0, ClusterFixture.createOperationContext(),
                 coreCursor);
 
@@ -186,7 +186,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
     void shouldGetExceptionsForOperationsOnTheCursorAfterClosing() {
         BsonDocument commandResult = executeFindCommand(5);
         AsyncCommandCursor<Document> coreCursor =
-                new AsyncCommandCursor<>(commandResult, 0, DOCUMENT_DECODER, null, connectionSource, connection);
+                new AsyncCommandCursor<>(commandResult, 0, DOCUMENT_DECODER, null, connectionSource, connection, false, null);
         cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, 0, ClusterFixture.createOperationContext(),
                 coreCursor);
 
@@ -203,7 +203,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
     void shouldThrowAnExceptionWhenGoingOffTheEnd() {
         BsonDocument commandResult = executeFindCommand(2, 1);
         cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, 0, ClusterFixture.createOperationContext(),
-                new AsyncCommandCursor<>(commandResult, 0, DOCUMENT_DECODER, null, connectionSource, connection));
+                new AsyncCommandCursor<>(commandResult, 0, DOCUMENT_DECODER, null, connectionSource, connection, false, null));
 
         cursorNext();
         cursorNext();
@@ -217,7 +217,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
     void testNormalExhaustion() {
         BsonDocument commandResult = executeFindCommand();
         cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, 0, ClusterFixture.createOperationContext(),
-                new AsyncCommandCursor<>(commandResult, 3, DOCUMENT_DECODER, null, connectionSource, connection));
+                new AsyncCommandCursor<>(commandResult, 3, DOCUMENT_DECODER, null, connectionSource, connection, false, null));
 
         assertEquals(10, cursorFlatten().size());
     }
@@ -228,7 +228,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
     void testLimitExhaustion(final int limit, final int batchSize, final int expectedTotal) {
         BsonDocument commandResult = executeFindCommand(limit, batchSize);
         cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, 0, ClusterFixture.createOperationContext(),
-                new AsyncCommandCursor<>(commandResult, batchSize, DOCUMENT_DECODER, null, connectionSource, connection));
+                new AsyncCommandCursor<>(commandResult, batchSize, DOCUMENT_DECODER, null, connectionSource, connection, false, null));
 
 
         assertEquals(expectedTotal, cursorFlatten().size());
@@ -247,7 +247,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
         BsonDocument commandResult = executeFindCommand(new BsonDocument("ts",
                 new BsonDocument("$gte", new BsonTimestamp(5, 0))), 0, 2, true, awaitData);
         cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, maxTimeMS, ClusterFixture.createOperationContext(),
-                new AsyncCommandCursor<>(commandResult, 2, DOCUMENT_DECODER, null, connectionSource, connection));
+                new AsyncCommandCursor<>(commandResult, 2, DOCUMENT_DECODER, null, connectionSource, connection, false, null));
 
         assertFalse(cursor.isClosed());
         assertEquals(1, cursorNext().get(0).get("_id"));
@@ -270,7 +270,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
         BsonDocument commandResult = executeFindCommand(new BsonDocument("ts",
                 new BsonDocument("$gte", new BsonTimestamp(5, 0))), 0, 2, true, true);
         cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, 0, ClusterFixture.createOperationContext(),
-                new AsyncCommandCursor<>(commandResult, 2, DOCUMENT_DECODER, null, connectionSource, connection));
+                new AsyncCommandCursor<>(commandResult, 2, DOCUMENT_DECODER, null, connectionSource, connection, false, null));
 
         CountDownLatch latch = new CountDownLatch(1);
         AtomicInteger seen = new AtomicInteger();
@@ -303,7 +303,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
         assumeFalse(isSharded());
         BsonDocument commandResult = executeFindCommand(5, 10);
         AsyncCommandCursor<Document> coreCursor =
-                new AsyncCommandCursor<>(commandResult, 0, DOCUMENT_DECODER, null, connectionSource, connection);
+                new AsyncCommandCursor<>(commandResult, 0, DOCUMENT_DECODER, null, connectionSource, connection, false, null);
         cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, 0, ClusterFixture.createOperationContext(),
                 coreCursor);
 
@@ -318,7 +318,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
         assumeFalse(isSharded());
         BsonDocument commandResult = executeFindCommand(5, 3);
         AsyncCommandCursor<Document> coreCursor =
-                new AsyncCommandCursor<>(commandResult, 3, DOCUMENT_DECODER, null, connectionSource, connection);
+                new AsyncCommandCursor<>(commandResult, 3, DOCUMENT_DECODER, null, connectionSource, connection, false, null);
         cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, 0, ClusterFixture.createOperationContext(),
                 coreCursor);
 
@@ -340,7 +340,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
 
         BsonDocument commandResult = executeFindCommand(5, 10);
         AsyncCommandCursor<Document> coreCursor =
-                new AsyncCommandCursor<>(commandResult, 0, DOCUMENT_DECODER, null, connectionSource, connection);
+                new AsyncCommandCursor<>(commandResult, 0, DOCUMENT_DECODER, null, connectionSource, connection, false, null);
         cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, 0, ClusterFixture.createOperationContext(),
                 coreCursor);
 
@@ -355,7 +355,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
         assumeFalse(isSharded());
         BsonDocument commandResult = executeFindCommand(5, 3);
         cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, 0, ClusterFixture.createOperationContext(),
-                new AsyncCommandCursor<>(commandResult, 3, DOCUMENT_DECODER, null, connectionSource, connection));
+                new AsyncCommandCursor<>(commandResult, 3, DOCUMENT_DECODER, null, connectionSource, connection, false, null));
 
         assertNotNull(cursorNext());
         assertNotNull(cursorNext());
@@ -368,7 +368,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
     void testLimitWithGetMore() {
         BsonDocument commandResult = executeFindCommand(5, 2);
         cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, 0, ClusterFixture.createOperationContext(),
-                new AsyncCommandCursor<>(commandResult, 2, DOCUMENT_DECODER, null, connectionSource, connection));
+                new AsyncCommandCursor<>(commandResult, 2, DOCUMENT_DECODER, null, connectionSource, connection, false, null));
 
         assertNotNull(cursorNext());
         assertNotNull(cursorNext());
@@ -391,7 +391,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
 
         BsonDocument commandResult = executeFindCommand(300, 0);
         cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, 0, ClusterFixture.createOperationContext(),
-                new AsyncCommandCursor<>(commandResult, 0, DOCUMENT_DECODER, null, connectionSource, connection));
+                new AsyncCommandCursor<>(commandResult, 0, DOCUMENT_DECODER, null, connectionSource, connection, false, null));
 
         assertEquals(300, cursorFlatten().size());
     }
@@ -401,7 +401,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
     void shouldRespectBatchSize() {
         BsonDocument commandResult = executeFindCommand(2);
         cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, 0, ClusterFixture.createOperationContext(),
-                new AsyncCommandCursor<>(commandResult, 2, DOCUMENT_DECODER, null, connectionSource, connection));
+                new AsyncCommandCursor<>(commandResult, 2, DOCUMENT_DECODER, null, connectionSource, connection, false, null));
 
         assertEquals(2, cursor.getBatchSize());
         assertEquals(2, cursorNext().size());
@@ -418,7 +418,7 @@ public class AsyncCommandBatchCursorFunctionalTest extends OperationTest {
     void shouldThrowCursorNotFoundException() throws Throwable {
         BsonDocument commandResult = executeFindCommand(2);
         AsyncCommandCursor<Document> coreCursor =
-                new AsyncCommandCursor<>(commandResult, 2, DOCUMENT_DECODER, null, connectionSource, connection);
+                new AsyncCommandCursor<>(commandResult, 2, DOCUMENT_DECODER, null, connectionSource, connection, false, null);
         cursor = new AsyncCommandBatchCursor<>(TimeoutMode.CURSOR_LIFETIME, 0, ClusterFixture.createOperationContext(),
                 coreCursor);
 

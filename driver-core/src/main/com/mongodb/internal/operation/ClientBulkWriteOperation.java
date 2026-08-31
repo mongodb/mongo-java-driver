@@ -157,24 +157,29 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     private final ConcreteClientBulkWriteOptions options;
     private final WriteConcern writeConcernSetting;
     private final boolean retryWritesSetting;
+    private final boolean retryReadsSetting;
     @Nullable
     private final Integer maxAdaptiveRetriesSetting;
     private final CodecRegistry codecRegistry;
 
     /**
      * @param retryWritesSetting See {@link MongoClientSettings#getRetryWrites()}.
+     * @param retryReadsSetting See {@link MongoClientSettings#getRetryReads()}. Governs overload retry of the
+     *                          results-cursor {@code getMore}, which is a read command at the wire level.
      */
     public ClientBulkWriteOperation(
             final List<? extends ClientNamespacedWriteModel> models,
             @Nullable final ClientBulkWriteOptions options,
             final WriteConcern writeConcernSetting,
             final boolean retryWritesSetting,
+            final boolean retryReadsSetting,
             @Nullable final Integer maxAdaptiveRetriesSetting,
             final CodecRegistry codecRegistry) {
         this.models = models;
         this.options = options == null ? EMPTY_OPTIONS : (ConcreteClientBulkWriteOptions) options;
         this.writeConcernSetting = writeConcernSetting;
         this.retryWritesSetting = retryWritesSetting;
+        this.retryReadsSetting = retryReadsSetting;
         this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
         this.codecRegistry = codecRegistry;
     }
@@ -509,7 +514,9 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 options.getComment().orElse(null),
                 connectionSource,
                 connection,
-                operationContext)) {
+                operationContext,
+                retryReadsSetting,
+                maxAdaptiveRetriesSetting)) {
 
            return cursor.exhaust();
         }
@@ -530,7 +537,9 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                     options.getComment().orElse(null),
                     connectionSource,
                     connection,
-                    operationContext);
+                    operationContext,
+                    retryReadsSetting,
+                    maxAdaptiveRetriesSetting);
 
             beginAsync().<List<List<BsonDocument>>>thenSupply(exhaustCallback -> {
                 cursor.exhaust(exhaustCallback);

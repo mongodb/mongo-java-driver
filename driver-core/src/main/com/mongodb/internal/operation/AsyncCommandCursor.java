@@ -30,6 +30,7 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerType;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackSupplier;
+import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.Connection;
@@ -51,6 +52,8 @@ import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.doesNotThrow;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.async.SingleResultCallback.THEN_DO_NOTHING;
+import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWithRetriesAsync;
+import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRetryControl;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.FIRST_BATCH;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CLOSED_AS_CURSOR;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.NEXT_BATCH;
@@ -71,6 +74,9 @@ class AsyncCommandCursor<T> implements AsyncCursor<T> {
     private final boolean firstBatchEmpty;
     private final ResourceManager resourceManager;
     private final AtomicBoolean processedInitial = new AtomicBoolean();
+    private final boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private int batchSize;
     private volatile CommandCursorResult<T> commandCursorResult;
 
@@ -80,7 +86,9 @@ class AsyncCommandCursor<T> implements AsyncCursor<T> {
             final Decoder<T> decoder,
             @Nullable final BsonValue comment,
             final AsyncConnectionSource connectionSource,
-            final AsyncConnection connection) {
+            final AsyncConnection connection,
+            final boolean retryReads,
+            @Nullable final Integer maxAdaptiveRetriesSetting) {
         ConnectionDescription connectionDescription = connection.getDescription();
         this.commandCursorResult = toCommandCursorResult(connectionDescription.getServerAddress(), FIRST_BATCH, commandCursorDocument);
         this.namespace = commandCursorResult.getNamespace();
@@ -92,6 +100,8 @@ class AsyncCommandCursor<T> implements AsyncCursor<T> {
         AsyncConnection connectionToPin = connectionSource.getServerDescription().getType() == ServerType.LOAD_BALANCER
                 ? connection : null;
         resourceManager = new ResourceManager(namespace, connectionSource, connectionToPin, commandCursorResult.getServerCursor());
+        this.retryReads = retryReads;
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     @Override
@@ -181,16 +191,25 @@ class AsyncCommandCursor<T> implements AsyncCursor<T> {
     }
 
     private void getMore(final ServerCursor cursor, final OperationContext operationContext, final SingleResultCallback<List<T>> callback) {
-        resourceManager.executeWithConnection(operationContext, (connection, wrappedCallback) ->
-                executeGetMoreCommand(assertNotNull(connection), cursor, operationContext, wrappedCallback), callback);
+        SpecRetryPolicy.IndividualPolicies policies = new SpecRetryPolicy.IndividualPolicies(retryReads)
+                .includeOverload(maxAdaptiveRetriesSetting, SpecRetryPolicy.ErrorPropagation.AS_READ_POLICY, true);
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(policies, operationContext);
+        AsyncCallbackSupplier<List<T>> retryingGetMore = decorateWithRetriesAsync(retryControl, operationContext, attemptCallback ->
+                resourceManager.executeWithConnection(operationContext, (connection, wrappedCallback) ->
+                        executeGetMoreCommand(assertNotNull(connection), cursor, operationContext, retryControl, wrappedCallback),
+                        attemptCallback));
+        retryingGetMore.get(callback);
     }
 
     private void executeGetMoreCommand(final AsyncConnection connection,
                                        final ServerCursor serverCursor,
                                        final OperationContext operationContext,
+                                       final RetryControl<SpecRetryPolicy> retryControl,
                                        final SingleResultCallback<List<T>> callback) {
+        BsonDocument command = getMoreCommandDocument(serverCursor.getId(), connection.getDescription(), namespace, batchSize, comment);
+        retryControl.getPolicy().onCommand(command::getFirstKey);
         connection.commandAsync(namespace.getDatabaseName(),
-                getMoreCommandDocument(serverCursor.getId(), connection.getDescription(), namespace, batchSize, comment),
+                command,
                 NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
                 CommandResultDocumentCodec.create(decoder, NEXT_BATCH),
                 operationContext,
