@@ -80,6 +80,7 @@ import com.mongodb.internal.connection.DualMessageSequences;
 import com.mongodb.internal.connection.IdHoldingBsonWriter;
 import com.mongodb.internal.connection.MongoWriteConcernWithResponseException;
 import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.connection.OverloadStateSuspendedSessionContext;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
@@ -424,7 +425,9 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         ClientBulkWriteCommandOkResponse response = new ClientBulkWriteCommandOkResponse(okResponseDocument);
         List<List<BsonDocument>> cursorExhaustBatches = retryControl.doWhileDisabled(() -> {
             onNotTryingToStartTransaction(operationContext.getSessionContext().getOverloadRetryPolicyState());
-            return exhaustBulkWriteCommandOkResponseCursor(connectionSource, operationContext, connection, response);
+            OperationContext getMoreOperationContext = operationContext.withSessionContext(
+                    new OverloadStateSuspendedSessionContext(operationContext.getSessionContext()));
+            return exhaustBulkWriteCommandOkResponseCursor(connectionSource, getMoreOperationContext, connection, response);
         });
         return createExhaustiveClientBulkWriteCommandOkResponse(
                 response,
@@ -462,7 +465,9 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             beginAsync().<List<List<BsonDocument>>>thenSupply(exhaustCallback -> {
                 retryControl.doWhileDisabledAsync((actionCallback) -> {
                     onNotTryingToStartTransaction(operationContext.getSessionContext().getOverloadRetryPolicyState());
-                    exhaustBulkWriteCommandOkResponseCursorAsync(connectionSource, connection, response, operationContext, actionCallback);
+                    OperationContext getMoreOperationContext = operationContext.withSessionContext(
+                            new OverloadStateSuspendedSessionContext(operationContext.getSessionContext()));
+                    exhaustBulkWriteCommandOkResponseCursorAsync(connectionSource, connection, response, getMoreOperationContext, actionCallback);
                 }, exhaustCallback);
             }).<ExhaustiveClientBulkWriteCommandOkResponse>thenApply((cursorExhaustBatches, transformExhaustionResultCallback) -> {
                 transformExhaustionResultCallback.complete(createExhaustiveClientBulkWriteCommandOkResponse(

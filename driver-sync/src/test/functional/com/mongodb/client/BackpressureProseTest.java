@@ -379,13 +379,43 @@ public class BackpressureProseTest {
                 .retryReads(true)
                 .addCommandListener(commandListener)
                 .build())) {
-            commandListener.reset();
             try (FailPoint ignored = FailPoint.enable(overloadOnGetMoreOnce, getPrimary())) {
                 ClientBulkWriteResult result = executeClientBulkWrite(client);
                 assertEquals(2, result.getUpsertedCount());
             }
             assertEquals(2, commandListener.getCommandStartedEvents("getMore").size(),
                     "Expected exactly two getMore attempts (overload retry + terminal success)");
+        }
+    }
+
+    /**
+     * Coverage test (not part of the spec prose suite).
+     */
+    @Test
+    void clientBulkWriteGetMoreExhaustsOverloadRetriesAndThrows() throws InterruptedException {
+        assumeTrue(serverVersionAtLeast(8, 0));
+        BsonDocument overloadOnGetMoreAlways = BsonDocument.parse(
+                "{"
+                + "    configureFailPoint: 'failCommand',"
+                + "    mode: {times: " + (DEFAULT_MAX_ADAPTIVE_RETRIES + 1) + "},"
+                + "    data: {"
+                + "        failCommands: ['getMore'],"
+                + "        errorCode: 462,"
+                + "        errorLabels: ['" + SYSTEM_OVERLOADED_ERROR_LABEL + "', '" + RETRYABLE_ERROR_LABEL + "']"
+                + "    }"
+                + "}");
+        TestCommandListener commandListener = new TestCommandListener();
+        try (MongoClient client = createClient(MongoClientSettings.builder(getMongoClientSettings())
+                .retryWrites(false)
+                .retryReads(true)
+                .addCommandListener(commandListener)
+                .build())) {
+            try (FailPoint ignored = FailPoint.enable(overloadOnGetMoreAlways, getPrimary())) {
+                MongoServerException exception = assertThrows(MongoServerException.class, () -> executeClientBulkWrite(client));
+                assertTrue(exception.hasErrorLabel(SYSTEM_OVERLOADED_ERROR_LABEL));
+            }
+            assertEquals(DEFAULT_MAX_ADAPTIVE_RETRIES + 1, commandListener.getCommandStartedEvents("getMore").size(),
+                    "Expected all overload retry attempts to be exhausted (initial + maxAdaptiveRetries)");
         }
     }
 
@@ -410,7 +440,6 @@ public class BackpressureProseTest {
                 .retryReads(true)
                 .addCommandListener(commandListener)
                 .build())) {
-            commandListener.reset();
             try (FailPoint ignored = FailPoint.enable(retryableReadCodeOnGetMoreOnce, getPrimary())) {
                 MongoServerException exception = assertThrows(MongoServerException.class,
                         () -> executeClientBulkWrite(client));
@@ -444,7 +473,6 @@ public class BackpressureProseTest {
                 .retryReads(false)
                 .addCommandListener(commandListener)
                 .build())) {
-            commandListener.reset();
             try (FailPoint ignored = FailPoint.enable(overloadOnGetMoreOnce, getPrimary())) {
                 MongoServerException exception = assertThrows(MongoServerException.class,
                         () -> executeClientBulkWrite(client));
