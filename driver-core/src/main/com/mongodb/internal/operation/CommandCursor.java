@@ -234,7 +234,7 @@ class CommandCursor<T> implements Cursor<T> {
         SpecRetryPolicy.IndividualPolicies policies = new SpecRetryPolicy.IndividualPolicies(retryReads)
                 .includeOverload(maxAdaptiveRetriesSetting, SpecRetryPolicy.ErrorPropagation.AS_READ_POLICY, true);
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(policies, operationContext);
-        decorateWithRetries(retryControl, operationContext, () -> {
+        Supplier<Void> retryingCommandExecutor = decorateWithRetries(retryControl, operationContext, () -> {
             resourceManager.executeWithConnection(connection -> {
                 ServerCursor nextServerCursor;
                 BsonDocument command = getMoreCommandDocument(serverCursor.getId(), connection.getDescription(), namespace, batchSize,
@@ -256,7 +256,8 @@ class CommandCursor<T> implements Cursor<T> {
                 resourceManager.setServerCursor(nextServerCursor);
             }, operationContext);
             return null;
-        }).get();
+        });
+        retryingCommandExecutor.get();
     }
 
     private CommandCursorResult<T> toCommandCursorResult(final ServerAddress serverAddress, final String fieldNameContainingBatch,

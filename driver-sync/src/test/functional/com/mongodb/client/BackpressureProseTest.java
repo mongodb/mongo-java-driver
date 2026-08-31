@@ -461,7 +461,7 @@ public class BackpressureProseTest {
         // batches (server sizes firstBatch by response size, not count), guaranteeing a getMore.
         int maxBsonObjectSize = client.getDatabase("admin")
                 .runCommand(new Document("hello", 1)).getInteger("maxBsonObjectSize");
-        MongoNamespace namespace = new MongoNamespace(getDefaultDatabaseName(), "clientBulkWriteGetMoreCoverage");
+        MongoNamespace namespace = new MongoNamespace(getDefaultDatabaseName(), BackpressureProseTest.class.getName());
         List<? extends ClientNamespacedWriteModel> models = asList(
                 ClientNamespacedWriteModel.updateOne(
                         namespace,

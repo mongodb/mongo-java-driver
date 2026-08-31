@@ -78,6 +78,6 @@ public final class CommandReadOperation<T> extends AbstractCommandReadOperation<
     private SpecRetryPolicy.IndividualPolicies createRetryPolicy() {
         boolean retryPolicyEnabled = retryReads && retryWrites;
         return new SpecRetryPolicy.IndividualPolicies(retryPolicyEnabled)
-                .includeOverload(maxAdaptiveRetriesSetting, SpecRetryPolicy.ErrorPropagation.AS_WRITE_POLICY, false);
+                .includeOverload(maxAdaptiveRetriesSetting, SpecRetryPolicy.ErrorPropagation.AS_WRITE_POLICY);
     }
 }

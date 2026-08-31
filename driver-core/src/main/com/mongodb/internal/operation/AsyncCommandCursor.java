@@ -194,11 +194,11 @@ class AsyncCommandCursor<T> implements AsyncCursor<T> {
         SpecRetryPolicy.IndividualPolicies policies = new SpecRetryPolicy.IndividualPolicies(retryReads)
                 .includeOverload(maxAdaptiveRetriesSetting, SpecRetryPolicy.ErrorPropagation.AS_READ_POLICY, true);
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(policies, operationContext);
-        AsyncCallbackSupplier<List<T>> retryingGetMore = decorateWithRetriesAsync(retryControl, operationContext, attemptCallback ->
+        AsyncCallbackSupplier<List<T>> retryingCommandExecutor = decorateWithRetriesAsync(retryControl, operationContext, attemptCallback ->
                 resourceManager.executeWithConnection(operationContext, (connection, wrappedCallback) ->
                         executeGetMoreCommand(assertNotNull(connection), cursor, operationContext, retryControl, wrappedCallback),
                         attemptCallback));
-        retryingGetMore.get(callback);
+        retryingCommandExecutor.get(callback);
     }
 
     private void executeGetMoreCommand(final AsyncConnection connection,

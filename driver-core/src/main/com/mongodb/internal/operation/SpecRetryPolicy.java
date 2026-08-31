@@ -25,6 +25,7 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.function.RetryContext;
+import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.async.function.RetryPolicy;
 import com.mongodb.internal.async.function.RetryPolicy.Decision.RetryAttemptInfo;
 import com.mongodb.internal.connection.OperationContext;
@@ -396,16 +397,25 @@ final class SpecRetryPolicy implements RetryPolicy {
          *
          * @param errorPropagation selects the error propagation shape applied by
          *                         {@link SpecRetryPolicy#decideProspectiveFailedResult}.
-         * @param sessionScopeUpdatesSuspended when {@code true}, this retry policy will not open, mutate, or close
-         *                                     the session's
+         */
+        IndividualPolicies includeOverload(@Nullable final Integer maxAdaptiveRetriesSetting,
+                                           final ErrorPropagation errorPropagation) {
+            return includeOverload(maxAdaptiveRetriesSetting, errorPropagation, false);
+        }
+
+        /**
+         * See {@link #includeOverload(Integer, ErrorPropagation)}.
+         *
+         * @param sessionScopeUpdatesSuspended when {@code true}, this policy will not open, mutate, or close the
+         *                                     session's
          *                                     {@link BaseClientSessionImpl.OverloadRetryPolicyState.CommandExecutionScoped command execution scope}.
-         *                                     Set for child retry controls executed inside another retry supplier's
-         *                                     execution (e.g. the cursor {@code getMore} retry in
-         *                                     {@link CommandCursor} / {@link AsyncCommandCursor} invoked while
-         *                                     iterating a bulk-write cursor inside
-         *                                     {@link com.mongodb.internal.async.function.RetryControl#doWhileDisabled(java.util.function.Supplier)}
+         *                                     Set to {@code true} only for child retry controls executed inside
+         *                                     another retry supplier's execution - for example, the cursor
+         *                                     {@code getMore} retry in {@link CommandCursor} / {@link AsyncCommandCursor}
+         *                                     invoked while iterating a bulk-write cursor inside
+         *                                     {@link RetryControl#doWhileDisabled(Supplier)}
          *                                     where the parent {@link ClientBulkWriteOperation} attempt's scope is
-         *                                     still open).
+         *                                     still open.
          */
         IndividualPolicies includeOverload(@Nullable final Integer maxAdaptiveRetriesSetting,
                                            final ErrorPropagation errorPropagation,
@@ -720,7 +730,7 @@ final class SpecRetryPolicy implements RetryPolicy {
 
     /**
      * Selects the error propagation shape for overload-only policy
-     * compositions (see {@link IndividualPolicies#includeOverload(Integer, ErrorPropagation, boolean)}).
+     * compositions (see {@link IndividualPolicies#includeOverload(Integer, ErrorPropagation)}).
      */
     enum ErrorPropagation {
         AS_READ_POLICY,
