@@ -232,7 +232,7 @@ class CommandCursor<T> implements Cursor<T> {
     private void getMore(final OperationContext operationContext) {
         ServerCursor serverCursor = assertNotNull(resourceManager.getServerCursor());
         SpecRetryPolicy.IndividualPolicies policies = new SpecRetryPolicy.IndividualPolicies(retryReads)
-                .includeOverload(maxAdaptiveRetriesSetting, SpecRetryPolicy.ErrorPropagation.AS_READ_POLICY, true);
+                .includeOverload(maxAdaptiveRetriesSetting, SpecRetryPolicy.ErrorPropagation.AS_READ_POLICY);
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(policies, operationContext);
         Supplier<Void> retryingCommandExecutor = decorateWithRetries(retryControl, operationContext, () -> {
             resourceManager.executeWithConnection(connection -> {
