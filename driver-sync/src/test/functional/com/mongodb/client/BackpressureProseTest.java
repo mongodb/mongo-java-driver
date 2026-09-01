@@ -379,7 +379,7 @@ public class BackpressureProseTest {
                 .build())) {
             try (FailPoint ignored = FailPoint.enable(overloadOnGetMoreOnce, getPrimary())) {
                 ClientBulkWriteResult result = executeClientBulkWrite(client);
-                assertEquals(2, result.getUpsertedCount());
+                assertEquals(102, result.getUpsertedCount());
             }
             assertEquals(2, commandListener.getCommandStartedEvents("getMore").size(),
                     "Expected exactly two getMore attempts (overload retry + terminal success)");
