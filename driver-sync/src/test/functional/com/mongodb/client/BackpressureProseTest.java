@@ -36,14 +36,12 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 import static com.mongodb.client.model.bulk.ClientBulkWriteOptions.clientBulkWriteOptions;
 import static com.mongodb.client.model.bulk.ClientUpdateOneOptions.clientUpdateOneOptions;
-import static java.lang.String.join;
-import static java.util.Arrays.asList;
-import static java.util.Collections.nCopies;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.MongoException.RETRYABLE_ERROR_LABEL;
@@ -485,22 +483,17 @@ public class BackpressureProseTest {
     }
 
     private static ClientBulkWriteResult executeClientBulkWrite(final MongoClient client) {
-        // Two upserts whose result docs each approach maxBsonObjectSize force the response cursor to span two
-        // batches (server sizes firstBatch by response size, not count), guaranteeing a getMore.
-        int maxBsonObjectSize = client.getDatabase("admin")
-                .runCommand(new Document("hello", 1)).getInteger("maxBsonObjectSize");
+        // 102 upserts exceed the server's default firstBatch size (101) for the bulkWrite response cursor,
+        // guaranteeing at least one getMore.
         MongoNamespace namespace = new MongoNamespace(getDefaultDatabaseName(), BackpressureProseTest.class.getName());
-        List<? extends ClientNamespacedWriteModel> models = asList(
-                ClientNamespacedWriteModel.updateOne(
-                        namespace,
-                        Filters.eq(join("", nCopies(maxBsonObjectSize / 2, "a"))),
-                        Updates.set("x", 1),
-                        clientUpdateOneOptions().upsert(true)),
-                ClientNamespacedWriteModel.updateOne(
-                        namespace,
-                        Filters.eq(join("", nCopies(maxBsonObjectSize / 2, "b"))),
-                        Updates.set("x", 1),
-                        clientUpdateOneOptions().upsert(true)));
+        List<ClientNamespacedWriteModel> models = new ArrayList<>(102);
+        for (int i = 0; i < 102; i++) {
+            models.add(ClientNamespacedWriteModel.updateOne(
+                    namespace,
+                    Filters.eq("_id", i),
+                    Updates.set("x", 1),
+                    clientUpdateOneOptions().upsert(true)));
+        }
         return client.bulkWrite(models, clientBulkWriteOptions().verboseResults(true));
     }
 
