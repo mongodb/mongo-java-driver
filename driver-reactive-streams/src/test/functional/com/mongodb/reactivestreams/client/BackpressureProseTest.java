@@ -62,8 +62,8 @@ final class BackpressureProseTest extends com.mongodb.client.BackpressureProseTe
      * "getMores are retried maxAttempts=2 times". Skipped by the unified runner
      * because {@code BatchCursorFlux} signals {@code sink.error(e)} without awaiting
      * the {@code killCursors} reply, so the runner may snapshot events before
-     * {@code killCursors} succeeds. Here we sleep after the terminal error to let
-     * the async close land, then assert the full command sequence.
+     * {@code killCursors} succeeds. Here we wait for that command to complete, then
+     * assert the full command sequence.
      */
     @Test
     void getMoreExhaustsOverloadRetriesAndCursorIsKilled() throws TimeoutException, InterruptedException {
