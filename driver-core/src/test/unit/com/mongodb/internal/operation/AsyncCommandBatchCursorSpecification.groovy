@@ -72,7 +72,14 @@ class AsyncCommandBatchCursorSpecification extends Specification {
         def reply =  getMoreResponse([], 0)
 
         when:
-        def commandCoreCursor = new AsyncCommandCursor<>(firstBatch, batchSize, CODEC, null, connectionSource, initialConnection, false, null)
+        def commandCoreCursor = new AsyncCommandCursor<>(
+                firstBatch, batchSize,
+                CODEC,
+                null,
+                connectionSource,
+                initialConnection,
+                false,
+                null)
         def cursor = new AsyncCommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, maxTimeMS, operationContext, commandCoreCursor)
         then:
         1 * timeoutContext.withMaxTimeOverride(*_)
