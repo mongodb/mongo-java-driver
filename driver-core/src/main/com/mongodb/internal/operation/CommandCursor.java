@@ -231,11 +231,11 @@ class CommandCursor<T> implements Cursor<T> {
 
     private void getMore(final OperationContext operationContext) {
         ServerCursor serverCursor = assertNotNull(resourceManager.getServerCursor());
-        resourceManager.executeWithConnection(connection -> {
-            SpecRetryPolicy.IndividualPolicies policies = new SpecRetryPolicy.IndividualPolicies(retryReads)
-                    .includeOverload(maxAdaptiveRetriesSetting, SpecRetryPolicy.ErrorPropagation.AS_READ_POLICY);
-            RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(policies, operationContext);
-            Supplier<Void> retryingCommandExecutor = decorateWithRetries(retryControl, operationContext, () -> {
+        SpecRetryPolicy.IndividualPolicies policies = new SpecRetryPolicy.IndividualPolicies(retryReads)
+                .includeOverload(maxAdaptiveRetriesSetting, SpecRetryPolicy.ErrorPropagation.AS_READ_POLICY);
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(policies, operationContext);
+        Supplier<Void> retryingCommandExecutor = decorateWithRetries(retryControl, operationContext, () -> {
+            resourceManager.executeWithConnection(connection -> {
                 ServerCursor nextServerCursor;
                 BsonDocument command = getMoreCommandDocument(serverCursor.getId(), connection.getDescription(), namespace, batchSize,
                         comment);
@@ -254,10 +254,10 @@ class CommandCursor<T> implements Cursor<T> {
                     throw translateCommandException(e, serverCursor);
                 }
                 resourceManager.setServerCursor(nextServerCursor);
-                return null;
-            });
-            retryingCommandExecutor.get();
-        }, operationContext);
+            }, operationContext);
+            return null;
+        });
+        retryingCommandExecutor.get();
     }
 
     private CommandCursorResult<T> toCommandCursorResult(final ServerAddress serverAddress, final String fieldNameContainingBatch,
