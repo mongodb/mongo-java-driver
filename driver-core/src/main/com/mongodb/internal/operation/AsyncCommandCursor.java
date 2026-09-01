@@ -191,14 +191,14 @@ class AsyncCommandCursor<T> implements AsyncCursor<T> {
     }
 
     private void getMore(final ServerCursor cursor, final OperationContext operationContext, final SingleResultCallback<List<T>> callback) {
-        SpecRetryPolicy.IndividualPolicies policies = new SpecRetryPolicy.IndividualPolicies(retryReads)
-                .includeOverload(maxAdaptiveRetriesSetting, SpecRetryPolicy.ErrorPropagation.AS_READ_POLICY);
-        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(policies, operationContext);
-        AsyncCallbackSupplier<List<T>> retryingCommandExecutor = decorateWithRetriesAsync(retryControl, operationContext, attemptCallback ->
-                resourceManager.executeWithConnection(operationContext, (connection, wrappedCallback) ->
-                        executeGetMoreCommand(assertNotNull(connection), cursor, operationContext, retryControl, wrappedCallback),
-                        attemptCallback));
-        retryingCommandExecutor.get(callback);
+        resourceManager.executeWithConnection(operationContext, (connection, wrappedCallback) -> {
+            SpecRetryPolicy.IndividualPolicies policies = new SpecRetryPolicy.IndividualPolicies(retryReads)
+                    .includeOverload(maxAdaptiveRetriesSetting, SpecRetryPolicy.ErrorPropagation.AS_READ_POLICY);
+            RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(policies, operationContext);
+            AsyncCallbackSupplier<List<T>> retryingCommandExecutor = decorateWithRetriesAsync(retryControl, operationContext, attemptCallback ->
+                    executeGetMoreCommand(assertNotNull(connection), cursor, operationContext, retryControl, attemptCallback));
+            retryingCommandExecutor.get(wrappedCallback);
+        }, callback);
     }
 
     private void executeGetMoreCommand(final AsyncConnection connection,
