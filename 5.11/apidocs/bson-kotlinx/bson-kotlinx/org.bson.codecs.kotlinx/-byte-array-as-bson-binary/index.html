@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" charset="UTF-8">
+    <title>ByteArrayAsBsonBinary</title>
+    <link href="../../../images/logo-icon.svg" rel="icon" type="image/svg">
+    <script>var pathToRoot = "../../../";</script>
+    <script>const storage = localStorage.getItem("dokka-dark-mode")
+    if (storage == null) {
+        const osDarkSchemePreferred = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+        if (osDarkSchemePreferred === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    } else {
+        const savedDarkMode = JSON.parse(storage)
+        if(savedDarkMode === true) {
+            document.getElementsByTagName("html")[0].classList.add("theme-dark")
+        }
+    }
+    </script>
+<script type="text/javascript" src="../../../scripts/sourceset_dependencies.js" async="async"></script>
+<link href="../../../styles/style.css" rel="Stylesheet">
+<link href="../../../styles/jetbrains-mono.css" rel="Stylesheet">
+<link href="../../../styles/main.css" rel="Stylesheet">
+<link href="../../../styles/prism.css" rel="Stylesheet">
+<link href="../../../styles/logo-styles.css" rel="Stylesheet">
+<script type="text/javascript" src="../../../scripts/clipboard.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/navigation-loader.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/platform-content-handler.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/main.js" defer="defer"></script>
+<script type="text/javascript" src="../../../scripts/prism.js" async="async"></script>
+<script type="text/javascript" src="../../../scripts/symbol-parameters-wrapper_deferred.js" defer="defer"></script>
+</head>
+<body>
+<div class="navigation-wrapper" id="navigation-wrapper">
+    <div id="leftToggler"><span class="icon-toggler"></span></div>
+    <div class="library-name">
+            <a href="../../../index.html">
+                    <span>bson-kotlinx</span>
+            </a>
+    </div>
+    <div>
+5.11.0    </div>
+    <div class="pull-right d-flex">
+        <div class="filter-section" id="filter-section">
+                <button class="platform-tag platform-selector jvm-like" data-active="" data-filter=":bson-kotlinx:dokkaHtml/main">jvm</button>
+        </div>
+        <button id="theme-toggle-button"><span id="theme-toggle"></span></button>
+        <div id="searchBar"></div>
+    </div>
+</div>
+<div id="container">
+    <div id="leftColumn">
+        <div id="sideMenu"></div>
+    </div>
+    <div id="main">
+<div class="main-content" data-page-type="classlike" id="content" pageIds="bson-kotlinx::org.bson.codecs.kotlinx/ByteArrayAsBsonBinary///PointingToDeclaration//-346569119">
+  <div class="breadcrumbs"><a href="../../../index.html">bson-kotlinx</a><span class="delimiter">/</span><a href="../index.html">org.bson.codecs.kotlinx</a><span class="delimiter">/</span><span class="current">ByteArrayAsBsonBinary</span></div>
+  <div class="cover ">
+    <h1 class="cover"><span>Byte</span><wbr></wbr><span>Array</span><wbr></wbr><span>As</span><wbr></wbr><span>Bson</span><wbr></wbr><span><span>Binary</span></span></h1>
+    <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":bson-kotlinx:dokkaHtml/main"><div class="symbol monospace"><div class="block"><div class="block"><span class="token annotation builtin">@</span><span data-unresolved-link="kotlinx.serialization/ExperimentalSerializationApi///PointingToDeclaration/"><span class="token annotation builtin">ExperimentalSerializationApi</span></span></div></div><span class="token keyword">object </span><a href="index.html">ByteArrayAsBsonBinary</a> : <span data-unresolved-link="kotlinx.serialization/KSerializer///PointingToDeclaration/">KSerializer</span><span class="token operator">&lt;</span><span class="token keyword"></span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-byte-array/index.html">ByteArray</a><span class="token operator">&gt; </span></div><p class="paragraph">ByteArray KSerializer.</p><p class="paragraph">Encodes and decodes <code class="lang-kotlin">ByteArray</code> values to and from a compact <code class="lang-kotlin">BsonBinary</code> (subtype <span data-unresolved-link="org.bson/BsonBinarySubType.BINARY///PointingToDeclaration/{&amp;quot;org.jetbrains.dokka.links.EnumEntryDRIExtra&amp;quot;:{&amp;quot;key&amp;quot;:&amp;quot;org.jetbrains.dokka.links.EnumEntryDRIExtra&amp;quot;}}">org.bson.BsonBinarySubType.BINARY</span>), matching the behavior of the standard <code class="lang-kotlin">ByteArrayCodec</code> and the <code class="lang-kotlin">bson-kotlin</code> <code class="lang-kotlin">DataClassCodec</code>.</p><p class="paragraph">This is an opt-in serializer: kotlinx.serialization's built-in <code class="lang-kotlin">ByteArray</code> serializer encodes a <code class="lang-kotlin">ByteArray</code> as a BSON array of int32 elements (one element per byte). To store a <code class="lang-kotlin">ByteArray</code> field as <code class="lang-kotlin">BsonBinary</code> instead, either annotate the field with <code class="lang-kotlin">@Serializable(with = ByteArrayAsBsonBinary::class)</code>, or annotate it with <code class="lang-kotlin">@Contextual</code> and register <a href="serializers-module.html">ByteArrayAsBsonBinary.serializersModule</a> on the codec.</p><p class="paragraph">To ease migration, decoding also accepts that legacy BSON array of int32 form — as written by the built-in <code class="lang-kotlin">ByteArray</code> serializer, and by <code class="lang-kotlin">bson-kotlin</code> 5.2.0 through 5.9.x. Encoding always produces <code class="lang-kotlin">BsonBinary</code>, so re-saving a document migrates it. Every element of such an array must be an int32 within the signed byte range; otherwise <code class="lang-kotlin">BsonInvalidOperationException</code> is thrown rather than silently decoding an unrelated BSON array into bytes.</p><span class="kdoc-tag"><h4 class="">Since</h4><p class="paragraph">5.10</p></span></div></div>
+  </div>
+  <div class="tabbedcontent">
+    <div class="tabs-section" tabs-section="tabs-section"><button class="section-tab" data-active="" data-togglable="CONSTRUCTOR,TYPE,FUNCTION,PROPERTY">Members</button></div>
+    <div class="tabs-section-body">
+      <div data-togglable="FUNCTION">
+        <h2 class="">Functions</h2>
+        <div class="table"><a data-name="1159403504%2FFunctions%2F-346569119" anchor-label="deserialize" id="1159403504%2FFunctions%2F-346569119" data-filterable-set=":bson-kotlinx:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":bson-kotlinx:dokkaHtml/main" data-filterable-set=":bson-kotlinx:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="deserialize.html"><span><span>deserialize</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1159403504%2FFunctions%2F-346569119"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":bson-kotlinx:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="deserialize.html"><span class="token function">deserialize</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">decoder<span class="token operator">: </span><span data-unresolved-link="kotlinx.serialization.encoding/Decoder///PointingToDeclaration/">Decoder</span></span></span><span class="token punctuation">)</span><span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-byte-array/index.html">ByteArray</a></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="1409562852%2FFunctions%2F-346569119" anchor-label="serialize" id="1409562852%2FFunctions%2F-346569119" data-filterable-set=":bson-kotlinx:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":bson-kotlinx:dokkaHtml/main" data-filterable-set=":bson-kotlinx:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="serialize.html"><span><span>serialize</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="1409562852%2FFunctions%2F-346569119"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":bson-kotlinx:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">fun </span><a href="serialize.html"><span class="token function">serialize</span></a><span class="token punctuation">(</span><span class="parameters "><span class="parameter ">encoder<span class="token operator">: </span><span data-unresolved-link="kotlinx.serialization.encoding/Encoder///PointingToDeclaration/">Encoder</span><span class="token punctuation">, </span></span><span class="parameter ">value<span class="token operator">: </span><a href="https://kotlinlang.org/api/latest/jvm/stdlib/kotlin-stdlib/kotlin/-byte-array/index.html">ByteArray</a></span></span><span class="token punctuation">)</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div data-togglable="PROPERTY">
+        <h2 class="">Properties</h2>
+        <div class="table"><a data-name="-586720034%2FProperties%2F-346569119" anchor-label="descriptor" id="-586720034%2FProperties%2F-346569119" data-filterable-set=":bson-kotlinx:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":bson-kotlinx:dokkaHtml/main" data-filterable-set=":bson-kotlinx:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="descriptor.html"><span><span>descriptor</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="-586720034%2FProperties%2F-346569119"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":bson-kotlinx:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword">open </span><span class="token keyword">override </span><span class="token keyword">val </span><a href="descriptor.html">descriptor</a><span class="token operator">: </span><span data-unresolved-link="kotlinx.serialization.descriptors/SerialDescriptor///PointingToDeclaration/">SerialDescriptor</span></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+<a data-name="703053248%2FProperties%2F-346569119" anchor-label="serializersModule" id="703053248%2FProperties%2F-346569119" data-filterable-set=":bson-kotlinx:dokkaHtml/main"></a>
+          <div class="table-row" data-filterable-current=":bson-kotlinx:dokkaHtml/main" data-filterable-set=":bson-kotlinx:dokkaHtml/main">
+            <div class="main-subrow keyValue ">
+              <div class=""><span class="inline-flex">
+                  <div><a href="serializers-module.html"><span>serializers</span><wbr></wbr><span><span>Module</span></span></a></div>
+<span class="anchor-wrapper"><span class="anchor-icon" pointing-to="703053248%2FProperties%2F-346569119"></span>
+                    <div class="copy-popup-wrapper "><span class="copy-popup-icon"></span><span>Link copied to clipboard</span></div>
+                  </span></span></div>
+              <div>
+                <div class="title">
+                  <div class="platform-hinted " data-platform-hinted="data-platform-hinted"><div class="content sourceset-dependent-content" data-active="" data-togglable=":bson-kotlinx:dokkaHtml/main"><div class="symbol monospace"><span class="token keyword"></span><span class="token keyword">val </span><a href="serializers-module.html">serializersModule</a><span class="token operator">: </span><span data-unresolved-link="kotlinx.serialization.modules/SerializersModule///PointingToDeclaration/">SerializersModule</span></div><div class="brief "><p class="paragraph">A <span data-unresolved-link="kotlinx.serialization.modules/SerializersModule///PointingToDeclaration/">SerializersModule</span> that registers <a href="index.html">ByteArrayAsBsonBinary</a> as the contextual serializer for <code class="lang-kotlin">ByteArray</code>.</p></div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      <div class="footer">
+        <span class="go-to-top-icon"><a href="#content" id="go-to-top-link"></a></span><span>© 2026 Copyright</span><span
+                class="pull-right"><span>Generated by </span><a
+                href="https://github.com/Kotlin/dokka"><span>dokka</span><span class="padded-icon"></span></a></span>
+      </div>
+    </div>
+</div>
+</body>
+</html>
