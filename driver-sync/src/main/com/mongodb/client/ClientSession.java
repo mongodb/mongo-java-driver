@@ -16,8 +16,10 @@
 
 package com.mongodb.client;
 
+import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
+import com.mongodb.annotations.Internal;
 import com.mongodb.internal.observability.micrometer.TransactionSpan;
 import com.mongodb.lang.Nullable;
 
@@ -46,13 +48,14 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
     boolean hasActiveTransaction();
 
     /**
-     *  Notify the client session that a message has been sent.
+     *  Notify that a message is about to be sent.
      *  <p>
      *      For internal use only
      *  </p>
      *
-     * @return true if this is the first message sent, false otherwise
+     * @return true Iff the message must bear {@code startTransaction: true}.
      */
+    @Internal
     boolean notifyMessageSent();
 
     /**
@@ -63,6 +66,7 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      *
      * @param operation the operation
      */
+    @Internal
     void notifyOperationInitiated(Object operation);
 
     /**
@@ -76,6 +80,7 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      * Start a transaction in the context of this session with default transaction options. A transaction can not be started if there is
      * already an active transaction on this session.
      *
+     * @see MongoException#TRANSIENT_TRANSACTION_ERROR_LABEL
      * @mongodb.server.release 4.0
      */
     void startTransaction();
@@ -86,13 +91,15 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      *
      * @param transactionOptions the options to apply to the transaction
      *
+     * @see MongoException#TRANSIENT_TRANSACTION_ERROR_LABEL
      * @mongodb.server.release 4.0
      */
     void startTransaction(TransactionOptions transactionOptions);
 
     /**
-     * Commit a transaction in the context of this session.  A transaction can only be commmited if one has first been started.
+     * Commit a transaction in the context of this session.  A transaction can only be committed if one has first been started.
      *
+     * @see MongoException#UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL
      * @mongodb.server.release 4.0
      */
     void commitTransaction();
@@ -110,6 +117,8 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      * @param <T> the return type of the transaction body
      * @param transactionBody the body of the transaction
      * @return the return value of the transaction body
+     * @see MongoException#TRANSIENT_TRANSACTION_ERROR_LABEL
+     * @see MongoException#UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL
      * @mongodb.server.release 4.0
      * @since 3.11
      */
@@ -122,6 +131,8 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      * @param transactionBody the body of the transaction
      * @param options         the transaction options
      * @return the return value of the transaction body
+     * @see MongoException#TRANSIENT_TRANSACTION_ERROR_LABEL
+     * @see MongoException#UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL
      * @mongodb.server.release 4.0
      * @since 3.11
      */

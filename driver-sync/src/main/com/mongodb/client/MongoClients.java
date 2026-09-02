@@ -23,6 +23,7 @@ import com.mongodb.client.internal.Clusters;
 import com.mongodb.client.internal.MongoClientImpl;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.StreamFactoryFactory;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.lang.Nullable;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -120,13 +121,14 @@ public final class MongoClients {
         StreamFactoryFactory syncStreamFactoryFactory = getSyncStreamFactoryFactory(
                 settings.getTransportSettings(),
                 getInetAddressResolver(settings));
-
+        AsyncClientExecutor clientExecutor = AsyncClientExecutor.NO_OP;
         Cluster cluster = Clusters.createCluster(
                 settings,
                 driverInfo,
-                syncStreamFactoryFactory);
+                syncStreamFactoryFactory,
+                clientExecutor);
 
-        return new MongoClientImpl(cluster, settings, driverInfo, syncStreamFactoryFactory);
+        return new MongoClientImpl(cluster, driverInfo, settings, syncStreamFactoryFactory, clientExecutor);
     }
 
     private MongoClients() {

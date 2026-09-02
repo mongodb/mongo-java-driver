@@ -32,7 +32,7 @@ import org.bson.BsonString;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabel;
+import static com.mongodb.internal.operation.CommandOperationHelper.addRetryableWriteErrorLabelIfNeeded;
 
 /**
  * This class is NOT part of the public API. It may change at any time without notification.
@@ -67,7 +67,7 @@ public final class WriteConcernHelper {
             if (exception == null) {
                 exception = createWriteConcernException(result, serverAddress);
             }
-            addRetryableWriteErrorLabel(exception, maxWireVersion);
+            addRetryableWriteErrorLabelIfNeeded(exception, maxWireVersion);
             throw exception;
         }
     }

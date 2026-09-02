@@ -228,7 +228,7 @@ public class DropCollectionOperation implements WriteOperation<Void> {
     }
 
     private ListCollectionsOperation<BsonValue> listCollectionOperation() {
-        return new ListCollectionsOperation<>(namespace.getDatabaseName(), BSON_VALUE_CODEC)
+        return new ListCollectionsOperation<>(namespace.getDatabaseName(), BSON_VALUE_CODEC, null)
                 .filter(new BsonDocument("name", new BsonString(namespace.getCollectionName())))
                 .batchSize(1);
     }

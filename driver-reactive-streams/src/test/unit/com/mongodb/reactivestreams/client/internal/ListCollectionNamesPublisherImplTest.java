@@ -35,7 +35,6 @@ final class ListCollectionNamesPublisherImplTest extends TestHelper {
 
     private static final String DATABASE_NAME = NAMESPACE.getDatabaseName();
 
-    @SuppressWarnings("deprecation")
     @DisplayName("Should build the expected ListCollectionsOperation")
     @Test
     void shouldBuildTheExpectedOperation() {
@@ -46,7 +45,8 @@ final class ListCollectionNamesPublisherImplTest extends TestHelper {
                 .authorizedCollections(true);
 
         ListCollectionsOperation<Document> expectedOperation = new ListCollectionsOperation<>(DATABASE_NAME,
-                                                                                              getDefaultCodecRegistry().get(Document.class))
+                                                                                              getDefaultCodecRegistry().get(Document.class),
+                null)
                 .batchSize(Integer.MAX_VALUE)
                 .nameOnly(true)
                 .authorizedCollections(true)
@@ -65,7 +65,8 @@ final class ListCollectionNamesPublisherImplTest extends TestHelper {
                 .batchSize(100);
 
         expectedOperation = new ListCollectionsOperation<>(DATABASE_NAME,
-                                                           getDefaultCodecRegistry().get(Document.class))
+                                                           getDefaultCodecRegistry().get(Document.class),
+                null)
                 .nameOnly(true)
                 .authorizedCollections(true)
                 .retryReads(true)

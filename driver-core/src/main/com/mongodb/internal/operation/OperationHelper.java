@@ -137,18 +137,6 @@ public final class OperationHelper {
         validateWriteRequestHints(connectionDescription, requests, writeConcern);
     }
 
-    static <R> boolean validateWriteRequestsAndCompleteIfInvalid(final ConnectionDescription connectionDescription,
-            final Boolean bypassDocumentValidation, final List<? extends WriteRequest> requests, final WriteConcern writeConcern,
-            final SingleResultCallback<R> callback) {
-        try {
-            validateWriteRequests(connectionDescription, bypassDocumentValidation, requests, writeConcern);
-            return false;
-        } catch (Throwable validationT) {
-            callback.onResult(null, validationT);
-            return true;
-        }
-    }
-
     private static void checkBypassDocumentValidationIsSupported(@Nullable final Boolean bypassDocumentValidation,
             final WriteConcern writeConcern) {
         if (bypassDocumentValidation != null && !writeConcern.isAcknowledged()) {
@@ -156,9 +144,9 @@ public final class OperationHelper {
         }
     }
 
-    static boolean isRetryableWrite(final boolean retryWrites, final WriteConcern writeConcern,
+    static boolean isNonCommandWriteRetryRequirementsMet(final boolean retryWritesSetting, final WriteConcern writeConcern,
             final ConnectionDescription connectionDescription, final SessionContext sessionContext) {
-        if (!retryWrites) {
+        if (!retryWritesSetting) {
             return false;
         } else if (!writeConcern.isAcknowledged()) {
             LOGGER.debug("retryWrites set to true but the writeConcern is unacknowledged.");
@@ -167,11 +155,11 @@ public final class OperationHelper {
             LOGGER.debug("retryWrites set to true but in an active transaction.");
             return false;
         } else {
-            return canRetryWrite(connectionDescription);
+            return isServerWriteRetryRequirementsMet(connectionDescription);
         }
     }
 
-    static boolean canRetryWrite(final ConnectionDescription connectionDescription) {
+    static boolean isServerWriteRetryRequirementsMet(final ConnectionDescription connectionDescription) {
         if (connectionDescription.getLogicalSessionTimeoutMinutes() == null) {
             LOGGER.debug("retryWrites set to true but the server does not support sessions.");
             return false;
@@ -182,7 +170,10 @@ public final class OperationHelper {
         return true;
     }
 
-    static boolean canRetryRead(final OperationContext operationContext) {
+    static boolean isReadRetryRequirementsMet(final boolean retryReadsSetting, final OperationContext operationContext) {
+        if (!retryReadsSetting) {
+            return false;
+        }
         if (operationContext.getSessionContext().hasActiveTransaction()) {
             LOGGER.debug("retryReads set to true but in an active transaction.");
             return false;

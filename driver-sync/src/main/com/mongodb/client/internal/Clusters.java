@@ -24,6 +24,7 @@ import com.mongodb.internal.connection.DefaultClusterFactory;
 import com.mongodb.internal.connection.InternalConnectionPoolSettings;
 import com.mongodb.internal.connection.StreamFactory;
 import com.mongodb.internal.connection.StreamFactoryFactory;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.lang.Nullable;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
@@ -37,7 +38,8 @@ public final class Clusters {
 
     public static Cluster createCluster(final MongoClientSettings settings,
                                         @Nullable final MongoDriverInformation mongoDriverInformation,
-                                        final StreamFactoryFactory streamFactoryFactory) {
+                                        final StreamFactoryFactory streamFactoryFactory,
+                                        final AsyncClientExecutor clientExecutor) {
         assertNotNull(streamFactoryFactory);
         assertNotNull(settings);
 
@@ -47,7 +49,7 @@ public final class Clusters {
         return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
                 settings.getConnectionPoolSettings(), InternalConnectionPoolSettings.builder().build(),
                 TimeoutSettings.create(settings), streamFactory,
-                TimeoutSettings.createHeartbeatSettings(settings), heartbeatStreamFactory,
+                TimeoutSettings.createHeartbeatSettings(settings), heartbeatStreamFactory, clientExecutor,
                 settings.getCredential(), settings.getLoggerSettings(), getCommandListener(settings.getCommandListeners()),
                 settings.getApplicationName(), mongoDriverInformation, settings.getCompressorList(), settings.getServerApi(),
                 settings.getDnsClient());

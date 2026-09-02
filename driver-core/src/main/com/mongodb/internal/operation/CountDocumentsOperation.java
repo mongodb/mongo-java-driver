@@ -43,6 +43,8 @@ public class CountDocumentsOperation implements ReadOperationSimple<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
     private final MongoNamespace namespace;
     private boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private BsonDocument filter;
     private BsonValue hint;
     private BsonValue comment;
@@ -50,8 +52,9 @@ public class CountDocumentsOperation implements ReadOperationSimple<Long> {
     private long limit;
     private Collation collation;
 
-    public CountDocumentsOperation(final MongoNamespace namespace) {
+    public CountDocumentsOperation(final MongoNamespace namespace, @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.namespace = notNull("namespace", namespace);
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     @Nullable
@@ -157,7 +160,7 @@ public class CountDocumentsOperation implements ReadOperationSimple<Long> {
     }
 
     private AggregateOperation<BsonDocument> getAggregateOperation() {
-        return new AggregateOperation<>(namespace, getPipeline(), DECODER)
+        return new AggregateOperation<>(namespace, getPipeline(), DECODER, maxAdaptiveRetriesSetting)
                 .retryReads(retryReads)
                 .collation(collation)
                 .comment(comment)

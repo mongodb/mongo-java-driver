@@ -97,6 +97,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
     private final boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private final ReadConcern readConcern;
     private final Operations<TDocument> operations;
     private final UuidRepresentation uuidRepresentation;
@@ -107,10 +109,10 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private final OperationExecutor executor;
 
     MongoCollectionImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final CodecRegistry codecRegistry,
-            final ReadPreference readPreference, final WriteConcern writeConcern, final boolean retryWrites,
-            final boolean retryReads, final ReadConcern readConcern, final UuidRepresentation uuidRepresentation,
-            @Nullable final AutoEncryptionSettings autoEncryptionSettings, final TimeoutSettings timeoutSettings,
-            final OperationExecutor executor) {
+            final ReadPreference readPreference, final WriteConcern writeConcern,
+            final boolean retryWrites, final boolean retryReads, @Nullable final Integer maxAdaptiveRetriesSetting,
+            final ReadConcern readConcern, final UuidRepresentation uuidRepresentation,
+            @Nullable final AutoEncryptionSettings autoEncryptionSettings, final TimeoutSettings timeoutSettings, final OperationExecutor executor) {
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
@@ -118,13 +120,14 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         this.writeConcern = notNull("writeConcern", writeConcern);
         this.retryWrites = retryWrites;
         this.retryReads = retryReads;
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
         this.readConcern = notNull("readConcern", readConcern);
         this.executor = notNull("executor", executor);
         this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
         this.autoEncryptionSettings = autoEncryptionSettings;
         this.timeoutSettings = timeoutSettings;
         this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
-                retryWrites, retryReads, timeoutSettings);
+                retryWrites, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
     }
 
     @Override
@@ -166,37 +169,44 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public <NewTDocument> MongoCollection<NewTDocument> withDocumentClass(final Class<NewTDocument> clazz) {
-        return new MongoCollectionImpl<>(namespace, clazz, codecRegistry, readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
+        return new MongoCollectionImpl<>(namespace, clazz, codecRegistry, readPreference, writeConcern,
+                retryWrites, retryReads, maxAdaptiveRetriesSetting,
+                readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoCollectionImpl<>(namespace, documentClass, withUuidRepresentation(codecRegistry, uuidRepresentation),
-                readPreference, writeConcern, retryWrites, retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
+                readPreference, writeConcern,
+                retryWrites, retryReads, maxAdaptiveRetriesSetting,
+                readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withReadPreference(final ReadPreference readPreference) {
-        return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
+        return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern,
+                retryWrites, retryReads, maxAdaptiveRetriesSetting,
+                readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withWriteConcern(final WriteConcern writeConcern) {
-        return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
+        return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern,
+                retryWrites, retryReads, maxAdaptiveRetriesSetting,
+                readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withReadConcern(final ReadConcern readConcern) {
-        return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
+        return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern,
+                retryWrites, retryReads, maxAdaptiveRetriesSetting,
+                readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withTimeout(final long timeout, final TimeUnit timeUnit) {
-        return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites, retryReads,
+        return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern,
+                retryWrites, retryReads, maxAdaptiveRetriesSetting,
                 readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings.withTimeout(timeout, timeUnit), executor);
     }
 
@@ -273,7 +283,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private <TResult> DistinctIterable<TResult> createDistinctIterable(@Nullable final ClientSession clientSession, final String fieldName,
                                                                        final Bson filter, final Class<TResult> resultClass) {
         return new DistinctIterableImpl<>(clientSession, namespace, documentClass, resultClass, codecRegistry,
-                readPreference, readConcern, executor, fieldName, filter, retryReads, timeoutSettings);
+                readPreference, readConcern, executor, fieldName, filter, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
     }
 
     @Override
@@ -324,7 +334,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private <TResult> FindIterable<TResult> createFindIterable(@Nullable final ClientSession clientSession, final Bson filter,
                                                                final Class<TResult> resultClass) {
         return new FindIterableImpl<>(clientSession, namespace, this.documentClass, resultClass, codecRegistry,
-                readPreference, readConcern, executor, filter, retryReads, timeoutSettings);
+                readPreference, readConcern, executor, filter, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
     }
 
     @Override
@@ -353,7 +363,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                                                          final List<? extends Bson> pipeline,
                                                                          final Class<TResult> resultClass) {
         return new AggregateIterableImpl<>(clientSession, namespace, documentClass, resultClass, codecRegistry,
-                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, retryReads, timeoutSettings);
+                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION,
+                retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
     }
 
     @Override
@@ -402,7 +413,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                                                                final List<? extends Bson> pipeline,
                                                                                final Class<TResult> resultClass) {
         return new ChangeStreamIterableImpl<>(clientSession, namespace, codecRegistry, readPreference, readConcern, executor,
-                pipeline, resultClass, ChangeStreamLevel.COLLECTION, retryReads, timeoutSettings);
+                pipeline, resultClass, ChangeStreamLevel.COLLECTION, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
     }
 
     @SuppressWarnings("deprecation")
@@ -438,7 +449,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                                                          final String mapFunction, final String reduceFunction,
                                                                          final Class<TResult> resultClass) {
         return new MapReduceIterableImpl<>(clientSession, namespace, documentClass, resultClass, codecRegistry,
-                readPreference, readConcern, writeConcern, executor, mapFunction, reduceFunction, timeoutSettings);
+                readPreference, readConcern, writeConcern, executor, mapFunction, reduceFunction,
+                maxAdaptiveRetriesSetting, timeoutSettings);
     }
 
     @Override
@@ -972,12 +984,12 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private <TResult> ListIndexesIterable<TResult> createListIndexesIterable(@Nullable final ClientSession clientSession,
                                                                              final Class<TResult> resultClass) {
         return new ListIndexesIterableImpl<>(clientSession, getNamespace(), resultClass, codecRegistry, ReadPreference.primary(),
-                executor, retryReads, timeoutSettings);
+                executor, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
     }
 
     private <TResult> ListSearchIndexesIterable<TResult> createListSearchIndexesIterable(final Class<TResult> resultClass) {
         return new ListSearchIndexesIterableImpl<>(getNamespace(), executor, resultClass, codecRegistry, readPreference,
-                retryReads, timeoutSettings);
+                retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
     }
 
     @Override

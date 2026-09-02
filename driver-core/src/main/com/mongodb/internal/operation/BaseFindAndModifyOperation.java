@@ -37,7 +37,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableWriteAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
-import static com.mongodb.internal.operation.OperationHelper.isRetryableWrite;
+import static com.mongodb.internal.operation.OperationHelper.isNonCommandWriteRetryRequirementsMet;
 import static com.mongodb.internal.operation.OperationHelper.validateHintForFindAndModify;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableWrite;
 
@@ -51,6 +51,8 @@ public abstract class BaseFindAndModifyOperation<T> implements WriteOperation<T>
     private final MongoNamespace namespace;
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private final Decoder<T> decoder;
 
     private BsonDocument filter;
@@ -62,11 +64,14 @@ public abstract class BaseFindAndModifyOperation<T> implements WriteOperation<T>
     private BsonValue comment;
     private BsonDocument variables;
 
-    protected BaseFindAndModifyOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
+    protected BaseFindAndModifyOperation(final MongoNamespace namespace, final WriteConcern writeConcern,
+            final boolean retryWrites,
+            @Nullable final Integer maxAdaptiveRetriesSetting,
             final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = notNull("writeConcern", writeConcern);
         this.retryWrites = retryWrites;
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
         this.decoder = notNull("decoder", decoder);
     }
 
@@ -82,7 +87,9 @@ public abstract class BaseFindAndModifyOperation<T> implements WriteOperation<T>
                                      CommandResultDocumentCodec.create(getDecoder(), "value"),
                                      getCommandCreator(),
                                      FindAndModifyHelper.transformer(),
-                                     cmd -> cmd);
+                                     cmd -> cmd,
+                                     retryWrites,
+                                     maxAdaptiveRetriesSetting);
     }
 
     @Override
@@ -90,7 +97,7 @@ public abstract class BaseFindAndModifyOperation<T> implements WriteOperation<T>
         executeRetryableWriteAsync(binding, operationContext, getDatabaseName(), null, getFieldNameValidator(),
                                    CommandResultDocumentCodec.create(getDecoder(), "value"),
                                    getCommandCreator(),
-                FindAndModifyHelper.asyncTransformer(), cmd -> cmd, callback);
+                FindAndModifyHelper.asyncTransformer(), cmd -> cmd, retryWrites, maxAdaptiveRetriesSetting, callback);
     }
 
     @Override
@@ -218,7 +225,7 @@ public abstract class BaseFindAndModifyOperation<T> implements WriteOperation<T>
             putIfNotNull(commandDocument, "comment", getComment());
             putIfNotNull(commandDocument, "let", getLet());
 
-            if (isRetryableWrite(isRetryWrites(), getWriteConcern(), connectionDescription, sessionContext)) {
+            if (isNonCommandWriteRetryRequirementsMet(isRetryWrites(), getWriteConcern(), connectionDescription, sessionContext)) {
                 commandDocument.put("txnNumber", new BsonInt64(sessionContext.advanceTransactionNumber()));
             }
             return commandDocument;

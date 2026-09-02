@@ -33,7 +33,7 @@ import org.bson.Document
 import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.createOperationContext
 
 class ListDatabasesOperationSpecification extends OperationFunctionalSpecification {
     def codec = new DocumentCodec()
@@ -41,7 +41,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
     def 'should return a list of database names'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
-        def operation = new ListDatabasesOperation(codec)
+        def operation = new ListDatabasesOperation(codec, null)
 
         when:
         def names = executeAndCollectBatchCursorResults(operation, async)*.get('name')
@@ -79,10 +79,10 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
             getReadConnectionSource(_) >> connectionSource
             getReadPreference() >> readPreference
         }
-        def operation = new ListDatabasesOperation(helper.decoder)
+        def operation = new ListDatabasesOperation(helper.decoder, null)
 
         when:
-        operation.execute(readBinding, OPERATION_CONTEXT)
+        operation.execute(readBinding, createOperationContext())
 
         then:
         _ * connection.getDescription() >> helper.connectionDescription
@@ -104,10 +104,10 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
             getReadPreference() >> readPreference
             getReadConnectionSource(_, _) >> { it[1].onResult(connectionSource, null) }
         }
-        def operation = new ListDatabasesOperation(helper.decoder)
+        def operation = new ListDatabasesOperation(helper.decoder, null)
 
         when:
-        operation.executeAsync(readBinding, OPERATION_CONTEXT, Stub(SingleResultCallback))
+        operation.executeAsync(readBinding, createOperationContext(), Stub(SingleResultCallback))
 
         then:
         _ * connection.getDescription() >> helper.connectionDescription

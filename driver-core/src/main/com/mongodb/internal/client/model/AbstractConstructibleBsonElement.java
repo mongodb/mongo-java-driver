@@ -35,10 +35,10 @@ import static java.lang.String.format;
  * A {@link Bson} that contains exactly one name/value pair
  * and allows constructing new instances via {@link #newWithAppendedValue(String, Object)} instead of mutating {@code this}.
  * The value must itself be a {@code Bson}.
+ * <p>
+ * This class is not part of the public API and may be removed or changed at any time.
  *
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
- *
- * @param <S> A type introduced by the concrete class that extends this abstract class.
+ * @param <S> Self. The type introduced by a subclass of {@link AbstractConstructibleBsonElement}.
  * @see AbstractConstructibleBson
  */
 public abstract class AbstractConstructibleBsonElement<S extends AbstractConstructibleBsonElement<S>> implements Bson, ToMap {
