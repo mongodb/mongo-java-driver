@@ -476,7 +476,8 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
         return (result, source, connection, operationContext) ->
                 new CommandBatchCursor<>(getTimeoutMode(), getMaxTimeForCursor(operationContext), operationContext,
                         new CommandCursor<>(
-                                result, batchSize, decoder, comment, source, connection
+                                result, batchSize, decoder, comment, source, connection,
+                                retryReads, maxAdaptiveRetriesSetting
                 ));
     }
 
@@ -485,7 +486,8 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
                 new AsyncCommandBatchCursor<>(getTimeoutMode(), getMaxTimeForCursor(operationContext), operationContext,
                         new AsyncCommandCursor<>(
                                 result, batchSize, decoder,
-                                comment, source, connection
+                                comment, source, connection,
+                                retryReads, maxAdaptiveRetriesSetting
                         ));
     }
 

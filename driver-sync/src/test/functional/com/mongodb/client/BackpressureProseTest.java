@@ -18,7 +18,12 @@ package com.mongodb.client;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
+import com.mongodb.MongoNamespace;
 import com.mongodb.MongoServerException;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Updates;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
+import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.event.ConfigureFailPointCommandListener;
@@ -27,10 +32,18 @@ import com.mongodb.internal.time.StartTime;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.Document;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
+
+import static com.mongodb.client.model.bulk.ClientBulkWriteOptions.clientBulkWriteOptions;
+import static com.mongodb.client.model.bulk.ClientUpdateOneOptions.clientUpdateOneOptions;
+import static java.lang.String.join;
+import static java.util.Arrays.asList;
+import static java.util.Collections.nCopies;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.MongoException.RETRYABLE_ERROR_LABEL;
@@ -54,6 +67,11 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 public class BackpressureProseTest {
     protected MongoClient createClient(final MongoClientSettings mongoClientSettings) {
         return MongoClients.create(mongoClientSettings);
+    }
+
+    @AfterEach
+    void tearDown() {
+        Fixture.getDefaultDatabase().drop();
     }
 
     /**
@@ -337,6 +355,153 @@ public class BackpressureProseTest {
             assertEquals(1, commandListener.getCommandStartedEvents("ping").size(),
                     "Expected exactly one ping attempt (runCommand overload-only policy does not retry retryable-read codes)");
         }
+    }
+
+    /**
+     * Coverage test (not part of the spec prose suite).
+     */
+    @Test
+    void clientBulkWriteGetMoreRetriesOverloadWhenRetryReadsEnabled() throws InterruptedException {
+        assumeTrue(serverVersionAtLeast(8, 0));
+        BsonDocument overloadOnGetMoreOnce = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: 'failCommand',\n"
+                + "    mode: {times: 1},\n"
+                + "    data: {\n"
+                + "        failCommands: ['getMore'],\n"
+                + "        errorCode: 462,\n"
+                + "        errorLabels: ['" + SYSTEM_OVERLOADED_ERROR_LABEL + "', '" + RETRYABLE_ERROR_LABEL + "']\n"
+                + "    }\n"
+                + "}\n");
+        TestCommandListener commandListener = new TestCommandListener();
+        try (MongoClient client = createClient(MongoClientSettings.builder(getMongoClientSettings())
+                .retryWrites(false)
+                .retryReads(true)
+                .addCommandListener(commandListener)
+                .build())) {
+            try (FailPoint ignored = FailPoint.enable(overloadOnGetMoreOnce, getPrimary())) {
+                ClientBulkWriteResult result = executeClientBulkWrite(client);
+                assertEquals(2, result.getUpsertedCount());
+            }
+            assertEquals(2, commandListener.getCommandStartedEvents("getMore").size(),
+                    "Expected exactly two getMore attempts (overload retry + terminal success)");
+        }
+    }
+
+    /**
+     * Coverage test (not part of the spec prose suite).
+     */
+    @Test
+    void clientBulkWriteGetMoreExhaustsOverloadRetriesAndThrows() throws InterruptedException {
+        assumeTrue(serverVersionAtLeast(8, 0));
+        BsonDocument overloadOnGetMoreAlways = BsonDocument.parse(
+                "{"
+                + "    configureFailPoint: 'failCommand',"
+                + "    mode: {times: " + (DEFAULT_MAX_ADAPTIVE_RETRIES + 1) + "},"
+                + "    data: {"
+                + "        failCommands: ['getMore'],"
+                + "        errorCode: 462,"
+                + "        errorLabels: ['" + SYSTEM_OVERLOADED_ERROR_LABEL + "', '" + RETRYABLE_ERROR_LABEL + "']"
+                + "    }"
+                + "}");
+        TestCommandListener commandListener = new TestCommandListener();
+        try (MongoClient client = createClient(MongoClientSettings.builder(getMongoClientSettings())
+                .retryWrites(false)
+                .retryReads(true)
+                .addCommandListener(commandListener)
+                .build())) {
+            try (FailPoint ignored = FailPoint.enable(overloadOnGetMoreAlways, getPrimary())) {
+                MongoServerException exception = assertThrows(MongoServerException.class, () -> executeClientBulkWrite(client));
+                assertTrue(exception.hasErrorLabel(SYSTEM_OVERLOADED_ERROR_LABEL));
+            }
+            assertEquals(DEFAULT_MAX_ADAPTIVE_RETRIES + 1, commandListener.getCommandStartedEvents("getMore").size(),
+                    "Expected all overload retry attempts to be exhausted (initial + maxAdaptiveRetries)");
+        }
+    }
+
+    /**
+     * Coverage test (not part of the spec prose suite).
+     */
+    @Test
+    void clientBulkWriteGetMoreDoesNotRetryNonOverloadError() throws InterruptedException {
+        assumeTrue(serverVersionAtLeast(8, 0));
+        BsonDocument retryableReadCodeOnGetMoreOnce = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: 'failCommand',\n"
+                + "    mode: {times: 1},\n"
+                + "    data: {\n"
+                + "        failCommands: ['getMore'],\n"
+                + "        errorCode: 11602\n"
+                + "    }\n"
+                + "}\n");
+        TestCommandListener commandListener = new TestCommandListener();
+        try (MongoClient client = createClient(MongoClientSettings.builder(getMongoClientSettings())
+                .retryWrites(false)
+                .retryReads(true)
+                .addCommandListener(commandListener)
+                .build())) {
+            try (FailPoint ignored = FailPoint.enable(retryableReadCodeOnGetMoreOnce, getPrimary())) {
+                MongoServerException exception = assertThrows(MongoServerException.class,
+                        () -> executeClientBulkWrite(client));
+                assertEquals(11602, ((MongoCommandException) exception).getErrorCode(),
+                        "Expected propagated non-overload error, got: " + exception);
+            }
+            assertEquals(1, commandListener.getCommandStartedEvents("getMore").size(),
+                    "Expected exactly one getMore attempt (non-overload error is not retried)");
+        }
+    }
+
+    /**
+     * Coverage test (not part of the spec prose suite).
+     */
+    @Test
+    void clientBulkWriteGetMoreDoesNotRetryOverloadWhenRetryReadsDisabled() throws InterruptedException {
+        assumeTrue(serverVersionAtLeast(8, 0));
+        BsonDocument overloadOnGetMoreOnce = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: 'failCommand',\n"
+                + "    mode: {times: 1},\n"
+                + "    data: {\n"
+                + "        failCommands: ['getMore'],\n"
+                + "        errorCode: 462,\n"
+                + "        errorLabels: ['" + SYSTEM_OVERLOADED_ERROR_LABEL + "', '" + RETRYABLE_ERROR_LABEL + "']\n"
+                + "    }\n"
+                + "}\n");
+        TestCommandListener commandListener = new TestCommandListener();
+        try (MongoClient client = createClient(MongoClientSettings.builder(getMongoClientSettings())
+                .retryWrites(false)
+                .retryReads(false)
+                .addCommandListener(commandListener)
+                .build())) {
+            try (FailPoint ignored = FailPoint.enable(overloadOnGetMoreOnce, getPrimary())) {
+                MongoServerException exception = assertThrows(MongoServerException.class,
+                        () -> executeClientBulkWrite(client));
+                assertTrue(exception.hasErrorLabel(SYSTEM_OVERLOADED_ERROR_LABEL),
+                        "Expected propagated overload error, got: " + exception);
+            }
+            assertEquals(1, commandListener.getCommandStartedEvents("getMore").size(),
+                    "Expected exactly one getMore attempt (retryReads=false disables overload retry for getMore)");
+        }
+    }
+
+    private static ClientBulkWriteResult executeClientBulkWrite(final MongoClient client) {
+        // Two upserts whose result docs each approach maxBsonObjectSize force the response cursor to span two
+        // batches, guaranteeing a getMore.
+        int maxBsonObjectSize = client.getDatabase("admin")
+                .runCommand(new Document("hello", 1)).getInteger("maxBsonObjectSize");
+        MongoNamespace namespace = new MongoNamespace(getDefaultDatabaseName(), BackpressureProseTest.class.getName());
+        List<? extends ClientNamespacedWriteModel> models = asList(
+                ClientNamespacedWriteModel.updateOne(
+                        namespace,
+                        Filters.eq(join("", nCopies(maxBsonObjectSize / 2, "a"))),
+                        Updates.set("x", 1),
+                        clientUpdateOneOptions().upsert(true)),
+                ClientNamespacedWriteModel.updateOne(
+                        namespace,
+                        Filters.eq(join("", nCopies(maxBsonObjectSize / 2, "b"))),
+                        Updates.set("x", 1),
+                        clientUpdateOneOptions().upsert(true)));
+        return client.bulkWrite(models, clientBulkWriteOptions().verboseResults(true));
     }
 
     private static MongoCollection<Document> dropAndGetCollection(final String name, final MongoClient client) {

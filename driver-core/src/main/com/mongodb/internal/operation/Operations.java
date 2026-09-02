@@ -819,7 +819,8 @@ public final class Operations<T> {
     public WriteOperation<ClientBulkWriteResult> clientBulkWriteOperation(
             final List<? extends ClientNamespacedWriteModel> clientWriteModels,
             @Nullable final ClientBulkWriteOptions options) {
-        return new ClientBulkWriteOperation(clientWriteModels, options, writeConcern, retryWrites, maxAdaptiveRetriesSetting, codecRegistry);
+        return new ClientBulkWriteOperation(clientWriteModels, options, writeConcern, retryWrites, retryReads, maxAdaptiveRetriesSetting,
+                codecRegistry);
     }
 
     private Codec<T> getCodec() {

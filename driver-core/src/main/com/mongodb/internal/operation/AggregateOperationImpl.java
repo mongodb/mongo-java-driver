@@ -250,7 +250,8 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
         return (result, source, connection, operationContext) ->
                 new CommandBatchCursor<>(getTimeoutMode(), getMaxTimeForCursor(operationContext.getTimeoutContext()), operationContext, new CommandCursor<>(
                         result, batchSize != null ? batchSize : 0,
-                        decoder, comment, source, connection
+                        decoder, comment, source, connection,
+                        retryReads, maxAdaptiveRetriesSetting
                 ));
     }
 
@@ -258,7 +259,8 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
         return (result, source, connection, operationContext) ->
             new AsyncCommandBatchCursor<>(getTimeoutMode(), getMaxTimeForCursor(operationContext.getTimeoutContext()),
                     operationContext, new AsyncCommandCursor<>(
-                    result, batchSize != null ? batchSize : 0, decoder, comment, source, connection
+                    result, batchSize != null ? batchSize : 0, decoder, comment, source, connection,
+                    retryReads, maxAdaptiveRetriesSetting
             ));
     }
 
