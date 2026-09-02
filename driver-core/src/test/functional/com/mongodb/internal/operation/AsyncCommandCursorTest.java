@@ -235,6 +235,8 @@ class AsyncCommandCursorTest {
                 DOCUMENT_CODEC,
                 null,
                 connectionSource,
-                mockConnection);
+                mockConnection,
+                false,
+                null);
     }
 }

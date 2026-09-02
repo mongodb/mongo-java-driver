@@ -390,9 +390,11 @@ final class AsyncOperationHelper {
                                                                     @Nullable final BsonValue comment,
                                                                     final AsyncConnectionSource source,
                                                                     final AsyncConnection connection,
-                                                                    final OperationContext operationContext) {
+                                                                    final OperationContext operationContext,
+                                                                    final boolean retryReads,
+                                                                    @Nullable final Integer maxAdaptiveRetriesSetting) {
         return new AsyncCommandBatchCursor<>(timeoutMode, 0, operationContext, new AsyncCommandCursor<>(
-                cursorDocument, batchSize, decoder, comment, source, connection
+                cursorDocument, batchSize, decoder, comment, source, connection, retryReads, maxAdaptiveRetriesSetting
         ));
     }
 

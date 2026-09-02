@@ -386,9 +386,11 @@ final class SyncOperationHelper {
             final BsonValue comment,
             final ConnectionSource source,
             final Connection connection,
-            final OperationContext operationContext) {
+            final OperationContext operationContext,
+            final boolean retryReads,
+            @Nullable final Integer maxAdaptiveRetriesSetting) {
         return new CommandBatchCursor<>(timeoutMode, 0, operationContext, new CommandCursor<>(
-                cursorDocument, batchSize, decoder, comment, source, connection
+                cursorDocument, batchSize, decoder, comment, source, connection, retryReads, maxAdaptiveRetriesSetting
         ));
 
     }

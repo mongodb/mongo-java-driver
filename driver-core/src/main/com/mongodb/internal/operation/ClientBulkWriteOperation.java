@@ -80,6 +80,7 @@ import com.mongodb.internal.connection.DualMessageSequences;
 import com.mongodb.internal.connection.IdHoldingBsonWriter;
 import com.mongodb.internal.connection.MongoWriteConcernWithResponseException;
 import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.connection.OverloadStateSuspendedSessionContext;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
@@ -157,24 +158,29 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
     private final ConcreteClientBulkWriteOptions options;
     private final WriteConcern writeConcernSetting;
     private final boolean retryWritesSetting;
+    private final boolean retryReadsSetting;
     @Nullable
     private final Integer maxAdaptiveRetriesSetting;
     private final CodecRegistry codecRegistry;
 
     /**
      * @param retryWritesSetting See {@link MongoClientSettings#getRetryWrites()}.
+     * @param retryReadsSetting See {@link MongoClientSettings#getRetryReads()}. Governs overload retry of the
+     *                          results-cursor {@code getMore}, which is a read command at the wire level.
      */
     public ClientBulkWriteOperation(
             final List<? extends ClientNamespacedWriteModel> models,
             @Nullable final ClientBulkWriteOptions options,
             final WriteConcern writeConcernSetting,
             final boolean retryWritesSetting,
+            final boolean retryReadsSetting,
             @Nullable final Integer maxAdaptiveRetriesSetting,
             final CodecRegistry codecRegistry) {
         this.models = models;
         this.options = options == null ? EMPTY_OPTIONS : (ConcreteClientBulkWriteOptions) options;
         this.writeConcernSetting = writeConcernSetting;
         this.retryWritesSetting = retryWritesSetting;
+        this.retryReadsSetting = retryReadsSetting;
         this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
         this.codecRegistry = codecRegistry;
     }
@@ -419,7 +425,9 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
         ClientBulkWriteCommandOkResponse response = new ClientBulkWriteCommandOkResponse(okResponseDocument);
         List<List<BsonDocument>> cursorExhaustBatches = retryControl.doWhileDisabled(() -> {
             onNotTryingToStartTransaction(operationContext.getSessionContext().getOverloadRetryPolicyState());
-            return exhaustBulkWriteCommandOkResponseCursor(connectionSource, operationContext, connection, response);
+            OperationContext getMoreOperationContext = operationContext.withSessionContext(
+                    new OverloadStateSuspendedSessionContext(operationContext.getSessionContext()));
+            return exhaustBulkWriteCommandOkResponseCursor(connectionSource, getMoreOperationContext, connection, response);
         });
         return createExhaustiveClientBulkWriteCommandOkResponse(
                 response,
@@ -457,7 +465,9 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             beginAsync().<List<List<BsonDocument>>>thenSupply(exhaustCallback -> {
                 retryControl.doWhileDisabledAsync((actionCallback) -> {
                     onNotTryingToStartTransaction(operationContext.getSessionContext().getOverloadRetryPolicyState());
-                    exhaustBulkWriteCommandOkResponseCursorAsync(connectionSource, connection, response, operationContext, actionCallback);
+                    OperationContext getMoreOperationContext = operationContext.withSessionContext(
+                            new OverloadStateSuspendedSessionContext(operationContext.getSessionContext()));
+                    exhaustBulkWriteCommandOkResponseCursorAsync(connectionSource, connection, response, getMoreOperationContext, actionCallback);
                 }, exhaustCallback);
             }).<ExhaustiveClientBulkWriteCommandOkResponse>thenApply((cursorExhaustBatches, transformExhaustionResultCallback) -> {
                 transformExhaustionResultCallback.complete(createExhaustiveClientBulkWriteCommandOkResponse(
@@ -509,7 +519,9 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 options.getComment().orElse(null),
                 connectionSource,
                 connection,
-                operationContext)) {
+                operationContext,
+                retryReadsSetting,
+                maxAdaptiveRetriesSetting)) {
 
            return cursor.exhaust();
         }
@@ -530,7 +542,9 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                     options.getComment().orElse(null),
                     connectionSource,
                     connection,
-                    operationContext);
+                    operationContext,
+                    retryReadsSetting,
+                    maxAdaptiveRetriesSetting);
 
             beginAsync().<List<List<BsonDocument>>>thenSupply(exhaustCallback -> {
                 cursor.exhaust(exhaustCallback);

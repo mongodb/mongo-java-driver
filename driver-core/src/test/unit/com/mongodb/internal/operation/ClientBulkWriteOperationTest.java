@@ -122,6 +122,7 @@ class ClientBulkWriteOperationTest {
                 options,
                 WriteConcern.ACKNOWLEDGED,
                 false,
+                false,
                 null,
                 getDefaultCodecRegistry());
         //when
@@ -174,6 +175,7 @@ class ClientBulkWriteOperationTest {
                 clientNamespacedReplaceOneModels,
                 options,
                 WriteConcern.ACKNOWLEDGED,
+                false,
                 false,
                 null,
                 getDefaultCodecRegistry());
