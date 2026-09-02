@@ -613,8 +613,12 @@ public final class UnifiedTestModifications {
                 .test("client-backpressure", "tests that operations retry at most maxAttempts=2 times", "collection.dropIndexes retries at most maxAttempts=2 times");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
                 .test("client-backpressure", "tests that operations retry at most maxAttempts=2 times", "collection.aggregate write retries at most maxAttempts=2 times");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-5956 TODO-JAVA-5956")
-                .file("client-backpressure", "getMore-retried-backpressure");
+
+        // BatchCursorFlux fires closeCursor() then sink.error(e) without awaiting the killCursors reply,
+        // so under reactive the test framework snapshots command events before killCursors succeeded lands.
+        // Equivalent coverage is provided by the reactive BackpressureProseTest.
+        def.skipNoncompliantReactive("Reactive cursor auto-close on error does not await killCursors reply")
+                .test("client-backpressure", "getMore-retried-backpressure", "getMores are retried maxAttempts=2 times");
 
         // valid-pass
 
