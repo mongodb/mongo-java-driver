@@ -19,11 +19,17 @@ package org.bson;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+
+import static java.lang.String.format;
 
 /**
  * Utility class for reading values from an input stream.
  */
 class Bits {
+
+    private static final int MIN_BSON_DOCUMENT_SIZE = 5;
+    private static final int INITIAL_BUFFER_SIZE = 4096;
 
     /**
      * Reads bytes from the input stream and puts them into the given byte buffer. The equivalent of calling
@@ -64,6 +70,48 @@ class Bits {
             bytesToRead -= bytesRead;
             arrayOffset += bytesRead;
         }
+    }
+
+    /**
+     * Reads a BSON document of {@code size} bytes from the input stream, where the first {@code prefix.length} bytes
+     * (the size prefix) have already been read into {@code prefix}. The destination buffer grows only as bytes actually
+     * arrive, so a bogus declared size cannot force a large up-front allocation.
+     *
+     * <p>A truncated stream is reported as an {@link EOFException}, consistent with
+     * {@link #readFully(InputStream, byte[], int, int)}. A {@code size} below the minimum BSON document size is malformed
+     * content rather than an I/O failure, so it is reported as a {@link BsonSerializationException}.</p>
+     *
+     * @param inputStream the input stream to read from
+     * @param prefix      the already-read leading bytes (typically the 4-byte size), copied to the start of the result
+     * @param size        the total number of bytes in the document, including {@code prefix}
+     * @return a byte array of length {@code size} containing the full document
+     * @throws EOFException                if the stream ends before {@code size} bytes are available
+     * @throws IOException                 if there's an error reading from the {@code inputStream}
+     * @throws BsonSerializationException  if {@code size} is below the minimum BSON document size
+     */
+    static byte[] readFully(final InputStream inputStream, final byte[] prefix, final int size) throws IOException {
+        if (size < MIN_BSON_DOCUMENT_SIZE) {
+            throw new BsonSerializationException(format(
+                    "While decoding a BSON document found a size of %d that is less than the minimum of %d bytes",
+                    size, MIN_BSON_DOCUMENT_SIZE));
+        }
+        byte[] buffer = new byte[Math.min(size, INITIAL_BUFFER_SIZE)];
+        System.arraycopy(prefix, 0, buffer, 0, prefix.length);
+        int position = prefix.length;
+        while (position < size) {
+            if (position == buffer.length) {
+                int newCapacity = (int) Math.min((long) size, (long) buffer.length * 2);
+                buffer = Arrays.copyOf(buffer, newCapacity);
+            }
+            int bytesRead = inputStream.read(buffer, position, buffer.length - position);
+            if (bytesRead < 0) {
+                throw new EOFException(format(
+                        "While decoding a BSON document the declared size of %d bytes exceeds the %d bytes that were "
+                                + "available in the stream", size, position));
+            }
+            position += bytesRead;
+        }
+        return buffer;
     }
 
     /**
