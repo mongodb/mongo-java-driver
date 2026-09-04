@@ -19,6 +19,9 @@ package com.mongodb;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
+import org.bson.BsonTimestamp;
+
+import java.util.Objects;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -31,6 +34,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public final class ReadConcern {
     private final ReadConcernLevel level;
+    private final BsonTimestamp afterClusterTime;
 
     /**
      * Construct a new read concern
@@ -39,6 +43,15 @@ public final class ReadConcern {
      */
     public ReadConcern(final ReadConcernLevel level) {
         this.level = notNull("level", level);
+        this.afterClusterTime = null;
+    }
+
+    /**
+     * Use an after-cluster-time read concern for causally-consistent sessions
+     */
+    public ReadConcern(final BsonTimestamp afterClusterTime) {
+        this.afterClusterTime = notNull("afterClusterTime", afterClusterTime);
+        this.level = null;
     }
 
     /**
@@ -99,7 +112,7 @@ public final class ReadConcern {
      * @return true if this is the server default read concern
      */
     public boolean isServerDefault() {
-        return level == null;
+        return level == null && afterClusterTime == null;
     }
 
     /**
@@ -112,37 +125,33 @@ public final class ReadConcern {
         if (level != null) {
             readConcern.put("level", new BsonString(level.getValue()));
         }
+        if (afterClusterTime != null) {
+            readConcern.put("afterClusterTime", afterClusterTime);
+        }
         return readConcern;
     }
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
         ReadConcern that = (ReadConcern) o;
-
-        return level == that.level;
+        return level == that.level && Objects.equals(afterClusterTime, that.afterClusterTime);
     }
 
     @Override
     public int hashCode() {
-        return level != null ? level.hashCode() : 0;
+        return Objects.hash(level, afterClusterTime);
     }
-
 
     @Override
     public String toString() {
-        return "ReadConcern{"
-                + "level=" + level
-                + '}';
+        return "ReadConcern{" + "level=" + level + ", afterClusterTime=" + afterClusterTime + '}';
     }
 
     private ReadConcern() {
         this.level = null;
+        this.afterClusterTime = null;
     }
 }
