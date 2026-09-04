@@ -264,6 +264,9 @@ functions:
         working_dir: "src"
         binary: "bash"
         include_expansions_in_env: ["AWS_SECRET_ACCESS_KEY", "AWS_ACCESS_KEY_ID", "AWS_SESSION_TOKEN"]
+        env:
+          # Use the corporate Azure KMS credentials (DRIVERS-3392 key vault)
+          FLE_AZURE_USE_CORPORATE: "YES"
         args:
           - ${DRIVERS_TOOLS}/.evergreen/csfle/setup.sh
 
