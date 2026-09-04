@@ -62,8 +62,8 @@ public abstract class AbstractClientEncryptionRewrapManyDataKeyProseTest {
                 + "  \"key\": \"arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0\"\n"
                 + "}"));
         MASTER_KEYS_BY_PROVIDER.put("azure", BsonDocument.parse("{\n"
-                + "  \"keyVaultEndpoint\": \"key-vault-csfle.vault.azure.net\",\n"
-                + "  \"keyName\": \"key-name-csfle\"\n"
+                + "  \"keyVaultEndpoint\": \"drivers-3392-key-vault.vault.azure.net\",\n"
+                + "  \"keyName\": \"drivers-3392-keyname\"\n"
                 + "}"));
         MASTER_KEYS_BY_PROVIDER.put("gcp", BsonDocument.parse("{\n"
                 + "  \"projectId\": \"devprod-drivers\",\n"

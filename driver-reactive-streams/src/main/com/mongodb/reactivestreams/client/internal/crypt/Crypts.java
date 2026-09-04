@@ -18,11 +18,13 @@ package com.mongodb.reactivestreams.client.internal.crypt;
 
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientEncryptionSettings;
+import com.mongodb.KmsConnectCallback;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.internal.crypt.capi.MongoCrypt;
 import com.mongodb.internal.crypt.capi.MongoCrypts;
+import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 
@@ -41,6 +43,7 @@ public final class Crypts {
     }
 
     public static Crypt createCrypt(final MongoClientSettings mongoClientSettings, final AutoEncryptionSettings autoEncryptionSettings) {
+        assertKmsConnectCallbackNotConfigured(autoEncryptionSettings.getKmsConnectCallback());
         MongoClient sharedInternalClient = null;
         MongoClientSettings keyVaultMongoClientSettings = autoEncryptionSettings.getKeyVaultMongoClientSettings();
         if (keyVaultMongoClientSettings == null || !autoEncryptionSettings.isBypassAutoEncryption()) {
@@ -67,12 +70,26 @@ public final class Crypts {
     }
 
     public static Crypt create(final MongoClient keyVaultClient, final ClientEncryptionSettings settings) {
+        assertKmsConnectCallbackNotConfigured(settings.getKmsConnectCallback());
         return new Crypt(MongoCrypts.create(createMongoCryptOptions(settings)),
                 createKeyRetriever(keyVaultClient, settings.getKeyVaultNamespace()),
                 createKeyManagementService(settings.getKmsProviderSslContextMap()),
                 settings.getKmsProviders(),
                 settings.getKmsProviderPropertySuppliers()
         );
+    }
+
+    /**
+     * A {@link KmsConnectCallback} returns a {@link java.net.Socket}, which offers only blocking I/O and cannot be
+     * adapted to the non-blocking machinery this driver uses: a socket connected to an intermediary over TLS is never
+     * backed by a {@link java.nio.channels.SocketChannel}. Fail rather than silently connecting to KMS hosts directly,
+     * which mirrors how a proxy configured for connections to a MongoDB server is rejected in
+     * {@link MongoClients#create(MongoClientSettings, com.mongodb.MongoDriverInformation)}.
+     */
+    private static void assertKmsConnectCallbackNotConfigured(@Nullable final KmsConnectCallback kmsConnectCallback) {
+        if (kmsConnectCallback != null) {
+            throw new MongoClientException("kmsConnectCallback is not supported for reactive clients");
+        }
     }
 
     private static KeyRetriever createKeyRetriever(final MongoClient keyVaultClient,
