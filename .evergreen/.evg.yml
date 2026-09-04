@@ -2520,7 +2520,7 @@ buildvariants:
   - matrix_name: "aws-auth-test"
     matrix_spec: { ssl: "nossl", jdk: [ "jdk8", "jdk17", "jdk21" ], version: [ "6.0", "7.0", "8.0", "9.0", "latest" ], os: "ubuntu2204",
                    aws-credential-provider: "*" }
-    display_name: "MONGODB-AWS Basic Auth test ${version} ${jdk} ${aws-credential-provider}"
+    display_name: "MONGODB-AWS Basic Auth test ${version} ${jdk} ${aws-credential-provider} ${os}"
     tasks:
       - name: "aws-auth-test-with-regular-aws-credentials-task"
 
@@ -2528,14 +2528,13 @@ buildvariants:
   - matrix_name: "aws-auth-test-ubuntu2004"
     matrix_spec: { ssl: "nossl", jdk: [ "jdk8", "jdk17", "jdk21" ], version: [ "4.4", "5.0" ], os: "ubuntu2004",
                    aws-credential-provider: "*" }
-    display_name: "MONGODB-AWS Basic Auth test ${version} ${jdk} ${aws-credential-provider}"
+    display_name: "MONGODB-AWS Basic Auth test ${version} ${jdk} ${aws-credential-provider} ${os}"
     tasks:
       - name: "aws-auth-test-with-regular-aws-credentials-task"
 
   - matrix_name: "aws-ec2-auth-test"
     matrix_spec: { ssl: "nossl", jdk: [ "jdk21" ], version: [ "7.0" ], os: "ubuntu2204", aws-credential-provider: "*" }
-    display_name: "MONGODB-AWS Advanced Auth test ${version} ${jdk} ${aws-credential-provider}"
-    run_on: "ubuntu2204-small"
+    display_name: "MONGODB-AWS Advanced Auth test ${version} ${jdk} ${aws-credential-provider} ${os}"
     tasks:
       - name: "aws-auth-test-with-aws-EC2-credentials-task"
       - name: "aws-auth-test-with-assume-role-credentials-task"
