@@ -241,7 +241,8 @@ public class ClientSessionBinding extends AbstractReferenceCounted implements As
                 return assertNotNull(clientSession.getTransactionOptions().getReadConcern());
             } else if (isSnapshot()) {
                 return ReadConcern.SNAPSHOT;
-            } else if (!clientSession.getServerSession().isClosed()
+            } else if (inheritedReadConcern == null
+                    && !clientSession.getServerSession().isClosed()
                     && clientSession.isCausallyConsistent()
                     && clientSession.getOperationTime() != null) {
                 return new ReadConcern(clientSession.getOperationTime());
