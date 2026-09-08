@@ -45,7 +45,10 @@ public final class ReadConcernHelper {
         if (sessionContext.isSnapshot() && maxWireVersion < FIVE_DOT_ZERO_WIRE_VERSION) {
             throw new MongoClientException("Snapshot reads require MongoDB 5.0 or later");
         }
-        if (shouldAddAfterClusterTime(sessionContext)) {
+        if (sessionContext.getReadConcern().getAfterClusterTime() != null) {
+            readConcernDocument.append(
+                    "afterClusterTime", sessionContext.getReadConcern().getAfterClusterTime());
+        } else if (shouldAddAfterClusterTime(sessionContext)) {
             readConcernDocument.append("afterClusterTime", sessionContext.getOperationTime());
         } else if (shouldAddAtClusterTime(sessionContext)) {
             readConcernDocument.append("atClusterTime", sessionContext.getSnapshotTimestamp());
@@ -61,6 +64,5 @@ public final class ReadConcernHelper {
         return sessionContext.isCausallyConsistent() && sessionContext.getOperationTime() != null;
     }
 
-    private ReadConcernHelper() {
-    }
+    private ReadConcernHelper() {}
 }

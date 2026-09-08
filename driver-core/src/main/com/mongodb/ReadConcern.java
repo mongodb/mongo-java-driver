@@ -20,6 +20,7 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonTimestamp;
+import org.bson.BsonValue;
 
 import java.util.Objects;
 
@@ -153,5 +154,9 @@ public final class ReadConcern {
     private ReadConcern() {
         this.level = null;
         this.afterClusterTime = null;
+    }
+
+    public BsonTimestamp getAfterClusterTime() {
+        return afterClusterTime;
     }
 }
