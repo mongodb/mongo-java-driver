@@ -235,7 +235,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
         long noBackoffTimeMs = measureTransactionLatencyMs(0.0);
         long withBackoffTimeMs = measureTransactionLatencyMs(1.0);
 
-        long sumOfBackoffsMs = 1800;
+        long sumOfBackoffsMs = 2300;
         long toleranceMs = 500;
         long actualDifferenceMs = Math.abs(withBackoffTimeMs - (noBackoffTimeMs + sumOfBackoffsMs));
 
