@@ -70,7 +70,7 @@ public final class ExponentialBackoff {
                 ? testJitterSupplier.getAsDouble()
                 : ThreadLocalRandom.current().nextDouble();
         return Math.round(jitter * Math.min(
-                baseMs * Math.pow(growth, attemptNumber - 1),
+                baseMs * Math.pow(growth, attemptNumber),
                 maxMs));
     }
 
