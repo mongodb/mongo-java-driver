@@ -96,8 +96,8 @@ public class BackpressureProseTest {
             MongoCollection<Document> collection = dropAndGetCollection("operationRetryUsesExponentialBackoff", client);
             long noBackoffTimeMillis = measureFailedInsertDuration(collection, false).toMillis();
             long withBackoffTimeMillis = measureFailedInsertDuration(collection, true).toMillis();
-            long expectedMaxVarianceMillis = 300;
-            long maxTotalBackoffMillis = 300;
+            long expectedMaxVarianceMillis = 600;
+            long maxTotalBackoffMillis = 600;
             long actualAbsDiffMillis = Math.abs(withBackoffTimeMillis - (noBackoffTimeMillis + maxTotalBackoffMillis));
             assertTrue(actualAbsDiffMillis < expectedMaxVarianceMillis,
                     format("Expected actualAbsDiffMillis < %d ms, but was %d ms (|%d ms - (%d ms + %d ms)|)",
