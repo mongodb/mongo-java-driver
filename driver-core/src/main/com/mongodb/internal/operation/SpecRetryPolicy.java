@@ -16,6 +16,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoCommandException;
 import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoOperationTimeoutException;
@@ -32,6 +33,9 @@ import com.mongodb.internal.connection.OperationContext.ServerDeprioritization;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.time.ExponentialBackoff;
 import com.mongodb.lang.Nullable;
+
+import org.bson.BsonDocument;
+import org.bson.BsonValue;
 
 import java.time.Duration;
 import java.util.EnumMap;
@@ -285,9 +289,26 @@ final class SpecRetryPolicy implements RetryPolicy {
         assertFalse(attemptFailedResult instanceof OperationHelper.ResourceSupplierInternalException);
         if (attemptFailedResult instanceof MongoException
                 && ((MongoException) attemptFailedResult).hasErrorLabel(SYSTEM_OVERLOADED_ERROR_LABEL)) {
-            return ExponentialBackoff.calculateOverloadBackoff(immediateNextAttempt);
+            return ExponentialBackoff.calculateOverloadBackoff(immediateNextAttempt, extractBaseBackoffMs(attemptFailedResult));
         }
         return Duration.ZERO;
+    }
+
+    @Nullable
+    private static Long extractBaseBackoffMs(final Throwable attemptFailedResult) {
+        if (!(attemptFailedResult instanceof MongoCommandException)) {
+            return null;
+        }
+        BsonDocument response = ((MongoCommandException) attemptFailedResult).getResponse();
+        if (!response.containsKey("baseBackoffMS")) {
+            return null;
+        }
+        BsonValue value = response.get("baseBackoffMS");
+        if (!value.isNumber()) {
+            return null;
+        }
+        long parsed = value.asNumber().longValue();
+        return parsed > 0 ? parsed : null;
     }
 
     private static int maxAttempts(final int maxRetries) {

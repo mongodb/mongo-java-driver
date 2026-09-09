@@ -18,6 +18,7 @@ package com.mongodb.internal.time;
 
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.function.RetryControl;
+import com.mongodb.lang.Nullable;
 
 import java.time.Duration;
 import java.util.concurrent.ThreadLocalRandom;
@@ -58,7 +59,20 @@ public final class ExponentialBackoff {
      * See {@link #calculateTransactionBackoffMs(int)} for more details.
      */
     public static Duration calculateOverloadBackoff(final int attemptNumber) {
-        return Duration.ofMillis(calculateBackoffMs(100, 10000, 2, attemptNumber));
+        return calculateOverloadBackoff(attemptNumber, null);
+    }
+
+    /**
+     * Calculate the backoff for command retries caused by
+     * {@linkplain com.mongodb.MongoException#SYSTEM_OVERLOADED_ERROR_LABEL overload},
+     * optionally using a server-supplied {@code baseBackoffMs} in place of the 100ms default.
+     * A {@code null} or non-positive {@code baseBackoffMs} falls back to the default.
+     *
+     * @param baseBackoffMs The server-supplied base backoff in milliseconds, or {@code null}.
+     */
+    public static Duration calculateOverloadBackoff(final int attemptNumber, @Nullable final Long baseBackoffMs) {
+        double baseMs = baseBackoffMs != null && baseBackoffMs > 0 ? baseBackoffMs : 100;
+        return Duration.ofMillis(calculateBackoffMs(baseMs, 10000, 2, attemptNumber));
     }
 
     /**

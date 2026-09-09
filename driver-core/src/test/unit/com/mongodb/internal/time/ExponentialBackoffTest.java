@@ -79,4 +79,52 @@ class ExponentialBackoffTest {
             ExponentialBackoff.clearTestJitterSupplier();
         }
     }
+
+    @Test
+    void testCalculateOverloadBackoffUsesDefaultBaseWhenOverrideAbsent() {
+        ExponentialBackoff.setTestJitterSupplier(() -> 1.0);
+        try {
+            // 100 * 2^1 = 200, 100 * 2^2 = 400
+            assertEquals(200L, ExponentialBackoff.calculateOverloadBackoff(1).toMillis());
+            assertEquals(400L, ExponentialBackoff.calculateOverloadBackoff(2).toMillis());
+            // null override == default
+            assertEquals(200L, ExponentialBackoff.calculateOverloadBackoff(1, null).toMillis());
+        } finally {
+            ExponentialBackoff.clearTestJitterSupplier();
+        }
+    }
+
+    @Test
+    void testCalculateOverloadBackoffUsesServerBaseBackoffMsWhenPositive() {
+        ExponentialBackoff.setTestJitterSupplier(() -> 1.0);
+        try {
+            // 50 * 2^1 = 100, 50 * 2^2 = 200
+            assertEquals(100L, ExponentialBackoff.calculateOverloadBackoff(1, 50L).toMillis());
+            assertEquals(200L, ExponentialBackoff.calculateOverloadBackoff(2, 50L).toMillis());
+        } finally {
+            ExponentialBackoff.clearTestJitterSupplier();
+        }
+    }
+
+    @Test
+    void testCalculateOverloadBackoffIgnoresNonPositiveOverride() {
+        ExponentialBackoff.setTestJitterSupplier(() -> 1.0);
+        try {
+            assertEquals(200L, ExponentialBackoff.calculateOverloadBackoff(1, 0L).toMillis());
+            assertEquals(200L, ExponentialBackoff.calculateOverloadBackoff(1, -10L).toMillis());
+        } finally {
+            ExponentialBackoff.clearTestJitterSupplier();
+        }
+    }
+
+    @Test
+    void testCalculateOverloadBackoffRespectsMaxCapWithLargeBaseBackoffMs() {
+        ExponentialBackoff.setTestJitterSupplier(() -> 1.0);
+        try {
+            // base 20000 * 2^1 = 40000 -> capped at 10000
+            assertEquals(10000L, ExponentialBackoff.calculateOverloadBackoff(1, 20000L).toMillis());
+        } finally {
+            ExponentialBackoff.clearTestJitterSupplier();
+        }
+    }
 }
