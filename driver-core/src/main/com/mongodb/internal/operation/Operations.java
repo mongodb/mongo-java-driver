@@ -337,7 +337,8 @@ public final class Operations<T> {
             final Boolean allowDiskUse, final Boolean bypassDocumentValidation, final Collation collation, @Nullable final Bson hint,
             @Nullable final String hintString, final BsonValue comment, final Bson variables, final AggregationLevel aggregationLevel) {
         return new AggregateToCollectionOperation(assertNotNull(namespace),
-                assertNotNull(toBsonDocumentList(pipeline)), readConcern, writeConcern, aggregationLevel)
+                assertNotNull(toBsonDocumentList(pipeline)), readConcern, writeConcern, aggregationLevel,
+                isRetryWrites(), maxAdaptiveRetriesSetting)
                 .allowDiskUse(allowDiskUse)
                 .bypassDocumentValidation(bypassDocumentValidation)
                 .collation(collation)
@@ -613,13 +614,13 @@ public final class Operations<T> {
 
     public WriteOperation<Void> dropDatabase() {
         return new DropDatabaseOperation(assertNotNull(namespace).getDatabaseName(),
-                getWriteConcern());
+                getWriteConcern(), isRetryWrites(), maxAdaptiveRetriesSetting);
     }
 
     public WriteOperation<Void> createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions,
             @Nullable final AutoEncryptionSettings autoEncryptionSettings) {
         CreateCollectionOperation operation = new CreateCollectionOperation(
-                assertNotNull(namespace).getDatabaseName(), collectionName, writeConcern)
+                assertNotNull(namespace).getDatabaseName(), collectionName, writeConcern, isRetryWrites(), maxAdaptiveRetriesSetting)
                 .collation(createCollectionOptions.getCollation())
                 .capped(createCollectionOptions.isCapped())
                 .sizeInBytes(createCollectionOptions.getSizeInBytes())
@@ -662,7 +663,7 @@ public final class Operations<T> {
             final DropCollectionOptions dropCollectionOptions,
             @Nullable final AutoEncryptionSettings autoEncryptionSettings) {
         DropCollectionOperation operation = new DropCollectionOperation(
-                assertNotNull(namespace), writeConcern);
+                assertNotNull(namespace), writeConcern, isRetryWrites(), maxAdaptiveRetriesSetting);
         Bson encryptedFields = dropCollectionOptions.getEncryptedFields();
         if (encryptedFields != null) {
             operation.encryptedFields(assertNotNull(toBsonDocument(encryptedFields)));
@@ -680,7 +681,8 @@ public final class Operations<T> {
     public WriteOperation<Void> renameCollection(final MongoNamespace newCollectionNamespace,
             final RenameCollectionOptions renameCollectionOptions) {
         return new RenameCollectionOperation(assertNotNull(namespace),
-                newCollectionNamespace, writeConcern).dropTarget(renameCollectionOptions.isDropTarget());
+                newCollectionNamespace, writeConcern, isRetryWrites(), maxAdaptiveRetriesSetting)
+                .dropTarget(renameCollectionOptions.isDropTarget());
     }
 
     public WriteOperation<Void> createView(final String viewName, final String viewOn, final List<? extends Bson> pipeline,
@@ -688,7 +690,8 @@ public final class Operations<T> {
         notNull("options", createViewOptions);
         notNull("pipeline", pipeline);
         return new CreateViewOperation(assertNotNull(namespace).getDatabaseName(), viewName,
-                viewOn, assertNotNull(toBsonDocumentList(pipeline)), writeConcern).collation(createViewOptions.getCollation());
+                viewOn, assertNotNull(toBsonDocumentList(pipeline)), writeConcern, isRetryWrites(), maxAdaptiveRetriesSetting)
+                .collation(createViewOptions.getCollation());
     }
 
     public WriteOperation<Void> createIndexes(final List<IndexModel> indexes, final CreateIndexOptions createIndexOptions) {
@@ -722,7 +725,7 @@ public final class Operations<T> {
             );
         }
         return new CreateIndexesOperation(
-                assertNotNull(namespace), indexRequests, writeConcern)
+                assertNotNull(namespace), indexRequests, writeConcern, isRetryWrites(), maxAdaptiveRetriesSetting)
                 .commitQuorum(createIndexOptions.getCommitQuorum());
     }
 
@@ -730,18 +733,18 @@ public final class Operations<T> {
         List<SearchIndexRequest> indexRequests = indexes.stream()
                 .map(this::createSearchIndexRequest)
                 .collect(Collectors.toList());
-        return new CreateSearchIndexesOperation(assertNotNull(namespace), indexRequests);
+        return new CreateSearchIndexesOperation(assertNotNull(namespace), indexRequests, isRetryWrites(), maxAdaptiveRetriesSetting);
     }
 
     public WriteOperation<Void> updateSearchIndex(final String indexName, final Bson definition) {
         BsonDocument definitionDocument = assertNotNull(toBsonDocument(definition));
         SearchIndexRequest searchIndexRequest = new SearchIndexRequest(definitionDocument, indexName);
-        return new UpdateSearchIndexesOperation(assertNotNull(namespace), searchIndexRequest);
+        return new UpdateSearchIndexesOperation(assertNotNull(namespace), searchIndexRequest, isRetryWrites(), maxAdaptiveRetriesSetting);
     }
 
 
     public WriteOperation<Void> dropSearchIndex(final String indexName) {
-        return new DropSearchIndexOperation(assertNotNull(namespace), indexName);
+        return new DropSearchIndexOperation(assertNotNull(namespace), indexName, isRetryWrites(), maxAdaptiveRetriesSetting);
     }
 
 
@@ -753,11 +756,12 @@ public final class Operations<T> {
     }
 
     public WriteOperation<Void> dropIndex(final String indexName, final DropIndexOptions ignoredOptions) {
-        return new DropIndexOperation(assertNotNull(namespace), indexName, writeConcern);
+        return new DropIndexOperation(assertNotNull(namespace), indexName, writeConcern, isRetryWrites(), maxAdaptiveRetriesSetting);
     }
 
     public WriteOperation<Void> dropIndex(final Bson keys, final DropIndexOptions ignoredOptions) {
-        return new DropIndexOperation(assertNotNull(namespace), keys.toBsonDocument(BsonDocument.class, codecRegistry), writeConcern);
+        return new DropIndexOperation(assertNotNull(namespace), keys.toBsonDocument(BsonDocument.class, codecRegistry), writeConcern,
+                isRetryWrites(), maxAdaptiveRetriesSetting);
     }
 
     public <R> ReadOperationCursor<R> listCollections(final String databaseName, final Class<R> resultClass,

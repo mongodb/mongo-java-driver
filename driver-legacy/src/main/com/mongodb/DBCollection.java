@@ -32,6 +32,7 @@ import com.mongodb.internal.bulk.IndexRequest;
 import com.mongodb.internal.bulk.InsertRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest.Type;
+import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.operation.AggregateOperation;
 import com.mongodb.internal.operation.AggregateToCollectionOperation;
@@ -979,7 +980,8 @@ public class DBCollection {
     public DBCollection rename(final String newName, final boolean dropTarget) {
         try {
             executor.execute(new RenameCollectionOperation(getNamespace(),
-                    new MongoNamespace(getNamespace().getDatabaseName(), newName), getWriteConcern())
+                    new MongoNamespace(getNamespace().getDatabaseName(), newName), getWriteConcern(),
+                    retryWrites, maxAdaptiveRetriesSetting)
                     .dropTarget(dropTarget), getReadConcern());
             return getDB().getCollection(newName);
         } catch (MongoWriteConcernException e) {
@@ -1249,7 +1251,8 @@ public class DBCollection {
         if (outCollection != null) {
             AggregateToCollectionOperation operation =
                     new AggregateToCollectionOperation(
-                            getNamespace(), stages, getReadConcern(), getWriteConcern())
+                            getNamespace(), stages, getReadConcern(), getWriteConcern(), AggregationLevel.COLLECTION,
+                            retryWrites, maxAdaptiveRetriesSetting)
                             .allowDiskUse(options.getAllowDiskUse())
                             .bypassDocumentValidation(options.getBypassDocumentValidation())
                             .collation(options.getCollation());
@@ -1818,7 +1821,7 @@ public class DBCollection {
     public void drop() {
         try {
             executor.execute(new DropCollectionOperation(getNamespace(),
-                            getWriteConcern()), getReadConcern());
+                            getWriteConcern(), retryWrites, maxAdaptiveRetriesSetting), getReadConcern());
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
         }
@@ -1913,7 +1916,7 @@ public class DBCollection {
     public void dropIndex(final DBObject index) {
         try {
             executor.execute(new DropIndexOperation(getNamespace(), wrap(index),
-                    getWriteConcern()), getReadConcern());
+                    getWriteConcern(), retryWrites, maxAdaptiveRetriesSetting), getReadConcern());
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
         }
@@ -1929,7 +1932,7 @@ public class DBCollection {
     public void dropIndex(final String indexName) {
         try {
             executor.execute(new DropIndexOperation(getNamespace(), indexName,
-                    getWriteConcern()), getReadConcern());
+                    getWriteConcern(), retryWrites, maxAdaptiveRetriesSetting), getReadConcern());
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
         }
@@ -2156,7 +2159,7 @@ public class DBCollection {
         if (options.containsField("collation")) {
             request.collation(DBObjectCollationHelper.createCollationFromOptions(options));
         }
-        return new CreateIndexesOperation(getNamespace(), singletonList(request), writeConcern);
+        return new CreateIndexesOperation(getNamespace(), singletonList(request), writeConcern, retryWrites, maxAdaptiveRetriesSetting);
     }
 
     Codec<DBObject> getObjectCodec() {

@@ -25,6 +25,7 @@ import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
+import static com.mongodb.internal.operation.SpecRetryPolicy.IndividualPolicies.overloadForWrite;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
 
 /**
@@ -76,8 +77,6 @@ public final class CommandReadOperation<T> extends AbstractCommandReadOperation<
     }
 
     private SpecRetryPolicy.IndividualPolicies createRetryPolicy() {
-        boolean retryPolicyEnabled = retryReads && retryWrites;
-        return new SpecRetryPolicy.IndividualPolicies(retryPolicyEnabled)
-                .includeOverload(maxAdaptiveRetriesSetting, SpecRetryPolicy.ErrorPropagation.AS_WRITE_POLICY);
+        return overloadForWrite(retryReads && retryWrites, maxAdaptiveRetriesSetting);
     }
 }

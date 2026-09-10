@@ -364,7 +364,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                                                          final Class<TResult> resultClass) {
         return new AggregateIterableImpl<>(clientSession, namespace, documentClass, resultClass, codecRegistry,
                 readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION,
-                retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
+                retryWrites, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
     }
 
     @Override

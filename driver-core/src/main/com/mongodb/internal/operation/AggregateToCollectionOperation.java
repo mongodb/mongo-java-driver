@@ -43,6 +43,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.ServerVersionHelper.FIVE_DOT_ZERO_WIRE_VERSION;
+import static com.mongodb.internal.operation.SpecRetryPolicy.IndividualPolicies.overloadForWrite;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
@@ -64,6 +65,9 @@ public class AggregateToCollectionOperation implements ReadOperationSimple<Void>
     private final WriteConcern writeConcern;
     private final ReadConcern readConcern;
     private final AggregationLevel aggregationLevel;
+    private final boolean retryWrites;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
 
     private Boolean allowDiskUse;
     private Boolean bypassDocumentValidation;
@@ -79,11 +83,19 @@ public class AggregateToCollectionOperation implements ReadOperationSimple<Void>
 
     public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
             @Nullable final ReadConcern readConcern, @Nullable final WriteConcern writeConcern, final AggregationLevel aggregationLevel) {
+        this(namespace, pipeline, readConcern, writeConcern, aggregationLevel, false, null);
+    }
+
+    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
+            @Nullable final ReadConcern readConcern, @Nullable final WriteConcern writeConcern, final AggregationLevel aggregationLevel,
+            final boolean retryWrites, @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.namespace = notNull("namespace", namespace);
         this.pipeline = notNull("pipeline", pipeline);
         this.writeConcern = writeConcern;
         this.readConcern = readConcern;
         this.aggregationLevel = notNull("aggregationLevel", aggregationLevel);
+        this.retryWrites = retryWrites;
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
 
         isTrueArgument("pipeline is not empty", !pipeline.isEmpty());
     }
@@ -178,8 +190,7 @@ public class AggregateToCollectionOperation implements ReadOperationSimple<Void>
                 getCommandCreator(),
                 new BsonDocumentCodec(),
                 transformer(),
-                false,
-                null);
+                overloadForWrite(retryWrites, maxAdaptiveRetriesSetting));
     }
 
     @Override
@@ -194,8 +205,7 @@ public class AggregateToCollectionOperation implements ReadOperationSimple<Void>
                 getCommandCreator(),
                 new BsonDocumentCodec(),
                 asyncTransformer(),
-                false,
-                null,
+                overloadForWrite(retryWrites, maxAdaptiveRetriesSetting),
                 callback);
     }
 
@@ -251,4 +261,5 @@ public class AggregateToCollectionOperation implements ReadOperationSimple<Void>
             return null;
         };
     }
+
 }

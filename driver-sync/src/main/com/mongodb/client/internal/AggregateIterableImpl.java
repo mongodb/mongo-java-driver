@@ -68,10 +68,11 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
             final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
             final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel,
-            final boolean retryReads, @Nullable final Integer maxAdaptiveRetriesSetting,
+            final boolean retryWrites, final boolean retryReads, @Nullable final Integer maxAdaptiveRetriesSetting,
             final TimeoutSettings timeoutSettings) {
         this(clientSession, new MongoNamespace(databaseName, "_ignored"), documentClass, resultClass, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, pipeline, aggregationLevel, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
+                readConcern, writeConcern, executor, pipeline, aggregationLevel, retryWrites, retryReads, maxAdaptiveRetriesSetting,
+                timeoutSettings);
     }
 
     @SuppressWarnings("checkstyle:ParameterNumber")
@@ -79,11 +80,11 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
             final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
             final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel,
-            final boolean retryReads, @Nullable final Integer maxAdaptiveRetriesSetting,
+            final boolean retryWrites, final boolean retryReads, @Nullable final Integer maxAdaptiveRetriesSetting,
             final TimeoutSettings timeoutSettings) {
         super(clientSession, executor, readConcern, readPreference, retryReads, timeoutSettings);
         this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
-                true, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
+                retryWrites, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);

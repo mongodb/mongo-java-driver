@@ -49,6 +49,7 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRetryControl;
+import static com.mongodb.internal.operation.SpecRetryPolicy.IndividualPolicies.overloadForRead;
 import static com.mongodb.internal.operation.SyncOperationHelper.decorateWithRetries;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.FIRST_BATCH;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CLOSED_AS_CURSOR;
@@ -231,9 +232,8 @@ class CommandCursor<T> implements Cursor<T> {
 
     private void getMore(final OperationContext operationContext) {
         ServerCursor serverCursor = assertNotNull(resourceManager.getServerCursor());
-        SpecRetryPolicy.IndividualPolicies policies = new SpecRetryPolicy.IndividualPolicies(retryReads)
-                .includeOverload(maxAdaptiveRetriesSetting, SpecRetryPolicy.ErrorPropagation.AS_READ_POLICY);
-        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(policies, operationContext);
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
+                overloadForRead(retryReads, maxAdaptiveRetriesSetting), operationContext);
         Supplier<Void> retryingCommandExecutor = decorateWithRetries(retryControl, operationContext, () -> {
             resourceManager.executeWithConnection(connection -> {
                 ServerCursor nextServerCursor;

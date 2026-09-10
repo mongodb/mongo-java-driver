@@ -32,6 +32,7 @@ import com.mongodb.internal.bulk.DeleteRequest
 import com.mongodb.internal.bulk.IndexRequest
 import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.bulk.UpdateRequest
+import com.mongodb.internal.client.model.AggregationLevel
 import com.mongodb.internal.operation.AggregateOperation
 import com.mongodb.internal.operation.AggregateToCollectionOperation
 import com.mongodb.internal.operation.BatchCursor
@@ -661,21 +662,22 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
-                bsonPipeline, collection.getReadConcern(), collection.getWriteConcern()))
+                bsonPipeline, collection.getReadConcern(), collection.getWriteConcern(), AggregationLevel.COLLECTION, true, null))
 
         when: // Inherits from DB
         collection.aggregate(pipeline, AggregationOptions.builder().build())
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
-                bsonPipeline, collection.getReadConcern(), collection.getWriteConcern()))
+                bsonPipeline, collection.getReadConcern(), collection.getWriteConcern(), AggregationLevel.COLLECTION, true, null))
 
         when:
         collection.aggregate(pipeline, AggregationOptions.builder().collation(collation).build())
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
-                bsonPipeline, collection.getReadConcern(), collection.getWriteConcern()).collation(collation))
+                bsonPipeline, collection.getReadConcern(), collection.getWriteConcern(),
+                AggregationLevel.COLLECTION, true, null).collation(collation))
     }
 
     def 'explainAggregate should create the correct AggregateOperation'() {
