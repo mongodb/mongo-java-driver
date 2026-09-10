@@ -448,7 +448,7 @@ class MongoDatabaseSpecification extends Specification {
         then:
         expect aggregateIterable, isTheSameAs(new AggregateIterableImpl<>(session, name, Document, Document,
                 codecRegistry, readPreference, readConcern, writeConcern, executor, [], AggregationLevel.DATABASE,
-                false, null, TIMEOUT_SETTINGS), ['codec'])
+                false, false, null, TIMEOUT_SETTINGS), ['codec'])
 
         when:
         aggregateIterable = execute(aggregateMethod, session, [new Document('$match', 1)])
@@ -456,7 +456,7 @@ class MongoDatabaseSpecification extends Specification {
         then:
         expect aggregateIterable, isTheSameAs(new AggregateIterableImpl<>(session, name, Document, Document,
                 codecRegistry, readPreference, readConcern, writeConcern, executor, [new Document('$match', 1)],
-                AggregationLevel.DATABASE, false, null, TIMEOUT_SETTINGS), ['codec'])
+                AggregationLevel.DATABASE, false, false, null, TIMEOUT_SETTINGS), ['codec'])
 
         when:
         aggregateIterable = execute(aggregateMethod, session, [new Document('$match', 1)], BsonDocument)
@@ -464,7 +464,7 @@ class MongoDatabaseSpecification extends Specification {
         then:
         expect aggregateIterable, isTheSameAs(new AggregateIterableImpl<>(session, name, Document, BsonDocument,
                 codecRegistry, readPreference, readConcern, writeConcern, executor, [new Document('$match', 1)],
-                AggregationLevel.DATABASE, false, null, TIMEOUT_SETTINGS), ['codec'])
+                AggregationLevel.DATABASE, false, false, null, TIMEOUT_SETTINGS), ['codec'])
 
         where:
         session << [null, Stub(ClientSession)]

@@ -18,14 +18,14 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.WriteConcern;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.function.AsyncCallbackSupplier;
+import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
-import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -40,13 +40,17 @@ import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncConnection;
 import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
+import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRetryControl;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
+import static com.mongodb.internal.operation.SpecRetryPolicy.IndividualPolicies.overloadForWrite;
+import static com.mongodb.internal.operation.SyncOperationHelper.decorateWithRetries;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
 import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
 import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErrorTransformer;
@@ -65,12 +69,22 @@ public class DropCollectionOperation implements WriteOperation<Void> {
     private static final BsonValueCodec BSON_VALUE_CODEC = new BsonValueCodec();
     private final MongoNamespace namespace;
     private final WriteConcern writeConcern;
+    private final boolean retryWrites;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private BsonDocument encryptedFields;
     private boolean autoEncryptedFields;
 
     public DropCollectionOperation(final MongoNamespace namespace, @Nullable final WriteConcern writeConcern) {
+        this(namespace, writeConcern, false, null);
+    }
+
+    public DropCollectionOperation(final MongoNamespace namespace, @Nullable final WriteConcern writeConcern,
+            final boolean retryWrites, @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = writeConcern;
+        this.retryWrites = retryWrites;
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     public WriteConcern getWriteConcern() {
@@ -100,38 +114,35 @@ public class DropCollectionOperation implements WriteOperation<Void> {
     @Override
     public Void execute(final WriteBinding binding, final OperationContext operationContext) {
         BsonDocument localEncryptedFields = getEncryptedFields((ReadWriteBinding) binding, operationContext);
-        return withConnection(binding, operationContext, (connection, operationContextWithMinRtt) -> {
-            getCommands(localEncryptedFields).forEach(command -> {
-                try {
-                    executeCommand(binding, operationContextWithMinRtt, namespace.getDatabaseName(), command.get(),
-                            connection, writeConcernErrorTransformer(operationContextWithMinRtt.getTimeoutContext()));
-                } catch (MongoCommandException e) {
-                    rethrowIfNotNamespaceError(e);
-                }
+        getCommands(localEncryptedFields).forEach(commandCreator -> {
+            RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
+                    overloadForWrite(retryWrites, maxAdaptiveRetriesSetting), operationContext);
+            Supplier<Void> retryingCommandExecutor = decorateWithRetries(retryControl, operationContext, () -> {
+                retryControl.getPolicy().onCommand(this::getCommandName);
+                return withConnection(binding, operationContext, (connection, connectionScopedOperationContext) -> {
+                    try {
+                        executeCommand(binding, connectionScopedOperationContext, namespace.getDatabaseName(), commandCreator.get(),
+                                connection, writeConcernErrorTransformer(connectionScopedOperationContext.getTimeoutContext()));
+                    } catch (MongoCommandException e) {
+                        rethrowIfNotNamespaceError(e);
+                    }
+                    return null;
+                });
             });
-            return null;
+            retryingCommandExecutor.get();
         });
+        return null;
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext,
                              final SingleResultCallback<Void> callback) {
-        SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        getEncryptedFields((AsyncReadWriteBinding) binding, operationContext, (result, t) -> {
+        getEncryptedFields((AsyncReadWriteBinding) binding, operationContext, (localEncryptedFields, t) -> {
             if (t != null) {
-                errHandlingCallback.onResult(null, t);
-            } else {
-                withAsyncConnection(binding, operationContext, (connection, operationContextWithMinRtt, t1) -> {
-                    if (t1 != null) {
-                        errHandlingCallback.onResult(null, t1);
-                    } else {
-                        new ProcessCommandsCallback(binding, operationContextWithMinRtt, connection, getCommands(result),
-                                releasingCallback(errHandlingCallback,
-                                connection))
-                                .onResult(null, null);
-                    }
-                });
+                errorHandlingCallback(callback, LOGGER).onResult(null, t);
+                return;
             }
+            new ProcessCommandsCallback(binding, operationContext, getCommands(localEncryptedFields), callback).onResult(null, null);
         });
     }
 
@@ -239,19 +250,16 @@ public class DropCollectionOperation implements WriteOperation<Void> {
     class ProcessCommandsCallback implements SingleResultCallback<Void> {
         private final AsyncWriteBinding binding;
         private final OperationContext operationContext;
-        private final AsyncConnection connection;
         private final SingleResultCallback<Void> finalCallback;
         private final Deque<Supplier<BsonDocument>> commands;
 
         ProcessCommandsCallback(
                 final AsyncWriteBinding binding,
                 final OperationContext operationContext,
-                final AsyncConnection connection,
                 final List<Supplier<BsonDocument>> commands,
                 final SingleResultCallback<Void> finalCallback) {
             this.binding = binding;
             this.operationContext = operationContext;
-            this.connection = connection;
             this.finalCallback = finalCallback;
             this.commands = new ArrayDeque<>(commands);
         }
@@ -266,14 +274,27 @@ public class DropCollectionOperation implements WriteOperation<Void> {
             if (nextCommandFunction == null) {
                 finalCallback.onResult(null, null);
             } else {
-                try {
-                    executeCommandAsync(binding, operationContext,  namespace.getDatabaseName(), nextCommandFunction.get(),
-                            connection, writeConcernErrorTransformerAsync(operationContext.getTimeoutContext()), this);
-                } catch (MongoOperationTimeoutException operationTimeoutException) {
-                    finalCallback.onResult(null, operationTimeoutException);
-                }
+                RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
+                    overloadForWrite(retryWrites, maxAdaptiveRetriesSetting), operationContext);
+                AsyncCallbackSupplier<Void> retryingCommandExecutor = decorateWithRetriesAsync(retryControl, operationContext,
+                        supplierCallback -> {
+                            retryControl.getPolicy().onCommand(DropCollectionOperation.this::getCommandName);
+                            withAsyncConnection(binding, operationContext, (connection, connectionScopedOperationContext, t1) -> {
+                                if (t1 != null) {
+                                    supplierCallback.onResult(null, t1);
+                                } else {
+                                    SingleResultCallback<Void> connectionReleasingCallback = releasingCallback(supplierCallback, connection);
+                                    executeCommandAsync(binding, connectionScopedOperationContext, namespace.getDatabaseName(),
+                                            nextCommandFunction.get(), connection,
+                                            writeConcernErrorTransformerAsync(connectionScopedOperationContext.getTimeoutContext()),
+                                            connectionReleasingCallback);
+                                }
+                            });
+                        });
+                retryingCommandExecutor.get(this);
             }
         }
     }
+
 
 }

@@ -88,7 +88,7 @@ class DBSpecification extends Specification {
 
         then:
         def operation = executor.getWriteOperation() as CreateCollectionOperation
-        expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest', db.getWriteConcern()))
+        expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest', db.getWriteConcern(), true, null))
         executor.getReadConcern() == ReadConcern.MAJORITY
 
         when:
@@ -108,7 +108,7 @@ class DBSpecification extends Specification {
         operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest', db.getWriteConcern())
+        expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest', db.getWriteConcern(), true, null)
                 .sizeInBytes(100000)
                 .maxDocuments(2000)
                 .capped(true)
@@ -136,7 +136,7 @@ class DBSpecification extends Specification {
         operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
-        expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest', db.getWriteConcern())
+        expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest', db.getWriteConcern(), true, null)
                 .collation(collation))
         executor.getReadConcern() == ReadConcern.MAJORITY
     }
@@ -167,7 +167,7 @@ class DBSpecification extends Specification {
         then:
         def operation = executor.getWriteOperation() as CreateViewOperation
         expect operation, isTheSameAs(new CreateViewOperation(databaseName, viewName, viewOn,
-                [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern))
+                [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern, true, null))
         executor.getReadConcern() == ReadConcern.MAJORITY
 
         when:
@@ -176,7 +176,7 @@ class DBSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new CreateViewOperation(databaseName, viewName, viewOn,
-                [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern).collation(collation))
+                [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern, true, null).collation(collation))
         executor.getReadConcern() == ReadConcern.MAJORITY
     }
 

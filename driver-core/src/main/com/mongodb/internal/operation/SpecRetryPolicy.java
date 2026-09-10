@@ -331,6 +331,16 @@ final class SpecRetryPolicy implements RetryPolicy {
             this.policies = new EnumMap<>(Descriptor.class);
         }
 
+        static IndividualPolicies overloadForWrite(final boolean retryWrites, @Nullable final Integer maxAdaptiveRetriesSetting) {
+            return new IndividualPolicies(retryWrites)
+                    .includeOverload(maxAdaptiveRetriesSetting, ErrorPropagation.AS_WRITE_POLICY);
+        }
+
+        static IndividualPolicies overloadForRead(final boolean retryReads, @Nullable final Integer maxAdaptiveRetriesSetting) {
+            return new IndividualPolicies(retryReads)
+                    .includeOverload(maxAdaptiveRetriesSetting, ErrorPropagation.AS_READ_POLICY);
+        }
+
         private IndividualPolicies assertValid() {
             assertFalse(policies.isEmpty());
             assertNoConflicts(policies.keySet());
@@ -692,7 +702,7 @@ final class SpecRetryPolicy implements RetryPolicy {
      * Selects the error propagation shape for overload-only policy
      * compositions (see {@link IndividualPolicies#includeOverload(Integer, ErrorPropagation)}).
      */
-    enum ErrorPropagation {
+    private enum ErrorPropagation {
         AS_READ_POLICY,
         AS_WRITE_POLICY
     }

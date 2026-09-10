@@ -376,7 +376,7 @@ class MongoCollectionSpecification extends Specification {
         then:
         expect aggregateIterable, isTheSameAs(new AggregateIterableImpl<>(session, namespace, Document, Document,
                 codecRegistry, readPreference, readConcern, ACKNOWLEDGED, executor, [new Document('$match', 1)],
-                AggregationLevel.COLLECTION, true, null, TIMEOUT_SETTINGS))
+                AggregationLevel.COLLECTION, true, true, null, TIMEOUT_SETTINGS))
 
         when:
         aggregateIterable = execute(aggregateMethod, session, [new Document('$match', 1)], BsonDocument)
@@ -384,7 +384,7 @@ class MongoCollectionSpecification extends Specification {
         then:
         expect aggregateIterable, isTheSameAs(new AggregateIterableImpl<>(session, namespace, Document, BsonDocument,
                 codecRegistry, readPreference, readConcern, ACKNOWLEDGED, executor, [new Document('$match', 1)],
-                AggregationLevel.COLLECTION, true, null, TIMEOUT_SETTINGS))
+                AggregationLevel.COLLECTION, true, true, null, TIMEOUT_SETTINGS))
 
         where:
         session << [null, Stub(ClientSession)]
@@ -1149,7 +1149,7 @@ class MongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([null])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
                 true, true, null, readConcern, JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
-        def expectedOperation = new DropCollectionOperation(namespace, ACKNOWLEDGED)
+        def expectedOperation = new DropCollectionOperation(namespace, ACKNOWLEDGED, true, null)
         def dropMethod = collection.&drop
 
         when:
@@ -1174,7 +1174,7 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         def expectedOperation = new CreateIndexesOperation(namespace,
-                [new IndexRequest(new BsonDocument('key', new BsonInt32(1)))], ACKNOWLEDGED)
+                [new IndexRequest(new BsonDocument('key', new BsonInt32(1)))], ACKNOWLEDGED, true, null)
         def indexName = execute(createIndexMethod, session, new Document('key', 1))
         def operation = executor.getWriteOperation() as CreateIndexesOperation
 
@@ -1185,7 +1185,7 @@ class MongoCollectionSpecification extends Specification {
         when:
         expectedOperation = new CreateIndexesOperation(namespace,
                 [new IndexRequest(new BsonDocument('key', new BsonInt32(1))),
-                 new IndexRequest(new BsonDocument('key1', new BsonInt32(1)))], ACKNOWLEDGED)
+                 new IndexRequest(new BsonDocument('key1', new BsonInt32(1)))], ACKNOWLEDGED, true, null)
         def indexNames = execute(createIndexesMethod, session, [new IndexModel(new Document('key', 1)),
                                                                                        new IndexModel(new Document('key1', 1))])
         operation = executor.getWriteOperation() as CreateIndexesOperation
@@ -1198,7 +1198,7 @@ class MongoCollectionSpecification extends Specification {
         when:
         expectedOperation = new CreateIndexesOperation(namespace,
                 [new IndexRequest(new BsonDocument('key', new BsonInt32(1))),
-                 new IndexRequest(new BsonDocument('key1', new BsonInt32(1)))], ACKNOWLEDGED)
+                 new IndexRequest(new BsonDocument('key1', new BsonInt32(1)))], ACKNOWLEDGED, true, null)
         indexNames = execute(createIndexesMethod, session,
                 [new IndexModel(new Document('key', 1)), new IndexModel(new Document('key1', 1))],
                 new CreateIndexOptions().maxTime(100, MILLISECONDS))
@@ -1212,7 +1212,7 @@ class MongoCollectionSpecification extends Specification {
         when:
         expectedOperation = new CreateIndexesOperation(namespace,
                 [new IndexRequest(new BsonDocument('key', new BsonInt32(1))),
-                 new IndexRequest(new BsonDocument('key1', new BsonInt32(1)))], ACKNOWLEDGED)
+                 new IndexRequest(new BsonDocument('key1', new BsonInt32(1)))], ACKNOWLEDGED, true, null)
                 .commitQuorum(CreateIndexCommitQuorum.VOTING_MEMBERS)
         indexNames = execute(createIndexesMethod, session,
                 [new IndexModel(new Document('key', 1)), new IndexModel(new Document('key1', 1))],
@@ -1246,7 +1246,7 @@ class MongoCollectionSpecification extends Specification {
                          .collation(collation)
                          .wildcardProjection(new BsonDocument('a', new BsonInt32(1)))
                          .hidden(true)
-                ], ACKNOWLEDGED)
+                ], ACKNOWLEDGED, true, null)
         indexName = execute(createIndexMethod, session, new Document('key', 1), new IndexOptions()
                 .background(true)
                 .unique(true)
@@ -1342,7 +1342,7 @@ class MongoCollectionSpecification extends Specification {
         def dropIndexMethod = collection.&dropIndex
 
         when:
-        def expectedOperation = new DropIndexOperation(namespace, 'indexName', ACKNOWLEDGED)
+        def expectedOperation = new DropIndexOperation(namespace, 'indexName', ACKNOWLEDGED, true, null)
         execute(dropIndexMethod, session, 'indexName')
         def operation = executor.getWriteOperation() as DropIndexOperation
 
@@ -1352,7 +1352,7 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         def keys = new BsonDocument('x', new BsonInt32(1))
-        expectedOperation = new DropIndexOperation(namespace, keys, ACKNOWLEDGED)
+        expectedOperation = new DropIndexOperation(namespace, keys, ACKNOWLEDGED, true, null)
         execute(dropIndexMethod, session, keys)
         operation = executor.getWriteOperation() as DropIndexOperation
 
@@ -1361,7 +1361,7 @@ class MongoCollectionSpecification extends Specification {
         executor.getClientSession() == session
 
         when:
-        expectedOperation = new DropIndexOperation(namespace, keys, ACKNOWLEDGED)
+        expectedOperation = new DropIndexOperation(namespace, keys, ACKNOWLEDGED, true, null)
         execute(dropIndexMethod, session, keys, new DropIndexOptions().maxTime(100, MILLISECONDS))
         operation = executor.getWriteOperation() as DropIndexOperation
 
@@ -1378,7 +1378,7 @@ class MongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([null, null])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
                 true, true, null, readConcern, JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
-        def expectedOperation = new DropIndexOperation(namespace, '*', ACKNOWLEDGED)
+        def expectedOperation = new DropIndexOperation(namespace, '*', ACKNOWLEDGED, true, null)
         def dropIndexesMethod = collection.&dropIndexes
 
         when:
@@ -1390,7 +1390,7 @@ class MongoCollectionSpecification extends Specification {
         executor.getClientSession() == session
 
         when:
-        expectedOperation = new DropIndexOperation(namespace, '*', ACKNOWLEDGED)
+        expectedOperation = new DropIndexOperation(namespace, '*', ACKNOWLEDGED, true, null)
         execute(dropIndexesMethod, session, new DropIndexOptions().maxTime(100, MILLISECONDS))
         operation = executor.getWriteOperation() as DropIndexOperation
 
@@ -1409,7 +1409,7 @@ class MongoCollectionSpecification extends Specification {
                 true, true, null, readConcern, JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
         def newNamespace = new MongoNamespace(namespace.getDatabaseName(), 'newName')
         def renameCollectionOptions = new RenameCollectionOptions().dropTarget(dropTarget)
-        def expectedOperation = new RenameCollectionOperation(namespace, newNamespace, ACKNOWLEDGED)
+        def expectedOperation = new RenameCollectionOperation(namespace, newNamespace, ACKNOWLEDGED, true, null)
         def renameCollection = collection.&renameCollection
 
         when:

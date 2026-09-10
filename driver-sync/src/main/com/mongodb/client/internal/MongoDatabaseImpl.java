@@ -399,7 +399,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
                                                                          final Class<TResult> resultClass) {
         return new AggregateIterableImpl<>(clientSession, name, Document.class, resultClass, codecRegistry,
                 readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.DATABASE,
-                retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
+                retryWrites, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
     }
 
     private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,

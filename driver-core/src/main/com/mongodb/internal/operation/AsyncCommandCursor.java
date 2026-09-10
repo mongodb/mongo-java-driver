@@ -54,6 +54,7 @@ import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.async.SingleResultCallback.THEN_DO_NOTHING;
 import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWithRetriesAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRetryControl;
+import static com.mongodb.internal.operation.SpecRetryPolicy.IndividualPolicies.overloadForRead;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.FIRST_BATCH;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CLOSED_AS_CURSOR;
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.NEXT_BATCH;
@@ -191,9 +192,8 @@ class AsyncCommandCursor<T> implements AsyncCursor<T> {
     }
 
     private void getMore(final ServerCursor cursor, final OperationContext operationContext, final SingleResultCallback<List<T>> callback) {
-        SpecRetryPolicy.IndividualPolicies policies = new SpecRetryPolicy.IndividualPolicies(retryReads)
-                .includeOverload(maxAdaptiveRetriesSetting, SpecRetryPolicy.ErrorPropagation.AS_READ_POLICY);
-        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(policies, operationContext);
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
+                overloadForRead(retryReads, maxAdaptiveRetriesSetting), operationContext);
         AsyncCallbackSupplier<List<T>> retryingCommandExecutor = decorateWithRetriesAsync(retryControl, operationContext, attemptCallback ->
                 resourceManager.executeWithConnection(operationContext, (connection, wrappedCallback) ->
                         executeGetMoreCommand(assertNotNull(connection), cursor, operationContext, retryControl, wrappedCallback),
