@@ -25,6 +25,7 @@ import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.gridfs.GridFSDownloadPublisher;
 import com.mongodb.reactivestreams.client.gridfs.GridFSFindPublisher;
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.types.Binary;
 import org.reactivestreams.Publisher;
@@ -95,7 +96,7 @@ public class GridFSDownloadPublisherImpl implements GridFSDownloadPublisher {
     }
 
     private Flux<ByteBuffer> getChunkPublisher(final GridFSFile gridFSFile, @Nullable final Timeout timeout) {
-        Document filter = new Document("files_id", gridFSFile.getId());
+        BsonDocument filter = GridFSFilters.eq("files_id", gridFSFile.getId());
         FindPublisher<Document> chunkPublisher;
         if (clientSession != null) {
             chunkPublisher = collectionWithTimeout(chunksCollection, timeout, TIMEOUT_ERROR_MESSAGE).find(clientSession, filter);

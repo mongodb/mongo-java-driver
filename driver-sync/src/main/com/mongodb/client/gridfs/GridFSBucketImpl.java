@@ -429,17 +429,19 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     private void executeDelete(@Nullable final ClientSession clientSession, final BsonValue id) {
         Timeout operationTimeout = startTimeout();
+        BsonDocument filesFilter = GridFSFilters.eq("_id", id);
+        BsonDocument chunksFilter = GridFSFilters.eq("files_id", id);
         DeleteResult result;
         if (clientSession != null) {
             result = withNullableTimeout(filesCollection, operationTimeout)
-                    .deleteOne(clientSession, new BsonDocument("_id", id));
+                    .deleteOne(clientSession, filesFilter);
             withNullableTimeout(chunksCollection, operationTimeout)
-                    .deleteMany(clientSession, new BsonDocument("files_id", id));
+                    .deleteMany(clientSession, chunksFilter);
         } else {
             result = withNullableTimeout(filesCollection, operationTimeout)
-                    .deleteOne(new BsonDocument("_id", id));
+                    .deleteOne(filesFilter);
             withNullableTimeout(chunksCollection, operationTimeout)
-                    .deleteMany(new BsonDocument("files_id", id));
+                    .deleteMany(chunksFilter);
         }
 
         if (result.wasAcknowledged() && result.getDeletedCount() == 0) {
@@ -470,12 +472,13 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     private void executeRename(@Nullable final ClientSession clientSession, final BsonValue id, final String newFilename) {
         Timeout operationTimeout = startTimeout();
+        BsonDocument filesFilter = GridFSFilters.eq("_id", id);
         UpdateResult updateResult;
         if (clientSession != null) {
-            updateResult = withNullableTimeout(filesCollection, operationTimeout).updateOne(clientSession, new BsonDocument("_id", id),
+            updateResult = withNullableTimeout(filesCollection, operationTimeout).updateOne(clientSession, filesFilter,
                     new BsonDocument("$set", new BsonDocument("filename", new BsonString(newFilename))));
         } else {
-            updateResult = withNullableTimeout(filesCollection, operationTimeout).updateOne(new BsonDocument("_id", id),
+            updateResult = withNullableTimeout(filesCollection, operationTimeout).updateOne(filesFilter,
                     new BsonDocument("$set", new BsonDocument("filename", new BsonString(newFilename))));
         }
 
@@ -599,7 +602,7 @@ final class GridFSBucketImpl implements GridFSBucket {
     private GridFSFile getFileInfoById(@Nullable final ClientSession clientSession, final BsonValue id,
                                        @Nullable final Timeout operationTImeout) {
         notNull("id", id);
-        GridFSFile fileInfo = createFindIterable(clientSession, new Document("_id", id), operationTImeout).first();
+        GridFSFile fileInfo = createFindIterable(clientSession, GridFSFilters.eq("_id", id), operationTImeout).first();
         if (fileInfo == null) {
             throw new MongoGridFSException(format("No file found with the id: %s", id));
         }
