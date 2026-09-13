@@ -71,7 +71,10 @@ public final class ExponentialBackoff {
      * @param baseBackoffMs The server-supplied base backoff in milliseconds, or {@code null}.
      */
     public static Duration calculateOverloadBackoff(final int attemptNumber, @Nullable final Long baseBackoffMs) {
-        double baseMs = baseBackoffMs != null && baseBackoffMs > 0 ? baseBackoffMs : 100;
+        double baseMs = 100;
+        if (baseBackoffMs != null && baseBackoffMs > 0) {
+            baseMs = baseBackoffMs;
+        }
         return Duration.ofMillis(calculateBackoffMs(baseMs, 10000, 2, attemptNumber));
     }
 
