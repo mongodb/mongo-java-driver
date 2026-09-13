@@ -63,7 +63,6 @@ import static com.mongodb.internal.operation.CommandOperationHelper.addRetryable
 import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRetryControl;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
 import static com.mongodb.internal.operation.CommandOperationHelper.validateAndGetEffectiveWriteConcern;
-import static com.mongodb.internal.operation.OperationHelper.isServerWriteRetryRequirementsMet;
 import static com.mongodb.internal.operation.OperationHelper.validateWriteRequests;
 import static com.mongodb.internal.operation.SyncOperationHelper.decorateWithRetries;
 import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndConnection;
@@ -416,7 +415,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final ConnectionDescription connectionDescription,
             final WriteConcern effectiveWriteConcern,
             final RetryControl<SpecRetryPolicy> retryControl) {
-        retryControl.breakAndThrowIfRetryAnd(() -> !isServerWriteRetryRequirementsMet(connectionDescription));
+        retryControl.breakAndThrowIfRetryAnd(() -> retryControl.getPolicy().shouldBreakWriteLoop(connectionDescription));
         validateWriteRequests(connectionDescription, bypassDocumentValidation, writeRequests, effectiveWriteConcern);
     }
 

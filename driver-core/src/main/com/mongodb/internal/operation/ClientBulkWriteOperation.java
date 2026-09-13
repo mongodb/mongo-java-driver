@@ -131,7 +131,6 @@ import static com.mongodb.internal.operation.CommandOperationHelper.commandWrite
 import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRetryControl;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
 import static com.mongodb.internal.operation.OperationHelper.isNonCommandWriteRetryRequirementsMet;
-import static com.mongodb.internal.operation.OperationHelper.isServerWriteRetryRequirementsMet;
 import static com.mongodb.internal.operation.SyncOperationHelper.cursorDocumentToBatchCursor;
 import static com.mongodb.internal.operation.SyncOperationHelper.decorateWithRetries;
 import static com.mongodb.internal.operation.SyncOperationHelper.withSourceAndConnection;
@@ -305,7 +304,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                         (connectionSource, connection, operationContextWithMinRtt) -> {
                             retryControl.getPolicy().onCommand(() -> BULK_WRITE_COMMAND_NAME);
                             ConnectionDescription connectionDescription = connection.getDescription();
-                            retryControl.breakAndThrowIfRetryAnd(() -> !isServerWriteRetryRequirementsMet(connectionDescription));
+                            retryControl.breakAndThrowIfRetryAnd(() -> retryControl.getPolicy().shouldBreakWriteLoop(connectionDescription));
                             resultAccumulator.onNewServerAddress(connectionDescription.getServerAddress());
                             ClientBulkWriteCommand bulkWriteCommand = createBulkWriteCommand(
                                     retryControl, connectionDescription, effectiveWriteConcern, sessionContext, unexecutedModels, batchEncoder);
@@ -360,7 +359,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                 beginAsync().<ExhaustiveClientBulkWriteCommandOkResponse>thenSupply(executeAndExhaustCallback -> {
                                     retryControl.getPolicy().onCommand(() -> BULK_WRITE_COMMAND_NAME);
                                     ConnectionDescription connectionDescription = connection.getDescription();
-                                    retryControl.breakAndThrowIfRetryAnd(() -> !isServerWriteRetryRequirementsMet(connectionDescription));
+                                    retryControl.breakAndThrowIfRetryAnd(() -> retryControl.getPolicy().shouldBreakWriteLoop(connectionDescription));
                                     resultAccumulator.onNewServerAddress(connectionDescription.getServerAddress());
                                     ClientBulkWriteCommand bulkWriteCommand = createBulkWriteCommand(
                                             retryControl, connectionDescription, effectiveWriteConcern, sessionContext, unexecutedModels, batchEncoder);

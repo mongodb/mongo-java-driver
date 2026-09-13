@@ -58,7 +58,6 @@ import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreat
 import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRetryControl;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
 import static com.mongodb.internal.operation.CommandOperationHelper.isWriteRetryRequirementsMet;
-import static com.mongodb.internal.operation.OperationHelper.isServerWriteRetryRequirementsMet;
 import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConcernError;
 
 final class AsyncOperationHelper {
@@ -306,7 +305,7 @@ final class AsyncOperationHelper {
                             (source, connection, operationContextWithMinRtt, functionCallback) -> {
                                 beginAsync().<T>thenSupply(executeCommandCallback -> {
                                     ConnectionDescription connectionDescription = connection.getDescription();
-                                    retryControl.breakAndThrowIfRetryAnd(() -> !isServerWriteRetryRequirementsMet(connectionDescription));
+                                    retryControl.breakAndThrowIfRetryAnd(() -> retryControl.getPolicy().shouldBreakWriteLoop(connectionDescription));
                                     if (command.getNullable() == null) {
                                         command.set(commandCreator.create(operationContextWithMinRtt, source.getServerDescription(), connectionDescription));
                                     } else {

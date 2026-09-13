@@ -59,6 +59,7 @@ import static com.mongodb.internal.operation.CommandOperationHelper.addRetryable
 import static com.mongodb.internal.operation.CommandOperationHelper.isRetryableException;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.isReadRetryRequirementsMet;
+import static com.mongodb.internal.operation.OperationHelper.isServerWriteRetryRequirementsMet;
 import static java.lang.Boolean.TRUE;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -310,6 +311,26 @@ final class SpecRetryPolicy implements RetryPolicy {
         }
         long parsed = value.asNumber().longValue();
         return parsed > 0 ? parsed : null;
+    }
+
+    /**
+     * Decides whether the write retry loop should be broken before the next attempt.
+     * The loop is not broken when all failures observed so far within the current command execution
+     * are retryable overload errors, because such commands were load-shed by the server without
+     * being executed, making the overload retry policy independent of retryable-write server support.
+     * Otherwise, the loop is broken when the server does not support retryable writes,
+     * preserving the existing retryable-write behavior.
+     *
+     * @param connectionDescription The {@link ConnectionDescription} of the connection selected for
+     *                              the immediate next attempt.
+     * @return {@code true} iff the write retry loop must be broken and the prospective failed result thrown.
+     */
+    boolean shouldBreakWriteLoop(final ConnectionDescription connectionDescription) {
+        assertTrue(policies.write().isPresent());
+        if (policies.overload().map(IndividualPolicies.State.Overload::observedNoneOrOnlyRetryableOverloadErrors).orElse(false)) {
+            return false;
+        }
+        return !isServerWriteRetryRequirementsMet(connectionDescription);
     }
 
     private static int maxAttempts(final int maxRetries) {
@@ -592,6 +613,14 @@ final class SpecRetryPolicy implements RetryPolicy {
                 private final ErrorPropagation errorPropagation;
                 @Nullable
                 private BaseClientSessionImpl.OverloadRetryPolicyState sessionScopedState;
+                /**
+                 * Whether all failures observed so far within the current command execution are
+                 * retryable overload errors. {@code true} is also the case if no failures have been observed.
+                 *
+                 * @see MongoException#RETRYABLE_ERROR_LABEL
+                 * @see MongoException#SYSTEM_OVERLOADED_ERROR_LABEL
+                 */
+                private boolean observedNoneOrOnlyRetryableOverloadErrors;
 
                 Overload(
                         final boolean effectiveRetrySetting,
@@ -603,6 +632,7 @@ final class SpecRetryPolicy implements RetryPolicy {
                     this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
                     this.errorPropagation = errorPropagation;
                     sessionScopedState = null;
+                    observedNoneOrOnlyRetryableOverloadErrors = true;
                 }
 
                 @Nullable
@@ -633,7 +663,16 @@ final class SpecRetryPolicy implements RetryPolicy {
                     return labelInfo;
                 }
 
+                /**
+                 * Returns whether all failures observed so far within the current command execution are
+                 * retryable overload errors. {@code true} is also returned if no failures have been observed.
+                 */
+                boolean observedNoneOrOnlyRetryableOverloadErrors() {
+                    return observedNoneOrOnlyRetryableOverloadErrors;
+                }
+
                 private void onAnyAttemptFailure(final boolean retryableOverloadError) {
+                    observedNoneOrOnlyRetryableOverloadErrors &= retryableOverloadError;
                     BaseClientSessionImpl.OverloadRetryPolicyState localSessionScopedState = assertNotNull(sessionScopedState);
                     assertNotNull(localSessionScopedState.getCommandExecutionScoped()).onAnyAttemptFailure(retryableOverloadError);
                     BaseClientSessionImpl.OverloadRetryPolicyState.CommitScoped commitScopedState = localSessionScopedState.getCommitScoped();
@@ -660,6 +699,7 @@ final class SpecRetryPolicy implements RetryPolicy {
                             + ", maxAdaptiveRetriesSetting=" + maxAdaptiveRetriesSetting
                             + ", errorPropagation=" + errorPropagation
                             + ", sessionScopedState=" + sessionScopedState
+                            + ", observedNoneOrOnlyRetryableOverloadErrors=" + observedNoneOrOnlyRetryableOverloadErrors
                             + '}';
                 }
 
