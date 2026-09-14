@@ -16,6 +16,10 @@
 
 /**
  * This package contains the synchronous CRUD API.
+ *
+ * <p>Use {@link com.mongodb.client.MongoClients} to create a {@link com.mongodb.client.MongoClient} for standard MongoDB connections.
+ * Use {@link com.mongodb.client.StreamProcessingClients} to create a {@link com.mongodb.client.StreamProcessingClient}
+ * for Atlas Stream Processing workspace connections.</p>
  */
 @NonNullApi
 package com.mongodb.client;
