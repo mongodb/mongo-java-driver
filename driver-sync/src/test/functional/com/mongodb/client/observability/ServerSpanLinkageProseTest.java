@@ -98,15 +98,20 @@ public class ServerSpanLinkageProseTest {
     @Test
     @DisplayName("a traced command produces a server span parented by the driver command span")
     void testServerSpanLinkage() {
-        runTraced(client -> collection(client, "serverSpanLinkage").find().first());
+        runTraced(client -> collection(client, "serverSpanLinkage").insertOne(new Document("x", 1)));
 
-        FinishedSpan commandSpan = singleCommandSpan("find");
-        ExportedSpan serverSpan = awaitExportedSpan(
+        FinishedSpan commandSpan = singleCommandSpan("insert");
+        awaitExportedSpan(
                 span -> span.traceId.equals(commandSpan.getTraceId())
                         && span.parentSpanId.equals(commandSpan.getSpanId()),
                 "a server span with traceId=" + commandSpan.getTraceId()
                         + " and parentSpanId=" + commandSpan.getSpanId());
-        assertTrue(serverSpan.spanId != null && !serverSpan.spanId.isEmpty(), "server span has no spanId");
+        List<ExportedSpan> matches = readExportedSpans().stream()
+                .filter(span -> span.traceId.equals(commandSpan.getTraceId())
+                        && span.parentSpanId.equals(commandSpan.getSpanId()))
+                .collect(Collectors.toList());
+        assertEquals(1, matches.size(),
+                "expected exactly one server span parented to the insert command span, got: " + matches);
     }
 
     @Test
@@ -122,6 +127,8 @@ public class ServerSpanLinkageProseTest {
 
         List<FinishedSpan> attemptSpans = commandSpans("find");
         assertEquals(2, attemptSpans.size(), "expected one client command span per attempt, got: " + attemptSpans);
+        assertEquals(attemptSpans.get(0).getTraceId(), attemptSpans.get(1).getTraceId(),
+                "both attempts' command spans must share one traceId");
         assertTrue(!attemptSpans.get(0).getSpanId().equals(attemptSpans.get(1).getSpanId()),
                 "attempt command spans must have distinct span ids");
 
@@ -131,6 +138,14 @@ public class ServerSpanLinkageProseTest {
                             && span.parentSpanId.equals(attemptSpan.getSpanId()),
                     "a server span parented to attempt command span " + attemptSpan.getSpanId());
         }
+
+        Set<String> attemptSpanIds = attemptSpans.stream().map(FinishedSpan::getSpanId).collect(Collectors.toSet());
+        List<ExportedSpan> matches = readExportedSpans().stream()
+                .filter(span -> span.traceId.equals(attemptSpans.get(0).getTraceId())
+                        && attemptSpanIds.contains(span.parentSpanId))
+                .collect(Collectors.toList());
+        assertEquals(2, matches.size(),
+                "expected exactly two server spans, one parented to each attempt's command span, got: " + matches);
     }
 
     @Test
