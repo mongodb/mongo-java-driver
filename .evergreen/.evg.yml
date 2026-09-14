@@ -2572,7 +2572,8 @@ buildvariants:
       - name: "aws-auth-test-with-web-identity-credentials-task"
 
   - matrix_name: "otel-tracing"
-    matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk21", version: [ "latest" ], topology: "standalone", os: "linux" }
+    # auth: exercises prose Test 7 (no server spans for auth/monitoring commands) as written.
+    matrix_spec: { auth: "auth", ssl: "nossl", jdk: "jdk21", version: [ "latest" ], topology: "standalone", os: "linux" }
     display_name: "OTel Tracing ${version} ${topology}"
     tags: [ "tests-variant" ]
     tasks:
