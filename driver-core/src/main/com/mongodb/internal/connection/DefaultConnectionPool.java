@@ -16,9 +16,11 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoServerUnavailableException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.annotations.NotThreadSafe;
@@ -256,7 +258,7 @@ final class DefaultConnectionPool implements ConnectionPool {
     private Throwable checkOutFailed(final Throwable t, final OperationContext operationContext, final StartTime checkoutStart) {
         Throwable result = t;
         Reason reason;
-        if (t instanceof MongoTimeoutException) {
+        if (t instanceof MongoTimeoutException || t instanceof MongoOperationTimeoutException) {
             reason = Reason.TIMEOUT;
         } else if (t instanceof MongoOpenConnectionInternalException) {
             reason = Reason.CONNECTION_ERROR;
@@ -334,7 +336,7 @@ final class DefaultConnectionPool implements ConnectionPool {
 
     private PooledConnection getPooledConnection(final Timeout maxWaitTimeout,
                                                  final StartTime startTime,
-                                                 final TimeoutContext timeoutContext) throws MongoTimeoutException {
+                                                 final TimeoutContext timeoutContext) throws MongoClientException {
         try {
             UsageTrackingInternalConnection internalConnection = maxWaitTimeout.call(NANOSECONDS,
                     () -> pool.get(-1L, NANOSECONDS),
@@ -363,9 +365,9 @@ final class DefaultConnectionPool implements ConnectionPool {
         return internalConnection == null ? null : new PooledConnection(internalConnection);
     }
 
-    private MongoTimeoutException createTimeoutException(final StartTime startTime,
-                                                         @Nullable final MongoTimeoutException cause,
-                                                         final TimeoutContext timeoutContext) {
+    private MongoClientException createTimeoutException(final StartTime startTime,
+                                                        @Nullable final MongoTimeoutException cause,
+                                                        final TimeoutContext timeoutContext) {
         long elapsedMs = startTime.elapsed().toMillis();
         int numPinnedToCursor = pinnedStatsManager.getNumPinnedToCursor();
         int numPinnedToTransaction = pinnedStatsManager.getNumPinnedToTransaction();
@@ -425,6 +427,7 @@ final class DefaultConnectionPool implements ConnectionPool {
     void doMaintenance() {
         Predicate<Exception> silentlyComplete = e ->
                 e instanceof MongoInterruptedException || e instanceof MongoTimeoutException
+                        || e instanceof MongoOperationTimeoutException
                         || e instanceof MongoConnectionPoolClearedException || ConcurrentPool.isPoolClosedException(e);
         try {
             pool.prune();
