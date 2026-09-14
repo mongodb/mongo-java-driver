@@ -28,6 +28,10 @@ description: Testing frameworks, conventions, and commands for the MongoDB Java 
 - Unit tests must not require a running MongoDB instance
 - Descriptive method names: `shouldReturnEmptyListWhenNoDocumentsMatch()` not `test1()`
 - Use `@DisplayName` for human-readable names
+- JUnit 5 does not require `public` visibility: declare test classes and their `@Test`,
+  `@ParameterizedTest`, `@BeforeEach`/`@AfterEach`/`@BeforeAll`/`@AfterAll` methods as
+  package-private (no modifier). Reserve `public`/`protected` for members a subclass or another
+  package genuinely needs to access (e.g. an abstract base test's `protected` hook methods)
 - Clean up test data in `@AfterEach` / `cleanup()` to prevent pollution
 - Import types at the top of the file — do not use inline fully-qualified names
   (`com.mongodb.connection.AsyncCompletionHandler`, `java.util.List`) in signatures or bodies
