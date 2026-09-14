@@ -34,6 +34,7 @@ import com.mongodb.internal.operation.OperationHelper;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteConcernHelper;
 import com.mongodb.internal.operation.WriteOperation;
+import com.mongodb.internal.operation.WriteThenReadOperationCursor;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.internal.observability.micrometer.TracingManager;
@@ -88,7 +89,8 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
 
     @Override
     public void notifyOperationInitiated(final Object operation) {
-        assertTrue(operation instanceof ReadOperation || operation instanceof WriteOperation);
+        assertTrue(operation instanceof ReadOperation || operation instanceof WriteOperation
+                || operation instanceof WriteThenReadOperationCursor);
         if (!(hasActiveTransaction() || operation instanceof CommitTransactionOperation)) {
             assertTrue(getPinnedServerAddress() == null
                     || (transactionState != TransactionState.ABORTED && transactionState != TransactionState.NONE));
