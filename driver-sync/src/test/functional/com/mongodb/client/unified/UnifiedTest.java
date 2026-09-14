@@ -685,7 +685,8 @@ public abstract class UnifiedTest {
                 case "modifyCollection":
                     return crudHelper.executeModifyCollection(operation);
                 case "rename":
-                    if ("bucket".equals(object)){
+                    // "rename" is both a GridFS bucket operation and a collection operation, so dispatch on the entity type.
+                    if (entities.hasBucket(object)) {
                         return gridFSHelper.executeRename(operation);
                     }
                     return crudHelper.executeRenameCollection(operation);

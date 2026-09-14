@@ -188,9 +188,9 @@ class GridFSUploadStreamSpecification extends Specification {
 
         then:
         if (clientSession != null) {
-            1 * chunksCollection.deleteMany(clientSession, new Document('files_id', fileId))
+            1 * chunksCollection.deleteMany(clientSession, new BsonDocument('files_id', new BsonDocument('$eq', fileId)))
         } else {
-            1 * chunksCollection.deleteMany(new Document('files_id', fileId))
+            1 * chunksCollection.deleteMany(new BsonDocument('files_id', new BsonDocument('$eq', fileId)))
         }
 
         where:
