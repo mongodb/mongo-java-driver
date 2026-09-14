@@ -120,7 +120,11 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    *   - `0` means infinite timeout.
    *   - `> 0` The time limit to use for the full execution of an operation.
    *
+   * If not set, the timeout is inherited from whatever the
+   * [[MongoDatabase.timeout MongoDatabase]] was resolved to.
+   *
    * @return the optional timeout duration
+   * @see [[withTimeout]]
    * @since 5.2
    */
   @Alpha(Array(Reason.CLIENT))
@@ -168,8 +172,12 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * - `0` means infinite timeout.
    * - `> 0` The time limit to use for the full execution of an operation.
    *
+   * If not set, the timeout is inherited from whatever the
+   * [[MongoDatabase.timeout MongoDatabase]] was resolved to.
+   *
    * @param timeout the timeout, which must be greater than or equal to 0
    * @return a new GridFSBucket instance with the set time limit for operations
+   * @see [[timeout]]
    * @since 5.2
    */
   @Alpha(Array(Reason.CLIENT))

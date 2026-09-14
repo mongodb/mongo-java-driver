@@ -15,9 +15,12 @@
  */
 package com.mongodb.kotlin.client
 
+import com.mongodb.ClientSessionOptions
+import com.mongodb.MongoClientSettings
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
+import com.mongodb.TransactionOptions
 import com.mongodb.WriteConcern
 import com.mongodb.annotations.Alpha
 import com.mongodb.annotations.Reason
@@ -102,10 +105,24 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * - `0` means infinite timeout.
      * - `> 0` The time limit to use for the full execution of an operation.
      *
+     * The timeout can be set at the following levels (ordered by lowest precedence):
+     * - [MongoClientSettings.Builder.timeout]
+     * - [MongoCluster.withTimeout]
+     * - [MongoDatabase.withTimeout]
+     * - [MongoCollection.withTimeout] (current)
+     * - [ClientSessionOptions.Builder.defaultTimeout]
+     * - [TransactionOptions.Builder.timeout]
+     *
+     * If not set at a given level, the timeout is inherited from the level above.
+     *
+     * If [write][MongoClientSettings.Builder.retryWrites] or [read][MongoClientSettings.Builder.retryReads] retries are
+     * enabled, the driver may retry multiple times until the timeout expires.
+     *
      * Note: This timeout does not limit socket writes, therefore there is a possibility that the operation might not be
      * timed out when expected.
      *
      * @return the optional timeout duration
+     * @see [withTimeout]
      * @since 5.2
      */
     @Alpha(Reason.CLIENT)
@@ -149,7 +166,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
     /**
      * Create a new collection instance with a different read preference.
      *
-     * @param newReadPreference the new [com.mongodb.ReadPreference] for the collection
+     * @param newReadPreference the new [ReadPreference] for the collection
      * @return a new MongoCollection instance with the different readPreference
      */
     public fun withReadPreference(newReadPreference: ReadPreference): MongoCollection<T> =
@@ -168,7 +185,7 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
     /**
      * Create a new collection instance with a different write concern.
      *
-     * @param newWriteConcern the new [com.mongodb.WriteConcern] for the collection
+     * @param newWriteConcern the new [WriteConcern] for the collection
      * @return a new MongoCollection instance with the different writeConcern
      */
     public fun withWriteConcern(newWriteConcern: WriteConcern): MongoCollection<T> =
@@ -179,13 +196,26 @@ public class MongoCollection<T : Any>(private val wrapped: JMongoCollection<T>) 
      * - `0` means an infinite timeout
      * - `> 0` The time limit to use for the full execution of an operation.
      *
+     * The timeout can be set at the following levels (ordered by lowest precedence):
+     * - [MongoClientSettings.Builder.timeout]
+     * - [MongoCluster.withTimeout]
+     * - [MongoDatabase.withTimeout]
+     * - [MongoCollection.withTimeout] (current)
+     * - [ClientSessionOptions.Builder.defaultTimeout]
+     * - [TransactionOptions.Builder.timeout]
+     *
+     * If not set at a given level, the timeout is inherited from the level above.
+     *
+     * If [write][MongoClientSettings.Builder.retryWrites] or [read][MongoClientSettings.Builder.retryReads] retries are
+     * enabled, the driver may retry multiple times until the timeout expires.
+     *
      * Note: This timeout does not limit socket writes, therefore there is a possibility that the operation might not be
      * timed out when expected.
      *
      * @param timeout the timeout, which must be greater than or equal to 0
      * @param timeUnit the time unit, defaults to Milliseconds
      * @return a new MongoCollection instance with the set time limit for operations
-     * @see [MongoCollection.timeout]
+     * @see [timeout]
      * @since 5.2
      */
     @Alpha(Reason.CLIENT)

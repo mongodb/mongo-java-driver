@@ -26,6 +26,7 @@ import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
+import com.mongodb.reactivestreams.client.MongoDatabase;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -102,9 +103,13 @@ public interface GridFSBucket {
      *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
      * </ul>
      *
+     * <p>If not set, the timeout is inherited from whatever the
+     * {@linkplain MongoDatabase#getTimeout MongoDatabase} was resolved to.
+     *
      * @param timeUnit the time unit
      * @return the timeout in the given time unit
      * @since 4.x
+     * @see #withTimeout
      */
     @Alpha(Reason.CLIENT)
     @Nullable
@@ -151,6 +156,9 @@ public interface GridFSBucket {
      *   <li>{@code 0} means infinite timeout.</li>
      *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
      * </ul>
+     *
+     * <p>If not set, the timeout is inherited from whatever the
+     * {@linkplain MongoDatabase#getTimeout MongoDatabase} was resolved to.
      *
      * @param timeout the timeout, which must be greater than or equal to 0
      * @param timeUnit the time unit
