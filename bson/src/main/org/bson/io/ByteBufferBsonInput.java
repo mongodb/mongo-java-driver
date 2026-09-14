@@ -276,6 +276,12 @@ public class ByteBufferBsonInput implements BsonInput {
     }
 
     @Override
+    public int getRemaining() {
+        ensureOpen();
+        return buffer.remaining();
+    }
+
+    @Override
     public void pipe(final BsonOutput output, final int numBytes) {
         ensureOpen();
         ensureAvailable(numBytes);
