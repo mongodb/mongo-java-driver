@@ -948,17 +948,6 @@ tasks:
 
   - name: "otel-tracing-prose-test-task"
     commands:
-      # TODO(DRIVERS-3605): remove this step once mongodb-labs/drivers-evergreen-tools#837 is merged upstream;
-      # until then the OTEL orchestration support only exists on this fork branch, so re-provision
-      # DRIVERS_TOOLS from it (mirrors the "prepare-resources" function).
-      - command: shell.exec
-        params:
-          shell: "bash"
-          script: |
-            ${PREPARE_SHELL}
-            rm -rf $DRIVERS_TOOLS
-            git clone --depth 1 --branch DRIVERS-3454-otel-orchestration https://github.com/nhachicha/drivers-evergreen-tools.git $DRIVERS_TOOLS
-            echo "{ \"releases\": { \"default\": \"$MONGODB_BINARIES\" }}" > $MONGO_ORCHESTRATION_HOME/orchestration.config
       - func: "start-mongo-orchestration"
         vars:
           OTEL: "true"
