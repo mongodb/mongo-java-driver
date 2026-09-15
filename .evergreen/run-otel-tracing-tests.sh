@@ -21,9 +21,19 @@ fi
 echo "Running OTel trace-context propagation prose tests"
 
 ./gradlew -version
-# Toolchain auto-detection does not scan /opt/java (notably on macOS hosts), so point it there explicitly.
+
+# Toolchain auto-detection does not scan /opt/java (notably on macOS hosts), so point Gradle at the JDKs
+# explicitly. The macOS images lay the JDKs out with an incomplete Contents/Home bundle dir that confuses
+# Gradle's probe, so resolve each JDK's real home from the JVM itself rather than trusting the directory.
+resolve_java_home() {
+  "$1/bin/java" -XshowSettings:properties -version 2>&1 | sed -n 's/^ *java\.home = //p'
+}
+ls -la /opt/java/ "$JDK17" "$JDK17/Contents" 2>&1 || true
+TOOLCHAIN_PATHS="$(resolve_java_home "$JDK17"),$(resolve_java_home "$JDK21")"
+echo "Gradle toolchain paths: ${TOOLCHAIN_PATHS}"
+
 ./gradlew --stacktrace --info \
-    -Porg.gradle.java.installations.paths="${JDK17},${JDK21}" \
+    -Porg.gradle.java.installations.paths="${TOOLCHAIN_PATHS}" \
     -PjavaVersion="${JAVA_VERSION:-21}" \
     -Dorg.mongodb.test.uri="${MONGODB_URI}" \
     -Dorg.mongodb.test.otel.trace.dir="${OTEL_TRACE_DIR}" \
