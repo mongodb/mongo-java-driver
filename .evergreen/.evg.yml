@@ -1826,6 +1826,9 @@ axes:
       - id: "linux"
         display_name: "Linux"
         run_on: "rhel80-small"
+      - id: "macos-arm64"
+        display_name: "macOS arm64"
+        run_on: "macos-14-arm64"
       # No single Ubuntu release has server builds for every version we test: 4.4 and 5.0 stop at
       # ubuntu2004, while 9.0 starts at ubuntu2204. mongodl infers the download target from the host
       # distro and does not fall back to an older target, so the host must match the server release.
@@ -2593,8 +2596,8 @@ buildvariants:
 
   - matrix_name: "otel-tracing"
     # auth: exercises prose Test 7 (no server spans for auth/monitoring commands) as written.
-    matrix_spec: { auth: "auth", ssl: "nossl", jdk: "jdk21", version: [ "latest" ], topology: "standalone", os: "linux" }
-    display_name: "OTel Tracing ${version} ${topology}"
+    matrix_spec: { auth: "auth", ssl: "nossl", jdk: "jdk21", version: [ "latest" ], topology: "standalone", os: [ "linux", "macos-arm64" ] }
+    display_name: "OTel Tracing ${version} ${topology} ${os}"
     tags: [ "tests-variant" ]
     tasks:
       - name: "otel-tracing-prose-test-task"
