@@ -561,7 +561,7 @@ public class CrudProseTest {
                 .append("mode", new BsonDocument("times", new BsonInt32(1)))
                 .append("data", new BsonDocument()
                         .append("failCommands", new BsonArray(singletonList(new BsonString(commandName))))
-                        .append("errorLabels", new BsonArray(singletonList(new BsonString("RetryableWriteError"))))
+                        .append("errorLabels", new BsonArray(singletonList(new BsonString(RETRYABLE_WRITE_ERROR_LABEL))))
                         .append("writeConcernError", new BsonDocument("code", new BsonInt32(91))
                                 .append("errmsg", new BsonString("Replication is being shut down"))));
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()

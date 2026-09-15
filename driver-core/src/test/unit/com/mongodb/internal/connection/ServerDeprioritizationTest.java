@@ -275,7 +275,7 @@ final class ServerDeprioritizationTest {
 
     private static MongoException createSystemOverloadedError() {
         MongoException e = new MongoException(6, "overloaded");
-        e.addLabel("SystemOverloadedError");
+        e.addLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL);
         return e;
     }
 
