@@ -15,6 +15,8 @@
  */
 package com.mongodb.internal.connection;
 
+import java.util.Objects;
+import java.util.Scanner;
 import java.util.regex.Pattern;
 
 /**
@@ -51,10 +53,14 @@ public class DomainNameUtils {
         if (labels.isEmpty()) {
             throw new IllegalArgumentException("srvAllowedHostsSuffix must contain at least one domain label");
         }
-        for (String label : labels.split("\\.", -1)) {
+        String[] parts = labels.split("\\.", -1);
+        for (String label : parts) {
             if (label.isEmpty()) {
                 throw new IllegalArgumentException("srvAllowedHostsSuffix must not contain empty domain labels");
             }
+        }
+        if (isTopLevelDomain(hasLeadingDot ? srvAllowedHostsSuffix.substring(1) : srvAllowedHostsSuffix)) {
+            throw new IllegalArgumentException("srvAllowedHostsSuffix must not be a top-level domain");
         }
         return hasLeadingDot ? srvAllowedHostsSuffix : "." + srvAllowedHostsSuffix;
     }
@@ -66,5 +72,38 @@ public class DomainNameUtils {
             }
         }
         return false;
+    }
+
+    private static boolean isTopLevelDomain(String suffix) {
+        try (Scanner scanner = new Scanner(Objects.requireNonNull(
+                DomainNameUtils.class.getResourceAsStream("public_suffix_list.dat"), "Missing DNS suffix list"))) {
+            String line;
+            int firstDot = suffix.indexOf('.');
+            String rootDomain = firstDot >= 0 ? suffix.substring(firstDot + 1) : suffix;
+            boolean invalidMatchWildcard = false;
+            while ((line = scanner.nextLine()) != null) {
+                if (line.startsWith("//") || line.isEmpty()) {
+                    continue;
+                }
+                if (line.startsWith("!")) {
+                    if (invalidMatchWildcard && suffix.equals(line.substring(1))) {
+                        return false;
+                    }
+                } else if (line.startsWith("*")) {
+                    String lineSuffix = line.substring(2);
+                    if (suffix.equals(lineSuffix) || rootDomain.equals(lineSuffix)) {
+                        invalidMatchWildcard = true;
+                    }
+                } else {
+                    if (invalidMatchWildcard) {
+                        return true;
+                    }
+                    if (suffix.equals(line)) {
+                        return true;
+                    }
+                }
+            }
+            return invalidMatchWildcard;
+        }
     }
 }

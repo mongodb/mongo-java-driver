@@ -189,8 +189,36 @@ final class ConnectionStringUnitTest {
 
     @Test
     void shouldThrowWhenSrvAllowedHostsSuffixContainsWhitespace() {
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=.build.10gen.cc%20"));
+        IllegalArgumentException e = assertThrows(
+                IllegalArgumentException.class,
+                () -> new ConnectionString(
+                        "mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=.build.10gen.cc%20"));
         assertEquals("srvAllowedHostsSuffix must not contain whitespace", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenSrvAllowedHostsSuffixIsTopLevelDomain() {
+        IllegalArgumentException e = assertThrows(
+                IllegalArgumentException.class,
+                () -> new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=.cc"));
+        assertEquals("srvAllowedHostsSuffix must not be a top-level domain", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenSrvAllowedHostsSuffixIsTopLevelDomainWildcard() {
+        // *.ck is disallowed, but www.ck is permitted by exception
+        IllegalArgumentException e = assertThrows(
+                IllegalArgumentException.class,
+                () -> new ConnectionString("mongodb+srv://test12.10gen.ck/?srvAllowedHostsSuffix=.ck"));
+        assertEquals("srvAllowedHostsSuffix must not be a top-level domain", e.getMessage());
+    }
+
+    @Test
+    void allowSrvAllowedHostsSuffixWithExemptWildcard() {
+        // *.ck is disallowed, but www.ck is permitted by exception
+        assertEquals(
+                ".www.ck",
+                new ConnectionString("mongodb+srv://test12.www.ck/?srvAllowedHostsSuffix=www.ck")
+                        .getSrvAllowedHostsSuffix());
     }
 }
