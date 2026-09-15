@@ -22,14 +22,27 @@ echo "Running OTel trace-context propagation prose tests"
 
 ./gradlew -version
 
-# Toolchain auto-detection does not scan /opt/java (notably on macOS hosts), so point Gradle at the JDKs
-# explicitly. The macOS images lay the JDKs out with an incomplete Contents/Home bundle dir that confuses
-# Gradle's probe, so resolve each JDK's real home from the JVM itself rather than trusting the directory.
-resolve_java_home() {
-  "$1/bin/java" -XshowSettings:properties -version 2>&1 | sed -n 's/^ *java\.home = //p'
+# Toolchain auto-detection does not scan /opt/java, so point Gradle at the JDKs explicitly. On the macOS
+# images the JDK content lives at the root of /opt/java/jdkNN, but a leftover macOS bundle skeleton with an
+# EMPTY Contents/Home sits beside it; Gradle prefers Contents/Home whenever it exists and then rejects the
+# installation ("does not contain a java executable") without falling back to the root. Neutralize that by
+# removing the empty Contents/Home, or failing that, by symlinking the JDK into a clean bundle-free dir.
+sanitize_jdk() {
+  local jdk_dir=$1
+  if [ -x "$jdk_dir/bin/java" ] && [ -d "$jdk_dir/Contents/Home" ] && [ ! -x "$jdk_dir/Contents/Home/bin/java" ]; then
+    if ! rmdir "$jdk_dir/Contents/Home" 2>/dev/null; then
+      local clean="$HOME/gradle-jdks/$(basename "$jdk_dir")"
+      mkdir -p "$clean"
+      local entry
+      for entry in bin conf include jmods legal lib release; do
+        [ -e "$jdk_dir/$entry" ] && ln -sfn "$jdk_dir/$entry" "$clean/$entry"
+      done
+      jdk_dir=$clean
+    fi
+  fi
+  echo "$jdk_dir"
 }
-ls -la /opt/java/ "$JDK17" "$JDK17/Contents" 2>&1 || true
-TOOLCHAIN_PATHS="$(resolve_java_home "$JDK17"),$(resolve_java_home "$JDK21")"
+TOOLCHAIN_PATHS="$(sanitize_jdk "$JDK17"),$(sanitize_jdk "$JDK21")"
 echo "Gradle toolchain paths: ${TOOLCHAIN_PATHS}"
 
 ./gradlew --stacktrace --info \
