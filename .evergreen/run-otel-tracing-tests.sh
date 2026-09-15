@@ -21,7 +21,9 @@ fi
 echo "Running OTel trace-context propagation prose tests"
 
 ./gradlew -version
+# Toolchain auto-detection does not scan /opt/java (notably on macOS hosts), so point it there explicitly.
 ./gradlew --stacktrace --info \
+    -Porg.gradle.java.installations.paths="${JDK17},${JDK21}" \
     -PjavaVersion="${JAVA_VERSION:-21}" \
     -Dorg.mongodb.test.uri="${MONGODB_URI}" \
     -Dorg.mongodb.test.otel.trace.dir="${OTEL_TRACE_DIR}" \
