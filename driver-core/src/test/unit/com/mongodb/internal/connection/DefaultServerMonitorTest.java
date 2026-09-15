@@ -34,6 +34,7 @@ import com.mongodb.internal.inject.SameObjectProvider;
 import org.bson.BsonDocument;
 import org.bson.ByteBufNIO;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.opentest4j.AssertionFailedError;
 
@@ -252,6 +253,66 @@ public class DefaultServerMonitorTest {
         // Then
         List<String> expectedEvents = asList("serverHeartbeatStartedEvent", "client connected", "client hello received", "serverHeartbeatFailedEvent");
         assertEquals(expectedEvents, events);
+    }
+
+    @Test
+    void shouldSendHeartbeatEventAfterInitialConnectionInPollMode() throws Exception {
+        // This test verifies that in POLL mode with a long heartbeat frequency,
+        // the monitor still fires a ServerHeartbeatSucceededEvent shortly after initial connection.
+        // This is critical for some unified tests like backpressure-network-error-fail.yml that rely on
+        // receiving an initial heartbeat event even with very long polling intervals.
+
+        // Given
+        ConnectionDescription connectionDescription = createDefaultConnectionDescription();
+        ServerDescription initialServerDescription = createDefaultServerDescription();
+        String helloResponse = "{"
+                + LEGACY_HELLO_LOWER + ": true,"
+                + "maxBsonObjectSize : 16777216, "
+                + "maxMessageSizeBytes : 48000000, "
+                + "maxWriteBatchSize : 1000, "
+                + "localTime : ISODate(\"2016-04-05T20:36:36.082Z\"), "
+                + "maxWireVersion : 4, "
+                + "minWireVersion : 0, "
+                + "ok : 1 "
+                + "}";
+
+        InternalConnection mockConnection = mock(InternalConnection.class);
+        when(mockConnection.getDescription()).thenReturn(connectionDescription);
+        when(mockConnection.getInitialServerDescription()).thenReturn(initialServerDescription);
+        when(mockConnection.getBuffer(anyInt())).thenReturn(new ByteBufNIO(ByteBuffer.allocate(1024)));
+        when(mockConnection.receive(any(), any())).thenReturn(BsonDocument.parse(helloResponse));
+
+        // When
+        TestServerMonitorListener listener = createTestServerMonitorListener();
+        // Create monitor explicitly in POLL mode with long heartbeat frequency
+        DefaultServerMonitor monitor = new DefaultServerMonitor(
+                new ServerId(new ClusterId(), new ServerAddress()),
+                ServerSettings.builder()
+                        .heartbeatFrequency(10000, TimeUnit.MILLISECONDS)
+                        .serverMonitoringMode(com.mongodb.connection.ServerMonitoringMode.POLL)
+                        .addServerMonitorListener(listener)
+                        .build(),
+                createConnectionFactory(mockConnection),
+                ClusterConnectionMode.SINGLE,
+                null,
+                false,
+                SameObjectProvider.initialized(mock(SdamServerDescriptionManager.class)),
+                OPERATION_CONTEXT_FACTORY);
+        monitor.start();
+        this.monitor = monitor;
+
+        // Wait for heartbeat event - should happen quickly despite long heartbeatFrequency
+        listener.waitForEvents(ServerHeartbeatSucceededEvent.class, event -> true, 1, Duration.ofSeconds(2));
+        ServerHeartbeatStartedEvent startedEvent = getEvent(ServerHeartbeatStartedEvent.class, listener);
+        ServerHeartbeatSucceededEvent succeededEvent = getEvent(ServerHeartbeatSucceededEvent.class, listener);
+
+        // Then
+        assertEquals(connectionDescription.getConnectionId(), startedEvent.getConnectionId());
+        assertEquals(connectionDescription.getConnectionId(), succeededEvent.getConnectionId());
+        assertEquals(BsonDocument.parse(helloResponse), succeededEvent.getReply());
+        assertTrue(succeededEvent.getElapsedTime(TimeUnit.NANOSECONDS) > 0);
+        // The event should not be awaited in POLL mode
+        Assertions.assertFalse(succeededEvent.isAwaited());
     }
 
 
