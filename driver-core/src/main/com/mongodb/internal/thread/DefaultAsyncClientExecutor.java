@@ -17,6 +17,8 @@ package com.mongodb.internal.thread;
 
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.annotations.ThreadSafe;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
 
 import java.time.Duration;
@@ -32,15 +34,19 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.assertions.Assertions.assertFalse;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.internal.Locks.withLock;
-import static com.mongodb.internal.thread.CommonExecutor.commonExecutor;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 @ThreadSafe
 final class DefaultAsyncClientExecutor implements AsyncClientExecutor {
+    private static final Logger LOGGER = Loggers.getLogger("client");
+
     private final Executor backingExecutor;
+    @Nullable
+    private final MongoScheduledThreadPoolExecutor fallbackSingleThreadScheduler;
     private final Set<ScheduledRejectableRunnable> scheduledTasks;
     /**
      * While holding this lock, no application code may be executed, and driver code external to {@link DefaultAsyncClientExecutor}
@@ -51,8 +57,14 @@ final class DefaultAsyncClientExecutor implements AsyncClientExecutor {
     private final ReentrantLock closeLock;
     private volatile boolean closed;
 
+    /**
+     * @param backingExecutor See {@link #close()}.
+     */
     DefaultAsyncClientExecutor(final Executor backingExecutor) {
         this.backingExecutor = backingExecutor;
+        fallbackSingleThreadScheduler = backingExecutor instanceof ScheduledExecutorService
+                ? null
+                : new MongoScheduledThreadPoolExecutor(1, new DaemonThreadFactory("ClientScheduler"));
         scheduledTasks = ConcurrentHashMap.newKeySet();
         closeLock = new ReentrantLock();
         closed = false;
@@ -76,7 +88,21 @@ final class DefaultAsyncClientExecutor implements AsyncClientExecutor {
                 }
                 ScheduledFuture<?> scheduledFuture = (backingExecutor instanceof ScheduledExecutorService)
                         ? ((ScheduledExecutorService) backingExecutor).schedule(scheduledTask, delay.toNanos(), NANOSECONDS)
-                        : commonExecutor().schedule(scheduledTask, delay, backingExecutor);
+                        // TODO-JAVA-6291 https://jira.mongodb.org/browse/JAVA-6291 Remove `fallbackSingleThreadScheduler`,
+                        // instead use: `commonExecutor().schedule(scheduledTask, delay, backingExecutor)`.
+                        : assertNotNull(fallbackSingleThreadScheduler).schedule(
+                                () -> {
+                                    try {
+                                        backingExecutor.execute(scheduledTask);
+                                    } catch (Exception e) {
+                                        LOGGER.error(
+                                                format("The executor %s, which was likely provided by the application, either failed to execute"
+                                                        + " the scheduled task %s, or executed it in the same thread that invoked `execute`",
+                                                        backingExecutor, scheduledTask),
+                                                e);
+                                    }
+                                },
+                                delay.toNanos(), NANOSECONDS);
                 scheduledTask.onScheduled(scheduledFuture);
             });
         } catch (RejectedExecutionException rejectionCause) {
@@ -94,29 +120,35 @@ final class DefaultAsyncClientExecutor implements AsyncClientExecutor {
 
     @Override
     public void close() {
-        Collection<ScheduledRejectableRunnable> localScheduledTasks = new ArrayList<>();
-        withLock(closeLock, () -> {
-            if (closed) {
-                return;
-            }
-            closed = true;
-            // Here we do not care about any `ScheduledRejectableRunnable` added after the current critical section,
-            // because its `reject` is called by the method that added it.
-            localScheduledTasks.addAll(scheduledTasks);
-        });
-        Throwable primaryException = null;
         try {
-            for (ScheduledRejectableRunnable scheduledTask : localScheduledTasks) {
-                try {
-                    scheduledTask.reject(createClosedException());
-                } catch (Throwable t) {
-                    primaryException = suppressUnlessThereIsNoPrimary(primaryException, t);
+            Collection<ScheduledRejectableRunnable> localScheduledTasks = new ArrayList<>();
+            withLock(closeLock, () -> {
+                if (closed) {
+                    return;
                 }
+                closed = true;
+                // Here we do not care about any `ScheduledRejectableRunnable` added after the current critical section,
+                // because its `reject` is called by the method that added it.
+                localScheduledTasks.addAll(scheduledTasks);
+            });
+            Throwable primaryException = null;
+            try {
+                for (ScheduledRejectableRunnable scheduledTask : localScheduledTasks) {
+                    try {
+                        scheduledTask.reject(createClosedException());
+                    } catch (Throwable t) {
+                        primaryException = suppressUnlessThereIsNoPrimary(primaryException, t);
+                    }
+                }
+            } catch (Throwable t) {
+                primaryException = suppressUnlessThereIsNoPrimary(primaryException, t);
+            } finally {
+                rethrowAsUnchecked(primaryException);
             }
-        } catch (Throwable t) {
-            primaryException = suppressUnlessThereIsNoPrimary(primaryException, t);
         } finally {
-            rethrowAsUnchecked(primaryException);
+            if (fallbackSingleThreadScheduler != null) {
+                fallbackSingleThreadScheduler.shutdown();
+            }
         }
     }
 
@@ -146,6 +178,7 @@ final class DefaultAsyncClientExecutor implements AsyncClientExecutor {
     public String toString() {
         return "DefaultAsyncClientExecutor{"
                 + "backingExecutor=" + backingExecutor
+                + ", fallbackSingleThreadScheduler=" + fallbackSingleThreadScheduler
                 + ", scheduledTasks=" + scheduledTasks
                 + ", closed=" + closed
                 + '}';
@@ -190,7 +223,6 @@ final class DefaultAsyncClientExecutor implements AsyncClientExecutor {
         public String toString() {
             return "ScheduledRejectableRunnable{"
                     + "task=" + task
-                    + ", scheduledFuture=" + scheduledFuture
                     + '}';
         }
     }

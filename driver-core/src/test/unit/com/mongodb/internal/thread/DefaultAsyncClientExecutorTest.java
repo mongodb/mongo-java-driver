@@ -17,6 +17,7 @@ package com.mongodb.internal.thread;
 
 import com.mongodb.internal.thread.AsyncClientExecutor.RejectableRunnable;
 import com.mongodb.internal.time.StartTime;
+import com.mongodb.internal.time.Timeout;
 import io.netty.channel.EventLoopGroup;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,10 +34,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
+import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_EXPIRED;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -264,7 +267,89 @@ class DefaultAsyncClientExecutorTest {
         assertEquals(3, completionCount.get());
     }
 
-    private static void waitForCompletion(final Future<Void> future, final Duration duration) {
+    @Test
+    void concurrency() {
+        ExecutorService executorA = Executors.newSingleThreadExecutor();
+        ExecutorService executorB = Executors.newSingleThreadExecutor();
+        try {
+            for (int i = 0; i < 500; i++) {
+                try (DefaultAsyncClientExecutor backedByExecutorService = new DefaultAsyncClientExecutor(executorService);
+                     DefaultAsyncClientExecutor backedByScheduledExecutorService = new DefaultAsyncClientExecutor(scheduledExecutorService)) {
+                    assertAll(
+                            () -> assertConcurrency(backedByExecutorService, executorA, executorB),
+                            () -> assertConcurrency(backedByScheduledExecutorService, executorA, executorB)
+                    );
+                }
+            }
+        } finally {
+            executorA.shutdownNow();
+            executorB.shutdownNow();
+        }
+    }
+
+    private static void assertConcurrency(
+            final DefaultAsyncClientExecutor clientExecutor,
+            final ExecutorService executorA,
+            final ExecutorService executorB) throws Exception {
+        int maxDelayMillis = 15;
+        AtomicInteger completionCount = new AtomicInteger();
+        int tasksCount = 10;
+        Runnable schedule = () -> {
+            for (int i = 0; i < tasksCount; i++) {
+                clientExecutor.schedule(
+                        RejectableRunnable.from((result, t) -> completionCount.incrementAndGet()),
+                        Duration.ofMillis(ThreadLocalRandom.current().nextInt(maxDelayMillis)));
+            }
+        };
+        Runnable close = () -> {
+            ThreadUtil.sleep(Duration.ofMillis(ThreadLocalRandom.current().nextInt(maxDelayMillis / 2)));
+            clientExecutor.close();
+        };
+        Future<?> scheduleFuture;
+        Future<?> closeFuture;
+        int executionVariant = ThreadLocalRandom.current().nextInt(4);
+        String message = "executionVariant=" + executionVariant;
+        switch (executionVariant) {
+            case 0: {
+                scheduleFuture = executorA.submit(schedule);
+                closeFuture = executorB.submit(close);
+                break;
+            }
+            case 1: {
+                closeFuture = executorB.submit(close);
+                scheduleFuture = executorA.submit(schedule);
+                break;
+            }
+            case 2: {
+                scheduleFuture = executorA.submit(schedule);
+                closeFuture = executorA.submit(close);
+                break;
+            }
+            case 3: {
+                closeFuture = executorA.submit(close);
+                scheduleFuture = executorA.submit(schedule);
+                break;
+            }
+            default: {
+                throw com.mongodb.assertions.Assertions.fail(message);
+            }
+        }
+        int waitMillis = maxDelayMillis * 2;
+        assertDoesNotThrow(() -> scheduleFuture.get(waitMillis, MILLISECONDS), message);
+        assertDoesNotThrow(() -> closeFuture.get(waitMillis, MILLISECONDS), message);
+        // Completion of a task is not guaranteed to happen before completion of `closeFuture`,
+        // because a task that is being executed concurrently with `DefaultAsyncClientExecutor.close`
+        // is not guaranteed to be completed before (in the happens-before order) `close` returns.
+        // So we have to wait for tasks separately.
+        Timeout tasksTimeout = Timeout.expiresIn(maxDelayMillis, MILLISECONDS, ZERO_DURATION_MEANS_EXPIRED);
+        while (completionCount.get() < tasksCount) {
+            tasksTimeout.onExpired(() -> fail("Not all tasks were completed. " + message));
+            Thread.sleep(1);
+        }
+        assertEquals(tasksCount, completionCount.get(), message);
+    }
+
+    private static void waitForCompletion(final Future<?> future, final Duration duration) {
         try {
             future.get(duration.toNanos(), NANOSECONDS);
         } catch (InterruptedException e) {
