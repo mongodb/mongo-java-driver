@@ -250,7 +250,7 @@ public class WithTransactionProseTest extends DatabaseTestCase {
     public void testExponentialBackoffOnTransientError() throws InterruptedException {
         BsonDocument failPointDocument = BsonDocument.parse("{'configureFailPoint': 'failCommand', 'mode': {'times': 3}, "
                 + "'data': {'failCommands': ['insert'], 'errorCode': 112, "
-                + "'errorLabels': ['TransientTransactionError']}}");
+                + "'errorLabels': ['" + MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL + "']}}");
 
         try (ClientSession session = client.startSession();
              FailPoint ignored = FailPoint.enable(failPointDocument, getPrimary())) {
