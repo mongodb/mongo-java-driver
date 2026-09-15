@@ -74,7 +74,7 @@ public class DomainNameUtils {
         return false;
     }
 
-    private static boolean isTopLevelDomain(String suffix) {
+    private static boolean isTopLevelDomain(final String suffix) {
         try (Scanner scanner = new Scanner(Objects.requireNonNull(
                 DomainNameUtils.class.getResourceAsStream("public_suffix_list.dat"), "Missing DNS suffix list"))) {
             int firstDot = suffix.indexOf('.');
