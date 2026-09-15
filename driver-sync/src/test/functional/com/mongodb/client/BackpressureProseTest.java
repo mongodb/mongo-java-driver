@@ -144,6 +144,24 @@ public class BackpressureProseTest {
     }
 
     /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/client-backpressure/tests/README.md#test-3-overload-errors-are-retried-a-maximum-of-max_retries-times">
+     * Test 3: Overload Errors are Retried a Maximum of {@code MAX_RETRIES} times</a>.
+     */
+    @Test
+    void overloadErrorsAreRetriedAtMostMaxRetriesTimes() throws InterruptedException {
+        overloadErrorsAreRetriedLimitedNumberOfTimes(null);
+    }
+
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/client-backpressure/tests/README.md#test-4-overload-errors-are-retried-a-maximum-of-maxadaptiveretries-times-when-configured">
+     * Test 4: Overload Errors are Retried a Maximum of {@code maxAdaptiveRetries} times when configured</a>.
+     */
+    @Test
+    void overloadErrorsAreRetriedAtMostMaxAdaptiveRetriesTimesWhenConfigured() throws InterruptedException {
+        overloadErrorsAreRetriedLimitedNumberOfTimes(1);
+    }
+
+    /**
      * <a href="https://github.com/mongodb/specifications/blob/master/source/client-backpressure/tests/README.md#test-5-overload-errors-with-basebackoffms-override-base-backoff">
      * Test 5: Overload Errors with baseBackoffMS override base backoff</a>.
      */
@@ -186,24 +204,6 @@ public class BackpressureProseTest {
                 ExponentialBackoff.clearTestJitterSupplier();
             }
         }
-    }
-
-    /**
-     * <a href="https://github.com/mongodb/specifications/blob/master/source/client-backpressure/tests/README.md#test-3-overload-errors-are-retried-a-maximum-of-max_retries-times">
-     * Test 3: Overload Errors are Retried a Maximum of {@code MAX_RETRIES} times</a>.
-     */
-    @Test
-    void overloadErrorsAreRetriedAtMostMaxRetriesTimes() throws InterruptedException {
-        overloadErrorsAreRetriedLimitedNumberOfTimes(null);
-    }
-
-    /**
-     * <a href="https://github.com/mongodb/specifications/blob/master/source/client-backpressure/tests/README.md#test-4-overload-errors-are-retried-a-maximum-of-maxadaptiveretries-times-when-configured">
-     * Test 4: Overload Errors are Retried a Maximum of {@code maxAdaptiveRetries} times when configured</a>.
-     */
-    @Test
-    void overloadErrorsAreRetriedAtMostMaxAdaptiveRetriesTimesWhenConfigured() throws InterruptedException {
-        overloadErrorsAreRetriedLimitedNumberOfTimes(1);
     }
 
     private void overloadErrorsAreRetriedLimitedNumberOfTimes(@Nullable final Integer maxAdaptiveRetries)
