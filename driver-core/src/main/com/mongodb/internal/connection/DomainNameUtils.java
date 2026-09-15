@@ -77,11 +77,11 @@ public class DomainNameUtils {
     private static boolean isTopLevelDomain(String suffix) {
         try (Scanner scanner = new Scanner(Objects.requireNonNull(
                 DomainNameUtils.class.getResourceAsStream("public_suffix_list.dat"), "Missing DNS suffix list"))) {
-            String line;
             int firstDot = suffix.indexOf('.');
             String rootDomain = firstDot >= 0 ? suffix.substring(firstDot + 1) : suffix;
             boolean invalidMatchWildcard = false;
-            while ((line = scanner.nextLine()) != null) {
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
                 if (line.startsWith("//") || line.isEmpty()) {
                     continue;
                 }
