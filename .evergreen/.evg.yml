@@ -2596,7 +2596,9 @@ buildvariants:
 
   - matrix_name: "otel-tracing"
     # auth: exercises prose Test 7 (no server spans for auth/monitoring commands) as written.
-    matrix_spec: { auth: "auth", ssl: "nossl", jdk: "jdk21", version: [ "latest" ], topology: "standalone", os: [ "linux", "macos-arm64" ] }
+    # linux only: macOS server binaries are not compiled with OpenTelemetry support (requires_otel_build),
+    # so no span files are ever exported there — re-add "macos-arm64" if that changes.
+    matrix_spec: { auth: "auth", ssl: "nossl", jdk: "jdk21", version: [ "latest" ], topology: "standalone", os: "linux" }
     display_name: "OTel Tracing ${version} ${topology} ${os}"
     tags: [ "tests-variant" ]
     tasks:
