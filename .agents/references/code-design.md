@@ -21,6 +21,6 @@ description: Design rules for implementation code in the MongoDB Java Driver. Us
   It should be created and managed either by `CommonExecutor`, `AsyncClientExecutor`,
   or a class whose instance is accessible via them. This may require changing their design, implementation, documentation. 
 - When instantiating an executor, prefer the `MongoThreadPoolExecutor` and `MongoScheduledThreadPoolExecutor` implementations.
-- Use daemon threads, see `DaemonThreadFactory`.
+- Must use daemon threads, see `DaemonThreadFactory`.
 - Any task executed, submitted, or scheduled via an executor must not allow an `Exception` to be propagated;
   `Error`s should generally not be caught, but if they are, they must still be propagated.
