@@ -16,7 +16,6 @@
 package com.mongodb.internal.connection;
 
 import java.net.IDN;
-import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Scanner;
@@ -87,7 +86,7 @@ public class DomainNameUtils {
         try (Scanner scanner = new Scanner(
                 Objects.requireNonNull(
                         DomainNameUtils.class.getResourceAsStream("public_suffix_list.dat"), "Missing DNS suffix list"),
-                StandardCharsets.UTF_8)) {
+                "UTF-8")) {
             int firstDot = suffix.indexOf('.');
             String rootDomain = firstDot >= 0 ? suffix.substring(firstDot + 1) : suffix;
             boolean invalidMatchWildcard = false;
