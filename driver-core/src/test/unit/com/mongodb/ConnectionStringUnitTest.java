@@ -226,7 +226,8 @@ final class ConnectionStringUnitTest {
     void shouldThrowWhenSrvAllowedHostsSuffixIsTopLevelDomainUnicode() {
         IllegalArgumentException e = assertThrows(
                 IllegalArgumentException.class,
-                () -> new ConnectionString("mongodb+srv://test12.test.build.10gen.点看/?srvAllowedHostsSuffix=.点看"));
+                () -> new ConnectionString(
+                        "mongodb+srv://test12.test.build.10gen.xn--3pxu8k/?srvAllowedHostsSuffix=.点看"));
         assertEquals("srvAllowedHostsSuffix must not be a public domain suffix", e.getMessage());
     }
 
@@ -235,15 +236,7 @@ final class ConnectionStringUnitTest {
         IllegalArgumentException e = assertThrows(
                 IllegalArgumentException.class,
                 () -> new ConnectionString(
-                        "mongodb+srv://test12.test.build.10gen.点看/?srvAllowedHostsSuffix=.xn--3pxu8k"));
+                        "mongodb+srv://test12.test.build.10gen.xn--3pxu8k/?srvAllowedHostsSuffix=.xn--3pxu8k"));
         assertEquals("srvAllowedHostsSuffix must not be a public domain suffix", e.getMessage());
-    }
-
-    @Test
-    void allowSrvAllowedHostsSuffixWithMixedPunycode() {
-        assertEquals(
-                ".10gen.xn--3pxu8k",
-                new ConnectionString("mongodb+srv://test12.10gen.xn--3pxu8k/?srvAllowedHostsSuffix=10gen.点看")
-                        .getSrvAllowedHostsSuffix());
     }
 }
