@@ -201,7 +201,7 @@ final class ConnectionStringUnitTest {
         IllegalArgumentException e = assertThrows(
                 IllegalArgumentException.class,
                 () -> new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=.cc"));
-        assertEquals("srvAllowedHostsSuffix must not be a top-level domain", e.getMessage());
+        assertEquals("srvAllowedHostsSuffix must not be a public domain suffix", e.getMessage());
     }
 
     @Test
@@ -210,7 +210,7 @@ final class ConnectionStringUnitTest {
         IllegalArgumentException e = assertThrows(
                 IllegalArgumentException.class,
                 () -> new ConnectionString("mongodb+srv://test12.10gen.ck/?srvAllowedHostsSuffix=.ck"));
-        assertEquals("srvAllowedHostsSuffix must not be a top-level domain", e.getMessage());
+        assertEquals("srvAllowedHostsSuffix must not be a public domain suffix", e.getMessage());
     }
 
     @Test
@@ -227,7 +227,7 @@ final class ConnectionStringUnitTest {
         IllegalArgumentException e = assertThrows(
                 IllegalArgumentException.class,
                 () -> new ConnectionString("mongodb+srv://test12.test.build.10gen.点看/?srvAllowedHostsSuffix=.点看"));
-        assertEquals("srvAllowedHostsSuffix must not be a top-level domain", e.getMessage());
+        assertEquals("srvAllowedHostsSuffix must not be a public domain suffix", e.getMessage());
     }
 
     @Test
@@ -236,7 +236,7 @@ final class ConnectionStringUnitTest {
                 IllegalArgumentException.class,
                 () -> new ConnectionString(
                         "mongodb+srv://test12.test.build.10gen.点看/?srvAllowedHostsSuffix=.xn--3pxu8k"));
-        assertEquals("srvAllowedHostsSuffix must not be a top-level domain", e.getMessage());
+        assertEquals("srvAllowedHostsSuffix must not be a public domain suffix", e.getMessage());
     }
 
     @Test

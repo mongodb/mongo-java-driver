@@ -35,13 +35,13 @@ public class DomainNameUtils {
      * Validates and normalizes a {@code srvAllowedHostsSuffix} value for use as the domain in SRV host validation.
      * A leading {@code "."} is prepended if absent, so the returned value always begins with {@code "."}; this is what
      * is stored and returned to callers. The suffix must contain at least one non-empty domain label and no
-     * whitespace; an overly broad suffix is permitted and is the caller's responsibility.
+     * whitespace. An overly broad suffix is restricted based on a public suffix list.
      *
      * @param srvAllowedHostsSuffix the non-null suffix to validate
      * @return the normalized suffix, always beginning with {@code "."}
      * @throws IllegalArgumentException if the suffix contains whitespace, contains no domain label (it is empty or
-     * consists only of a leading {@code "."}), or contains an empty domain label (consecutive {@code "."} characters
-     * or a trailing {@code "."})
+     * consists only of a leading {@code "."}), contains an empty domain label (consecutive {@code "."} characters
+     * or a trailing {@code "."}), or, is a public domain suffix (e.g., top-level domain, AWS data center)
      */
     public static String normalizeSrvAllowedHostsSuffix(final String srvAllowedHostsSuffix) {
         if (containsWhitespace(srvAllowedHostsSuffix)) {
@@ -60,8 +60,8 @@ public class DomainNameUtils {
                 throw new IllegalArgumentException("srvAllowedHostsSuffix must not contain empty domain labels");
             }
         }
-        if (isTopLevelDomain(labels)) {
-            throw new IllegalArgumentException("srvAllowedHostsSuffix must not be a top-level domain");
+        if (isPublicSuffix(labels)) {
+            throw new IllegalArgumentException("srvAllowedHostsSuffix must not be a public domain suffix");
         }
         return "." + labels;
     }
@@ -75,7 +75,7 @@ public class DomainNameUtils {
         return false;
     }
 
-    private static boolean isTopLevelDomain(final String suffix) {
+    private static boolean isPublicSuffix(final String suffix) {
         try (Scanner scanner = new Scanner(Objects.requireNonNull(
                 DomainNameUtils.class.getResourceAsStream("public_suffix_list.dat"), "Missing DNS suffix list"))) {
             int firstDot = suffix.indexOf('.');
