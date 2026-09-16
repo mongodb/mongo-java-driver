@@ -16,6 +16,8 @@
 package com.mongodb.internal.connection;
 
 import java.net.IDN;
+import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Scanner;
 import java.util.regex.Pattern;
@@ -24,8 +26,8 @@ import java.util.regex.Pattern;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class DomainNameUtils {
-    private static final Pattern DOMAIN_PATTERN =
-            Pattern.compile("^(?=.{1,255}$)((([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,63}|localhost))$");
+    private static final Pattern DOMAIN_PATTERN = Pattern.compile(
+            "^(?=.{1,255}$)((([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,63}|localhost))$");
 
     static boolean isDomainName(final String domainName) {
         return DOMAIN_PATTERN.matcher(domainName).matches();
@@ -50,7 +52,13 @@ public class DomainNameUtils {
         // A single leading '.' is allowed (it is the documented suffix form); everything after it must be one or more
         // non-empty domain labels.
         boolean hasLeadingDot = srvAllowedHostsSuffix.startsWith(".");
-        String labels = IDN.toASCII(hasLeadingDot ? srvAllowedHostsSuffix.substring(1) : srvAllowedHostsSuffix);
+        String labels = IDN.toASCII(
+                        hasLeadingDot ? srvAllowedHostsSuffix.substring(1) : srvAllowedHostsSuffix,
+                        IDN.ALLOW_UNASSIGNED)
+                .toLowerCase(Locale.ROOT);
+        if (!isDomainName(labels)) {
+            throw new IllegalArgumentException("srvAllowedHostsSuffix is not a valid domain");
+        }
         if (labels.isEmpty()) {
             throw new IllegalArgumentException("srvAllowedHostsSuffix must contain at least one domain label");
         }
@@ -76,8 +84,10 @@ public class DomainNameUtils {
     }
 
     private static boolean isPublicSuffix(final String suffix) {
-        try (Scanner scanner = new Scanner(Objects.requireNonNull(
-                DomainNameUtils.class.getResourceAsStream("public_suffix_list.dat"), "Missing DNS suffix list"))) {
+        try (Scanner scanner = new Scanner(
+                Objects.requireNonNull(
+                        DomainNameUtils.class.getResourceAsStream("public_suffix_list.dat"), "Missing DNS suffix list"),
+                StandardCharsets.UTF_8)) {
             int firstDot = suffix.indexOf('.');
             String rootDomain = firstDot >= 0 ? suffix.substring(firstDot + 1) : suffix;
             boolean invalidMatchWildcard = false;
@@ -87,11 +97,11 @@ public class DomainNameUtils {
                     continue;
                 }
                 if (line.startsWith("!")) {
-                    if (invalidMatchWildcard && suffix.equals(IDN.toASCII(line.substring(1)))) {
+                    if (invalidMatchWildcard && suffix.equals(IDN.toASCII(line.substring(1), IDN.ALLOW_UNASSIGNED))) {
                         return false;
                     }
                 } else if (line.startsWith("*")) {
-                    String lineSuffix = IDN.toASCII(line.substring(2));
+                    String lineSuffix = IDN.toASCII(line.substring(2), IDN.ALLOW_UNASSIGNED);
                     if (suffix.equals(lineSuffix) || rootDomain.equals(lineSuffix)) {
                         invalidMatchWildcard = true;
                     }
@@ -99,7 +109,7 @@ public class DomainNameUtils {
                     if (invalidMatchWildcard) {
                         return true;
                     }
-                    if (suffix.equals(IDN.toASCII(line))) {
+                    if (suffix.equals(IDN.toASCII(line, IDN.ALLOW_UNASSIGNED))) {
                         return true;
                     }
                 }

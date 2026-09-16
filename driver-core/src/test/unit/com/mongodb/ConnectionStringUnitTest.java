@@ -197,6 +197,15 @@ final class ConnectionStringUnitTest {
     }
 
     @Test
+    void shouldThrowWhenSrvAllowedHostsSuffixIsNotDomain() {
+        IllegalArgumentException e = assertThrows(
+                IllegalArgumentException.class,
+                () -> new ConnectionString(
+                        "mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=.*.10gen.cc"));
+        assertEquals("srvAllowedHostsSuffix is not a valid domain", e.getMessage());
+    }
+
+    @Test
     void shouldThrowWhenSrvAllowedHostsSuffixIsTopLevelDomain() {
         IllegalArgumentException e = assertThrows(
                 IllegalArgumentException.class,
