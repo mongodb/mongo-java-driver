@@ -85,6 +85,14 @@ final class ConnectionStringUnitTest {
     }
 
     @Test
+    void shouldNotBeEqualWhenSrvAllowedHostsSuffixDiffers() {
+        ConnectionString first = new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=.build.10gen.cc");
+        ConnectionString second = new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=.other.10gen.cc");
+        assertNotEquals(first, second);
+        assertNotEquals(first.hashCode(), second.hashCode());
+    }
+
+    @Test
     void serverMonitoringMode() {
         assertAll(
                 () -> assertEquals(ServerMonitoringMode.POLL,
@@ -108,5 +116,136 @@ final class ConnectionStringUnitTest {
         IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> new ConnectionString(input));
         assertFalse(exception.getMessage().contains("bar"));
         assertFalse(exception.getMessage().contains("12345678"));
+    }
+
+    @Test
+    void shouldParseSrvAllowedHostsSuffixWithLeadingDot() {
+        assertEquals(".build.10gen.cc",
+                new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=.build.10gen.cc")
+                        .getSrvAllowedHostsSuffix());
+    }
+
+    @Test
+    void shouldNormalizeSrvAllowedHostsSuffixWithoutLeadingDot() {
+        // a leading "." is prepended at parse time, so the stored/returned value always begins with "."
+        assertEquals(".build.10gen.cc",
+                new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=build.10gen.cc")
+                        .getSrvAllowedHostsSuffix());
+    }
+
+    @Test
+    void shouldDefaultSrvAllowedHostsSuffixToNull() {
+        assertNull(new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/").getSrvAllowedHostsSuffix());
+    }
+
+    @Test
+    void shouldThrowWhenSrvAllowedHostsSuffixUsedWithNonSrvUri() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> new ConnectionString("mongodb://localhost/?srvAllowedHostsSuffix=.build.10gen.cc"));
+        assertEquals("srvAllowedHostsSuffix can only be specified with mongodb+srv protocol", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenSrvAllowedHostsSuffixIsEmpty() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix="));
+        assertEquals("srvAllowedHostsSuffix must contain at least one domain label", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenSrvAllowedHostsSuffixIsOnlyADot() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=."));
+        assertEquals("srvAllowedHostsSuffix must contain at least one domain label", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenSrvAllowedHostsSuffixIsOnlyDots() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=.."));
+        assertEquals("srvAllowedHostsSuffix must not contain empty domain labels", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenSrvAllowedHostsSuffixHasLeadingDoubleDot() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=..build.10gen.cc"));
+        assertEquals("srvAllowedHostsSuffix must not contain empty domain labels", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenSrvAllowedHostsSuffixHasEmptyInteriorLabel() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=build..10gen.cc"));
+        assertEquals("srvAllowedHostsSuffix must not contain empty domain labels", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenSrvAllowedHostsSuffixHasTrailingDot() {
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=.build.10gen.cc."));
+        assertEquals("srvAllowedHostsSuffix must not contain empty domain labels", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenSrvAllowedHostsSuffixContainsWhitespace() {
+        IllegalArgumentException e = assertThrows(
+                IllegalArgumentException.class,
+                () -> new ConnectionString(
+                        "mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=.build.10gen.cc%20"));
+        assertEquals("srvAllowedHostsSuffix must not contain whitespace", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenSrvAllowedHostsSuffixIsNotDomain() {
+        IllegalArgumentException e = assertThrows(
+                IllegalArgumentException.class,
+                () -> new ConnectionString(
+                        "mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=.*.10gen.cc"));
+        assertEquals("srvAllowedHostsSuffix is not a valid domain", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenSrvAllowedHostsSuffixIsTopLevelDomain() {
+        IllegalArgumentException e = assertThrows(
+                IllegalArgumentException.class,
+                () -> new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=.cc"));
+        assertEquals("srvAllowedHostsSuffix must not be a public domain suffix", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenSrvAllowedHostsSuffixIsTopLevelDomainWildcard() {
+        // *.ck is disallowed, but www.ck is permitted by exception
+        IllegalArgumentException e = assertThrows(
+                IllegalArgumentException.class,
+                () -> new ConnectionString("mongodb+srv://test12.10gen.ck/?srvAllowedHostsSuffix=.ck"));
+        assertEquals("srvAllowedHostsSuffix must not be a public domain suffix", e.getMessage());
+    }
+
+    @Test
+    void allowSrvAllowedHostsSuffixWithExemptWildcard() {
+        // *.ck is disallowed, but www.ck is permitted by exception
+        assertEquals(
+                ".www.ck",
+                new ConnectionString("mongodb+srv://test12.www.ck/?srvAllowedHostsSuffix=www.ck")
+                        .getSrvAllowedHostsSuffix());
+    }
+
+    @Test
+    void shouldThrowWhenSrvAllowedHostsSuffixIsTopLevelDomainUnicode() {
+        IllegalArgumentException e = assertThrows(
+                IllegalArgumentException.class,
+                () -> new ConnectionString(
+                        "mongodb+srv://test12.test.build.10gen.xn--3pxu8k/?srvAllowedHostsSuffix=.点看"));
+        assertEquals("srvAllowedHostsSuffix must not be a public domain suffix", e.getMessage());
+    }
+
+    @Test
+    void shouldThrowWhenSrvAllowedHostsSuffixIsTopLevelDomainPunycode() {
+        IllegalArgumentException e = assertThrows(
+                IllegalArgumentException.class,
+                () -> new ConnectionString(
+                        "mongodb+srv://test12.test.build.10gen.xn--3pxu8k/?srvAllowedHostsSuffix=.xn--3pxu8k"));
+        assertEquals("srvAllowedHostsSuffix must not be a public domain suffix", e.getMessage());
     }
 }

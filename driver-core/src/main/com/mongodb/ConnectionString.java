@@ -53,6 +53,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.mongodb.MongoCredential.ALLOWED_HOSTS_KEY;
+import static com.mongodb.internal.connection.DomainNameUtils.normalizeSrvAllowedHostsSuffix;
 import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateCreateOidcCredential;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -265,6 +266,8 @@ import static java.util.Collections.unmodifiableList;
  * <ul>
  * <li>{@code srvServiceName=string}: The SRV service name. See {@link ClusterSettings#getSrvServiceName()} for details.</li>
  * <li>{@code srvMaxHosts=number}: The maximum number of hosts from the SRV record to connect to.</li>
+ * <li>{@code srvAllowedHostsSuffix=string}: The hostname suffix used to validate hosts returned via SRV lookup, replacing the domain
+ * inferred from the SRV host name. Only valid with the mongodb+srv protocol.</li>
  * </ul>
  * <p>General configuration:</p>
  * <ul>
@@ -302,6 +305,7 @@ public class ConnectionString {
 
     private Integer srvMaxHosts;
     private String srvServiceName;
+    private String srvAllowedHostsSuffix;
     private Boolean directConnection;
     private Boolean loadBalanced;
     private ReadPreference readPreference;
@@ -479,6 +483,14 @@ public class ConnectionString {
             throw new IllegalArgumentException("srvServiceName can only be specified with mongodb+srv protocol");
         }
 
+        if (!isSrvProtocol && srvAllowedHostsSuffix != null) {
+            throw new IllegalArgumentException("srvAllowedHostsSuffix can only be specified with mongodb+srv protocol");
+        }
+
+        if (srvAllowedHostsSuffix != null) {
+            srvAllowedHostsSuffix = normalizeSrvAllowedHostsSuffix(srvAllowedHostsSuffix);
+        }
+
         if (directConnection != null && directConnection) {
             if (isSrvProtocol) {
                 throw new IllegalArgumentException("Direct connections are not supported when using mongodb+srv protocol");
@@ -568,6 +580,7 @@ public class ConnectionString {
 
         GENERAL_OPTIONS_KEYS.add("srvmaxhosts");
         GENERAL_OPTIONS_KEYS.add("srvservicename");
+        GENERAL_OPTIONS_KEYS.add("srvallowedhostssuffix");
 
         COMPRESSOR_KEYS.add("compressors");
         COMPRESSOR_KEYS.add("zlibcompressionlevel");
@@ -723,6 +736,9 @@ public class ConnectionString {
                     break;
                 case "srvservicename":
                     srvServiceName = value;
+                    break;
+                case "srvallowedhostssuffix":
+                    srvAllowedHostsSuffix = value;
                     break;
                 default:
                     break;
@@ -1356,6 +1372,22 @@ public class ConnectionString {
     }
 
     /**
+     * Gets the SRV allowed hosts suffix.
+     *
+     * <p>If present, its value is used as the domain for SRV host name validation, replacing the domain inferred from
+     * the SRV host name. The value is normalized: a leading {@code "."} is prepended if absent, so the returned value
+     * always begins with {@code "."}.</p>
+     *
+     * @return the normalized SRV allowed hosts suffix, always beginning with {@code "."}. Defaults to null.
+     * @since 5.9
+     * @see ClusterSettings#getSrvAllowedHostsSuffix()
+     */
+    @Nullable
+    public String getSrvAllowedHostsSuffix() {
+        return srvAllowedHostsSuffix;
+    }
+
+    /**
      * Gets the list of hosts
      *
      * @return the host list
@@ -1820,7 +1852,8 @@ public class ConnectionString {
                 && Objects.equals(compressorList, that.compressorList)
                 && Objects.equals(uuidRepresentation, that.uuidRepresentation)
                 && Objects.equals(srvServiceName, that.srvServiceName)
-                && Objects.equals(srvMaxHosts, that.srvMaxHosts);
+                && Objects.equals(srvMaxHosts, that.srvMaxHosts)
+                && Objects.equals(srvAllowedHostsSuffix, that.srvAllowedHostsSuffix);
     }
 
     @Override
@@ -1829,7 +1862,7 @@ public class ConnectionString {
                 writeConcern, retryWrites, retryReads, readConcern, minConnectionPoolSize, maxConnectionPoolSize, maxWaitTime,
                 maxConnectionIdleTime, maxConnectionLifeTime, maxConnecting, connectTimeout, timeout, socketTimeout, sslEnabled,
                 sslInvalidHostnameAllowed, requiredReplicaSetName, serverSelectionTimeout, localThreshold, heartbeatFrequency,
-                serverMonitoringMode, applicationName, compressorList, uuidRepresentation, srvServiceName, srvMaxHosts, proxyHost,
-                proxyPort, proxyUsername, proxyPassword);
+                serverMonitoringMode, applicationName, compressorList, uuidRepresentation, srvServiceName, srvMaxHosts,
+                srvAllowedHostsSuffix, proxyHost, proxyPort, proxyUsername, proxyPassword);
     }
 }

@@ -107,11 +107,78 @@ class ClusterSettingsSpecification extends Specification {
                 .hosts([new ServerAddress('localhost')])
                 .srvMaxHosts(4)
                 .srvServiceName('foo')
+                .srvAllowedHostsSuffix('.build.10gen.cc')
                 .build()
 
         expect:
         ClusterSettings.builder().applySettings(customSettings).build() == customSettings
         ClusterSettings.builder(customSettings).applySettings(defaultSettings).build() == defaultSettings
+    }
+
+    def 'should set srvAllowedHostsSuffix'() {
+        when:
+        def settings = ClusterSettings.builder().srvHost('test12.test.build.10gen.cc')
+                .srvAllowedHostsSuffix('.build.10gen.cc').build()
+
+        then:
+        settings.srvAllowedHostsSuffix == '.build.10gen.cc'
+    }
+
+    def 'should normalize srvAllowedHostsSuffix without a leading dot'() {
+        when:
+        def settings = ClusterSettings.builder().srvHost('test12.test.build.10gen.cc')
+                .srvAllowedHostsSuffix('build.10gen.cc').build()
+
+        then:
+        settings.srvAllowedHostsSuffix == '.build.10gen.cc'
+    }
+
+    def 'should default srvAllowedHostsSuffix to null'() {
+        expect:
+        ClusterSettings.builder().hosts([new ServerAddress()]).build().srvAllowedHostsSuffix == null
+    }
+
+    def 'should apply srvAllowedHostsSuffix from connection string'() {
+        when:
+        def settings = ClusterSettings.builder().applyConnectionString(
+                new ConnectionString('mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=.build.10gen.cc')).build()
+
+        then:
+        settings.srvAllowedHostsSuffix == '.build.10gen.cc'
+    }
+
+    def 'should apply srvAllowedHostsSuffix from connection string when loadBalanced'() {
+        when:
+        def settings = ClusterSettings.builder().applyConnectionString(
+                new ConnectionString('mongodb+srv://test12.test.build.10gen.cc/'
+                        + '?loadBalanced=true&srvAllowedHostsSuffix=.build.10gen.cc')).build()
+
+        then:
+        settings.mode == ClusterConnectionMode.LOAD_BALANCED
+        settings.srvAllowedHostsSuffix == '.build.10gen.cc'
+    }
+
+    def 'should apply srvServiceName from connection string when loadBalanced'() {
+        when:
+        def settings = ClusterSettings.builder().applyConnectionString(
+                new ConnectionString('mongodb+srv://test12.test.build.10gen.cc/'
+                        + '?loadBalanced=true&srvServiceName=customname')).build()
+
+        then:
+        settings.mode == ClusterConnectionMode.LOAD_BALANCED
+        settings.srvServiceName == 'customname'
+    }
+
+    def 'should throw IllegalArgumentException for invalid srvAllowedHostsSuffix'() {
+        when:
+        ClusterSettings.builder().srvHost('test12.test.build.10gen.cc').srvAllowedHostsSuffix(suffix)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        where:
+        suffix << ['', '   ', '.', '..', '...', ' .build.10gen.cc', '.build.10gen.cc ',
+                   '..build.10gen.cc', 'build..10gen.cc', '.build.10gen.cc.']
     }
 
     def 'when hosts contains more than one element and mode is SINGLE, should throw IllegalArgumentException'() {

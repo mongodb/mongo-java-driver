@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.DomainNameUtils.normalizeSrvAllowedHostsSuffix;
 import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
@@ -50,6 +51,7 @@ public final class ClusterSettings {
     private final String srvHost;
     private final Integer srvMaxHosts;
     private final String srvServiceName;
+    private final String srvAllowedHostsSuffix;
     private final List<ServerAddress> hosts;
     private final ClusterConnectionMode mode;
     private final ClusterType requiredClusterType;
@@ -88,6 +90,7 @@ public final class ClusterSettings {
         private String srvHost;
         private Integer srvMaxHosts;
         private String srvServiceName = "mongodb";
+        private String srvAllowedHostsSuffix;
         private List<ServerAddress> hosts = DEFAULT_HOSTS;
         private ClusterConnectionMode mode;
         private ClusterType requiredClusterType = ClusterType.UNKNOWN;
@@ -114,6 +117,7 @@ public final class ClusterSettings {
             srvHost = clusterSettings.srvHost;
             srvServiceName = clusterSettings.srvServiceName;
             srvMaxHosts = clusterSettings.srvMaxHosts;
+            srvAllowedHostsSuffix = clusterSettings.srvAllowedHostsSuffix;
             hosts = clusterSettings.hosts;
             mode = clusterSettings.mode;
             requiredReplicaSetName = clusterSettings.requiredReplicaSetName;
@@ -182,6 +186,26 @@ public final class ClusterSettings {
         */
         public Builder srvServiceName(final String srvServiceName) {
             this.srvServiceName = notNull("srvServiceName", srvServiceName);
+            return this;
+        }
+
+        /**
+         * Sets the SRV allowed hosts suffix used to validate hosts returned via SRV lookup.
+         *
+         * <p>If set, its value is used as the domain for SRV host name validation, replacing the domain inferred from
+         * the SRV host name. The value is normalized: a leading {@code "."} is prepended if absent, so
+         * {@link #getSrvAllowedHostsSuffix()} always returns a value beginning with {@code "."}. This setting is only
+         * used with SRV. Specifying an overly broad suffix (for example a bare TLD) weakens SRV host name validation and
+         * is the responsibility of the caller.</p>
+         *
+         * @param srvAllowedHostsSuffix the SRV allowed hosts suffix; may not be null or empty
+         * @return this
+         * @since 5.9
+         * @see #getSrvAllowedHostsSuffix()
+         */
+        public Builder srvAllowedHostsSuffix(final String srvAllowedHostsSuffix) {
+            notNull("srvAllowedHostsSuffix", srvAllowedHostsSuffix);
+            this.srvAllowedHostsSuffix = normalizeSrvAllowedHostsSuffix(srvAllowedHostsSuffix);
             return this;
         }
 
@@ -328,6 +352,7 @@ public final class ClusterSettings {
                 mode(ClusterConnectionMode.LOAD_BALANCED);
                 if (connectionString.isSrvProtocol()) {
                     srvHost(connectionString.getHosts().get(0));
+                    applySrvConnectionStringOptions(connectionString);
                 } else {
                     hosts(singletonList(createServerAddress(connectionString.getHosts().get(0))));
                 }
@@ -338,10 +363,7 @@ public final class ClusterSettings {
                 if (srvMaxHosts != null) {
                     srvMaxHosts(srvMaxHosts);
                 }
-                String srvServiceName = connectionString.getSrvServiceName();
-                if (srvServiceName != null) {
-                    srvServiceName(srvServiceName);
-                }
+                applySrvConnectionStringOptions(connectionString);
             } else if (directConnection != null) {
                 mode(directConnection ? ClusterConnectionMode.SINGLE : ClusterConnectionMode.MULTIPLE);
                 List<String> hosts = directConnection ? singletonList(connectionString.getHosts().get(0)) : connectionString.getHosts();
@@ -365,6 +387,19 @@ public final class ClusterSettings {
                 localThreshold(localThreshold, MILLISECONDS);
             }
             return this;
+        }
+
+        // Applies the SRV options shared by the load-balanced and multi-server SRV paths. srvMaxHosts is intentionally
+        // not applied here, as it is only valid for the multi-server path.
+        private void applySrvConnectionStringOptions(final ConnectionString connectionString) {
+            String srvServiceName = connectionString.getSrvServiceName();
+            if (srvServiceName != null) {
+                srvServiceName(srvServiceName);
+            }
+            String srvAllowedHostsSuffix = connectionString.getSrvAllowedHostsSuffix();
+            if (srvAllowedHostsSuffix != null) {
+                srvAllowedHostsSuffix(srvAllowedHostsSuffix);
+            }
         }
 
         /**
@@ -419,6 +454,21 @@ public final class ClusterSettings {
      */
     public String getSrvServiceName() {
         return srvServiceName;
+    }
+
+    /**
+     * Gets the SRV allowed hosts suffix used to validate hosts returned via SRV lookup.
+     *
+     * <p>If present, its value is used as the domain for SRV host name validation, replacing the domain inferred from
+     * the SRV host name. The value is normalized to always begin with {@code "."}.</p>
+     *
+     * @return the normalized SRV allowed hosts suffix, always beginning with {@code "."}. Defaults to null.
+     * @since 5.9
+     * @see Builder#srvAllowedHostsSuffix(String)
+     */
+    @Nullable
+    public String getSrvAllowedHostsSuffix() {
+        return srvAllowedHostsSuffix;
     }
 
     /**
@@ -554,6 +604,7 @@ public final class ClusterSettings {
                 && Objects.equals(srvHost, that.srvHost)
                 && Objects.equals(srvMaxHosts, that.srvMaxHosts)
                 && srvServiceName.equals(that.srvServiceName)
+                && Objects.equals(srvAllowedHostsSuffix, that.srvAllowedHostsSuffix)
                 && hosts.equals(that.hosts)
                 && mode == that.mode
                 && requiredClusterType == that.requiredClusterType
@@ -564,8 +615,8 @@ public final class ClusterSettings {
 
     @Override
     public int hashCode() {
-        return Objects.hash(srvHost, srvMaxHosts, srvServiceName, hosts, mode, requiredClusterType, requiredReplicaSetName, serverSelector,
-                localThresholdMS, serverSelectionTimeoutMS, clusterListeners);
+        return Objects.hash(srvHost, srvMaxHosts, srvServiceName, srvAllowedHostsSuffix, hosts, mode, requiredClusterType,
+                requiredReplicaSetName, serverSelector, localThresholdMS, serverSelectionTimeoutMS, clusterListeners);
     }
 
     @Override
@@ -575,6 +626,7 @@ public final class ClusterSettings {
                + (srvHost == null ? "" : ", srvHost=" + srvHost)
                + (srvServiceName == null ? "" : ", srvServiceName=" + srvServiceName)
                + (srvMaxHosts == null ? "" : ", srvMaxHosts=" + srvMaxHosts)
+               + (srvAllowedHostsSuffix == null ? "" : ", srvAllowedHostsSuffix=" + srvAllowedHostsSuffix)
                + ", mode=" + mode
                + ", requiredClusterType=" + requiredClusterType
                + ", requiredReplicaSetName='" + requiredReplicaSetName + '\''
@@ -624,6 +676,7 @@ public final class ClusterSettings {
         srvHost = builder.srvHost;
         srvMaxHosts = builder.srvMaxHosts;
         srvServiceName = builder.srvServiceName;
+        srvAllowedHostsSuffix = builder.srvAllowedHostsSuffix;
         hosts = builder.hosts;
         requiredReplicaSetName = builder.requiredReplicaSetName;
         if (builder.mode != null) {

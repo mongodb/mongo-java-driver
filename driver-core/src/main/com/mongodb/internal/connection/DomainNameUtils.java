@@ -15,16 +15,103 @@
  */
 package com.mongodb.internal.connection;
 
+import java.net.IDN;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Scanner;
 import java.util.regex.Pattern;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class DomainNameUtils {
-    private static final Pattern DOMAIN_PATTERN =
-            Pattern.compile("^(?=.{1,255}$)((([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,63}|localhost))$");
+    private static final Pattern DOMAIN_PATTERN = Pattern.compile(
+            "^(?=.{1,255}$)((([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z0-9\\-]{2,63}|localhost))$");
 
     static boolean isDomainName(final String domainName) {
         return DOMAIN_PATTERN.matcher(domainName).matches();
+    }
+
+    /**
+     * Validates and normalizes a {@code srvAllowedHostsSuffix} value for use as the domain in SRV host validation.
+     * A leading {@code "."} is prepended if absent, so the returned value always begins with {@code "."}; this is what
+     * is stored and returned to callers. The suffix must contain at least one non-empty domain label and no
+     * whitespace. An overly broad suffix is restricted based on a public suffix list.
+     *
+     * @param srvAllowedHostsSuffix the non-null suffix to validate
+     * @return the normalized suffix, always beginning with {@code "."}
+     * @throws IllegalArgumentException if the suffix contains whitespace, contains no domain label (it is empty or
+     * consists only of a leading {@code "."}), contains an empty domain label (consecutive {@code "."} characters
+     * or a trailing {@code "."}), or, is a public domain suffix (e.g., top-level domain, AWS data center)
+     */
+    public static String normalizeSrvAllowedHostsSuffix(final String srvAllowedHostsSuffix) {
+        if (containsWhitespace(srvAllowedHostsSuffix)) {
+            throw new IllegalArgumentException("srvAllowedHostsSuffix must not contain whitespace");
+        }
+        // A single leading '.' is allowed (it is the documented suffix form); everything after it must be one or more
+        // non-empty domain labels.
+        boolean hasLeadingDot = srvAllowedHostsSuffix.startsWith(".");
+        String labels = hasLeadingDot ? srvAllowedHostsSuffix.substring(1) : srvAllowedHostsSuffix;
+        if (labels.isEmpty()) {
+            throw new IllegalArgumentException("srvAllowedHostsSuffix must contain at least one domain label");
+        }
+        String[] parts = labels.split("\\.", -1);
+        for (String label : parts) {
+            if (label.isEmpty()) {
+                throw new IllegalArgumentException("srvAllowedHostsSuffix must not contain empty domain labels");
+            }
+        }
+        labels = IDN.toASCII(labels, IDN.ALLOW_UNASSIGNED).toLowerCase(Locale.ROOT);
+        if (!isDomainName(labels)) {
+            throw new IllegalArgumentException("srvAllowedHostsSuffix is not a valid domain");
+        }
+        if (isPublicSuffix(labels)) {
+            throw new IllegalArgumentException("srvAllowedHostsSuffix must not be a public domain suffix");
+        }
+        return "." + labels;
+    }
+
+    private static boolean containsWhitespace(final String value) {
+        for (int i = 0; i < value.length(); i++) {
+            if (Character.isWhitespace(value.charAt(i))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static boolean isPublicSuffix(final String suffix) {
+        try (Scanner scanner = new Scanner(
+                Objects.requireNonNull(
+                        DomainNameUtils.class.getResourceAsStream("public_suffix_list.dat"), "Missing DNS suffix list"),
+                "UTF-8")) {
+            int firstDot = suffix.indexOf('.');
+            String rootDomain = firstDot >= 0 ? suffix.substring(firstDot + 1) : suffix;
+            boolean invalidMatchWildcard = false;
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                if (line.startsWith("//") || line.isEmpty()) {
+                    continue;
+                }
+                if (line.startsWith("!")) {
+                    if (invalidMatchWildcard && suffix.equals(IDN.toASCII(line.substring(1), IDN.ALLOW_UNASSIGNED))) {
+                        return false;
+                    }
+                } else if (line.startsWith("*")) {
+                    String lineSuffix = IDN.toASCII(line.substring(2), IDN.ALLOW_UNASSIGNED);
+                    if (suffix.equals(lineSuffix) || rootDomain.equals(lineSuffix)) {
+                        invalidMatchWildcard = true;
+                    }
+                } else {
+                    if (invalidMatchWildcard) {
+                        return true;
+                    }
+                    if (suffix.equals(IDN.toASCII(line, IDN.ALLOW_UNASSIGNED))) {
+                        return true;
+                    }
+                }
+            }
+            return invalidMatchWildcard;
+        }
     }
 }
