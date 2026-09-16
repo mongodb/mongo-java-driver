@@ -94,7 +94,8 @@ public final class DefaultDnsResolver implements DnsResolver {
                 String[] split = srvRecord.split(" ");
                 String resolvedHost = split[3].endsWith(".") ? split[3].substring(0, split[3].length() - 1) : split[3];
                 if (srvAllowedHostsSuffix != null) {
-                    // DNS host names are case-insensitive, so the suffix comparison must be too.
+                    // DNS host names are case-insensitive, so the suffix comparison must be too. The provided name will also be in
+                    // Punycode since that's what stored in an SRV record.
                     if (!endsWithIgnoreCase(resolvedHost, srvAllowedHostsSuffix)) {
                         throw new MongoConfigurationException(
                                 format("The SRV host name '%s' resolved to a host '%s' that does not end with the "

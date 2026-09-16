@@ -15,6 +15,7 @@
  */
 package com.mongodb.internal.connection;
 
+import java.net.IDN;
 import java.util.Objects;
 import java.util.Scanner;
 import java.util.regex.Pattern;
@@ -49,7 +50,7 @@ public class DomainNameUtils {
         // A single leading '.' is allowed (it is the documented suffix form); everything after it must be one or more
         // non-empty domain labels.
         boolean hasLeadingDot = srvAllowedHostsSuffix.startsWith(".");
-        String labels = hasLeadingDot ? srvAllowedHostsSuffix.substring(1) : srvAllowedHostsSuffix;
+        String labels = IDN.toASCII(hasLeadingDot ? srvAllowedHostsSuffix.substring(1) : srvAllowedHostsSuffix);
         if (labels.isEmpty()) {
             throw new IllegalArgumentException("srvAllowedHostsSuffix must contain at least one domain label");
         }
@@ -59,10 +60,10 @@ public class DomainNameUtils {
                 throw new IllegalArgumentException("srvAllowedHostsSuffix must not contain empty domain labels");
             }
         }
-        if (isTopLevelDomain(hasLeadingDot ? srvAllowedHostsSuffix.substring(1) : srvAllowedHostsSuffix)) {
+        if (isTopLevelDomain(labels)) {
             throw new IllegalArgumentException("srvAllowedHostsSuffix must not be a top-level domain");
         }
-        return hasLeadingDot ? srvAllowedHostsSuffix : "." + srvAllowedHostsSuffix;
+        return "." + labels;
     }
 
     private static boolean containsWhitespace(final String value) {
@@ -86,11 +87,11 @@ public class DomainNameUtils {
                     continue;
                 }
                 if (line.startsWith("!")) {
-                    if (invalidMatchWildcard && suffix.equals(line.substring(1))) {
+                    if (invalidMatchWildcard && suffix.equals(IDN.toASCII(line.substring(1)))) {
                         return false;
                     }
                 } else if (line.startsWith("*")) {
-                    String lineSuffix = line.substring(2);
+                    String lineSuffix = IDN.toASCII(line.substring(2));
                     if (suffix.equals(lineSuffix) || rootDomain.equals(lineSuffix)) {
                         invalidMatchWildcard = true;
                     }
@@ -98,7 +99,7 @@ public class DomainNameUtils {
                     if (invalidMatchWildcard) {
                         return true;
                     }
-                    if (suffix.equals(line)) {
+                    if (suffix.equals(IDN.toASCII(line))) {
                         return true;
                     }
                 }
