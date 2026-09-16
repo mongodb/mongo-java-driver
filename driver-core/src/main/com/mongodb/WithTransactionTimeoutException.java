@@ -35,7 +35,6 @@ public final class WithTransactionTimeoutException extends MongoClientException 
      * Construct a new instance
      * @param message the message
      * @param cause the cause
-     * @since 5.12
      */
     public WithTransactionTimeoutException(final String message, @Nullable final Throwable cause) {
         super(message, cause);
