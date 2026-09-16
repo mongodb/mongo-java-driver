@@ -765,7 +765,8 @@ class GridFSBucketSpecification extends Specification {
         gridFSBucket.delete(fileId)
 
         then: 'Delete from the files collection first'
-        1 * filesCollection.deleteOne(new Document('_id', new BsonDocument('$eq', new BsonObjectId(fileId)))) >> DeleteResult.acknowledged(1)
+        1 * filesCollection.deleteOne(new Document('_id', new BsonDocument('$eq', new BsonObjectId(fileId)))) >>
+                DeleteResult.acknowledged(1)
 
         then:
         1 * chunksCollection.deleteMany(new Document('files_id', new BsonDocument('$eq', new BsonObjectId(fileId))))
@@ -782,7 +783,8 @@ class GridFSBucketSpecification extends Specification {
         gridFSBucket.delete(fileId)
 
         then: 'Delete from the files collection first'
-        1 * filesCollection.deleteOne(new Document('_id', new BsonDocument('$eq', new BsonObjectId(fileId)))) >> DeleteResult.acknowledged(0)
+        1 * filesCollection.deleteOne(new Document('_id', new BsonDocument('$eq', new BsonObjectId(fileId)))) >>
+                DeleteResult.acknowledged(0)
 
         then: 'Should still delete any orphan chunks'
         1 * chunksCollection.deleteMany(new Document('files_id', new BsonDocument('$eq', new BsonObjectId(fileId))))

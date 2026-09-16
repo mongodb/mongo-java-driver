@@ -68,10 +68,11 @@ dependencies {
 
 tasks.processTestResources {
     from("${rootProject.projectDir}/testing/resources")
-    // TODO JAVA-6283 remove this, and the resources-ghsa-556f-q76p-2vxq directory, once the specifications submodule is
-    // updated to include the GridFS $eq tests. These files are vendored from the specifications security fork because
-    // they are not yet published upstream. Some of them replace files that the submodule already provides, so this
-    // spec must come last and duplicates must resolve in favour of the vendored copy.
+    // TODO JAVA-6283: remove this and the resources-ghsa-556f-q76p-2vxq
+    // directory once the specifications submodule includes the GridFS $eq
+    // tests. These files are vendored from the specifications security fork.
+    // Some of them replace files the submodule already provides, so this spec
+    // must come last and duplicates must resolve to the vendored copy.
     from("${rootProject.projectDir}/testing/resources-ghsa-556f-q76p-2vxq")
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
     into("${layout.buildDirectory.get()}/resources/test")
