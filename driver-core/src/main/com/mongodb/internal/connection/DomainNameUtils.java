@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  */
 public class DomainNameUtils {
     private static final Pattern DOMAIN_PATTERN = Pattern.compile(
-            "^(?=.{1,255}$)((([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,63}|localhost))$");
+            "^(?=.{1,255}$)((([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z0-9\\-]{2,63}|localhost))$");
 
     static boolean isDomainName(final String domainName) {
         return DOMAIN_PATTERN.matcher(domainName).matches();
@@ -51,13 +51,7 @@ public class DomainNameUtils {
         // A single leading '.' is allowed (it is the documented suffix form); everything after it must be one or more
         // non-empty domain labels.
         boolean hasLeadingDot = srvAllowedHostsSuffix.startsWith(".");
-        String labels = IDN.toASCII(
-                        hasLeadingDot ? srvAllowedHostsSuffix.substring(1) : srvAllowedHostsSuffix,
-                        IDN.ALLOW_UNASSIGNED)
-                .toLowerCase(Locale.ROOT);
-        if (!isDomainName(labels)) {
-            throw new IllegalArgumentException("srvAllowedHostsSuffix is not a valid domain");
-        }
+        String labels = hasLeadingDot ? srvAllowedHostsSuffix.substring(1) : srvAllowedHostsSuffix;
         if (labels.isEmpty()) {
             throw new IllegalArgumentException("srvAllowedHostsSuffix must contain at least one domain label");
         }
@@ -66,6 +60,10 @@ public class DomainNameUtils {
             if (label.isEmpty()) {
                 throw new IllegalArgumentException("srvAllowedHostsSuffix must not contain empty domain labels");
             }
+        }
+        labels = IDN.toASCII(labels, IDN.ALLOW_UNASSIGNED).toLowerCase(Locale.ROOT);
+        if (!isDomainName(labels)) {
+            throw new IllegalArgumentException("srvAllowedHostsSuffix is not a valid domain");
         }
         if (isPublicSuffix(labels)) {
             throw new IllegalArgumentException("srvAllowedHostsSuffix must not be a public domain suffix");
