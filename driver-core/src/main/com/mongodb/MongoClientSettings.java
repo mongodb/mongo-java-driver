@@ -559,7 +559,7 @@ public final class MongoClientSettings {
          * @mongodb.driver.manual reference/parameters/#mongodb-parameter-param.overloadAwareServerSelectionEnabled
          * overloadAwareServerSelectionEnabled: the server-side counterpart, which is configured independently
          * and affects the server behavior as opposed to the client behavior.
-         * @since 5.7
+         * @since 5.12
          */
         // TODO-BACKPRESSURE Valentin Document commands that we do not retry now, but should retry according to the spec.
         @Beta(Reason.CLIENT)
@@ -588,7 +588,7 @@ public final class MongoClientSettings {
          * @param enableOverloadRetargeting whether to enable overload retargeting.
          * @return this
          * @see #getEnableOverloadRetargeting()
-         * @since 5.7
+         * @since 5.12
          */
         @Beta(Reason.CLIENT)
         public Builder enableOverloadRetargeting(final boolean enableOverloadRetargeting) {
@@ -960,7 +960,7 @@ public final class MongoClientSettings {
      *
      * @return The maximum number of retry attempts when encountering a retryable overload error.
      * @see Builder#maxAdaptiveRetries(Integer)
-     * @since 5.7
+     * @since 5.12
      */
     @Beta(Reason.CLIENT)
     @Nullable
@@ -974,7 +974,7 @@ public final class MongoClientSettings {
      *
      * @return the enableOverloadRetargeting value
      * @see Builder#enableOverloadRetargeting(boolean)
-     * @since 5.7
+     * @since 5.12
      */
     @Beta(Reason.CLIENT)
     public boolean getEnableOverloadRetargeting() {

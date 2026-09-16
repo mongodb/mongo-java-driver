@@ -238,8 +238,8 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
      * This label on its own does not mean that the operation can be [[MongoException.RETRYABLE_ERROR_LABEL safely retried]].
      *
      * @see [[https://www.mongodb.com/docs/atlas/overload-errors/ Overload errors]]
-     * @since 5.7
-     * @note Requires MongoDB 8.3 or greater
+     * @since 5.12
+     * @note Requires MongoDB 9.0 or greater
      */
     val SYSTEM_OVERLOADED_ERROR_LABEL: String = com.mongodb.MongoException.SYSTEM_OVERLOADED_ERROR_LABEL
 
@@ -253,8 +253,8 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
      * [[MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL "UnknownTransactionCommitResult"]] error labels.
      *
      * @see [[https://www.mongodb.com/docs/atlas/overload-errors/ Overload errors]]
-     * @since 5.7
-     * @note Requires MongoDB 8.3 or greater
+     * @since 5.12
+     * @note Requires MongoDB 9.0 or greater
      */
     val RETRYABLE_ERROR_LABEL: String = com.mongodb.MongoException.RETRYABLE_ERROR_LABEL
   }
@@ -420,7 +420,7 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
    * An exception indicating that the convenient transactions API (`withTransaction`) exceeded its overall timeout
    * while retrying the user-supplied callback or the commit loop.
    *
-   * @since 5.7
+   * @since 5.12
    */
   type WithTransactionTimeoutException = com.mongodb.WithTransactionTimeoutException
 
