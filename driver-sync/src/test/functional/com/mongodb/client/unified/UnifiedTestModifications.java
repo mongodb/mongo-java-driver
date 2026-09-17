@@ -631,6 +631,22 @@ public final class UnifiedTestModifications {
 
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5672")
                 .file("unified-test-format/tests/valid-fail", "operator-matchAsDocument");
+
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-6235")
+                .file("initial-dns-seedlist-discovery/tests/replica-set", "srvAllowedHostsSuffix-case-insensitive")
+                .file("initial-dns-seedlist-discovery/tests/replica-set", "srvAllowedHostsSuffix-mismatch")
+                .file("initial-dns-seedlist-discovery/tests/replica-set", "srvAllowedHostsSuffix-period-only")
+                .file("initial-dns-seedlist-discovery/tests/replica-set", "srvAllowedHostsSuffix-psl-not-public-suffix")
+                .file(
+                        "initial-dns-seedlist-discovery/tests/replica-set",
+                        "srvAllowedHostsSuffix-psl-public-suffix-capitalized")
+                .file("initial-dns-seedlist-discovery/tests/replica-set", "srvAllowedHostsSuffix-psl-public-suffix")
+                .file("initial-dns-seedlist-discovery/tests/replica-set", "srvAllowedHostsSuffix-tld-only")
+                .file("initial-dns-seedlist-discovery/tests/replica-set", "srvAllowedHostsSuffix-trailing-dot")
+                .file("initial-dns-seedlist-discovery/tests/replica-set", "srvAllowedHostsSuffix-with_dot")
+                .file("initial-dns-seedlist-discovery/tests/replica-set", "srvAllowedHostsSuffix-without_dot_fail")
+                .file("initial-dns-seedlist-discovery/tests/replica-set", "srvAllowedHostsSuffix-without_dot_pass")
+                .file("uri-options/tests", "srv-options");
     }
 
     /**
