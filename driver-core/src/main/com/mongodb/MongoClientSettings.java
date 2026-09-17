@@ -564,7 +564,6 @@ public final class MongoClientSettings {
          * @since 5.12
          * @mongodb.server.release 9.0
          */
-        // TODO-BACKPRESSURE Valentin Document commands that we do not retry now, but should retry according to the spec.
         @Beta(Reason.CLIENT)
         public Builder maxAdaptiveRetries(@Nullable final Integer maxAdaptiveRetries) {
             if (maxAdaptiveRetries != null) {
