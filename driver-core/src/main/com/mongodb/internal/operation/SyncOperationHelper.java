@@ -53,7 +53,6 @@ import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRe
 import static com.mongodb.internal.operation.CommandOperationHelper.isWriteRetryRequirementsMet;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
 import static com.mongodb.internal.operation.OperationHelper.ResourceSupplierInternalException;
-import static com.mongodb.internal.operation.OperationHelper.isServerWriteRetryRequirementsMet;
 import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConcernError;
 
 final class SyncOperationHelper {
@@ -303,7 +302,7 @@ final class SyncOperationHelper {
             }
             return withSourceAndConnection(binding::getWriteConnectionSource, true, operationContext, (source, connection, operationContextWithMinRtt) -> {
                     ConnectionDescription connectionDescription = connection.getDescription();
-                    retryControl.breakAndThrowIfRetryAnd(() -> !isServerWriteRetryRequirementsMet(connectionDescription));
+                    retryControl.breakAndThrowIfRetryAnd(() -> retryControl.getPolicy().shouldBreakWriteRetryLoop(connectionDescription));
                     if (command.getNullable() == null) {
                         command.set(commandCreator.create(operationContextWithMinRtt, source.getServerDescription(), connectionDescription));
                     } else {

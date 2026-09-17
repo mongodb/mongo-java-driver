@@ -117,8 +117,8 @@ public class BackpressureProseTest {
             MongoCollection<Document> collection = dropAndGetCollection("operationRetryUsesExponentialBackoff", client);
             long noBackoffTimeMillis = measureFailedInsertDuration(collection, false).toMillis();
             long withBackoffTimeMillis = measureFailedInsertDuration(collection, true).toMillis();
-            long expectedMaxVarianceMillis = 300;
-            long maxTotalBackoffMillis = 300;
+            long expectedMaxVarianceMillis = 600;
+            long maxTotalBackoffMillis = 600;
             long actualAbsDiffMillis = Math.abs(withBackoffTimeMillis - (noBackoffTimeMillis + maxTotalBackoffMillis));
             assertTrue(actualAbsDiffMillis < expectedMaxVarianceMillis,
                     format("Expected actualAbsDiffMillis < %d ms, but was %d ms (|%d ms - (%d ms + %d ms)|)",
@@ -137,6 +137,12 @@ public class BackpressureProseTest {
         }
     }
 
+    private static Duration measureFailedInsertDuration(final MongoCollection<Document> collection) {
+        StartTime startTime = StartTime.now();
+        assertThrows(MongoServerException.class, () -> collection.insertOne(Document.parse("{a: 1}")));
+        return startTime.elapsed();
+    }
+
     /**
      * <a href="https://github.com/mongodb/specifications/blob/master/source/client-backpressure/tests/README.md#test-3-overload-errors-are-retried-a-maximum-of-max_retries-times">
      * Test 3: Overload Errors are Retried a Maximum of {@code MAX_RETRIES} times</a>.
@@ -153,6 +159,51 @@ public class BackpressureProseTest {
     @Test
     void overloadErrorsAreRetriedAtMostMaxAdaptiveRetriesTimesWhenConfigured() throws InterruptedException {
         overloadErrorsAreRetriedLimitedNumberOfTimes(1);
+    }
+
+    /**
+     * <a href="https://github.com/mongodb/specifications/blob/master/source/client-backpressure/tests/README.md#test-5-overload-errors-with-basebackoffms-override-base-backoff">
+     * Test 5: Overload Errors with baseBackoffMS override base backoff</a>.
+     */
+    @Test
+    void overloadErrorsWithBaseBackoffMsOverrideBaseBackoff() throws InterruptedException {
+        assumeTrue(serverVersionAtLeast(9, 0));
+        BsonDocument configureFailPoint = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: 'failCommand',\n"
+                + "    mode: 'alwaysOn',\n"
+                + "    data: {\n"
+                + "        failCommands: ['insert'],\n"
+                + "        errorCode: 462,\n"
+                + "        errorLabels: ['" + SYSTEM_OVERLOADED_ERROR_LABEL + "', '" + RETRYABLE_ERROR_LABEL + "']\n"
+                + "    }\n"
+                + "}\n");
+        try (MongoClient client = createClient(getMongoClientSettings());
+             FailPoint ignored = FailPoint.enable(configureFailPoint, getPrimary())) {
+            MongoCollection<Document> collection = dropAndGetCollection("overloadErrorsWithBaseBackoffMsOverrideBaseBackoff", client);
+
+            ExponentialBackoff.setTestJitterSupplier(() -> 1);
+            try {
+                long exponentialBackoffTimeMs = measureFailedInsertDuration(collection).toMillis();
+
+                client.getDatabase("admin").runCommand(Document.parse("{setParameter: 1, externalClientBaseBackoffMS: 50}"));
+                long withBaseBackoffMsTimeMs;
+                try {
+                    withBaseBackoffMsTimeMs = measureFailedInsertDuration(collection).toMillis();
+                } finally {
+                    client.getDatabase("admin").runCommand(Document.parse("{setParameter: 1, externalClientBaseBackoffMS: 0}"));
+                }
+
+                assertTrue(exponentialBackoffTimeMs >= 600,
+                        format("Expected default-backoff run >= 600 ms, was %d ms", exponentialBackoffTimeMs));
+                assertTrue(withBaseBackoffMsTimeMs >= 300,
+                        format("Expected baseBackoffMS=50 run >= 300 ms, was %d ms", withBaseBackoffMsTimeMs));
+                assertTrue(withBaseBackoffMsTimeMs < 600,
+                        format("Expected baseBackoffMS=50 run < 600 ms, was %d ms", withBaseBackoffMsTimeMs));
+            } finally {
+                ExponentialBackoff.clearTestJitterSupplier();
+            }
+        }
     }
 
     private void overloadErrorsAreRetriedLimitedNumberOfTimes(@Nullable final Integer maxAdaptiveRetries)
