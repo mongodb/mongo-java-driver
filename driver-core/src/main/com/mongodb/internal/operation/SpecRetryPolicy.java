@@ -249,6 +249,7 @@ final class SpecRetryPolicy implements RetryPolicy {
                 || policies.overload().map(overload -> overload.errorPropagation() == ErrorPropagation.AS_WRITE_POLICY).orElse(false);
         boolean readPolicyErrorPropagation = policies.read().isPresent()
                 || policies.overload().map(overload -> overload.errorPropagation() == ErrorPropagation.AS_READ_POLICY).orElse(false);
+        assertTrue(writePolicyErrorPropagation ^ readPolicyErrorPropagation);
         if (writePolicyErrorPropagation) {
             newProspectiveFailedResult = decideWriteProspectiveFailedResult(currentProspectiveFailedResult, mostRecentAttemptFailedResult);
         } else if (readPolicyErrorPropagation) {
@@ -314,18 +315,18 @@ final class SpecRetryPolicy implements RetryPolicy {
     }
 
     /**
-     * Decides whether the write retry loop should be broken before the next attempt.
+     * Decides whether the write retry loop should be broken at the beginning of the next attempt.
      * The loop is not broken when all failures observed so far within the current command execution
      * are retryable overload errors, because such commands were load-shed by the server without
-     * being executed, making the overload retry policy independent of retryable-write server support.
-     * Otherwise, the loop is broken when the server does not support retryable writes,
+     * being executed, making the overload retry policy independent of meeting the server write retry requirements.
+     * Otherwise, the loop is broken if the the server write retry requirements are not met,
      * preserving the existing retryable-write behavior.
      *
      * @param connectionDescription The {@link ConnectionDescription} of the connection selected for
      *                              the immediate next attempt.
      * @return {@code true} iff the write retry loop must be broken and the prospective failed result thrown.
      */
-    boolean shouldBreakWriteLoop(final ConnectionDescription connectionDescription) {
+    boolean shouldBreakWriteRetryLoop(final ConnectionDescription connectionDescription) {
         assertTrue(policies.write().isPresent());
         if (policies.overload().map(IndividualPolicies.State.Overload::observedNoneOrOnlyRetryableOverloadErrors).orElse(false)) {
             return false;

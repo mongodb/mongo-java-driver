@@ -305,7 +305,7 @@ final class AsyncOperationHelper {
                             (source, connection, operationContextWithMinRtt, functionCallback) -> {
                                 beginAsync().<T>thenSupply(executeCommandCallback -> {
                                     ConnectionDescription connectionDescription = connection.getDescription();
-                                    retryControl.breakAndThrowIfRetryAnd(() -> retryControl.getPolicy().shouldBreakWriteLoop(connectionDescription));
+                                    retryControl.breakAndThrowIfRetryAnd(() -> retryControl.getPolicy().shouldBreakWriteRetryLoop(connectionDescription));
                                     if (command.getNullable() == null) {
                                         command.set(commandCreator.create(operationContextWithMinRtt, source.getServerDescription(), connectionDescription));
                                     } else {

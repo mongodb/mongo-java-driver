@@ -304,7 +304,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                         (connectionSource, connection, operationContextWithMinRtt) -> {
                             retryControl.getPolicy().onCommand(() -> BULK_WRITE_COMMAND_NAME);
                             ConnectionDescription connectionDescription = connection.getDescription();
-                            retryControl.breakAndThrowIfRetryAnd(() -> retryControl.getPolicy().shouldBreakWriteLoop(connectionDescription));
+                            retryControl.breakAndThrowIfRetryAnd(() -> retryControl.getPolicy().shouldBreakWriteRetryLoop(connectionDescription));
                             resultAccumulator.onNewServerAddress(connectionDescription.getServerAddress());
                             ClientBulkWriteCommand bulkWriteCommand = createBulkWriteCommand(
                                     retryControl, connectionDescription, effectiveWriteConcern, sessionContext, unexecutedModels, batchEncoder);
@@ -359,7 +359,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                 beginAsync().<ExhaustiveClientBulkWriteCommandOkResponse>thenSupply(executeAndExhaustCallback -> {
                                     retryControl.getPolicy().onCommand(() -> BULK_WRITE_COMMAND_NAME);
                                     ConnectionDescription connectionDescription = connection.getDescription();
-                                    retryControl.breakAndThrowIfRetryAnd(() -> retryControl.getPolicy().shouldBreakWriteLoop(connectionDescription));
+                                    retryControl.breakAndThrowIfRetryAnd(() -> retryControl.getPolicy().shouldBreakWriteRetryLoop(connectionDescription));
                                     resultAccumulator.onNewServerAddress(connectionDescription.getServerAddress());
                                     ClientBulkWriteCommand bulkWriteCommand = createBulkWriteCommand(
                                             retryControl, connectionDescription, effectiveWriteConcern, sessionContext, unexecutedModels, batchEncoder);

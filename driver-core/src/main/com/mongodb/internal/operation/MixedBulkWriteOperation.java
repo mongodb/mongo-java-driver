@@ -415,7 +415,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
             final ConnectionDescription connectionDescription,
             final WriteConcern effectiveWriteConcern,
             final RetryControl<SpecRetryPolicy> retryControl) {
-        retryControl.breakAndThrowIfRetryAnd(() -> retryControl.getPolicy().shouldBreakWriteLoop(connectionDescription));
+        retryControl.breakAndThrowIfRetryAnd(() -> retryControl.getPolicy().shouldBreakWriteRetryLoop(connectionDescription));
         validateWriteRequests(connectionDescription, bypassDocumentValidation, writeRequests, effectiveWriteConcern);
     }
 
