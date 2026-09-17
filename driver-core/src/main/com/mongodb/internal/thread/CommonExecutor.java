@@ -34,6 +34,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 /**
  * A per-{@link ClassLoader} executor.
+ * Its API is meant to become the single point of dealing with global execution resources (threads and thread pools).
  * <p>
  * We do not always have access to {@link ScheduledExecutorService} in a {@code MongoClient}.
  * For example, even if {@link AsyncTransportSettings#getExecutorService()} is present, it is merely an {@link ExecutorService},
@@ -45,7 +46,6 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  *
  * @see AsyncClientExecutor
  */
-// TODO-BACKPRESSURE Valentin decide what to do with https://jira.mongodb.org/browse/JAVA-6279.
 final class CommonExecutor {
     private static final Logger LOGGER = Loggers.getLogger("client");
     private static final CommonExecutor INSTANCE = new CommonExecutor();
@@ -73,6 +73,7 @@ final class CommonExecutor {
      * the {@linkplain ScheduledExecutorService#schedule(Runnable, long, TimeUnit) scheduling part},
      * and not the execution part done by the {@code executor}.
      */
+    // TODO-JAVA-6291 https://jira.mongodb.org/browse/JAVA-6291 Start using this method again in `DefaultAsyncClientExecutor.schedule`.
     ScheduledFuture<?> schedule(final Runnable task, final Duration delay, final Executor executor) {
         assertFalse(delay.isNegative());
         try {
