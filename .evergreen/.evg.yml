@@ -1747,6 +1747,10 @@ axes:
         display_name: "8.0"
         variables:
           VERSION: "8.0"
+      - id: "9.0"
+        display_name: "9.0"
+        variables:
+          VERSION: "9.0"
       # 8.2 is used solely for Windows testing. MongoDB 8.0 binaries are affected by SERVER-116018 on Windows,
       # and the fix is only available starting from 8.2.
       - id: "8.2"

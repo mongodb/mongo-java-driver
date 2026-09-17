@@ -201,7 +201,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         def initializer = new InternalStreamConnectionInitializer(SINGLE, null, clientMetadataDocument, [], null)
         def expectedHelloCommandDocument = new BsonDocument(LEGACY_HELLO, new BsonInt32(1))
                 .append('helloOk', BsonBoolean.TRUE)
-                .append('backpressure', BsonBoolean.TRUE)
+                .append('backpressure', new BsonString('2'))
                 .append('\$db', new BsonString('admin'))
         if (clientMetadataDocument != null) {
              expectedHelloCommandDocument.append('client', clientMetadataDocument)
@@ -234,7 +234,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         def initializer = new InternalStreamConnectionInitializer(SINGLE, null, null, compressors, null)
         def expectedHelloCommandDocument = new BsonDocument(LEGACY_HELLO, new BsonInt32(1))
                 .append('helloOk', BsonBoolean.TRUE)
-                .append('backpressure', BsonBoolean.TRUE)
+                .append('backpressure', new BsonString('2'))
                 .append('\$db', new BsonString('admin'))
 
         def compressionArray = new BsonArray()
@@ -405,7 +405,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         ((SpeculativeAuthenticator) authenticator).getSpeculativeAuthenticateResponse() == null
         ((SpeculativeAuthenticator) authenticator)
                 .createSpeculativeAuthenticateCommand(internalConnection) == null
-        BsonDocument.parse("{$LEGACY_HELLO: 1, helloOk: true, backpressure: true, '\$db': 'admin'}") ==
+        BsonDocument.parse("{$LEGACY_HELLO: 1, helloOk: true, backpressure: \"2\", '\$db': 'admin'}") ==
                 decodeCommand(internalConnection.getSent()[0])
 
         where:
@@ -503,7 +503,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def createHelloCommand(final String firstClientChallenge, final String mechanism,
                               final boolean hasSaslSupportedMechs) {
-        String hello = "{$LEGACY_HELLO: 1, helloOk: true, backpressure: true, " +
+        String hello = "{$LEGACY_HELLO: 1, helloOk: true, backpressure: \"2\", " +
                 (hasSaslSupportedMechs ? 'saslSupportedMechs: "database.user", ' : '') +
                 (mechanism == 'MONGODB-X509' ?
                         'speculativeAuthenticate: { authenticate: 1, ' +
