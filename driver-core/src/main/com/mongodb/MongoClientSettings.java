@@ -464,6 +464,7 @@ public final class MongoClientSettings {
          * @return this
          * @see #getRetryWrites()
          * @see #maxAdaptiveRetries(Integer)
+         * @mongodb.driver.manual core/retryable-writes/ Retryable Writes
          * @mongodb.server.release 3.6
          */
         public Builder retryWrites(final boolean retryWrites) {
@@ -491,6 +492,7 @@ public final class MongoClientSettings {
          * @see #getRetryReads()
          * @see #maxAdaptiveRetries(Integer)
          * @since 3.11
+         * @mongodb.driver.manual core/retryable-reads/ Retryable Reads
          * @mongodb.server.release 3.6
          */
         public Builder retryReads(final boolean retryReads) {
@@ -560,6 +562,7 @@ public final class MongoClientSettings {
          * overloadAwareServerSelectionEnabled: the server-side counterpart, which is configured independently
          * and affects the server behavior as opposed to the client behavior.
          * @since 5.12
+         * @mongodb.server.release 9.0
          */
         // TODO-BACKPRESSURE Valentin Document commands that we do not retry now, but should retry according to the spec.
         @Beta(Reason.CLIENT)
@@ -589,6 +592,7 @@ public final class MongoClientSettings {
          * @return this
          * @see #getEnableOverloadRetargeting()
          * @since 5.12
+         * @mongodb.server.release 9.0
          */
         @Beta(Reason.CLIENT)
         public Builder enableOverloadRetargeting(final boolean enableOverloadRetargeting) {
@@ -961,6 +965,7 @@ public final class MongoClientSettings {
      * @return The maximum number of retry attempts when encountering a retryable overload error.
      * @see Builder#maxAdaptiveRetries(Integer)
      * @since 5.12
+     * @mongodb.server.release 9.0
      */
     @Beta(Reason.CLIENT)
     @Nullable
@@ -975,6 +980,7 @@ public final class MongoClientSettings {
      * @return the enableOverloadRetargeting value
      * @see Builder#enableOverloadRetargeting(boolean)
      * @since 5.12
+     * @mongodb.server.release 9.0
      */
     @Beta(Reason.CLIENT)
     public boolean getEnableOverloadRetargeting() {

@@ -1512,6 +1512,7 @@ public class ConnectionString {
      *
      * @return The {@code maxAdaptiveRetries} value, or {@code null} if unset.
      * @since 5.12
+     * @mongodb.server.release 9.0
      */
     @Beta(Reason.CLIENT)
     @Nullable
@@ -1526,6 +1527,7 @@ public class ConnectionString {
      * @return the enableOverloadRetargeting value, or null if not set
      * @see MongoClientSettings.Builder#enableOverloadRetargeting(boolean)
      * @since 5.12
+     * @mongodb.server.release 9.0
      */
     @Beta(Reason.CLIENT)
     @Nullable
