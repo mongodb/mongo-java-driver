@@ -101,7 +101,6 @@ import static com.mongodb.internal.Locks.lockInterruptibly;
 import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.ConcurrentPool.INFINITE_SIZE;
 import static com.mongodb.internal.connection.ConcurrentPool.sizeToString;
 import static com.mongodb.internal.event.EventListenerHelper.getConnectionPoolListener;
@@ -212,13 +211,12 @@ final class DefaultConnectionPool implements ConnectionPool {
         StartTime checkoutStart = connectionCheckoutStarted(operationContext);
         Timeout maxWaitTimeout = operationContext.getTimeoutContext().startMaxWaitTimeout(checkoutStart);
         SingleResultCallback<PooledConnection> eventSendingCallback = (connection, failure) -> {
-            SingleResultCallback<InternalConnection> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
             if (failure == null) {
                 assertNotNull(connection).checkedOutForOperation(operationContext);
                 connectionCheckedOut(operationContext, connection, checkoutStart);
-                errHandlingCallback.onResult(connection, null);
+                callback.onResult(connection, null);
             } else {
-                errHandlingCallback.onResult(null, checkOutFailed(failure, operationContext, checkoutStart));
+                callback.onResult(null, checkOutFailed(failure, operationContext, checkoutStart));
             }
         };
         try {

@@ -30,12 +30,10 @@ import org.bson.codecs.Decoder;
 
 import static com.mongodb.internal.MongoNamespaceHelper.COMMAND_COLLECTION_NAME;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.asyncSingleBatchCursorTransformer;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
-import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
 import static com.mongodb.internal.operation.SyncOperationHelper.singleBatchCursorTransformer;
 
@@ -129,7 +127,7 @@ public class ListDatabasesOperation<T> implements ReadOperationCursor<T> {
     public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext,
                              final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         executeRetryableReadAsync(binding, operationContext,  "admin", getCommandCreator(), CommandResultDocumentCodec.create(decoder, DATABASES),
-                asyncSingleBatchCursorTransformer(DATABASES), retryReads, maxAdaptiveRetriesSetting, errorHandlingCallback(callback, LOGGER));
+                asyncSingleBatchCursorTransformer(DATABASES), retryReads, maxAdaptiveRetriesSetting, callback);
     }
 
     private CommandCreator getCommandCreator() {

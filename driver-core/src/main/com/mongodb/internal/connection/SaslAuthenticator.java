@@ -29,8 +29,6 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
@@ -51,12 +49,10 @@ import static com.mongodb.MongoCredential.JAVA_SUBJECT_KEY;
 import static com.mongodb.MongoCredential.JAVA_SUBJECT_PROVIDER_KEY;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.Locks.withInterruptibleLock;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
 import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync;
 
 abstract class SaslAuthenticator extends Authenticator implements SpeculativeAuthenticator {
-    public static final Logger LOGGER = Loggers.getLogger("authenticator");
     private static final String SUBJECT_PROVIDER_CACHE_KEY = "SUBJECT_PROVIDER";
     SaslAuthenticator(final MongoCredentialWithCache credential, final ClusterConnectionMode clusterConnectionMode,
                       @Nullable final ServerApi serverApi) {
@@ -151,29 +147,28 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
 
     private void getNextSaslResponseAsync(final SaslClient saslClient, final InternalConnection connection,
             final OperationContext operationContext, final SingleResultCallback<Void> callback) {
-        SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         try {
             BsonDocument response = connection.opened() ? null : getSpeculativeAuthenticateResponse();
             if (response == null) {
                 byte[] serverResponse = (saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : null);
                 sendSaslStartAsync(serverResponse, connection, operationContext, (result, t) -> {
                     if (t != null) {
-                        errHandlingCallback.onResult(null, wrapException(t));
+                        callback.onResult(null, wrapException(t));
                         return;
                     }
                     assertNotNull(result);
                     if (result.getBoolean("done").getValue()) {
-                        verifySaslClientComplete(saslClient, result, errHandlingCallback);
+                        verifySaslClientComplete(saslClient, result, callback);
                     } else {
                         OperationContext saslContinueOperationContext =
                                 operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout);
-                        new Continuator(saslClient, result, connection, saslContinueOperationContext, errHandlingCallback).start();
+                        new Continuator(saslClient, result, connection, saslContinueOperationContext, callback).start();
                     }
                 });
             } else if (response.getBoolean("done").getValue()) {
-                verifySaslClientComplete(saslClient, response, errHandlingCallback);
+                verifySaslClientComplete(saslClient, response, callback);
             } else {
-                new Continuator(saslClient, response, connection, operationContext, errHandlingCallback).start();
+                new Continuator(saslClient, response, connection, operationContext, callback).start();
             }
         } catch (Exception e) {
             callback.onResult(null, wrapException(e));

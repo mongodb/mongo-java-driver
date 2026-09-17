@@ -35,14 +35,12 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncConnection;
 import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRetryControl;
-import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.SpecRetryPolicy.IndividualPolicies.overloadForWrite;
 import static com.mongodb.internal.operation.SyncOperationHelper.decorateWithRetries;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
@@ -175,11 +173,10 @@ public class CreateViewOperation implements WriteOperation<Void> {
                 operationContext);
         AsyncCallbackSupplier<Void> retryingCommandExecutor = decorateWithRetriesAsync(retryControl, operationContext, supplierCallback ->
                 withAsyncConnection(binding, operationContext, (connection, operationContextWithMinRtt, t) -> {
-                    SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(supplierCallback, LOGGER);
                     if (t != null) {
-                        errHandlingCallback.onResult(null, t);
+                        supplierCallback.onResult(null, t);
                     } else {
-                        SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
+                        SingleResultCallback<Void> wrappedCallback = releasingCallback(supplierCallback, connection);
                         executeCommandAsync(binding, operationContextWithMinRtt,  databaseName, getCommand(), connection,
                                 writeConcernErrorTransformerAsync(operationContextWithMinRtt.getTimeoutContext()),
                                 wrappedCallback);
