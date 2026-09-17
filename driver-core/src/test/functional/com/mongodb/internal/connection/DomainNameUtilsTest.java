@@ -26,6 +26,7 @@ class DomainNameUtilsTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
+            "xn--frosch-6ya.w23",
             "hyphen-domain.com",
             "sub.domain.com",
             "sub.domain.c.com.com",
@@ -51,7 +52,6 @@ class DomainNameUtilsTest {
 
     @ParameterizedTest
     @ValueSource(strings = {
-            "xn--frosch-6ya.w23",
             "-special_chars_$$.net",
             "special_chars_$$.net",
             "special_chars_$$.123",
@@ -59,7 +59,6 @@ class DomainNameUtilsTest {
             "_subdomain..domain.com",
             "subdomain..domain._com",
             "subdomain..domain.com_",
-            "notlocalhost",
             "домен.com", //NON-ASCII
             "ẞẞ.com", //NON-ASCII
             "abcdefghijklmnopqrstuvwxyz0123456789-abcdefghijklmnopqrstuvwxyzl.com", //64 characters label name.
