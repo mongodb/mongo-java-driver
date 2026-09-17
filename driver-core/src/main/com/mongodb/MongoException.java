@@ -61,9 +61,9 @@ public class MongoException extends RuntimeException {
      *
      * @see #hasErrorLabel(String)
      * @see MongoClientSettings.Builder#maxAdaptiveRetries(Integer)
-     * @mongodb.atlas.manual overload-errors/ Overload errors
-     * @since 5.7
-     * @mongodb.server.release 8.3
+     * @mongodb.driver.manual reference/parameters/#mongodb-parameter-param.overloadAwareServerSelectionEnabled overloadAwareServerSelectionEnabled
+     * @since 5.12
+     * @mongodb.server.release 9.0
      */
     public static final String SYSTEM_OVERLOADED_ERROR_LABEL = "SystemOverloadedError";
 
@@ -78,9 +78,8 @@ public class MongoException extends RuntimeException {
      * @see #hasErrorLabel(String)
      * @see MongoClientSettings.Builder#retryWrites(boolean)
      * @see MongoClientSettings.Builder#retryReads(boolean)
-     * @mongodb.atlas.manual overload-errors/ Overload errors
-     * @since 5.7
-     * @mongodb.server.release 8.3
+     * @since 5.12
+     * @mongodb.server.release 9.0
      */
     public static final String RETRYABLE_ERROR_LABEL = "RetryableError";
 

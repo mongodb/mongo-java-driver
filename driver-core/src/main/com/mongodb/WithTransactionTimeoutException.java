@@ -24,7 +24,7 @@ import com.mongodb.lang.Nullable;
  * The last encountered error (if any) is attached as the
  * {@linkplain Throwable#getCause() cause}.
  *
- * @since 5.7
+ * @since 5.12
  * @mongodb.driver.manual core/transactions-in-applications/#callback-api withTransaction
  */
 public final class WithTransactionTimeoutException extends MongoClientException {
@@ -35,7 +35,6 @@ public final class WithTransactionTimeoutException extends MongoClientException 
      * Construct a new instance
      * @param message the message
      * @param cause the cause
-     * @since 5.7
      */
     public WithTransactionTimeoutException(final String message, @Nullable final Throwable cause) {
         super(message, cause);
