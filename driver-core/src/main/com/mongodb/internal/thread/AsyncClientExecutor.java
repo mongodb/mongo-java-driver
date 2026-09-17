@@ -21,23 +21,19 @@ import com.mongodb.internal.connection.StreamFactoryFactory;
 
 import java.time.Duration;
 import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * An executor for a {@code MongoClient} (currently, only for an asynchronous one).
+ * Its API is meant to become the single point of dealing with per-{@code MongoClient} execution resources (threads and thread pools).
  * An implementation may use resources shared by multiple clients, if appropriate.
  * <p>
  * May be used to execute internal code that is not blocking, or application code.
  * When an asynchronous client is used, the application code we may execute is supposed to not be blocking, but we cannot enforce that.
  * If an application violates the contract, it bears the responsibility.
- * <p>
- * Purposefully not {@link ExecutorService}, because it does not manage the underlying resources, if any.
- * They must be managed externally to {@link AsyncClientExecutor}.
- * Nonetheless, it is still {@link AutoCloseable}. See {@link #close()} for the details.
  * <p>
  * This class is not part of the public API and may be removed or changed at any time.
  *
@@ -51,6 +47,8 @@ public interface AsyncClientExecutor extends AutoCloseable {
      * @param executor The executor to use for executing tasks.
      * If it is a {@link ScheduledExecutorService}, then it is also used for scheduling,
      * otherwise {@link CommonExecutor} is used for scheduling.
+     * <a href="https://jira.mongodb.org/browse/JAVA-6291">TODO-JAVA-6291</a> Note that the above documentation is temporarily false.
+     *   When we complete JAVA-6291, the documentation will become true again, and this note will be removed.
      * @see StreamFactoryFactory#getExecutor()
      */
     static AsyncClientExecutor backedBy(final Executor executor) {
@@ -65,6 +63,8 @@ public interface AsyncClientExecutor extends AutoCloseable {
     void schedule(RejectableRunnable task, Duration delay);
 
     /**
+     * {@inheritDoc}
+     * <p>
      * Must be called before shutting down the {@linkplain #backedBy(Executor) backing executor},
      * to notify this {@link AsyncClientExecutor} that the backing executor may be about to shut down.
      * Guarantees exactly-once execution of all {@link RejectableRunnable} tasks,
@@ -79,10 +79,11 @@ public interface AsyncClientExecutor extends AutoCloseable {
      */
     interface RejectableRunnable extends Runnable {
         /**
-         * Unlike {@link ScheduledThreadPoolExecutor}, which handles rejections based on the {@link RejectedExecutionHandler},
+         * Unlike {@link ThreadPoolExecutor}, which handles rejections based on the {@link RejectedExecutionHandler},
          * and by default throws {@link RejectedExecutionException},
          * {@link AsyncClientExecutor} delegates rejection handling to the scheduled tasks by invoking this method.
-         * This way, {@link #close()} does not have to return the list of tasks that never commenced execution,
+         * This way, {@link #close()} does not have to return the
+         * {@linkplain ThreadPoolExecutor#shutdownNow() list of tasks that never commenced execution},
          * and its caller does not have to deal with them to make sure all the tasks are executed in some way
          * (if a task must complete a callback, failing to execute it is a critical bug).
          * Additionally, this method allows reacting to rejection differently than what {@link #run()} would have done.

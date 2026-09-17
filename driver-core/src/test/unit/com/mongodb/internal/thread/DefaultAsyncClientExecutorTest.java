@@ -17,6 +17,7 @@ package com.mongodb.internal.thread;
 
 import com.mongodb.internal.thread.AsyncClientExecutor.RejectableRunnable;
 import com.mongodb.internal.time.StartTime;
+import com.mongodb.internal.time.Timeout;
 import io.netty.channel.EventLoopGroup;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -25,6 +26,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
@@ -33,12 +35,15 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
+import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_EXPIRED;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
+import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -264,7 +269,77 @@ class DefaultAsyncClientExecutorTest {
         assertEquals(3, completionCount.get());
     }
 
-    private static void waitForCompletion(final Future<Void> future, final Duration duration) {
+    @Test
+    void concurrency() {
+        ExecutorService cachedExecutor = Executors.newCachedThreadPool();
+        try {
+            for (int i = 0; i < 500; i++) {
+                try (DefaultAsyncClientExecutor backedByExecutorService = new DefaultAsyncClientExecutor(executorService);
+                     DefaultAsyncClientExecutor backedByScheduledExecutorService = new DefaultAsyncClientExecutor(scheduledExecutorService)) {
+                    assertAll(
+                            () -> assertConcurrency(backedByExecutorService, cachedExecutor),
+                            () -> assertConcurrency(backedByScheduledExecutorService, cachedExecutor)
+                    );
+                }
+            }
+        } finally {
+            cachedExecutor.shutdownNow();
+        }
+    }
+
+    private static void assertConcurrency(
+            final DefaultAsyncClientExecutor clientExecutor,
+            final ExecutorService cachedExecutor) throws Exception {
+        int maxDelayMillis = 15;
+        AtomicInteger completionCount = new AtomicInteger();
+        int taskCountPerSchedulingThread = 20;
+        int schedulingAndClosingThreadCount = 2;
+        Runnable schedule = () -> {
+            for (int i = 0; i < taskCountPerSchedulingThread; i++) {
+                clientExecutor.schedule(
+                        RejectableRunnable.from((result, t) -> completionCount.incrementAndGet()),
+                        Duration.ofMillis(ThreadLocalRandom.current().nextInt(maxDelayMillis)));
+                Thread.yield();
+            }
+        };
+        Runnable close = () -> {
+            StartTime startTime = StartTime.now();
+            ThreadUtil.sleep(Duration.ofMillis(ThreadLocalRandom.current().nextInt(maxDelayMillis)));
+            boolean loop = ThreadLocalRandom.current().nextBoolean();
+            do {
+                clientExecutor.close();
+                Thread.yield();
+            } while (loop && startTime.elapsed().toMillis() < maxDelayMillis);
+        };
+        ArrayList<Future<?>> scheduleFutures = new ArrayList<>();
+        ArrayList<Future<?>> closeFutures = new ArrayList<>();
+        for (int i = 0; i < schedulingAndClosingThreadCount; i++) {
+            scheduleFutures.add(cachedExecutor.submit(schedule));
+            closeFutures.add(cachedExecutor.submit(close));
+        }
+        long waitMillis = SECONDS.toMillis(1);
+        for (Future<?> future : scheduleFutures) {
+            assertDoesNotThrow(() -> future.get(waitMillis, MILLISECONDS));
+        }
+        for (Future<?> future : closeFutures) {
+            assertDoesNotThrow(() -> future.get(waitMillis, MILLISECONDS));
+        }
+        // Completion of a task is not guaranteed to happen before completion of all `closeFutures`,
+        // because a task that is being executed concurrently with `DefaultAsyncClientExecutor.close`
+        // is not guaranteed to be completed before (in the happens-before order) `close` returns.
+        // So we have to wait for tasks separately.
+        Timeout tasksTimeout = Timeout.expiresIn(waitMillis, MILLISECONDS, ZERO_DURATION_MEANS_EXPIRED);
+        int expectedCompletionCount = taskCountPerSchedulingThread * schedulingAndClosingThreadCount;
+        while (completionCount.get() < expectedCompletionCount) {
+            tasksTimeout.onExpired(() -> fail("Not all tasks were completed"));
+            Thread.yield();
+        }
+        // wait a bit to see if any more completions happen, in case tasks are incorrectly completed more than once
+        Thread.sleep(1);
+        assertEquals(expectedCompletionCount, completionCount.get());
+    }
+
+    private static void waitForCompletion(final Future<?> future, final Duration duration) {
         try {
             future.get(duration.toNanos(), NANOSECONDS);
         } catch (InterruptedException e) {
