@@ -34,8 +34,6 @@ import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerOpeningEvent;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.types.ObjectId;
@@ -45,14 +43,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 @ThreadSafe
 public class LoadBalancedServer implements ClusterableServer {
-    private static final Logger LOGGER = Loggers.getLogger("connection");
     private final AtomicBoolean closed = new AtomicBoolean();
     private final ServerId serverId;
     private final ConnectionPool connectionPool;
@@ -174,7 +170,7 @@ public class LoadBalancedServer implements ClusterableServer {
         public <T> void executeAsync(final CommandProtocol<T> protocol, final InternalConnection connection,
                                      final SessionContext sessionContext, final SingleResultCallback<T> callback) {
             protocol.withSessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock))
-                    .executeAsync(connection, errorHandlingCallback((result, t) -> {
+                    .executeAsync(connection, (result, t) -> {
                 if (t != null) {
                     if (t instanceof MongoWriteConcernWithResponseException) {
                         callback.onResult((T) ((MongoWriteConcernWithResponseException) t).getResponse(), null);
@@ -185,7 +181,7 @@ public class LoadBalancedServer implements ClusterableServer {
                 } else {
                     callback.onResult(result, null);
                 }
-            }, LOGGER));
+            });
         }
 
         private void handleExecutionException(final InternalConnection connection, final SessionContext sessionContext,
