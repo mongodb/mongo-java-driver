@@ -32,7 +32,8 @@ import com.mongodb.lang.Nullable;
  * 3=network unreachable, 4=host unreachable, 5=connection refused, 6=TTL expired,
  * 7=command not supported, 8=address type not supported.
  *
- * @since 5.9
+ * @since 5.12
+ * @serial exclude
  */
 public class MongoSocksProxyException extends MongoSocketOpenException {
     private static final long serialVersionUID = 1L;

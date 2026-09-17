@@ -480,7 +480,8 @@ public class MongoClientOptions {
      *
      * @return The maximum number of retry attempts when encountering a retryable overload error.
      * @see Builder#maxAdaptiveRetries(Integer)
-     * @since 5.7
+     * @since 5.12
+     * @mongodb.server.release 9.0
      */
     @Beta(Reason.CLIENT)
     @Nullable
@@ -494,7 +495,8 @@ public class MongoClientOptions {
      *
      * @return the enableOverloadRetargeting value
      * @see MongoClientSettings.Builder#enableOverloadRetargeting(boolean)
-     * @since 5.7
+     * @since 5.12
+     * @mongodb.server.release 9.0
      */
     @Beta(Reason.CLIENT)
     public boolean getEnableOverloadRetargeting() {
@@ -1101,7 +1103,8 @@ public class MongoClientOptions {
          * @param maxAdaptiveRetries Sets the maximum number of retry attempts when encountering a retryable overload error.
          * @return {@code this}.
          * @see #getMaxAdaptiveRetries()
-         * @since 5.7
+         * @since 5.12
+         * @mongodb.server.release 9.0
          */
         @Beta(Reason.CLIENT)
         public Builder maxAdaptiveRetries(@Nullable final Integer maxAdaptiveRetries) {
@@ -1116,7 +1119,8 @@ public class MongoClientOptions {
          * @param enableOverloadRetargeting whether to enable overload retargeting
          * @return {@code this}
          * @see #getEnableOverloadRetargeting()
-         * @since 5.7
+         * @since 5.12
+         * @mongodb.server.release 9.0
          */
         @Beta(Reason.CLIENT)
         public Builder enableOverloadRetargeting(final boolean enableOverloadRetargeting) {
