@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.junit.runners.Parameterized;
 import util.JsonPoweredTestHelper;
 
+import java.util.Arrays;
 import java.util.Collection;
 
 import static org.junit.Assume.assumeFalse;
@@ -30,6 +31,9 @@ import static org.junit.Assume.assumeFalse;
 public class UriOptionsTest extends AbstractConnectionStringTest {
     public UriOptionsTest(final String filename, final String description, final String input, final BsonDocument definition) {
         super(filename, description, input, definition);
+        // TODO-JAVA-6235 https://jira.mongodb.org/browse/JAVA-6235
+        assumeFalse(filename.equals("srv-options.json"));
+
     }
 
     @Test
