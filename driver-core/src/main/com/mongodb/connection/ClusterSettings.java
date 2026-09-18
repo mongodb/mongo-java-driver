@@ -200,7 +200,7 @@ public final class ClusterSettings {
          *
          * @param srvAllowedHostsSuffix the SRV allowed hosts suffix; may not be null or empty
          * @return this
-         * @since 5.9
+         * @since 5.13
          * @see #getSrvAllowedHostsSuffix()
          */
         public Builder srvAllowedHostsSuffix(final String srvAllowedHostsSuffix) {

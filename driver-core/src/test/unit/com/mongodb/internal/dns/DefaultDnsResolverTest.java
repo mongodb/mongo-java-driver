@@ -93,8 +93,9 @@ public class DefaultDnsResolverTest {
     @Test
     public void shouldThrowWhenAnyResolvedHostDoesNotEndWithSrvAllowedHostsSuffix() {
         DefaultDnsResolver resolver = resolverReturning("ok.build.10gen.cc.", "bad.evil.example.com.");
-        assertThrows(MongoConfigurationException.class,
+        MongoConfigurationException e = assertThrows(MongoConfigurationException.class,
                 () -> resolver.resolveHostFromSrvRecords(TEST_HOST, "mongodb", ".build.10gen.cc"));
+        assertTrue(e.getMessage().contains("bad.evil.example.com"));
     }
 
     @Test

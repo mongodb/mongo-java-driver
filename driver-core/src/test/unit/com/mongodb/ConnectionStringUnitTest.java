@@ -194,28 +194,28 @@ final class ConnectionStringUnitTest {
     void shouldThrowWhenSrvAllowedHostsSuffixIsOnlyDots() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
                 () -> new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=.."));
-        assertEquals("srvAllowedHostsSuffix must not contain empty domain labels", e.getMessage());
+        assertEquals("srvAllowedHostsSuffix is not a valid domain", e.getMessage());
     }
 
     @Test
     void shouldThrowWhenSrvAllowedHostsSuffixHasLeadingDoubleDot() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
                 () -> new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=..build.10gen.cc"));
-        assertEquals("srvAllowedHostsSuffix must not contain empty domain labels", e.getMessage());
+        assertEquals("srvAllowedHostsSuffix is not a valid domain", e.getMessage());
     }
 
     @Test
     void shouldThrowWhenSrvAllowedHostsSuffixHasEmptyInteriorLabel() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
                 () -> new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=build..10gen.cc"));
-        assertEquals("srvAllowedHostsSuffix must not contain empty domain labels", e.getMessage());
+        assertEquals("srvAllowedHostsSuffix is not a valid domain", e.getMessage());
     }
 
     @Test
     void shouldThrowWhenSrvAllowedHostsSuffixHasTrailingDot() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
                 () -> new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=.build.10gen.cc."));
-        assertEquals("srvAllowedHostsSuffix must not contain empty domain labels", e.getMessage());
+        assertEquals("srvAllowedHostsSuffix is not a valid domain", e.getMessage());
     }
 
     @Test

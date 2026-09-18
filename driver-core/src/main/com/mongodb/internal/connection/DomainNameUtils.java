@@ -55,13 +55,11 @@ public class DomainNameUtils {
         if (labels.isEmpty()) {
             throw new IllegalArgumentException("srvAllowedHostsSuffix must contain at least one domain label");
         }
-        String[] parts = labels.split("\\.", -1);
-        for (String label : parts) {
-            if (label.isEmpty()) {
-                throw new IllegalArgumentException("srvAllowedHostsSuffix must not contain empty domain labels");
-            }
+        try {
+            labels = IDN.toASCII(labels, IDN.ALLOW_UNASSIGNED).toLowerCase(Locale.ROOT);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("srvAllowedHostsSuffix is not a valid domain", e);
         }
-        labels = IDN.toASCII(labels, IDN.ALLOW_UNASSIGNED).toLowerCase(Locale.ROOT);
         if (!isDomainName(labels)) {
             throw new IllegalArgumentException("srvAllowedHostsSuffix is not a valid domain");
         }
@@ -83,16 +81,14 @@ public class DomainNameUtils {
     private static boolean isPublicSuffix(final String suffix) {
         try (Scanner scanner = new Scanner(
                 Objects.requireNonNull(
-                        DomainNameUtils.class.getResourceAsStream("public_suffix_list.dat"), "Missing DNS suffix list"),
+                        DomainNameUtils.class.getResourceAsStream("public_suffix_list.dat"),
+                        "Missing DNS public suffix list"),
                 "UTF-8")) {
             int firstDot = suffix.indexOf('.');
             String rootDomain = firstDot >= 0 ? suffix.substring(firstDot + 1) : suffix;
             boolean invalidMatchWildcard = false;
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
-                if (line.startsWith("//") || line.isEmpty()) {
-                    continue;
-                }
                 if (line.startsWith("!")) {
                     if (invalidMatchWildcard && suffix.equals(IDN.toASCII(line.substring(1), IDN.ALLOW_UNASSIGNED))) {
                         return false;
