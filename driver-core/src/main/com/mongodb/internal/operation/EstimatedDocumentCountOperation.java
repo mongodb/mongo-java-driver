@@ -50,10 +50,13 @@ public class EstimatedDocumentCountOperation implements ReadOperationSimple<Long
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
     private final MongoNamespace namespace;
     private boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private BsonValue comment;
 
-    public EstimatedDocumentCountOperation(final MongoNamespace namespace) {
+    public EstimatedDocumentCountOperation(final MongoNamespace namespace, @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.namespace = notNull("namespace", namespace);
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     public EstimatedDocumentCountOperation retryReads(final boolean retryReads) {
@@ -86,7 +89,7 @@ public class EstimatedDocumentCountOperation implements ReadOperationSimple<Long
         try {
             return executeRetryableRead(binding, operationContext, namespace.getDatabaseName(),
                                         getCommandCreator(), CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")),
-                                        transformer(), retryReads);
+                                        transformer(), retryReads, maxAdaptiveRetriesSetting);
         } catch (MongoCommandException e) {
             return assertNotNull(rethrowIfNotNamespaceError(e, 0L));
         }
@@ -96,7 +99,7 @@ public class EstimatedDocumentCountOperation implements ReadOperationSimple<Long
     public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<Long> callback) {
         executeRetryableReadAsync(binding, operationContext,  namespace.getDatabaseName(),
                                   getCommandCreator(), CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")),
-                                  asyncTransformer(), retryReads,
+                                  asyncTransformer(), retryReads, maxAdaptiveRetriesSetting,
                                   (result, t) -> {
                     if (isNamespaceError(t)) {
                         callback.onResult(0L, null);

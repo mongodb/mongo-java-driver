@@ -26,6 +26,7 @@ import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.event.ConnectionCheckOutFailedEvent;
+import com.mongodb.event.ConnectionCheckedInEvent;
 import com.mongodb.event.ConnectionClosedEvent;
 import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionPoolClearedEvent;
@@ -207,6 +208,12 @@ final class EventMatcher {
                 break;
             case "connectionReadyEvent":
                 eventClass = ConnectionReadyEvent.class;
+                break;
+            case "connectionClosedEvent":
+                eventClass = ConnectionClosedEvent.class;
+                break;
+            case "connectionCheckedInEvent":
+                eventClass = ConnectionCheckedInEvent.class;
                 break;
             default:
                 throw new UnsupportedOperationException("Unsupported event: " + event.getFirstKey());
@@ -436,11 +443,18 @@ final class EventMatcher {
         switch (newType) {
             case "Unknown":
                 return event.getNewDescription().getType() == ServerType.UNKNOWN;
-            case "LoadBalancer": {
+            case "LoadBalancer":
                 return event.getNewDescription().getType() == ServerType.LOAD_BALANCER;
-            }
+            case "Mongos":
+                return event.getNewDescription().getType() == ServerType.SHARD_ROUTER;
+            case "Standalone":
+                return event.getNewDescription().getType() == ServerType.STANDALONE;
+            case "RSPrimary":
+                return event.getNewDescription().getType() == ServerType.REPLICA_SET_PRIMARY;
+            case "RSSecondary":
+                return event.getNewDescription().getType() == ServerType.REPLICA_SET_SECONDARY;
             default:
-                throw new UnsupportedOperationException();
+                throw new UnsupportedOperationException("Unsupported server type " + newType);
         }
     }
 
@@ -499,6 +513,13 @@ final class EventMatcher {
         if (expectedEventContents.size() > 1) {
             throw new UnsupportedOperationException("Matching for the following event is not implemented " + expectedEventContents.toJson());
         }
+        if (event instanceof ServerDescriptionChangedEvent) {
+            boolean matches = serverDescriptionChangedEventMatches(expectedEventContents, (ServerDescriptionChangedEvent) event);
+            if (context != null) {
+                assertTrue(context.getMessage("Expected serverDescriptionChangedEvent contents to match"), matches);
+            }
+            return matches;
+        }
         if (expectedEventContents.containsKey("awaited")) {
             boolean expectedAwaited = expectedEventContents.getBoolean("awaited").getValue();
             boolean actualAwaited = getAwaitedFromServerMonitorEvent(event);
@@ -531,7 +552,7 @@ final class EventMatcher {
             return eventClassName.replace("ConnectionPool", "pool");
         } else if (eventClassName.startsWith("Connection")) {
             return eventClassName.replace("Connection", "connection");
-        } else if (eventClassName.startsWith("ServerHeartbeat")) {
+        } else if (eventClassName.startsWith("Server")) {
             StringBuilder eventTypeBuilder = new StringBuilder(eventClassName);
             eventTypeBuilder.setCharAt(0, Character.toLowerCase(eventTypeBuilder.charAt(0)));
             return eventTypeBuilder.toString();

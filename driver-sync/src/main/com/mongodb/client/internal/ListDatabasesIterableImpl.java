@@ -51,9 +51,10 @@ public class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResul
 
     public ListDatabasesIterableImpl(@Nullable final ClientSession clientSession, final Class<TResult> resultClass,
             final CodecRegistry codecRegistry, final ReadPreference readPreference, final OperationExecutor executor,
-            final boolean retryReads, final TimeoutSettings timeoutSettings) {
+            final boolean retryReads, @Nullable final Integer maxAdaptiveRetriesSetting, final TimeoutSettings timeoutSettings) {
         super(clientSession, executor, ReadConcern.DEFAULT, readPreference, retryReads, timeoutSettings); // TODO: read concern?
-        this.operations = new Operations<>(BsonDocument.class, readPreference, codecRegistry, retryReads, timeoutSettings);
+        this.operations = new Operations<>(
+                BsonDocument.class, readPreference, codecRegistry, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
         this.resultClass = notNull("clazz", resultClass);
     }
 

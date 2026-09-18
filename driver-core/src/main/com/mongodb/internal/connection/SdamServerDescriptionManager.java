@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoCommandException;
+import com.mongodb.MongoException;
 import com.mongodb.MongoNodeIsRecoveringException;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSecurityException;
@@ -160,6 +161,11 @@ interface SdamServerDescriptionManager {
 
         boolean relatedToWriteConcern() {
             return exception instanceof MongoWriteConcernWithResponseException;
+        }
+
+        boolean hasSystemOverloadedLabel() {
+            return exception instanceof MongoException
+                    && ((MongoException) exception).hasErrorLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL);
         }
 
         private static boolean stale(@Nullable final Throwable t, final ServerDescription currentServerDescription) {

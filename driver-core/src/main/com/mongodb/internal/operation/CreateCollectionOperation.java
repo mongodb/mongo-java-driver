@@ -28,9 +28,10 @@ import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.function.AsyncCallbackSupplier;
+import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
-import com.mongodb.internal.connection.AsyncConnection;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -46,16 +47,18 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncConnection;
 import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
+import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRetryControl;
 import static com.mongodb.internal.operation.DocumentHelper.putIfFalse;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotZero;
-import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionSevenDotZero;
+import static com.mongodb.internal.operation.SpecRetryPolicy.IndividualPolicies.overloadForWrite;
+import static com.mongodb.internal.operation.SyncOperationHelper.decorateWithRetries;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
 import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
 import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErrorTransformer;
@@ -76,6 +79,9 @@ public class CreateCollectionOperation implements WriteOperation<Void> {
     private final String databaseName;
     private final String collectionName;
     private final WriteConcern writeConcern;
+    private final boolean retryWrites;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private boolean capped = false;
     private long sizeInBytes = 0;
     private boolean autoIndex = true;
@@ -95,9 +101,16 @@ public class CreateCollectionOperation implements WriteOperation<Void> {
     private BsonDocument encryptedFields;
 
     public CreateCollectionOperation(final String databaseName, final String collectionName, @Nullable final WriteConcern writeConcern) {
+        this(databaseName, collectionName, writeConcern, false, null);
+    }
+
+    public CreateCollectionOperation(final String databaseName, final String collectionName, @Nullable final WriteConcern writeConcern,
+            final boolean retryWrites, @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.databaseName = notNull("databaseName", databaseName);
         this.collectionName = notNull("collectionName", collectionName);
         this.writeConcern = writeConcern;
+        this.retryWrites = retryWrites;
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     public String getCollectionName() {
@@ -245,31 +258,26 @@ public class CreateCollectionOperation implements WriteOperation<Void> {
 
     @Override
     public Void execute(final WriteBinding binding, final OperationContext operationContext) {
-        return withConnection(binding, operationContext, (connection, operationContextWithMinRtt)-> {
-            checkEncryptedFieldsSupported(connection.getDescription());
-            getCommandFunctions().forEach(commandCreator ->
-               executeCommand(binding, operationContextWithMinRtt,  databaseName, commandCreator.get(), connection,
-                      writeConcernErrorTransformer(operationContextWithMinRtt.getTimeoutContext()))
-            );
-            return null;
+        getCommandFunctions().forEach(commandCreator -> {
+            RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(overloadForWrite(retryWrites, maxAdaptiveRetriesSetting),
+                    operationContext);
+            Supplier<Void> retryingCommandExecutor = decorateWithRetries(retryControl, operationContext, () -> {
+                retryControl.getPolicy().onCommand(this::getCommandName);
+                return withConnection(binding, operationContext, (connection, connectionScopedOperationContext) -> {
+                    checkEncryptedFieldsSupported(connection.getDescription());
+                    executeCommand(binding, connectionScopedOperationContext, databaseName, commandCreator.get(), connection,
+                            writeConcernErrorTransformer(connectionScopedOperationContext.getTimeoutContext()));
+                    return null;
+                });
+            });
+            retryingCommandExecutor.get();
         });
+        return null;
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(binding, operationContext, (connection, operationContextWithMinRtt, t) -> {
-            SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-            if (t != null) {
-                errHandlingCallback.onResult(null, t);
-            } else {
-                SingleResultCallback<Void> releasingCallback = releasingCallback(errHandlingCallback, connection);
-                if (!checkEncryptedFieldsSupported(connection.getDescription(), releasingCallback)) {
-                    return;
-                }
-                new ProcessCommandsCallback(binding, operationContextWithMinRtt, connection, releasingCallback)
-                        .onResult(null, null);
-            }
-        });
+        new ProcessCommandsCallback(binding, operationContext, callback).onResult(null, null);
     }
 
     private String getGranularityAsString(final TimeSeriesGranularity granularity) {
@@ -411,15 +419,13 @@ public class CreateCollectionOperation implements WriteOperation<Void> {
     class ProcessCommandsCallback implements SingleResultCallback<Void> {
         private final AsyncWriteBinding binding;
         private final OperationContext operationContext;
-        private final AsyncConnection connection;
         private final SingleResultCallback<Void>  finalCallback;
         private final Deque<Supplier<BsonDocument>> commands;
 
         ProcessCommandsCallback(
-                final AsyncWriteBinding binding, final OperationContext operationContext, final AsyncConnection connection, final SingleResultCallback<Void> finalCallback) {
+                final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<Void> finalCallback) {
             this.binding = binding;
             this.operationContext = operationContext;
-            this.connection = connection;
             this.finalCallback = finalCallback;
             this.commands = new ArrayDeque<>(getCommandFunctions());
         }
@@ -434,8 +440,27 @@ public class CreateCollectionOperation implements WriteOperation<Void> {
             if (nextCommandFunction == null) {
                 finalCallback.onResult(null, null);
             } else {
-                executeCommandAsync(binding, operationContext,  databaseName, nextCommandFunction.get(),
-                        connection, writeConcernErrorTransformerAsync(operationContext.getTimeoutContext()), this);
+                RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
+                        overloadForWrite(retryWrites, maxAdaptiveRetriesSetting), operationContext);
+                AsyncCallbackSupplier<Void> retryingCommandExecutor = decorateWithRetriesAsync(retryControl, operationContext,
+                        supplierCallback -> {
+                            retryControl.getPolicy().onCommand(CreateCollectionOperation.this::getCommandName);
+                            withAsyncConnection(binding, operationContext, (connection, connectionScopedOperationContext, t1) -> {
+                                if (t1 != null) {
+                                    supplierCallback.onResult(null, t1);
+                                } else {
+                                    SingleResultCallback<Void> connectionReleasingCallback = releasingCallback(supplierCallback, connection);
+                                    if (!checkEncryptedFieldsSupported(connection.getDescription(), connectionReleasingCallback)) {
+                                        return;
+                                    }
+                                    executeCommandAsync(binding, connectionScopedOperationContext, databaseName,
+                                            nextCommandFunction.get(), connection,
+                                            writeConcernErrorTransformerAsync(connectionScopedOperationContext.getTimeoutContext()),
+                                            connectionReleasingCallback);
+                                }
+                            });
+                        });
+                retryingCommandExecutor.get(this);
             }
         }
     }

@@ -64,7 +64,7 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
 
     def cleanup() {
         def binding = getBinding()
-        def operationContext = ClusterFixture.getOperationContext(binding.getReadPreference())
+        def operationContext = ClusterFixture.createOperationContext(binding.getReadPreference())
         new DropCollectionOperation(mapReduceInputNamespace, WriteConcern.ACKNOWLEDGED)
                 .execute(binding, operationContext)
         new DropCollectionOperation(mapReduceOutputNamespace, WriteConcern.ACKNOWLEDGED)

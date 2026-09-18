@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.lang.Nullable;
 import org.bson.UuidRepresentation;
 
@@ -147,10 +148,6 @@ import static com.mongodb.assertions.Assertions.notNull;
  *          <li>Used in combination with {@code w}</li>
  *      </ul>
  *  </li>
- *  <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
- *  Defaults to false.</li>
- *  <li>{@code retryReads=true|false}. If true the driver will retry supported read operations if they fail due to a network error.
- *  Defaults to false.</li>
  * </ul>
  *
  *
@@ -214,10 +211,15 @@ import static com.mongodb.assertions.Assertions.notNull;
  * </ul>
  * <p>General configuration:</p>
  * <ul>
- * <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
- *  Defaults to true.</li>
- * <li>{@code retryReads=true|false}. If true the driver will retry supported read operations if they fail due to a network error.
- *  Defaults to true.</li>
+ * <li>{@code retryWrites=true|false}: Whether attempts to execute write commands should be retried if they fail due to a retryable error.
+ *  Defaults to true. See also {@code maxAdaptiveRetries}.</li>
+ * <li>{@code retryReads=true|false}: Whether attempts to execute read commands should be retried if they fail due to a retryable error.
+ *  Defaults to true. See also {@code maxAdaptiveRetries}.</li>
+ * <li>{@code maxAdaptiveRetries=n}: This is {@linkplain Beta Beta API}.
+ * The maximum number of retry attempts when encountering a retryable overload error.
+ * See {@link MongoClientSettings.Builder#maxAdaptiveRetries(Integer)} for more information.</li>
+* <li>{@code enableOverloadRetargeting=true|false}: Whether to enable overload retargeting. Defaults to false.
+ * See {@link MongoClientSettings.Builder#enableOverloadRetargeting(boolean)} for more information.</li>
  * <li>{@code uuidRepresentation=unspecified|standard|javaLegacy|csharpLegacy|pythonLegacy}.  See
  * {@link MongoClientOptions#getUuidRepresentation()} for documentation of semantics of this parameter.  Defaults to "javaLegacy", but
  * will change to "unspecified" in the next major release.</li>
@@ -381,10 +383,18 @@ public class MongoClientURI {
         if (retryWritesValue != null) {
             builder.retryWrites(retryWritesValue);
         }
-
         Boolean retryReads = proxied.getRetryReads();
         if (retryReads != null) {
             builder.retryReads(retryReads);
+        }
+        Integer maxAdaptiveRetries = proxied.getMaxAdaptiveRetries();
+        if (maxAdaptiveRetries != null) {
+            builder.maxAdaptiveRetries(maxAdaptiveRetries);
+        }
+
+        Boolean enableOverloadRetargeting = proxied.getEnableOverloadRetargeting();
+        if (enableOverloadRetargeting != null) {
+            builder.enableOverloadRetargeting(enableOverloadRetargeting);
         }
 
         Integer maxConnectionPoolSize = proxied.getMaxConnectionPoolSize();

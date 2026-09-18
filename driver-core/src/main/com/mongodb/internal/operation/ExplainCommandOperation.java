@@ -28,7 +28,7 @@ import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreat
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class ExplainCommandOperation<T> extends CommandReadOperation<T> {
+public class ExplainCommandOperation<T> extends AbstractCommandReadOperation<T> {
 
     public ExplainCommandOperation(final String databaseName, final BsonDocument command, final Decoder<T> decoder) {
         super(databaseName, command, decoder);

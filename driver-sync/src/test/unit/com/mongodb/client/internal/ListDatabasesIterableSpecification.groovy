@@ -46,8 +46,8 @@ class ListDatabasesIterableSpecification extends Specification {
     def 'should build the expected listCollectionOperation'() {
         given:
         def executor = new TestOperationExecutor([null, null, null])
-        def listDatabaseIterable = new ListDatabasesIterableImpl<Document>(null, Document, codecRegistry, readPreference, executor, true,
-                TIMEOUT_SETTINGS)
+        def listDatabaseIterable = new ListDatabasesIterableImpl<Document>(null, Document, codecRegistry, readPreference, executor,
+                true, null, TIMEOUT_SETTINGS)
 
         when: 'default input should be as expected'
         listDatabaseIterable.iterator()
@@ -56,7 +56,7 @@ class ListDatabasesIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec())
+        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec(), null)
                 .retryReads(true))
         readPreference == secondary()
 
@@ -66,7 +66,7 @@ class ListDatabasesIterableSpecification extends Specification {
         operation = executor.getReadOperation() as ListDatabasesOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec())
+        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec(), null)
                 .filter(BsonDocument.parse('{a: 1}')).nameOnly(true).retryReads(true))
 
         when: 'overriding initial options'
@@ -75,7 +75,7 @@ class ListDatabasesIterableSpecification extends Specification {
         operation = executor.getReadOperation() as ListDatabasesOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec())
+        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec(), null)
                 .filter(BsonDocument.parse('{a: 1}')).nameOnly(true).authorizedDatabasesOnly(true).retryReads(true))
     }
 
@@ -102,7 +102,7 @@ class ListDatabasesIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()])
         def mongoIterable = new ListDatabasesIterableImpl<Document>(null, Document, codecRegistry, readPreference, executor,
-                true, TIMEOUT_SETTINGS)
+                true, null, TIMEOUT_SETTINGS)
 
         when:
         def results = mongoIterable.first()
@@ -145,8 +145,8 @@ class ListDatabasesIterableSpecification extends Specification {
     def 'should get and set batchSize as expected'() {
         when:
         def batchSize = 5
-        def mongoIterable = new ListDatabasesIterableImpl<Document>(null, Document, codecRegistry, readPreference,
-                Stub(OperationExecutor), true, TIMEOUT_SETTINGS)
+        def mongoIterable = new ListDatabasesIterableImpl<Document>(null, Document, codecRegistry, readPreference, Stub(OperationExecutor),
+                true, null, TIMEOUT_SETTINGS)
 
         then:
         mongoIterable.getBatchSize() == null
