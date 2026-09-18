@@ -314,8 +314,16 @@ public class ServerDiscoveryAndMonitoringProseTests {
                                 collection.find(new Document("$where", "function() { sleep(2000); return true; }")).first());
                     }
                     executor.shutdown();
-                    assertTrue("Executor did not terminate within timeout",
-                            executor.awaitTermination(20, SECONDS));
+                    // The operation storm takes 15-17.5s on CI hosts even against healthy servers, and
+                    // ~25-35s against MongoDB 9.0, whose concurrent JS sleep() is slow under contention
+                    // (SERVER-134156, see HELP-100331) — so the previous 20s deadline had almost no
+                    // headroom. The measured worst case is 44.2s (9.0, auth/ssl, sharded), so 90s gives ~2x headroom
+                    // while still catching real hangs.
+                    long startMillis = System.currentTimeMillis();
+                    boolean terminated = executor.awaitTermination(90, SECONDS);
+                    LOGGER.info("testConnectionPoolBackpressure: operations completed="
+                            + terminated + " in " + (System.currentTimeMillis() - startMillis) + " ms");
+                    assertTrue("Executor did not terminate within timeout", terminated);
                 } finally {
                     if (!executor.isTerminated()) {
                         executor.shutdownNow();
