@@ -314,8 +314,16 @@ public class ServerDiscoveryAndMonitoringProseTests {
                                 collection.find(new Document("$where", "function() { sleep(2000); return true; }")).first());
                     }
                     executor.shutdown();
-                    assertTrue("Executor did not terminate within timeout",
-                            executor.awaitTermination(20, SECONDS));
+                    // Temporarily use a generous ceiling instead of the 20s deadline and log the actual
+                    // completion time, to measure the timeout this test needs on CI. Against MongoDB 9.0
+                    // the storm exceeds 20s because concurrent JS sleep() is slow under contention
+                    // (SERVER-134156, see HELP-100331).
+                    // TODO JAVA-5942 restore a fixed deadline based on the measured CI durations
+                    long startMillis = System.currentTimeMillis();
+                    boolean terminated = executor.awaitTermination(600, SECONDS);
+                    LOGGER.info("testConnectionPoolBackpressure: operations completed="
+                            + terminated + " in " + (System.currentTimeMillis() - startMillis) + " ms");
+                    assertTrue("Executor did not terminate within timeout", terminated);
                 } finally {
                     if (!executor.isTerminated()) {
                         executor.shutdownNow();
