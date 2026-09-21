@@ -194,28 +194,29 @@ final class ConnectionStringUnitTest {
     void shouldThrowWhenSrvAllowedHostsSuffixIsOnlyDots() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
                 () -> new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=.."));
-        assertEquals("srvAllowedHostsSuffix is not a valid domain", e.getMessage());
+        assertEquals("srvAllowedHostsSuffix must contain at least one domain label", e.getMessage());
     }
 
     @Test
     void shouldThrowWhenSrvAllowedHostsSuffixHasLeadingDoubleDot() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
                 () -> new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=..build.10gen.cc"));
-        assertEquals("srvAllowedHostsSuffix is not a valid domain", e.getMessage());
+        assertEquals("srvAllowedHostsSuffix is not a valid domain: ..build.10gen.cc", e.getMessage());
     }
 
     @Test
     void shouldThrowWhenSrvAllowedHostsSuffixHasEmptyInteriorLabel() {
         IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
                 () -> new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=build..10gen.cc"));
-        assertEquals("srvAllowedHostsSuffix is not a valid domain", e.getMessage());
+        assertEquals("srvAllowedHostsSuffix is not a valid domain: build..10gen.cc", e.getMessage());
     }
 
     @Test
-    void shouldThrowWhenSrvAllowedHostsSuffixHasTrailingDot() {
-        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
-                () -> new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=.build.10gen.cc."));
-        assertEquals("srvAllowedHostsSuffix is not a valid domain", e.getMessage());
+    void shouldNormalizeSrvAllowedHostsSuffixWhenHasTrailingDot() {
+        assertEquals(
+                ".build.10gen.cc",
+                new ConnectionString("mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=.build.10gen.cc.")
+                        .getSrvAllowedHostsSuffix());
     }
 
     @Test
@@ -233,7 +234,7 @@ final class ConnectionStringUnitTest {
                 IllegalArgumentException.class,
                 () -> new ConnectionString(
                         "mongodb+srv://test12.test.build.10gen.cc/?srvAllowedHostsSuffix=.*.10gen.cc"));
-        assertEquals("srvAllowedHostsSuffix is not a valid domain", e.getMessage());
+        assertEquals("srvAllowedHostsSuffix is not a valid domain: .*.10gen.cc", e.getMessage());
     }
 
     @Test

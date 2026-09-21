@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  */
 public class DomainNameUtils {
     private static final Pattern DOMAIN_PATTERN = Pattern.compile(
-            "^(?=.{1,255}$)(([a-z0-9]([a-z0-9\\-]{0,61}[a-z0-9])?\\.)*[a-z0-9]([a-z0-9\\\\-]{0,61}[a-z0-9])?)$", Pattern.CASE_INSENSITIVE);
+            "^(?=.{1,255}$)(([a-z0-9]([a-z0-9\\-]{0,61}[a-z0-9])?\\.)*[a-z0-9]([a-z0-9\\-]{0,61}[a-z0-9])?)$", Pattern.CASE_INSENSITIVE);
 
     static boolean isDomainName(final String domainName) {
         return DOMAIN_PATTERN.matcher(domainName).matches();
@@ -52,16 +52,19 @@ public class DomainNameUtils {
         // non-empty domain labels.
         boolean hasLeadingDot = srvAllowedHostsSuffix.startsWith(".");
         String labels = hasLeadingDot ? srvAllowedHostsSuffix.substring(1) : srvAllowedHostsSuffix;
+        if (labels.endsWith(".")) {
+            labels = labels.substring(0, labels.length() - 1);
+        }
         if (labels.isEmpty()) {
             throw new IllegalArgumentException("srvAllowedHostsSuffix must contain at least one domain label");
         }
         try {
             labels = IDN.toASCII(labels, IDN.ALLOW_UNASSIGNED).toLowerCase(Locale.ROOT);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("srvAllowedHostsSuffix is not a valid domain", e);
+            throw new IllegalArgumentException("srvAllowedHostsSuffix is not a valid domain: " + srvAllowedHostsSuffix, e);
         }
         if (!isDomainName(labels)) {
-            throw new IllegalArgumentException("srvAllowedHostsSuffix is not a valid domain");
+            throw new IllegalArgumentException("srvAllowedHostsSuffix is not a valid domain: " + srvAllowedHostsSuffix);
         }
         if (isPublicSuffix(labels)) {
             throw new IllegalArgumentException("srvAllowedHostsSuffix must not be a public domain suffix");
