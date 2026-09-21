@@ -66,6 +66,12 @@ dependencies {
     }
 }
 
+tasks.processResources {
+    from("${rootProject.projectDir}/testing/resources/specifications/source/public-suffix-list/public_suffix_list.dat") {
+        into("com/mongodb/internal/connection")
+    }
+}
+
 tasks.processTestResources {
     from("${rootProject.projectDir}/testing/resources")
     // TODO JAVA-6283: remove this and the resources-ghsa-556f-q76p-2vxq

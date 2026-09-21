@@ -165,7 +165,7 @@ public final class SocksSocket extends Socket {
 
         AddressType addressType;
         byte[] ipAddress = InetAddressUtils.ipStringToBytes(host);
-        if (ipAddress !=null) {
+        if (ipAddress != null) {
             addressType = determineAddressType(ipAddress);
 
         } else if (isDomainName(host)) {
