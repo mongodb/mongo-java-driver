@@ -124,6 +124,15 @@ class ClusterSettingsSpecification extends Specification {
         settings.srvAllowedHostsSuffix == '.build.10gen.cc'
     }
 
+    def 'should normalize srvAllowedHostsSuffix with trailing dot'() {
+        when:
+        def settings = ClusterSettings.builder().srvHost('test12.test.build.10gen.cc')
+                .srvAllowedHostsSuffix('.build.10gen.cc.').build()
+
+        then:
+        settings.srvAllowedHostsSuffix == '.build.10gen.cc'
+    }
+
     def 'should normalize srvAllowedHostsSuffix without a leading dot'() {
         when:
         def settings = ClusterSettings.builder().srvHost('test12.test.build.10gen.cc')
@@ -178,7 +187,7 @@ class ClusterSettingsSpecification extends Specification {
 
         where:
         suffix << ['', '   ', '.', '..', '...', ' .build.10gen.cc', '.build.10gen.cc ',
-                   '..build.10gen.cc', 'build..10gen.cc', '.build.10gen.cc.']
+                   '..build.10gen.cc', 'build..10gen.cc']
     }
 
     def 'when hosts contains more than one element and mode is SINGLE, should throw IllegalArgumentException'() {
