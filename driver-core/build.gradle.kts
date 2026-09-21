@@ -67,7 +67,8 @@ dependencies {
 }
 
 tasks.processResources {
-    from("${rootProject.projectDir}/testing/resources/specifications/source/public-suffix-list/public_suffix_list.dat") {
+    from(
+        "${rootProject.projectDir}/testing/resources/specifications/source/public-suffix-list/public_suffix_list.dat") {
         into("com/mongodb/internal/connection")
     }
 }
