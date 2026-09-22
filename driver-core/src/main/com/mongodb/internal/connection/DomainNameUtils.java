@@ -16,9 +16,13 @@
 package com.mongodb.internal.connection;
 
 import java.net.IDN;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.Scanner;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Pattern;
 
 /**
@@ -27,6 +31,15 @@ import java.util.regex.Pattern;
 public class DomainNameUtils {
     private static final Pattern DOMAIN_PATTERN = Pattern.compile(
             "^(?=.{1,255}$)(([a-z0-9]([a-z0-9\\-]{0,61}[a-z0-9])?\\.)*[a-z0-9]([a-z0-9\\-]{0,61}[a-z0-9])?)$", Pattern.CASE_INSENSITIVE);
+    private static final Set<String> VALID_SINGLE_LABEL_SUFFIXES = Collections.unmodifiableSet(new TreeSet<>(Arrays.asList(
+            // RFC 6761 special use names
+            "test", "localhost", "invalid", "example",
+            // RFC 6762 multicast DNS
+            "local",
+            // reserved by ICANN for private use
+            "internal",
+            // not reserved by ICANN, but commonly used privately
+            "corp", "home", "mail")));
 
     static boolean isDomainName(final String domainName) {
         return DOMAIN_PATTERN.matcher(domainName).matches();
@@ -68,6 +81,9 @@ public class DomainNameUtils {
         }
         if (isPublicSuffix(labels)) {
             throw new IllegalArgumentException("srvAllowedHostsSuffix must not be a public domain suffix");
+        }
+        if (!labels.contains(".") && !VALID_SINGLE_LABEL_SUFFIXES.contains(labels)) {
+            throw new IllegalArgumentException("srvAllowedHostsSuffix must contain two or more domain labels");
         }
         return "." + labels;
     }

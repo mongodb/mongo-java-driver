@@ -281,4 +281,20 @@ final class ConnectionStringUnitTest {
         assertEquals("srvAllowedHostsSuffix must not be a public domain suffix", e.getMessage());
     }
 
+    @Test
+    void shouldThrowWhenSrvAllowedHostsSuffixIsSingleElement() {
+        IllegalArgumentException e = assertThrows(
+                IllegalArgumentException.class,
+                () -> new ConnectionString("mongodb+srv://test12.10gen.ck/?srvAllowedHostsSuffix=.whatever"));
+        assertEquals("srvAllowedHostsSuffix must contain two or more domain labels", e.getMessage());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"test", "localhost", "invalid", "example", "local", "internal", "corp", "home", "mail"})
+    void allowSrvAllowedHostsSuffixSpecialSingleLabel(String suffix) {
+        assertEquals(
+                "." + suffix,
+                new ConnectionString("mongodb+srv://test12.www.ck/?srvAllowedHostsSuffix=" + suffix)
+                        .getSrvAllowedHostsSuffix());
+    }
 }
