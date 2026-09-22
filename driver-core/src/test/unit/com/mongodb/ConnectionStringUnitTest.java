@@ -291,7 +291,7 @@ final class ConnectionStringUnitTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"test", "localhost", "invalid", "example", "local", "internal", "corp", "home", "mail"})
-    void allowSrvAllowedHostsSuffixSpecialSingleLabel(String suffix) {
+    void allowSrvAllowedHostsSuffixSpecialSingleLabel(final String suffix) {
         assertEquals(
                 "." + suffix,
                 new ConnectionString("mongodb+srv://test12.www.ck/?srvAllowedHostsSuffix=" + suffix)
