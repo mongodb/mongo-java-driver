@@ -85,13 +85,15 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
             final OperationContext originalOperationContext,
             final SaslClient saslClient) {
         try {
-            OperationContext operationContext = originalOperationContext;
-            BsonDocument responseDocument = connection.opened() ? null : getSpeculativeAuthenticateResponse();
-            if (responseDocument == null) {
-                responseDocument = getNextSaslResponse(saslClient, connection, operationContext);
-                operationContext = operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout);
+            OperationContext initialOperationContext = originalOperationContext;
+            BsonDocument initialResponseDocument = connection.opened() ? null : getSpeculativeAuthenticateResponse();
+            if (initialResponseDocument == null) {
+                initialResponseDocument = getNextSaslResponse(saslClient, connection, initialOperationContext);
+                initialOperationContext = initialOperationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout);
             }
 
+            OperationContext operationContext = initialOperationContext;
+            BsonDocument responseDocument = initialResponseDocument;
             BsonInt32 conversationId = responseDocument.getInt32("conversationId");
 
             while (!(responseDocument.getBoolean("done")).getValue()) {
