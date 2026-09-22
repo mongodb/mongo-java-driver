@@ -1399,7 +1399,7 @@ public class ConnectionString {
      * always begins with {@code "."}.</p>
      *
      * @return the normalized SRV allowed hosts suffix, always beginning with {@code "."}. Defaults to null.
-     * @since 5.9
+     * @since 5.13
      * @see ClusterSettings#getSrvAllowedHostsSuffix()
      */
     @Nullable
