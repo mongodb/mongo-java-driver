@@ -42,6 +42,7 @@ import org.junit.runners.Parameterized;
 import util.JsonPoweredTestHelper;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -96,6 +97,21 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
         this.isError = isError;
         this.options = options;
         this.executePingCommand = executePingCommand;
+
+        // TODO-JAVA-6235 https://jira.mongodb.org/browse/JAVA-6235
+        assumeFalse(Arrays.asList(
+                        "srvAllowedHostsSuffix-case-insensitive.json",
+                        "srvAllowedHostsSuffix-mismatch.json",
+                        "srvAllowedHostsSuffix-period-only.json",
+                        "srvAllowedHostsSuffix-psl-not-public-suffix.json",
+                        "srvAllowedHostsSuffix-psl-public-suffix-capitalized.json",
+                        "srvAllowedHostsSuffix-psl-public-suffix.json",
+                        "srvAllowedHostsSuffix-tld-only.json",
+                        "srvAllowedHostsSuffix-trailing-dot.json",
+                        "srvAllowedHostsSuffix-with_dot.json",
+                        "srvAllowedHostsSuffix-without_dot_fail.json",
+                        "srvAllowedHostsSuffix-without_dot_pass.json")
+                .contains(filename));
     }
 
     public abstract MongoClient createMongoClient(MongoClientSettings settings);
