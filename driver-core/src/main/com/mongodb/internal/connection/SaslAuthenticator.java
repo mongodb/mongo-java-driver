@@ -107,7 +107,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
                 operationContext = operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout);
             }
             if (!saslClient.isComplete()) {
-                saslClient.evaluateChallenge((responseDocument.getBinary("payload")).getData());
+                evaluateChallenge(saslClient, responseDocument);
                 if (!saslClient.isComplete()) {
                     throw new MongoSecurityException(getMongoCredential(),
                             "SASL protocol error: server completed challenges before client completed responses "
@@ -119,8 +119,13 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
         }
     }
 
-    private byte[] evaluateChallenge(final SaslClient saslClient, final BsonDocument responseDocument) throws SaslException {
-        return saslClient.evaluateChallenge((responseDocument.getBinary("payload")).getData());
+    @Nullable
+    private byte[] evaluateChallenge(final SaslClient saslClient, final BsonDocument responseDocument) {
+        try {
+            return saslClient.evaluateChallenge((responseDocument.getBinary("payload")).getData());
+        } catch (SaslException e) {
+            throw wrapException(e);
+        }
     }
 
     @Override
