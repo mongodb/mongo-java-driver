@@ -69,3 +69,13 @@ driver-benchmarks/.factorypath
 **/bin
 
 docs/superpowers/
+
+# async generator tool lives in its own repository, checked out here
+tools/async-generator/
+
+# refactoring tools (refactor-ops and intellij-refactor), living in their own repository, checked out here
+tools/pure-refactor/
+
+# llm scratchpad folder (session notes, plans, work logs); llm/pr/ holds per-PR notes and is tracked
+llm/*
+!llm/pr/
