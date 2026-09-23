@@ -19,8 +19,6 @@ import java.net.IDN;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Locale;
-import java.util.Objects;
-import java.util.Scanner;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
@@ -80,8 +78,8 @@ public class DomainNameUtils {
         if (!isDomainName(labels)) {
             throw new IllegalArgumentException("srvAllowedHostsSuffix is not a valid domain: " + srvAllowedHostsSuffix);
         }
-        if (!VALID_SINGLE_LABEL_SUFFIXES.contains(labels) && isPublicSuffix(labels)) {
-            throw new IllegalArgumentException("srvAllowedHostsSuffix must not be a public domain suffix");
+        if (!VALID_SINGLE_LABEL_SUFFIXES.contains(labels) && !labels.contains(".")) {
+            throw new IllegalArgumentException("srvAllowedHostsSuffix must contain at least two domain labels");
         }
         return "." + labels;
     }
@@ -93,35 +91,5 @@ public class DomainNameUtils {
             }
         }
         return false;
-    }
-
-    private static boolean isPublicSuffix(final String suffix) {
-        try (Scanner scanner = new Scanner(
-                Objects.requireNonNull(
-                        DomainNameUtils.class.getResourceAsStream("public_suffix_list.dat"),
-                        "Missing DNS public suffix list"),
-                "UTF-8")) {
-            int firstDot = suffix.indexOf('.');
-            String rootDomain = firstDot >= 0 ? suffix.substring(firstDot + 1) : "";
-            boolean invalidMatchWildcard = false;
-            while (scanner.hasNextLine()) {
-                String line = scanner.nextLine();
-                if (line.startsWith("!")) {
-                    if (invalidMatchWildcard && suffix.equals(IDN.toASCII(line.substring(1), IDN.ALLOW_UNASSIGNED))) {
-                        return false;
-                    }
-                } else if (line.startsWith("*")) {
-                    String lineSuffix = IDN.toASCII(line.substring(2), IDN.ALLOW_UNASSIGNED);
-                    if (rootDomain.equals(lineSuffix)) {
-                        invalidMatchWildcard = true;
-                    }
-                } else {
-                    if (suffix.equals(IDN.toASCII(line, IDN.ALLOW_UNASSIGNED))) {
-                        return true;
-                    }
-                }
-            }
-            return invalidMatchWildcard || !suffix.contains(".");
-        }
     }
 }

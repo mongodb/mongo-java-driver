@@ -4,8 +4,6 @@
     "pattern":"\\QMETA-INF/services/com.mongodb.spi.dns.DnsClientProvider\\E"
   }, {
     "pattern":"\\QMETA-INF/services/com.mongodb.spi.dns.InetAddressResolverProvider\\E"
-  }, {
-    "pattern":"\\Qcom/mongodb/internal/connection/public_suffix_list.dat\\E"
   }]},
   "bundles":[]
 }
