@@ -92,8 +92,8 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
                 initialOperationContext = initialOperationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout);
             }
 
-            BsonDocument responseDocument = continueSaslConversation(connection, saslClient, initialOperationContext, initialResponseDocument);
-            throwIfSaslClientIncomplete(saslClient, responseDocument);
+            initialResponseDocument = continueSaslConversation(connection, saslClient, initialOperationContext, initialResponseDocument);
+            throwIfSaslClientIncomplete(saslClient, initialResponseDocument);
         } catch (Exception e) {
             throw wrapException(e);
         }
