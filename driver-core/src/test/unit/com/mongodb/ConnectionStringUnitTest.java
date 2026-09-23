@@ -286,7 +286,7 @@ final class ConnectionStringUnitTest {
         IllegalArgumentException e = assertThrows(
                 IllegalArgumentException.class,
                 () -> new ConnectionString("mongodb+srv://test12.10gen.ck/?srvAllowedHostsSuffix=.whatever"));
-        assertEquals("srvAllowedHostsSuffix must contain two or more domain labels", e.getMessage());
+        assertEquals("srvAllowedHostsSuffix must not be a public domain suffix", e.getMessage());
     }
 
     @ParameterizedTest

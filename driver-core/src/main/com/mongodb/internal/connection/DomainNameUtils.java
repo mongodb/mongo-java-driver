@@ -102,7 +102,7 @@ public class DomainNameUtils {
                         "Missing DNS public suffix list"),
                 "UTF-8")) {
             int firstDot = suffix.indexOf('.');
-            String rootDomain = firstDot >= 0 ? suffix.substring(firstDot + 1) : suffix;
+            String rootDomain = firstDot >= 0 ? suffix.substring(firstDot + 1) : "";
             boolean invalidMatchWildcard = false;
             while (scanner.hasNextLine()) {
                 String line = scanner.nextLine();
@@ -112,13 +112,10 @@ public class DomainNameUtils {
                     }
                 } else if (line.startsWith("*")) {
                     String lineSuffix = IDN.toASCII(line.substring(2), IDN.ALLOW_UNASSIGNED);
-                    if (suffix.equals(lineSuffix) || rootDomain.equals(lineSuffix)) {
+                    if (rootDomain.equals(lineSuffix)) {
                         invalidMatchWildcard = true;
                     }
                 } else {
-                    if (invalidMatchWildcard) {
-                        return true;
-                    }
                     if (suffix.equals(IDN.toASCII(line, IDN.ALLOW_UNASSIGNED))) {
                         return true;
                     }
