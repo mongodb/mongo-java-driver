@@ -66,9 +66,12 @@ dependencies {
     }
 }
 
+val publicSuffixList = rootProject.layout.projectDirectory.file(
+    "testing/resources/specifications/source/public-suffix-list/public_suffix_list.dat")
+
 tasks.processResources {
-    from(
-        "${rootProject.projectDir}/testing/resources/specifications/source/public-suffix-list/public_suffix_list.dat") {
+    inputs.file(publicSuffixList).withPropertyName("publicSuffixList")
+    from(publicSuffixList) {
         into("com/mongodb/internal/connection")
     }
 }

@@ -61,6 +61,8 @@ class DomainNameUtilsTest {
             "subdomain..domain.com_",
             "домен.com", //NON-ASCII
             "ẞẞ.com", //NON-ASCII
+            "999.999.999.999", // no all numeric TLD
+            "foo.123", // no all numeric TLD
             "abcdefghijklmnopqrstuvwxyz0123456789-abcdefghijklmnopqrstuvwxyzl.com", //64 characters label name.
             "a.abcdefghijklmnopqrstuvwxyzabcdefghjklabcdefghijklmnopqrstuvwxyza", //64 characters TLD.
             "this-domain-is-really-long-because-it-just-keeps-going-and-going-and-its-still-not-done-yet-because-theres-more.net",

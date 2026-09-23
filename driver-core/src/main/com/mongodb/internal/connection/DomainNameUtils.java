@@ -30,7 +30,8 @@ import java.util.regex.Pattern;
  */
 public class DomainNameUtils {
     private static final Pattern DOMAIN_PATTERN = Pattern.compile(
-            "^(?=.{1,255}$)(([a-z0-9]([a-z0-9\\-]{0,61}[a-z0-9])?\\.)*[a-z0-9]([a-z0-9\\-]{0,61}[a-z0-9])?)$", Pattern.CASE_INSENSITIVE);
+            "^(?=.{1,255}$)(([a-z0-9]([a-z0-9\\-]{0,61}[a-z0-9])?\\.)*(?![0-9]+$)[a-z0-9]([a-z0-9\\-]{0,61}[a-z0-9])?)$",
+            Pattern.CASE_INSENSITIVE);
     private static final Set<String> VALID_SINGLE_LABEL_SUFFIXES = Collections.unmodifiableSet(new TreeSet<>(Arrays.asList(
             // RFC 6761 special use names
             "test", "localhost", "invalid", "example",
@@ -79,11 +80,8 @@ public class DomainNameUtils {
         if (!isDomainName(labels)) {
             throw new IllegalArgumentException("srvAllowedHostsSuffix is not a valid domain: " + srvAllowedHostsSuffix);
         }
-        if (isPublicSuffix(labels)) {
+        if (!VALID_SINGLE_LABEL_SUFFIXES.contains(labels) && isPublicSuffix(labels)) {
             throw new IllegalArgumentException("srvAllowedHostsSuffix must not be a public domain suffix");
-        }
-        if (!labels.contains(".") && !VALID_SINGLE_LABEL_SUFFIXES.contains(labels)) {
-            throw new IllegalArgumentException("srvAllowedHostsSuffix must contain two or more domain labels");
         }
         return "." + labels;
     }
@@ -126,7 +124,7 @@ public class DomainNameUtils {
                     }
                 }
             }
-            return invalidMatchWildcard;
+            return invalidMatchWildcard || !suffix.contains(".");
         }
     }
 }
