@@ -65,40 +65,42 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
     public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription,
                              final OperationContext originalOperationContext) {
         doAsSubject(() -> {
-            OperationContext operationContext = originalOperationContext;
-            SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress(), operationContext);
+            SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress(), originalOperationContext);
             throwIfSaslClientIsNull(saslClient);
             try {
-                BsonDocument responseDocument = connection.opened() ? null : getSpeculativeAuthenticateResponse();
-                if (responseDocument == null) {
-                    responseDocument = getNextSaslResponse(saslClient, connection, operationContext);
-                    operationContext = operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout);
-                }
-
-                BsonInt32 conversationId = responseDocument.getInt32("conversationId");
-
-                while (!(responseDocument.getBoolean("done")).getValue()) {
-                    byte[] response = saslClient.evaluateChallenge((responseDocument.getBinary("payload")).getData());
-
-                    if (response == null) {
-                        throw new MongoSecurityException(getMongoCredential(),
-                                "SASL protocol error: no client response to challenge for credential "
-                                        + getMongoCredential());
+                try {
+                    OperationContext operationContext = originalOperationContext;
+                    BsonDocument responseDocument = connection.opened() ? null : getSpeculativeAuthenticateResponse();
+                    if (responseDocument == null) {
+                        responseDocument = getNextSaslResponse(saslClient, connection, operationContext);
+                        operationContext = operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout);
                     }
 
-                    responseDocument = sendSaslContinue(conversationId, response, connection, operationContext);
-                    operationContext = operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout);
-                }
-                if (!saslClient.isComplete()) {
-                    saslClient.evaluateChallenge((responseDocument.getBinary("payload")).getData());
+                    BsonInt32 conversationId = responseDocument.getInt32("conversationId");
+
+                    while (!(responseDocument.getBoolean("done")).getValue()) {
+                        byte[] response = saslClient.evaluateChallenge((responseDocument.getBinary("payload")).getData());
+
+                        if (response == null) {
+                            throw new MongoSecurityException(getMongoCredential(),
+                                    "SASL protocol error: no client response to challenge for credential "
+                                            + getMongoCredential());
+                        }
+
+                        responseDocument = sendSaslContinue(conversationId, response, connection, operationContext);
+                        operationContext = operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout);
+                    }
                     if (!saslClient.isComplete()) {
-                        throw new MongoSecurityException(getMongoCredential(),
-                                "SASL protocol error: server completed challenges before client completed responses "
-                                        + getMongoCredential());
+                        saslClient.evaluateChallenge((responseDocument.getBinary("payload")).getData());
+                        if (!saslClient.isComplete()) {
+                            throw new MongoSecurityException(getMongoCredential(),
+                                    "SASL protocol error: server completed challenges before client completed responses "
+                                            + getMongoCredential());
+                        }
                     }
+                } catch (Exception e) {
+                    throw wrapException(e);
                 }
-            } catch (Exception e) {
-                throw wrapException(e);
             } finally {
                 disposeOfSaslClient(saslClient);
             }

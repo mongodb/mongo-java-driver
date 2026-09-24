@@ -14,6 +14,14 @@ Notes for reviewers; see commit messages for per-file detail.
 - The generator would live in a separate repo; its output is reviewed here like
   any other code. Regenerating a file is byte-idempotent.
 
+## Pure refactoring commits
+- The SaslAuthenticator conversation-helper extraction, the later split of
+  `runSaslConversation`, and the final rename of that extraction's leftover identifiers are all
+  `PureRefactor:` commits made by tools/pure-refactor/refactor-ops: each carries its exact operations in the
+  commit message and is checked by `refactor-ops validate <sha>`, which replays them from the
+  parent and requires an identical tree. Tiny hand commits before and after each hold the prep and
+  residue that aren't refactoring.
+
 ## Decisions
 - Generated methods take the real `*Async` name; the hand-written twin becomes
   `*AsyncDefunct` + `@DeadAsync`, loses `@Override`, body untouched.
