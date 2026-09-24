@@ -90,12 +90,14 @@ public interface Span {
 
     /**
      * Opens a scope for this span, making it the current observation on the thread.
-     * Must be paired with {@link #closeScope()} in a try-finally block.
+     * A successful {@code openScope()} must be followed by {@link #closeScope()}.
      */
     void openScope();
 
     /**
      * Closes the scope previously opened by {@link #openScope()}, restoring the previous observation.
+     * Calling this without a prior {@code openScope()}, or more than once, is a no-op — error-handling
+     * paths may therefore call it unconditionally.
      */
     void closeScope();
 
