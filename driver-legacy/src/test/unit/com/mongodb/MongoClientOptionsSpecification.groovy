@@ -80,6 +80,7 @@ class MongoClientOptionsSpecification extends Specification {
 
         options.getSrvMaxHosts() == null
         options.getSrvServiceName() == 'mongodb'
+        options.getSrvAllowedHostsSuffix() == null
     }
 
     def 'should handle illegal arguments'() {
@@ -98,6 +99,10 @@ class MongoClientOptionsSpecification extends Specification {
 
         when:
         builder.dbEncoderFactory(null)
+        then:
+        thrown(IllegalArgumentException)
+        when:
+        builder.srvAllowedHostsSuffix(null)
         then:
         thrown(IllegalArgumentException)
     }
@@ -320,9 +325,11 @@ class MongoClientOptionsSpecification extends Specification {
         settings.clusterSettings == ClusterSettings.builder().srvHost('test3.test.build.10gen.cc')
                 .srvServiceName('test')
                 .srvMaxHosts(4)
+                .srvAllowedHostsSuffix(".build.10gen.cc")
                 .build()
         options.getSrvServiceName() == 'test'
         options.getSrvMaxHosts() == 4
+        options.getSrvAllowedHostsSuffix() == ".build.10gen.cc"
     }
 
     def 'should be easy to create new options from existing'() {

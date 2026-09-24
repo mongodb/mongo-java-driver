@@ -110,6 +110,13 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <ul>
  * <li>{@code srvServiceName=string}: The SRV service name. See {@link MongoClientOptions#getSrvServiceName()} for details.</li>
  * <li>{@code srvMaxHosts=number}: The maximum number of hosts from the SRV record to connect to.</li>
+ * <li>{@code srvAllowedHostsSuffix=string}: The hostname suffix used to validate hosts returned via SRV lookup, replacing the domain
+ * inferred from the SRV host name. Only valid with the mongodb+srv protocol. <b>WARNING:</b> Modifying the default SRV domain name
+ * validation can create vulnerabilities. This option relaxes a built-in DNS spoofing safeguard. Use the most specific suffix possible for
+ * your deployment rather than a broad company-wide domain. For example, instead of {@code "mongodb+srv://cluster.test.internal.example
+ * .com/?srvAllowedHostsSuffix=.example.com"} which would accept any host across the entire domain, scope it further like so:
+ * {@code "mongodb+srv://cluster.test.internal.example.com/?srvAllowedHostsSuffix=.internal.example.com"}.
+ * </li>
  * </ul>
  *
  * <p>Connection pool configuration:</p>
