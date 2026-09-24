@@ -62,7 +62,6 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 
-
 /**
  * <p>Represents a <a href="https://www.mongodb.com/docs/manual/reference/connection-string/">Connection String</a>.
  * The Connection String describes the hosts to be used and options.</p>
@@ -269,7 +268,10 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code srvMaxHosts=n}: The maximum number of hosts from the SRV record to connect to.</li>
  * <li>{@code srvAllowedHostsSuffix=string}: The hostname suffix used to validate hosts returned via SRV lookup, replacing the domain
  * inferred from the SRV host name. Only valid with the mongodb+srv protocol. <b>WARNING:</b> Modifying the default SRV domain name
- * validation can create vulnerabilities.
+ * validation can create vulnerabilities. This option relaxes a built-in DNS spoofing safeguard. Use the most specific suffix possible for
+ * your deployment rather than a broad company-wide domain. For example, instead of {@code "mongodb+srv://cluster.test.internal.example
+ * .com/?srvAllowedHostsSuffix=.example.com"} which would accept any host across the entire domain, scope it further like so:
+ * {@code "mongodb+srv://cluster.test.internal.example.com/?srvAllowedHostsSuffix=.internal.example.com"}.
  * </li>
  * </ul>
  * <p>General configuration:</p>
