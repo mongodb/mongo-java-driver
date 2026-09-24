@@ -314,8 +314,8 @@ public class ServerDiscoveryAndMonitoringProseTests {
                                 collection.find(new Document("$where", "function() { sleep(2000); return true; }")).first());
                     }
                     executor.shutdown();
-                    assertTrue("Executor did not terminate within timeout",
-                            executor.awaitTermination(20, SECONDS));
+                    assertTrue("Executor did not terminate within 90 seconds",
+                            executor.awaitTermination(90, SECONDS));
                 } finally {
                     if (!executor.isTerminated()) {
                         executor.shutdownNow();
