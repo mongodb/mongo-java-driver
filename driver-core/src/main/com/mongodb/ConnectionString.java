@@ -268,7 +268,9 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code srvServiceName=string}: The SRV service name. See {@link ClusterSettings#getSrvServiceName()} for details.</li>
  * <li>{@code srvMaxHosts=n}: The maximum number of hosts from the SRV record to connect to.</li>
  * <li>{@code srvAllowedHostsSuffix=string}: The hostname suffix used to validate hosts returned via SRV lookup, replacing the domain
- * inferred from the SRV host name. Only valid with the mongodb+srv protocol.</li>
+ * inferred from the SRV host name. Only valid with the mongodb+srv protocol. <b>WARNING:</b> Modifying the default SRV domain name
+ * validation can create vulnerabilities.
+ * </li>
  * </ul>
  * <p>General configuration:</p>
  * <ul>

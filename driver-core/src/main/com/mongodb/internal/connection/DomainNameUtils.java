@@ -48,13 +48,13 @@ public class DomainNameUtils {
      * Validates and normalizes a {@code srvAllowedHostsSuffix} value for use as the domain in SRV host validation.
      * A leading {@code "."} is prepended if absent, so the returned value always begins with {@code "."}; this is what
      * is stored and returned to callers. The suffix must contain at least one non-empty domain label and no
-     * whitespace. An overly broad suffix is restricted based on a public suffix list.
+     * whitespace.
      *
      * @param srvAllowedHostsSuffix the non-null suffix to validate
      * @return the normalized suffix, always beginning with {@code "."}
      * @throws IllegalArgumentException if the suffix contains whitespace, contains no domain label (it is empty or
      * consists only of a leading {@code "."}), contains an empty domain label (consecutive {@code "."} characters
-     * or a trailing {@code "."}), or, is a public domain suffix (e.g., top-level domain, AWS data center)
+     * or a trailing {@code "."}), or, top-level domain
      */
     public static String normalizeSrvAllowedHostsSuffix(final String srvAllowedHostsSuffix) {
         if (containsWhitespace(srvAllowedHostsSuffix)) {

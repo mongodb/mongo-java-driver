@@ -462,8 +462,10 @@ public final class ClusterSettings {
      * <p>If present, its value is used as the domain for SRV host name validation, replacing the domain inferred from
      * the SRV host name. The value is normalized to always begin with {@code "."}.</p>
      *
+     * <p><b>WARNING:</b> Modifying the default SRV domain name validation can create vulnerabilities.</p>
+     *
      * @return the normalized SRV allowed hosts suffix, always beginning with {@code "."}. Defaults to null.
-     * @since 5.9
+     * @since 5.13
      * @see Builder#srvAllowedHostsSuffix(String)
      */
     @Nullable
