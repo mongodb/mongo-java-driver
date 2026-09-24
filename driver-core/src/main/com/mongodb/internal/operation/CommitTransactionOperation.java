@@ -32,13 +32,14 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 import java.util.List;
 
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
-import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
+import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.operation.CommandOperationHelper.RETRYABLE_WRITE_ERROR_LABEL;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -53,12 +54,8 @@ public class CommitTransactionOperation extends TransactionOperation {
     private final boolean alreadyCommitted;
     private BsonDocument recoveryToken;
 
-    public CommitTransactionOperation(final WriteConcern writeConcern) {
-        this(writeConcern, false);
-    }
-
-    public CommitTransactionOperation(final WriteConcern writeConcern, final boolean alreadyCommitted) {
-        super(writeConcern);
+    public CommitTransactionOperation(final WriteConcern writeConcern, @Nullable final Integer maxAdaptiveRetriesSetting, final boolean alreadyCommitted) {
+        super(writeConcern, maxAdaptiveRetriesSetting);
         this.alreadyCommitted = alreadyCommitted;
     }
 
@@ -138,7 +135,7 @@ public class CommitTransactionOperation extends TransactionOperation {
         };
         if (alreadyCommitted) {
             return (operationContext, serverDescription, connectionDescription) ->
-                    getRetryCommandModifier(operationContext.getTimeoutContext())
+                    getRetryCommandModifier(operationContext)
                             .apply(creator.create(operationContext, serverDescription, connectionDescription));
         } else if (recoveryToken != null) {
                 return (operationContext, serverDescription, connectionDescription) ->
@@ -149,13 +146,17 @@ public class CommitTransactionOperation extends TransactionOperation {
     }
 
     @Override
-    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier(final TimeoutContext timeoutContext) {
+    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier(final OperationContext operationContext) {
+        TimeoutContext timeoutContext = operationContext.getTimeoutContext();
         return command -> {
-            WriteConcern retryWriteConcern = getWriteConcern().withW("majority");
-            if (retryWriteConcern.getWTimeout(MILLISECONDS) == null && !timeoutContext.hasTimeoutMS()) {
-                retryWriteConcern = retryWriteConcern.withWTimeout(10000, MILLISECONDS);
+            if (!assertNotNull(operationContext.getSessionContext().getOverloadRetryPolicyState().getCommitScoped())
+                    .observedErrorsAndTheyAreAllRetryableOverloadErrors()) {
+                WriteConcern retryWriteConcern = getWriteConcern().withW("majority");
+                if (retryWriteConcern.getWTimeout(MILLISECONDS) == null && !timeoutContext.hasTimeoutMS()) {
+                    retryWriteConcern = retryWriteConcern.withWTimeout(10000, MILLISECONDS);
+                }
+                command.put("writeConcern", retryWriteConcern.asDocument());
             }
-            command.put("writeConcern", retryWriteConcern.asDocument());
             if (recoveryToken != null) {
                 command.put("recoveryToken", recoveryToken);
             }

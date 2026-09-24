@@ -172,6 +172,8 @@ class CommandCursorTest {
                 DOCUMENT_CODEC,
                 null,
                 connectionSource,
-                mockConnection);
+                mockConnection,
+                false,
+                null);
     }
 }

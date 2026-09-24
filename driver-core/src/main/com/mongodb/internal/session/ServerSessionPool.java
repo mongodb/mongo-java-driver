@@ -24,11 +24,14 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
@@ -50,6 +53,7 @@ import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.LongAdder;
 
 import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
 /**
@@ -67,17 +71,23 @@ public class ServerSessionPool {
         long millis();
     }
 
-    public ServerSessionPool(final Cluster cluster, final TimeoutSettings timeoutSettings, @Nullable final ServerApi serverApi) {
+    public ServerSessionPool(
+            final Cluster cluster,
+            final AsyncClientExecutor clientExecutor,
+            final TimeoutSettings timeoutSettings,
+            @Nullable final ServerApi serverApi) {
         this(cluster,
                 new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
-                        new TimeoutContext(timeoutSettings.connectionOnly()), serverApi));
+                        new TimeoutContext(timeoutSettings.connectionOnly()), clientExecutor, TracingManager.NO_OP, serverApi, null));
     }
 
-    public ServerSessionPool(final Cluster cluster, final OperationContext operationContext) {
+    @VisibleForTesting(otherwise = PRIVATE)
+    ServerSessionPool(final Cluster cluster, final OperationContext operationContext) {
         this(cluster, operationContext, System::currentTimeMillis);
     }
 
-    public ServerSessionPool(final Cluster cluster, final OperationContext operationContext, final Clock clock) {
+    @VisibleForTesting(otherwise = PRIVATE)
+    ServerSessionPool(final Cluster cluster, final OperationContext operationContext, final Clock clock) {
         this.cluster = cluster;
         this.operationContext = operationContext;
         this.clock = clock;

@@ -43,7 +43,6 @@ final class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TRe
     private final Class<TResult> resultClass;
     @Nullable
     private Boolean allowDiskUse;
-    @Nullable
     private long maxTimeMS;
     @Nullable
     private Collation collation;
@@ -54,11 +53,12 @@ final class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TRe
     private final CodecRegistry codecRegistry;
 
     ListSearchIndexesIterableImpl(final MongoNamespace namespace, final OperationExecutor executor,
-                                  final Class<TResult> resultClass, final CodecRegistry codecRegistry,
-                                  final ReadPreference readPreference, final boolean retryReads, final TimeoutSettings timeoutSettings) {
+                                  final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
+                                  final boolean retryReads, @Nullable final Integer maxAdaptiveRetriesSetting,
+                                  final TimeoutSettings timeoutSettings) {
         super(null, executor, ReadConcern.DEFAULT, readPreference, retryReads, timeoutSettings);
         this.resultClass = resultClass;
-        this.operations = new Operations<>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads, timeoutSettings);
+        this.operations = new Operations<>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
         this.codecRegistry = codecRegistry;
     }
 

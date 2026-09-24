@@ -17,9 +17,10 @@
 package com.mongodb.internal.async;
 
 import com.mongodb.internal.async.function.AsyncCallbackLoop;
-import com.mongodb.internal.async.function.LoopState;
-import com.mongodb.internal.async.function.RetryState;
+import com.mongodb.internal.async.function.LoopControl;
+import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.async.function.RetryingAsyncCallbackSupplier;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
@@ -111,9 +112,11 @@ import java.util.function.Supplier;
  *   <li>Is every c.complete followed by a return, to end execution?</li>
  *   <li>Have all sync method calls been converted to async, where needed?</li>
  * </ol>
- *
- * <p>This class is not part of the public API and may be removed or changed
- * at any time
+ * <p>
+ * If, when writing a lambda expression, you need to have an effectively {@code final} variable
+ * whose value may be mutated, use {@link MutableValue}.
+ * <p>
+ * This class is not part of the public API and may be removed or changed at any time.
  */
 @FunctionalInterface
 public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> {
@@ -231,9 +234,9 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
     default AsyncRunnable thenRunRetryingWhile(final AsyncRunnable runnable, final Predicate<Throwable> shouldRetry) {
         return thenRun(callback -> {
             new RetryingAsyncCallbackSupplier<Void>(
-                    new RetryState(),
-                    (previouslyChosenFailure, lastAttemptFailure) -> lastAttemptFailure,
-                    (rs, lastAttemptFailure) -> shouldRetry.test(lastAttemptFailure),
+                    // `AsyncClientExecutor` is not needed, given the contract of `SimpleRetryPolicy`, `RetryingAsyncCallbackSupplier`
+                    AsyncClientExecutor.NO_OP,
+                    new RetryControl<>(new SimpleRetryPolicy(shouldRetry)),
                     // `finish` is required here instead of `unsafeFinish`
                     // because only `finish` meets the contract of
                     // `AsyncCallbackSupplier.get`, which we implement here
@@ -253,10 +256,10 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
      */
     default AsyncRunnable thenRunWhileLoop(final BooleanSupplier whileCheck, final AsyncRunnable loopBodyRunnable) {
         return thenRun(finalCallback -> {
-            LoopState loopState = new LoopState();
-            new AsyncCallbackLoop(loopState, iterationCallback -> {
+            LoopControl loopControl = new LoopControl();
+            new AsyncCallbackLoop(loopControl, iterationCallback -> {
 
-                if (loopState.breakAndCompleteIf(() -> !whileCheck.getAsBoolean(), iterationCallback)) {
+                if (loopControl.breakAndCompleteIf(() -> !whileCheck.getAsBoolean(), iterationCallback)) {
                     return;
                 }
                 loopBodyRunnable.finish((result, t) -> {
@@ -282,15 +285,15 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
      */
     default AsyncRunnable thenRunDoWhileLoop(final AsyncRunnable loopBodyRunnable, final BooleanSupplier whileCheck) {
         return thenRun(finalCallback -> {
-            LoopState loopState = new LoopState();
-            new AsyncCallbackLoop(loopState, iterationCallback -> {
+            LoopControl loopControl = new LoopControl();
+            new AsyncCallbackLoop(loopControl, iterationCallback -> {
 
                 loopBodyRunnable.finish((result, t) -> {
                     if (t != null) {
                         iterationCallback.completeExceptionally(t);
                         return;
                     }
-                    if (loopState.breakAndCompleteIf(() -> !whileCheck.getAsBoolean(), iterationCallback)) {
+                    if (loopControl.breakAndCompleteIf(() -> !whileCheck.getAsBoolean(), iterationCallback)) {
                         return;
                     }
                     iterationCallback.complete(iterationCallback);
