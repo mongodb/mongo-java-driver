@@ -18,15 +18,13 @@ package com.mongodb.internal.async;
 import com.mongodb.MongoException;
 import org.junit.jupiter.api.Test;
 
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
+abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsLoopTest {
     @Test
     void test1Method() {
         // the number of expected variations is often: 1 + N methods invoked
@@ -49,6 +47,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
         // tests pairs, converting: plain-sync, sync-plain, sync-sync
         // (plain-plain does not need an async chain)
 
+        // 1(plain-1 exception) + 1(sync-2 exception) + 1(success) = 3
         assertBehavesSameVariations(3,
                 () -> {
                     // plain (unaffected) invocations...
@@ -63,6 +62,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                     }).finish(callback);
                 });
 
+        // 1(sync-1 exception) + 1(plain-2 exception) + 1(success) = 3
         assertBehavesSameVariations(3,
                 () -> {
                     // when a plain invocation follows an affected method...
@@ -79,6 +79,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                     }).finish(callback);
                 });
 
+        // 1(sync-1 exception) + 1(sync-2 exception) + 1(success) = 3
         assertBehavesSameVariations(3,
                 () -> {
                     // when an affected method follows an affected method
@@ -99,6 +100,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
     void test4Methods() {
         // tests the sync-sync pair with preceding and ensuing plain methods.
 
+        // 1(plain-11 exception) + 1(sync-1 exception) + 1(plain-22 exception) + 1(sync-2 exception) + 1(success) = 5
         assertBehavesSameVariations(5,
                 () -> {
                     plain(11);
@@ -116,6 +118,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                     }).finish(callback);
                 });
 
+        // 1(sync-1 exception) + 1(plain-11 exception) + 1(sync-2 exception) + 1(plain-22 exception) + 1(success) = 5
         assertBehavesSameVariations(5,
                 () -> {
                     sync(1);
@@ -129,7 +132,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                     }).thenRun(c -> {
                         plain(11);
                         async(2, c);
-                    }).thenRunAndFinish(() ->{
+                    }).thenRunAndFinish(() -> {
                         plain(22);
                     }, callback);
                 });
@@ -137,6 +140,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
 
     @Test
     void testSupply() {
+        // 1(sync-0 exception) + 1(plain-1 exception) + 1(syncReturns-2 exception) + 1(success) = 4
         assertBehavesSameVariations(4,
                 () -> {
                     sync(0);
@@ -155,6 +159,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
 
     @Test
     void testSupplyWithMixedReturns() {
+        // 1(plainTest exception) + 2(true: syncReturns-11 exception/success) + 2(false: plainReturns-22 exception/success) = 5
         assertBehavesSameVariations(5,
                 () -> {
                     if (plainTest(1)) {
@@ -168,9 +173,9 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                         if (plainTest(1)) {
                             asyncReturns(11, c);
                         } else {
-                            int r = plainReturns(22);
-                            c.complete(r); // corresponds to a return, and
-                            // must be followed by a return or end of method
+                            // corresponds to a return,
+                            // and must be followed by a return or end of method
+                            c.complete(plainReturns(22));
                         }
                     }).finish(callback);
                 });
@@ -179,6 +184,8 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
     @Test
     void testFullChain() {
         // tests a chain with: runnable, producer, function, function, consumer
+        // 13 invocations in sequence, each ending the flow when it throws:
+        // 13(one exception each) + 1(all succeed) = 14
         assertBehavesSameVariations(14,
                 () -> {
                     plain(90);
@@ -222,6 +229,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
 
     @Test
     void testConditionals() {
+        // 1(plainTest exception) + 2(true: sync-2 exception/success) + 2(false: sync-3 exception/success) = 5
         assertBehavesSameVariations(5,
                 () -> {
                     if (plainTest(1)) {
@@ -263,6 +271,9 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                 });
 
         // an additional affected method within the "if" branch
+        // 1(sync-0 exception) + 1(plainTest exception)
+        // + 4(true: sync-21 exception + sync-22 exception + 2(sync-3 exception/success))
+        // + 2(false: sync-3 exception/success) = 8
         assertBehavesSameVariations(8,
                 () -> {
                     sync(0);
@@ -278,7 +289,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                     }).thenRunIf(() -> plainTest(1),
                         beginAsync().thenRun(c -> {
                             async(21, c);
-                        }).thenRun((c) -> {
+                        }).thenRun(c -> {
                             async(22, c);
                         })
                     ).thenRun(c -> {
@@ -287,6 +298,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                 });
 
         // empty `else` branch
+        // 1(plainTest exception) + 3(true: syncReturns-2 exception + 2(sync exception/success)) + 1(false: empty branch) = 5
         assertBehavesSameVariations(5,
                 () -> {
                     if (plainTest(1)) {
@@ -305,7 +317,8 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                                 async(connection + 5, c3);
                             }).finish(c);
                         } else {
-                            c.complete(c); // do nothing
+                            // do nothing
+                            c.complete(c);
                         }
                     }).finish(callback);
                 });
@@ -313,6 +326,9 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
 
     @Test
     void testMixedConditionalCascade() {
+        // test1 false: 1(plainTest-2 exception) + 1(test2 true: plain return)
+        // + 4(test2 false: syncReturns-33 exception + plain exception + 2(syncReturns-44 exception/success)) = 6
+        // 1(plainTest-1 exception) + 2(test1 true: syncReturns-11 exception/success) + 6(test1 false) = 9
         assertBehavesSameVariations(9,
                 () -> {
                     boolean test1 = plainTest(1);
@@ -342,7 +358,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                         beginAsync().<Integer>thenSupply(c2 -> {
                             asyncReturns(33, c2);
                         }).<Integer>thenApply((x, c2) -> {
-                            plain(assertNotNull(x) + 100);
+                            plain(x + 100);
                             asyncReturns(44, c2);
                         }).finish(c);
                     }).finish(callback);
@@ -352,6 +368,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
     @Test
     void testPlain() {
         // For completeness. This should not be used, since there is no async.
+        // 1(plain exception) + 1(plain success) = 2
         assertBehavesSameVariations(2,
                 () -> {
                     plain(1);
@@ -367,6 +384,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
     @Test
     void testTryCatch() {
         // single method in both try and catch
+        // 1(sync-1 success) + 2(sync-1 exception: sync-2 exception/success) = 3
         assertBehavesSameVariations(3,
                 () -> {
                     try {
@@ -384,6 +402,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                 });
 
         // mixed sync/plain
+        // 1(sync-1 success) + 2(sync-1 exception: plain-2 exception/success) = 3
         assertBehavesSameVariations(3,
                 () -> {
                     try {
@@ -406,6 +425,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
         // the preceding chain to be part of the try.
         // Use nested async chains, or convenience methods,
         // to define the beginning of the try.
+        // 2(sync-1 exception: sync-9 exception/success) + 2(sync-2 exception: sync-9 exception/success) + 1(success) = 5
         assertBehavesSameVariations(5,
                 () -> {
                     try {
@@ -426,6 +446,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                 });
 
         // chain of 2 in catch
+        // 1(sync-1 success) + sync-1 exception: 1(sync-8 exception) + 2(sync-9 exception/success) = 4
         assertBehavesSameVariations(4,
                 () -> {
                     try {
@@ -449,6 +470,8 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
 
         // method after the try-catch block
         // here, the try-catch must be nested (as a code block)
+        // try-catch: 1(exceptional: sync-1 exception then sync-2 exception) + 2(normal: sync-1 success, or sync-2 success)
+        // 1(exceptional) + 2(normal) * 2(sync-3 exception/success) = 5
         assertBehavesSameVariations(5,
                 () -> {
                     try {
@@ -459,20 +482,23 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                     sync(3);
                 },
                 (callback) -> {
-                    beginAsync().thenRun(c2 -> {
-                        beginAsync().thenRun(c -> {
-                            async(1, c);
-                        }).onErrorIf(t -> true, (t, c) -> {
-                            async(2, c);
-                        }).finish(c2);
+                    beginAsync().thenRun(c -> {
+                        beginAsync().thenRun(c2 -> {
+                            async(1, c2);
+                        }).onErrorIf(t -> true, (t, c2) -> {
+                            async(2, c2);
+                        }).finish(c);
                     }).thenRun(c -> {
                         async(3, c);
                     }).finish(callback);
                 });
 
-        // multiple catch blocks
-        // WARNING: these are not exclusive; if multiple "onErrorIf" blocks
-        // match, they will all be executed.
+        // multiple catch blocks: Java catch clauses are exclusive, so the handlers
+        // share one onErrorIf whose branches mirror the clauses in order. Chained
+        // onErrorIf steps would not be exclusive: the IllegalStateException the
+        // first handler throws would be offered to the second handler.
+        // 1(plainTest exception, matched by neither catch) + 2(true: plain-8 exception/success, then throw)
+        // + 2(false: sync-9 exception/success) = 5
         assertBehavesSameVariations(5,
                 () -> {
                     try {
@@ -481,9 +507,10 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                         } else {
                             throw new IllegalStateException("B");
                         }
-                    } catch (UnsupportedOperationException t) {
-                        sync(8);
-                    } catch (IllegalStateException t) {
+                    } catch (UnsupportedOperationException e) {
+                        plain(8);
+                        throw new IllegalStateException("A handled");
+                    } catch (IllegalStateException e) {
                         sync(9);
                     }
                 },
@@ -494,16 +521,24 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                         } else {
                             throw new IllegalStateException("B");
                         }
-                    }).onErrorIf(t -> t instanceof UnsupportedOperationException, (t, c) -> {
-                        async(8, c);
-                    }).onErrorIf(t -> t instanceof IllegalStateException, (t, c) -> {
-                        async(9, c);
+                    }).onErrorIf(t -> true, (t, c) -> {
+                        if (t instanceof UnsupportedOperationException) {
+                            plain(8);
+                            throw new IllegalStateException("A handled");
+                        } else {
+                            if (t instanceof IllegalStateException) {
+                                async(9, c);
+                            } else {
+                                c.completeExceptionally(t);
+                            }
+                        }
                     }).finish(callback);
                 });
     }
 
     @Test
     void testTryWithEmptyCatch() {
+        // the RuntimeException matches no catch, so only the finally branches: 1(plain-2 exception) + 1(plain-2 success) = 2
         assertBehavesSameVariations(2,
                 () -> {
                     try {
@@ -520,9 +555,9 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                         beginAsync().thenRunTryCatchAsyncBlocks(c2 -> {
                             c2.completeExceptionally(new RuntimeException());
                         }, MongoException.class, (e, c3) -> {
-                            c3.complete(c3); // ignore exceptions
-                        })
-                        .thenAlwaysRunAndFinish(() -> {
+                            // ignore exceptions
+                            c3.complete(c3);
+                        }).thenAlwaysRunAndFinish(() -> {
                             plain(2);
                         }, c);
                     }).thenRun(c4 -> {
@@ -534,6 +569,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
 
     @Test
     void testTryCatchHelper() {
+        // 1(plain-0 exception) + 1(sync-1 success) + 2(sync-1 exception: plain-2 exception/success, rethrown either way) = 4
         assertBehavesSameVariations(4,
                 () -> {
                     plain(0);
@@ -556,6 +592,8 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                     }).finish(callback);
                 });
 
+        // try-catch: 1(plain-0 exception) + 2(sync-1 exception: plain-2 exception/success, rethrown either way) + 1(normal: sync-1 success)
+        // 3(exceptional) + 1(normal) * 2(sync-4 exception/success) = 5
         assertBehavesSameVariations(5,
                 () -> {
                     plain(0);
@@ -585,6 +623,9 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
     @Test
     void testTryCatchWithVariables() {
         // using supply etc.
+        // per each of the 2 plainTest values: 2(syncReturns exception -> catch sync-3 exception/success)
+        // + 2(sync exception -> catch sync-3 exception/success) + 1(success) = 5
+        // 2(plainTest exception -> catch sync-3 exception/success) + 2 * 5 = 12
         assertBehavesSameVariations(12,
                 () -> {
                     try {
@@ -596,19 +637,20 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                     }
                 },
                 (callback) -> {
-                    beginAsync().thenRun(
-                            beginAsync().<Integer>thenSupply(c -> {
-                                int i = plainTest(0) ? 1 : 2;
-                                asyncReturns(i + 10, c);
-                            }).thenConsume((i, c) -> {
-                                async(assertNotNull(i) + 100, c);
-                            })
-                    ).onErrorIf(t -> true, (t, c) -> {
+                    beginAsync().<Integer>thenSupply(c -> {
+                        int i = plainTest(0) ? 1 : 2;
+                        asyncReturns(i + 10, c);
+                    }).thenConsume((i, c) -> {
+                        async(i + 100, c);
+                    }).onErrorIf(t -> true, (t, c) -> {
                         async(3, c);
                     }).finish(callback);
                 });
 
         // using an externally-declared variable
+        // try-catch, per each of the 2 plainTest values: 2(exceptional: syncReturns or sync threw and catch sync-3 threw)
+        // + 3(normal: nothing threw, or either threw and catch sync-3 succeeded)
+        // 1(plainTest exception, before the try) + 2 * (2(exceptional) + 3(normal) * 2(trailing sync)) = 17
         assertBehavesSameVariations(17,
                 () -> {
                     int i = plainTest(0) ? 1 : 2;
@@ -629,7 +671,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                         beginAsync().<Integer>thenSupply(c2 -> {
                             asyncReturns(i[0] + 10, c2);
                         }).thenConsume((i2, c2) -> {
-                            i[0] = assertNotNull(i2);
+                            i[0] = i2;
                             async(i2 + 100, c2);
                         }).onErrorIf(t -> true, (t, c2) -> {
                             async(3, c2);
@@ -642,6 +684,9 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
 
     @Test
     void testTryCatchWithConditionInCatch() {
+        // entering the catch costs 2(sync-5 exception, or sync-5 success then rethrow/wrap)
+        // per each of the 2 plainTest values: 2(sync-1/2 exception -> catch) + 2(sync-3 exception -> catch) + 1(success) = 5
+        // 2(plainTest exception -> catch) + 2 * 5 = 12
         assertBehavesSameVariations(12,
                 () -> {
                     try {
@@ -666,7 +711,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                             async(5, c2);
                         }).thenRun(c2 -> {
                             if (assertNotNull(t).getMessage().equals("exception-1")) {
-                                throw (RuntimeException) t;
+                                c2.completeExceptionally(t);
                             } else {
                                 throw new RuntimeException("wrapped-" + t.getMessage(), t);
                             }
@@ -678,6 +723,9 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
     @Test
     void testTryCatchTestAndRethrow() {
         // thenSupply:
+        // syncReturns-1 exception -> catch: 1(plainTest exception) + 1(true: message differs, rethrow)
+        // + 2(false: message matches, syncReturns-2 exception/success) = 4
+        // 1(syncReturns-1 success) + 4 = 5
         assertBehavesSameVariations(5,
                 () -> {
                     try {
@@ -699,6 +747,9 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                 });
 
         // thenRun:
+        // sync-1 exception -> catch: 1(plainTest exception) + 1(true: message differs, rethrow)
+        // + 2(false: message matches, sync-2 exception/success) = 4
+        // 1(sync-1 success) + 4 = 5
         assertBehavesSameVariations(5,
                 () -> {
                     try {
@@ -735,10 +786,10 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                     }
                 },
                 (callback) -> {
-                    MutableValue<Integer> counter = new MutableValue<>(0);
-                    beginAsync().thenRunWhileLoop(() -> counter.get() < 3 && plainTest(counter.get()), c2 -> {
+                    HoistedLocal<Integer> counter = new HoistedLocal<>(0);
+                    beginAsync().thenRunWhileLoop(() -> counter.get() < 3 && plainTest(counter.get()), c -> {
                         counter.set(counter.get() + 1);
-                        async(counter.get(), c2);
+                        async(counter.get(), c);
                     }).finish(callback);
                 });
     }
@@ -761,12 +812,10 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                     sync(counter + 1);
                 },
                 (callback) -> {
-                    MutableValue<Integer> counter = new MutableValue<>(0);
-                    beginAsync().thenRun(c -> {
-                        beginAsync().thenRunWhileLoop(() -> counter.get() < 3 && plainTest(counter.get()),  c2 -> {
-                            counter.set(counter.get() + 1);
-                            async(counter.get(), c2);
-                        }).finish(c);
+                    HoistedLocal<Integer> counter = new HoistedLocal<>(0);
+                    beginAsync().thenRunWhileLoop(() -> counter.get() < 3 && plainTest(counter.get()), c -> {
+                        counter.set(counter.get() + 1);
+                        async(counter.get(), c);
                     }).thenRun(c -> {
                         async(counter.get() + 1, c);
                     }).finish(callback);
@@ -793,9 +842,9 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                     }
                 },
                 (callback) -> {
-                    MutableValue<Integer> outer = new MutableValue<>(0);
+                    HoistedLocal<Integer> outer = new HoistedLocal<>(0);
                     beginAsync().thenRunWhileLoop(() -> outer.get() < 3 && plainTest(outer.get()), c -> {
-                        MutableValue<Integer> inner = new MutableValue<>(0);
+                        HoistedLocal<Integer> inner = new HoistedLocal<>(0);
                         beginAsync().thenRunWhileLoop(
                                 () -> inner.get() < 3 && plainTest(inner.get()),
                                 c2 -> {
@@ -822,8 +871,8 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
     }
 
     private int maxStackDepthForIterations(final int iterations) {
-        MutableValue<Integer> counter = new MutableValue<>(0);
-        MutableValue<Integer> maxDepth = new MutableValue<>(0);
+        HoistedLocal<Integer> counter = new HoistedLocal<>(0);
+        HoistedLocal<Integer> maxDepth = new HoistedLocal<>(0);
         beginAsync().thenRunWhileLoop(() -> counter.get() < iterations, c -> {
             maxDepth.set(Math.max(maxDepth.get(), Thread.currentThread().getStackTrace().length));
             counter.set(counter.get() + 1);
@@ -836,6 +885,10 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
 
     @Test
     void testRetryLoop() {
+        // each iteration consumes 2 options (plainTest + sync), so DEPTH_LIMIT / 2 = 25 iterations fit
+        // per iteration: 1(plainTest exception, rethrown) + 1(true: sync-1 success, break) + 1(false: sync-2 success, break)
+        // + 1(false: sync-2 exception, rethrown) = 4; only true + sync-1 exception retries
+        // 4 * 25(iterations) + 1(forced plainTest exception at the depth limit) = 101 = DEPTH_LIMIT * 2 + 1
         assertBehavesSameVariations(InvocationTracker.DEPTH_LIMIT * 2 + 1,
                 () -> {
                     while (true) {
@@ -860,6 +913,9 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
 
     @Test
     void testDoWhileLoop() {
+        // each iteration consumes 3 options (plain + sync + plainTest), so 16 whole iterations fit in DEPTH_LIMIT = 50
+        // per iteration: 1(plain exception) + 1(sync exception) + 1(plainTest exception) + 1(plainTest false) = 4, true repeats
+        // 4 * 16(iterations) + 3(depth-limited 17th: plain exception + sync exception + forced plainTest exception) = 67
         assertBehavesSameVariations(67,
                 () -> {
                     do {
@@ -898,9 +954,9 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                     } while (outer < 3 && plainTest(outer));
                 },
                 (callback) -> {
-                    MutableValue<Integer> outer = new MutableValue<>(0);
+                    HoistedLocal<Integer> outer = new HoistedLocal<>(0);
                     beginAsync().thenRunDoWhileLoop(c -> {
-                        MutableValue<Integer> inner = new MutableValue<>(0);
+                        HoistedLocal<Integer> inner = new HoistedLocal<>(0);
                         beginAsync().thenRunDoWhileLoop(c2 -> {
                                     beginAsync().thenRun(c3 -> {
                                         async(outer.get() + inner.get(), c3);
@@ -926,8 +982,8 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
     }
 
     private int maxDoWhileStackDepthForIterations(final int iterations) {
-        MutableValue<Integer> counter = new MutableValue<>(0);
-        MutableValue<Integer> maxDepth = new MutableValue<>(0);
+        HoistedLocal<Integer> counter = new HoistedLocal<>(0);
+        HoistedLocal<Integer> maxDepth = new HoistedLocal<>(0);
         beginAsync().thenRunDoWhileLoop(c -> {
             maxDepth.set(Math.max(maxDepth.get(), Thread.currentThread().getStackTrace().length));
             counter.set(counter.get() + 1);
@@ -961,6 +1017,8 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
 
     @Test
     void testFinallyWithPlainOutsideTry() {
+        // 1(plain-1 exception, outside the try)
+        // + (in try: sync-2 success + sync-2 exception) * (in finally: plain-3 success + plain-3 exception) = 1 + 2 * 2 = 5
         assertBehavesSameVariations(5,
                 () -> {
                     plain(1);
@@ -984,6 +1042,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
 
     @Test
     void testSupplyFinallyWithPlainInsideTry() {
+        // (in try: normal flow + plain-1 exception + syncReturns-2 exception) * (in finally: normal + exception) = 3 * 2 = 6
         assertBehavesSameVariations(6,
                 () -> {
                     try {
@@ -1005,6 +1064,8 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
 
     @Test
     void testSupplyFinallyWithPlainOutsideTry() {
+        // 1(plain-1 exception, outside the try)
+        // + (in try: syncReturns-2 success + exception) * (in finally: plain-3 success + exception) = 1 + 2 * 2 = 5
         assertBehavesSameVariations(5,
                 () -> {
                     plain(1);
@@ -1026,9 +1087,9 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                 });
     }
 
-
     @Test
     void testUsedAsLambda() {
+        // 1(sync-0 exception) + 1(plain-1 exception) + 1(syncReturns-9 exception) + 1(success) = 4
         assertBehavesSameVariations(4,
                 () -> {
                     Supplier<Integer> s = () -> syncReturns(9);
@@ -1037,10 +1098,10 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                     return s.get();
                 },
                 (callback) -> {
-                    AsyncSupplier<Integer> s = (c) -> asyncReturns(9, c);
+                    AsyncSupplier<Integer> s = c -> asyncReturns(9, c);
                     beginAsync().thenRun(c -> {
                         async(0, c);
-                    }).<Integer>thenSupply((c) -> {
+                    }).<Integer>thenSupply(c -> {
                         plain(1);
                         s.getAsync(c);
                     }).finish(callback);
@@ -1049,6 +1110,7 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
 
     @Test
     void testVariables() {
+        // 1(sync-90 exception) + 1(sync-100 exception) + 1(success) = 3
         assertBehavesSameVariations(3,
                 () -> {
                     int something;
@@ -1065,97 +1127,9 @@ abstract class AsyncFunctionsAbstractTest extends AsyncFunctionsTestBase {
                     beginAsync().thenRun(c -> {
                         something[0] = 90;
                         async(something[0], c);
-                    }).thenRun((c) -> {
+                    }).thenRun(c -> {
                         something[0] = something[0] + 10;
                         async(something[0], c);
-                    }).finish(callback);
-                });
-    }
-
-    @Test
-    void testDerivation() {
-        // Demonstrates the progression from nested async to the API.
-
-        // Stand-ins for sync-async methods; these "happily" do not throw
-        // exceptions, to avoid complicating this demo async code.
-        Consumer<Integer> happySync = (i) -> {
-            getNextOption(1);
-            listenerAdd("affected-success-" + i);
-        };
-        BiConsumer<Integer, SingleResultCallback<Void>> happyAsync = (i, c) -> {
-            happySync.accept(i);
-            c.complete(c);
-        };
-
-        // Standard nested async, no error handling:
-        assertBehavesSameVariations(1,
-                () -> {
-                    happySync.accept(1);
-                    happySync.accept(2);
-                },
-                (callback) -> {
-                    happyAsync.accept(1, (v, e) -> {
-                        happyAsync.accept(2, callback);
-                    });
-                });
-
-        // When both methods are naively extracted, they are out of order:
-        assertBehavesSameVariations(1,
-                () -> {
-                    happySync.accept(1);
-                    happySync.accept(2);
-                },
-                (callback) -> {
-                    SingleResultCallback<Void> second = (v, e) -> {
-                        happyAsync.accept(2, callback);
-                    };
-                    SingleResultCallback<Void> first = (v, e) -> {
-                        happyAsync.accept(1, second);
-                    };
-                    first.onResult(null, null);
-                });
-
-        // We create an "AsyncRunnable" that takes a callback, which
-        // decouples any async methods from each other, allowing them
-        // to be declared in a sync-like order, and without nesting:
-        assertBehavesSameVariations(1,
-                () -> {
-                    happySync.accept(1);
-                    happySync.accept(2);
-                },
-                (callback) -> {
-                    AsyncRunnable first = (SingleResultCallback<Void> c) -> {
-                        happyAsync.accept(1, c);
-                    };
-                    AsyncRunnable second = (SingleResultCallback<Void> c) -> {
-                        happyAsync.accept(2, c);
-                    };
-                    // This is a simplified variant of the "then" methods;
-                    // it has no error handling. It takes methods A and B,
-                    // and returns C, which is B(A()).
-                    AsyncRunnable combined = (c) -> {
-                        first.unsafeFinish((r, e) -> {
-                            second.unsafeFinish(c);
-                        });
-                    };
-                    combined.unsafeFinish(callback);
-                });
-
-        // This combining method is added as a default method on AsyncRunnable,
-        // and a "finish" method wraps the resulting methods. This also adds
-        // exception handling and monadic short-circuiting of ensuing methods
-        // when an exception arises (comparable to how thrown exceptions "skip"
-        // ensuing code).
-        assertBehavesSameVariations(3,
-                () -> {
-                    sync(1);
-                    sync(2);
-                },
-                (callback) -> {
-                    beginAsync().thenRun(c -> {
-                        async(1, c);
-                    }).thenRun(c -> {
-                        async(2, c);
                     }).finish(callback);
                 });
     }
