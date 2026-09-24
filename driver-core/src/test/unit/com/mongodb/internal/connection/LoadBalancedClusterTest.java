@@ -125,8 +125,8 @@ public class LoadBalancedClusterTest {
         ClusterableServerFactory serverFactory = mockServerFactory(resolvedServerAddress, expectedServer);
 
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = mock(DnsSrvRecordMonitorFactory.class);
-        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any())).thenAnswer(
-                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(2)));
+        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any(), any())).thenAnswer(
+                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(3)));
 
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, CLIENT_METADATA, dnsSrvRecordMonitorFactory);
 
@@ -152,8 +152,8 @@ public class LoadBalancedClusterTest {
         ClusterableServerFactory serverFactory = mockServerFactory(resolvedServerAddress, expectedServer);
 
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = mock(DnsSrvRecordMonitorFactory.class);
-        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any())).thenAnswer(
-                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(2)));
+        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any(), any())).thenAnswer(
+                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(3)));
 
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, CLIENT_METADATA, dnsSrvRecordMonitorFactory);
 
@@ -178,8 +178,8 @@ public class LoadBalancedClusterTest {
         ClusterableServerFactory serverFactory = mockServerFactory();
 
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = mock(DnsSrvRecordMonitorFactory.class);
-        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any())).thenAnswer(
-                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(2))
+        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any(), any())).thenAnswer(
+                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(3))
                         .hosts(Arrays.asList(new ServerAddress("host1"), new ServerAddress("host2"))));
 
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, CLIENT_METADATA, dnsSrvRecordMonitorFactory);
@@ -202,8 +202,8 @@ public class LoadBalancedClusterTest {
         ClusterableServerFactory serverFactory = mockServerFactory();
 
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = mock(DnsSrvRecordMonitorFactory.class);
-        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any())).thenAnswer(
-                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(2))
+        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any(), any())).thenAnswer(
+                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(3))
                         .hosts(Arrays.asList(new ServerAddress("host1"), new ServerAddress("host2"))));
 
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, CLIENT_METADATA, dnsSrvRecordMonitorFactory);
@@ -231,8 +231,8 @@ public class LoadBalancedClusterTest {
         ClusterableServerFactory serverFactory = mockServerFactory(resolvedServerAddress, expectedServer);
 
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = mock(DnsSrvRecordMonitorFactory.class);
-        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any())).thenAnswer(
-                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(2)).sleepTime(Duration.ofHours(1)));
+        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any(), any())).thenAnswer(
+                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(3)).sleepTime(Duration.ofHours(1)));
 
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, CLIENT_METADATA, dnsSrvRecordMonitorFactory);
 
@@ -256,8 +256,8 @@ public class LoadBalancedClusterTest {
         ClusterableServerFactory serverFactory = mockServerFactory(resolvedServerAddress, expectedServer);
 
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = mock(DnsSrvRecordMonitorFactory.class);
-        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any())).thenAnswer(
-                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(2)).sleepTime(Duration.ofHours(1)));
+        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any(), any())).thenAnswer(
+                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(3)).sleepTime(Duration.ofHours(1)));
 
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, CLIENT_METADATA, dnsSrvRecordMonitorFactory);
 
@@ -282,8 +282,8 @@ public class LoadBalancedClusterTest {
         ClusterableServerFactory serverFactory = mockServerFactory(resolvedServerAddress, expectedServer);
 
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = mock(DnsSrvRecordMonitorFactory.class);
-        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any())).thenAnswer(
-                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(2))
+        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any(), any())).thenAnswer(
+                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(3))
                         .sleepTime(Duration.ofMillis(1))
                         .exception(new MongoConfigurationException("Unable to resolve SRV record")));
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, CLIENT_METADATA, dnsSrvRecordMonitorFactory);
@@ -311,8 +311,8 @@ public class LoadBalancedClusterTest {
         ClusterableServerFactory serverFactory = mockServerFactory(resolvedServerAddress, expectedServer);
 
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = mock(DnsSrvRecordMonitorFactory.class);
-        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any())).thenAnswer(
-                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(2)).sleepTime(Duration.ofHours(1)));
+        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any(), any())).thenAnswer(
+                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(3)).sleepTime(Duration.ofHours(1)));
 
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, CLIENT_METADATA, dnsSrvRecordMonitorFactory);
 
@@ -339,8 +339,8 @@ public class LoadBalancedClusterTest {
         ClusterableServerFactory serverFactory = mockServerFactory(resolvedServerAddress, expectedServer);
 
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = mock(DnsSrvRecordMonitorFactory.class);
-        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any())).thenAnswer(
-                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(2))
+        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any(), any())).thenAnswer(
+                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(3))
                         .sleepTime(Duration.ofMillis(1))
                         .exception(new MongoConfigurationException("Unable to resolve SRV record")));
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, CLIENT_METADATA, dnsSrvRecordMonitorFactory);
@@ -361,11 +361,11 @@ public class LoadBalancedClusterTest {
         ClusterableServerFactory serverFactory = mock(ClusterableServerFactory.class);
         when(serverFactory.getSettings()).thenReturn(mock(ServerSettings.class));
         DnsSrvRecordMonitorFactory srvRecordMonitorFactory = mock(DnsSrvRecordMonitorFactory.class);
-        when(srvRecordMonitorFactory.create(any(), eq(clusterSettings.getSrvServiceName()), any(DnsSrvRecordInitializer.class))).thenReturn(mock(DnsSrvRecordMonitor.class));
+        when(srvRecordMonitorFactory.create(any(), eq(clusterSettings.getSrvServiceName()), any(), any(DnsSrvRecordInitializer.class))).thenReturn(mock(DnsSrvRecordMonitor.class));
         ArgumentCaptor<DnsSrvRecordInitializer> serverInitializerCaptor = ArgumentCaptor.forClass(DnsSrvRecordInitializer.class);
         // create `cluster` and capture its `DnsSrvRecordInitializer` (server initializer)
         LoadBalancedCluster cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, CLIENT_METADATA, srvRecordMonitorFactory);
-        verify(srvRecordMonitorFactory, times(1)).create(any(), eq(clusterSettings.getSrvServiceName()), serverInitializerCaptor.capture());
+        verify(srvRecordMonitorFactory, times(1)).create(any(), eq(clusterSettings.getSrvServiceName()), any(), serverInitializerCaptor.capture());
         // close `cluster`, call `DnsSrvRecordInitializer.initialize` and check that it does not result in creating a `ClusterableServer`
         cluster.close();
         serverInitializerCaptor.getValue().initialize(Collections.singleton(new ServerAddress()));
@@ -405,8 +405,8 @@ public class LoadBalancedClusterTest {
 
         Duration srvResolutionTime = Duration.ofSeconds(5);
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = mock(DnsSrvRecordMonitorFactory.class);
-        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any())).thenAnswer(
-                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(2)).sleepTime(srvResolutionTime));
+        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any(), any())).thenAnswer(
+                invocation -> new TestDnsSrvRecordMonitor(invocation.getArgument(3)).sleepTime(srvResolutionTime));
         cluster = new LoadBalancedCluster(new ClusterId(), clusterSettings, serverFactory, CLIENT_METADATA, dnsSrvRecordMonitorFactory);
 
         int numThreads = 100;
@@ -456,9 +456,9 @@ public class LoadBalancedClusterTest {
         Duration srvResolutionTime = Duration.ofSeconds(5);
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = mock(DnsSrvRecordMonitorFactory.class);
         AtomicReference<TestDnsSrvRecordMonitor> dnsSrvRecordMonitorReference = new AtomicReference<>();
-        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any())).thenAnswer(
+        when(dnsSrvRecordMonitorFactory.create(eq(srvHostName), eq(clusterSettings.getSrvServiceName()), any(), any())).thenAnswer(
                 invocation -> {
-                    TestDnsSrvRecordMonitor dnsSrvRecordMonitor = new TestDnsSrvRecordMonitor(invocation.getArgument(2))
+                    TestDnsSrvRecordMonitor dnsSrvRecordMonitor = new TestDnsSrvRecordMonitor(invocation.getArgument(3))
                             .sleepTime(srvResolutionTime);
                     dnsSrvRecordMonitorReference.set(dnsSrvRecordMonitor);
                     return dnsSrvRecordMonitor;

@@ -46,6 +46,7 @@ public final class DnsMultiServerCluster extends AbstractMultiServerCluster {
                                  final DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory) {
         super(clusterId, settings, serverFactory, clientMetadata);
         dnsSrvRecordMonitor = dnsSrvRecordMonitorFactory.create(assertNotNull(settings.getSrvHost()), settings.getSrvServiceName(),
+                settings.getSrvAllowedHostsSuffix(),
                 new DnsSrvRecordInitializer() {
             private volatile boolean initialized;
 

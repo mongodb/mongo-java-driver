@@ -26,6 +26,7 @@ import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.internal.dns.DefaultDnsResolver;
 import com.mongodb.internal.dns.DnsResolver;
+import com.mongodb.lang.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -96,21 +97,48 @@ class InitialDnsSeedListDiscoveryProseTest {
         doTest(srvHost, resolvedHost, true);
     }
 
+    @ParameterizedTest(name = "mongodb+srv://{0} (suffix {2}) => {1}, throws={3}")
+    @CsvSource({
+            // resolved host shares the configured suffix -> valid
+            "test12.test.build.10gen.cc, localhost.build.10gen.cc, .build.10gen.cc, false",
+            // suffix without leading dot is normalized before validation -> valid
+            "test12.test.build.10gen.cc, localhost.build.10gen.cc, build.10gen.cc, false",
+            // resolved host does not end with the configured suffix -> invalid
+            "test12.test.build.10gen.cc, localhost.build.10gen.cc, test.build.10gen.cc, true",
+            // partial-label match must fail because '.' is prepended ('uild.10gen.cc' -> '.uild.10gen.cc')
+            "test12.test.build.10gen.cc, localhost.build.10gen.cc, uild.10gen.cc, true"
+    })
+    @DisplayName("5. srvAllowedHostsSuffix overrides the inferred domain for validation")
+    void testSrvAllowedHostsSuffixValidation(final String srvHost, final String resolvedHost,
+            final String srvAllowedHostsSuffix, final boolean throwException) {
+        doTest(srvHost, resolvedHost, srvAllowedHostsSuffix, throwException);
+    }
+
     private void doTest(final String srvHost, final String resolvedHost, final boolean throwException) {
+        doTest(srvHost, resolvedHost, null, throwException);
+    }
+
+    private void doTest(final String srvHost, final String resolvedHost, @Nullable final String srvAllowedHostsSuffix,
+            final boolean throwException) {
         final ClusterId clusterId = new ClusterId();
 
         final DnsResolver dnsResolver = new DefaultDnsResolver((name, type) -> singletonList(String.format("10 5 27017 %s",
                 resolvedHost)));
 
         final DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = mock(DnsSrvRecordMonitorFactory.class);
-        when(dnsSrvRecordMonitorFactory.create(eq(srvHost), eq(SRV_SERVICE_NAME), any(DnsSrvRecordInitializer.class))).thenAnswer(
-                invocation -> new DefaultDnsSrvRecordMonitor(srvHost, SRV_SERVICE_NAME, 10, 10,
-                            invocation.getArgument(2), clusterId, dnsResolver));
+        // The suffix is normalized by ClusterSettings, so match any value and pass through whatever the cluster sends.
+        when(dnsSrvRecordMonitorFactory.create(eq(srvHost), eq(SRV_SERVICE_NAME), any(),
+                any(DnsSrvRecordInitializer.class))).thenAnswer(
+                invocation -> new DefaultDnsSrvRecordMonitor(srvHost, SRV_SERVICE_NAME, invocation.getArgument(2), 10, 10,
+                            invocation.getArgument(3), clusterId, dnsResolver));
 
         final ClusterSettings.Builder settingsBuilder = ClusterSettings.builder()
                 .mode(ClusterConnectionMode.MULTIPLE)
                 .requiredClusterType(ClusterType.SHARDED)
                 .srvHost(srvHost);
+        if (srvAllowedHostsSuffix != null) {
+            settingsBuilder.srvAllowedHostsSuffix(srvAllowedHostsSuffix);
+        }
 
         final ClusterableServerFactory serverFactory = mock(ClusterableServerFactory.class);
         when(serverFactory.getSettings()).thenReturn(ServerSettings.builder().build());
