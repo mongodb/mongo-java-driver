@@ -101,8 +101,14 @@ class MongoClientOptionsSpecification extends Specification {
         builder.dbEncoderFactory(null)
         then:
         thrown(IllegalArgumentException)
+
         when:
         builder.srvAllowedHostsSuffix(null)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        builder.srvAllowedHostsSuffix("")
         then:
         thrown(IllegalArgumentException)
     }
@@ -317,6 +323,7 @@ class MongoClientOptionsSpecification extends Specification {
         def options = MongoClientOptions.builder()
                 .srvServiceName('test')
                 .srvMaxHosts(4)
+                .srvAllowedHostsSuffix(".build.10gen.cc")
                 .build()
         settings = options.asMongoClientSettings(null, 'test3.test.build.10gen.cc',
                 MULTIPLE, null)

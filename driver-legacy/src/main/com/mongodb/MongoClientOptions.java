@@ -22,7 +22,6 @@ import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.annotations.Reason;
 import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.CommandListener;
@@ -590,12 +589,13 @@ public class MongoClientOptions {
      *
      * @return the normalized SRV allowed hosts suffix, always beginning with {@code "."}. Defaults to null.
      * @since 5.13
-     * @see ClusterSettings.Builder#srvAllowedHostsSuffix(String)
+     * @see Builder#srvAllowedHostsSuffix(String)
      */
     @Nullable
     public String getSrvAllowedHostsSuffix() {
         return wrapped.getClusterSettings().getSrvAllowedHostsSuffix();
     }
+
     /**
      * Gets the server API to use when sending commands to the server.
      *
@@ -1461,10 +1461,10 @@ public class MongoClientOptions {
          * @see #getSrvAllowedHostsSuffix()
          */
         public Builder srvAllowedHostsSuffix(final String srvAllowedHostsSuffix) {
-            notNull("srvAllowedHostsSuffix", srvAllowedHostsSuffix);
             wrapped.applyToClusterSettings(builder -> builder.srvAllowedHostsSuffix(srvAllowedHostsSuffix));
             return this;
         }
+
         /**
          * Sets the time limit, in milliseconds for the full execution of an operation.
          *
