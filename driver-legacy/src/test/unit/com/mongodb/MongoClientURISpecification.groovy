@@ -308,7 +308,8 @@ class MongoClientURISpecification extends Specification {
 
     def 'should apply SRV parameters'() {
         when:
-        def uri = new MongoClientURI('mongodb+srv://test3.test.build.10gen.cc/?srvMaxHosts=4&srvServiceName=test')
+        def uri = new MongoClientURI(
+                'mongodb+srv://test3.test.build.10gen.cc/?srvMaxHosts=4&srvServiceName=test&srvAllowedHostsSuffix=.build.10gen.cc')
 
         then:
         uri.getSrvMaxHosts() == 4
@@ -320,6 +321,7 @@ class MongoClientURISpecification extends Specification {
         then:
         options.getSrvMaxHosts() == 4
         options.getSrvServiceName() == 'test'
+        options.getSrvAllowedHostsSuffix() == '.build.10gen.cc'
     }
 
     def 'should respect MongoClientOptions builder'() {
