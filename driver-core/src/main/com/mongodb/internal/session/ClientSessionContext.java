@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.session;
 
+import com.mongodb.internal.session.BaseClientSessionImpl.OverloadRetryPolicyState;
 import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
@@ -118,5 +119,10 @@ public abstract class ClientSessionContext implements SessionContext {
     @Override
     public boolean isSessionMarkedDirty() {
         return clientSession.getServerSession().isMarkedDirty();
+    }
+
+    @Override
+    public OverloadRetryPolicyState getOverloadRetryPolicyState() {
+        return (OverloadRetryPolicyState) clientSession.getOverloadRetryPolicyState();
     }
 }

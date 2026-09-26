@@ -138,4 +138,19 @@ class ProxySettingsTest {
         Assertions.assertEquals(USERNAME, proxySettings.getUsername());
         Assertions.assertEquals(PASSWORD, proxySettings.getPassword());
     }
+
+    @Test
+    void shouldNotExposeCredentialsInToString() {
+        ProxySettings proxySettings = ProxySettings.builder()
+                .host(HOST)
+                .port(VALID_PORT)
+                .username(USERNAME)
+                .password(PASSWORD)
+                .build();
+
+        String stringValue = proxySettings.toString();
+
+        Assertions.assertEquals("ProxySettings{host=" + HOST + ", port=" + VALID_PORT
+                + ", username=<hidden>, password=<hidden>}", stringValue);
+    }
 }

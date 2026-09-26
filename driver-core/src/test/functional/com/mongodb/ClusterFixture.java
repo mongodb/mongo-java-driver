@@ -66,6 +66,7 @@ import com.mongodb.internal.operation.CommandReadOperation;
 import com.mongodb.internal.operation.DropDatabaseOperation;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.lang.Nullable;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.SslContextBuilder;
@@ -74,9 +75,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
-import org.bson.codecs.DocumentCodec;
 
 import javax.net.ssl.SSLException;
 import java.time.Duration;
@@ -120,6 +119,8 @@ public final class ClusterFixture {
     private static final String MONGODB_OCSP_SHOULD_SUCCEED = "org.mongodb.test.ocsp.tls.should.succeed";
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
     private static final int COMMAND_NOT_FOUND_ERROR_CODE = 59;
+    /** Factor by which CSOT timeout/block values are widened on Windows, whose slower TLS setup eats tight budgets. */
+    public static final int WINDOWS_CSOT_TIMEOUT_MULTIPLIER = 10;
     public static final long TIMEOUT = 120L;
     public static final Duration TIMEOUT_DURATION = Duration.ofSeconds(TIMEOUT);
     public static final ClientMetadata CLIENT_METADATA = new ClientMetadata("test", MongoDriverInformation.builder().build());
@@ -143,7 +144,6 @@ public final class ClusterFixture {
     private static Cluster asyncCluster;
     private static final Map<ReadPreference, ReadWriteBinding> BINDING_MAP = new HashMap<>();
     private static final Map<ReadPreference, SimpleSessionContext> SESSION_CONTEXT_MAP = new HashMap<>();
-    private static final Map<ReadPreference, SimpleSessionContext> ASYNC_SESSION_CONTEXT_MAP = new HashMap<>();
     private static final Map<ReadPreference, AsyncReadWriteBinding> ASYNC_BINDING_MAP = new HashMap<>();
 
     private static ServerVersion mongoCryptVersion;
@@ -191,19 +191,21 @@ public final class ClusterFixture {
         if (serverVersion == null) {
             serverVersion = getVersion(new CommandReadOperation<>("admin",
                     new BsonDocument("buildInfo", new BsonInt32(1)), new BsonDocumentCodec())
-                    .execute(new ClusterBinding(getCluster(), ReadPreference.nearest()), OPERATION_CONTEXT));
+                    .execute(new ClusterBinding(getCluster(), ReadPreference.nearest()), createOperationContext()));
         }
         return serverVersion;
     }
 
-    public static final OperationContext OPERATION_CONTEXT = new OperationContext(
-            IgnorableRequestContext.INSTANCE,
-            new ReadConcernAwareNoOpSessionContext(ReadConcern.DEFAULT),
-            new TimeoutContext(TIMEOUT_SETTINGS),
-            getServerApi());
+    public static OperationContext createOperationContext() {
+        return new OperationContext(
+                IgnorableRequestContext.INSTANCE,
+                new ReadConcernAwareNoOpSessionContext(ReadConcern.DEFAULT),
+                new TimeoutContext(TIMEOUT_SETTINGS),
+                getServerApi());
+    }
 
     public static final InternalOperationContextFactory OPERATION_CONTEXT_FACTORY =
-            new InternalOperationContextFactory(TIMEOUT_SETTINGS, getServerApi());
+            new InternalOperationContextFactory(TIMEOUT_SETTINGS, getServerApi(), AsyncClientExecutor.NO_OP);
 
     public static OperationContext createOperationContext(final TimeoutSettings timeoutSettings) {
         return new OperationContext(
@@ -250,25 +252,12 @@ public final class ClusterFixture {
                         .count() == requiredSystemProperties.size();
     }
 
-    public static Document getServerStatus() {
-        return new CommandReadOperation<>("admin", new BsonDocument("serverStatus", new BsonInt32(1)),
-                new DocumentCodec())
-                .execute(getBinding(), OPERATION_CONTEXT);
-    }
-
-    public static boolean supportsFsync() {
-        Document serverStatus = getServerStatus();
-        Document storageEngine = (Document) serverStatus.get("storageEngine");
-
-        return storageEngine != null && !storageEngine.get("name").equals("inMemory");
-    }
-
     static class ShutdownHook extends Thread {
         @Override
         public void run() {
             if (cluster != null) {
                 try {
-                    new DropDatabaseOperation(getDefaultDatabaseName(), WriteConcern.ACKNOWLEDGED).execute(getBinding(), OPERATION_CONTEXT);
+                    new DropDatabaseOperation(getDefaultDatabaseName(), WriteConcern.ACKNOWLEDGED).execute(getBinding(), createOperationContext());
                 } catch (MongoCommandException e) {
                     // if we do not have permission to drop the database, assume it is cleaned up in some other way
                     if (!e.getMessage().contains("Command dropDatabase requires authentication")) {
@@ -320,7 +309,7 @@ public final class ClusterFixture {
         try {
             BsonDocument helloResult = new CommandReadOperation<>("admin",
                     new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), new BsonDocumentCodec())
-                    .execute(new ClusterBinding(cluster, ReadPreference.nearest()), OPERATION_CONTEXT);
+                    .execute(new ClusterBinding(cluster, ReadPreference.nearest()), createOperationContext());
             if (helloResult.containsKey("setName")) {
                 connectionString = new ConnectionString(DEFAULT_URI + "/?replicaSet="
                         + helloResult.getString("setName").getValue());
@@ -386,7 +375,7 @@ public final class ClusterFixture {
     }
 
     public static SingleConnectionBinding getSingleConnectionBinding() {
-        return new SingleConnectionBinding(getCluster(), ReadPreference.primary(), OPERATION_CONTEXT);
+        return new SingleConnectionBinding(getCluster(), ReadPreference.primary(), createOperationContext());
     }
 
     public static AsyncSingleConnectionBinding getAsyncSingleConnectionBinding() {
@@ -394,7 +383,7 @@ public final class ClusterFixture {
     }
 
     public static AsyncSingleConnectionBinding getAsyncSingleConnectionBinding(final Cluster cluster) {
-        return new AsyncSingleConnectionBinding(cluster,  ReadPreference.primary(), OPERATION_CONTEXT);
+        return new AsyncSingleConnectionBinding(cluster,  ReadPreference.primary(), createOperationContext());
     }
 
     public static AsyncReadWriteBinding getAsyncBinding(final Cluster cluster) {
@@ -411,7 +400,6 @@ public final class ClusterFixture {
         if (!ASYNC_BINDING_MAP.containsKey(readPreference)) {
             AsyncReadWriteBinding binding = new AsyncClusterBinding(cluster, readPreference);
             ASYNC_BINDING_MAP.put(readPreference, binding);
-            ASYNC_SESSION_CONTEXT_MAP.put(readPreference, new SimpleSessionContext());
         }
         return ASYNC_BINDING_MAP.get(readPreference);
     }
@@ -447,7 +435,7 @@ public final class ClusterFixture {
         return new DefaultClusterFactory().createCluster(ClusterSettings.builder().hosts(asList(getPrimary())).build(),
                 ServerSettings.builder().build(),
                 ConnectionPoolSettings.builder().maxSize(1).build(), InternalConnectionPoolSettings.builder().build(),
-                TIMEOUT_SETTINGS.connectionOnly(), streamFactory, TIMEOUT_SETTINGS.connectionOnly(), streamFactory, credential,
+                TIMEOUT_SETTINGS.connectionOnly(), streamFactory, TIMEOUT_SETTINGS.connectionOnly(), streamFactory, AsyncClientExecutor.NO_OP, credential,
                 LoggerSettings.builder().build(), null, null, null, Collections.emptyList(), getServerApi(), null);
     }
 
@@ -459,7 +447,7 @@ public final class ClusterFixture {
                 InternalConnectionPoolSettings.builder().build(), TimeoutSettings.create(mongoClientSettings).connectionOnly(),
                 streamFactory, TimeoutSettings.createHeartbeatSettings(mongoClientSettings).connectionOnly(),
                 new SocketStreamFactory(new DefaultInetAddressResolver(), SocketSettings.builder().readTimeout(5, SECONDS).build(),
-                        getSslSettings(connectionString)),
+                        getSslSettings(connectionString)), AsyncClientExecutor.NO_OP,
                 connectionString.getCredential(),
                 LoggerSettings.builder().build(), null, null, null,
                 connectionString.getCompressorList(), getServerApi(), null);
@@ -573,7 +561,7 @@ public final class ClusterFixture {
         if (serverParameters == null) {
             serverParameters = new CommandReadOperation<>("admin",
                     new BsonDocument("getParameter", new BsonString("*")), new BsonDocumentCodec())
-                    .execute(getBinding(), OPERATION_CONTEXT);
+                    .execute(getBinding(), createOperationContext());
         }
         return serverParameters;
     }
@@ -641,7 +629,7 @@ public final class ClusterFixture {
         if (!isSharded()) {
             try {
                 new CommandReadOperation<>("admin", failPointDocument, new BsonDocumentCodec())
-                        .execute(getBinding(), OPERATION_CONTEXT);
+                        .execute(getBinding(), createOperationContext());
             } catch (MongoCommandException e) {
                 if (e.getErrorCode() == COMMAND_NOT_FOUND_ERROR_CODE) {
                     failsPointsSupported = false;
@@ -657,7 +645,7 @@ public final class ClusterFixture {
                     .append("mode", new BsonString("off"));
             try {
                 new CommandReadOperation<>("admin", failPointDocument, new BsonDocumentCodec())
-                        .execute(getBinding(), OPERATION_CONTEXT);
+                        .execute(getBinding(), createOperationContext());
             } catch (MongoCommandException e) {
                 // ignore
             }
@@ -671,7 +659,7 @@ public final class ClusterFixture {
 
     @SuppressWarnings("overloads")
     public static <T> T executeSync(final WriteOperation<T> op, final ReadWriteBinding binding) {
-        return op.execute(binding, applySessionContext(OPERATION_CONTEXT, binding.getReadPreference()));
+        return op.execute(binding, applySessionContext(createOperationContext(), binding.getReadPreference()));
     }
 
     @SuppressWarnings("overloads")
@@ -681,7 +669,7 @@ public final class ClusterFixture {
 
     @SuppressWarnings("overloads")
     public static <T> T executeSync(final ReadOperation<T, ?> op, final ReadWriteBinding binding) {
-        return op.execute(binding, applySessionContext(OPERATION_CONTEXT, binding.getReadPreference()));
+        return op.execute(binding, applySessionContext(createOperationContext(), binding.getReadPreference()));
     }
 
     @SuppressWarnings("overloads")
@@ -697,7 +685,7 @@ public final class ClusterFixture {
     @SuppressWarnings("overloads")
     public static <T> T executeAsync(final WriteOperation<T> op, final AsyncReadWriteBinding binding) throws Throwable {
         FutureResultCallback<T> futureResultCallback = new FutureResultCallback<>();
-        op.executeAsync(binding, applySessionContext(OPERATION_CONTEXT, binding.getReadPreference()), futureResultCallback);
+        op.executeAsync(binding, applySessionContext(createOperationContext(), binding.getReadPreference()), futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
@@ -709,7 +697,7 @@ public final class ClusterFixture {
     @SuppressWarnings("overloads")
     public static <T> T executeAsync(final ReadOperation<?, T> op, final AsyncReadBinding binding) throws Throwable {
         FutureResultCallback<T> futureResultCallback = new FutureResultCallback<>();
-        op.executeAsync(binding, OPERATION_CONTEXT, futureResultCallback);
+        op.executeAsync(binding, createOperationContext(), futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
@@ -719,7 +707,7 @@ public final class ClusterFixture {
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
-    public static <T> void loopCursor(final List<AsyncBatchCursor<T>> batchCursors, final Block<T> block) throws Throwable {
+    public static <T> void loopCursor(final List<AsyncBatchCursor<T>> batchCursors, final Block<T> block) {
         List<FutureResultCallback<Void>> futures = new ArrayList<>();
         for (AsyncBatchCursor<T> batchCursor : batchCursors) {
             FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<>();
@@ -761,7 +749,7 @@ public final class ClusterFixture {
         });
     }
 
-    public static <T> List<T> collectCursorResults(final AsyncBatchCursor<T> batchCursor) throws Throwable {
+    public static <T> List<T> collectCursorResults(final AsyncBatchCursor<T> batchCursor) {
         List<T> results = new ArrayList<>();
         FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<>();
         loopCursor(batchCursor, t -> results.add(t), futureResultCallback);
@@ -779,19 +767,19 @@ public final class ClusterFixture {
 
     public static AsyncConnectionSource getWriteConnectionSource(final AsyncReadWriteBinding binding) throws Throwable {
         FutureResultCallback<AsyncConnectionSource> futureResultCallback = new FutureResultCallback<>();
-        binding.getWriteConnectionSource(OPERATION_CONTEXT, futureResultCallback);
+        binding.getWriteConnectionSource(createOperationContext(), futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
     public static AsyncConnectionSource getReadConnectionSource(final AsyncReadWriteBinding binding) throws Throwable {
         FutureResultCallback<AsyncConnectionSource> futureResultCallback = new FutureResultCallback<>();
-        binding.getReadConnectionSource(OPERATION_CONTEXT, futureResultCallback);
+        binding.getReadConnectionSource(createOperationContext(), futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
     public static AsyncConnection getConnection(final AsyncConnectionSource source) throws Throwable {
         FutureResultCallback<AsyncConnection> futureResultCallback = new FutureResultCallback<>();
-        source.getConnection(OPERATION_CONTEXT, futureResultCallback);
+        source.getConnection(createOperationContext(), futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
@@ -834,7 +822,19 @@ public final class ClusterFixture {
         return operationContext.withSessionContext(simpleSessionContext);
     }
 
-    public static OperationContext getOperationContext(final ReadPreference readPreference) {
-        return applySessionContext(OPERATION_CONTEXT, readPreference);
+    public static OperationContext createOperationContext(final ReadPreference readPreference) {
+        return applySessionContext(createOperationContext(), readPreference);
+    }
+
+    public static boolean isWindows() {
+        return System.getProperty("os.name", "").startsWith("Windows");
+    }
+
+    /**
+     * Scales a CSOT timeout / failpoint-block value by {@link #WINDOWS_CSOT_TIMEOUT_MULTIPLIER} on Windows (unchanged
+     * elsewhere). Scale a test's timeout and its blockTimeMS together to preserve which command times out.
+     */
+    public static int scaleForWindows(final int millis) {
+        return isWindows() ? millis * WINDOWS_CSOT_TIMEOUT_MULTIPLIER : millis;
     }
 }

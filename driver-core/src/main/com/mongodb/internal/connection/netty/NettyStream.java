@@ -221,7 +221,7 @@ final class NettyStream implements Stream {
                 }
             });
             ChannelFuture channelFuture = bootstrap.connect(nextAddress);
-            channelFuture.addListener(new OpenChannelFutureListener(operationContext, socketAddressQueue, channelFuture, handler));
+            channelFuture.addListener(new OpenChannelFutureListener(this, operationContext, socketAddressQueue, channelFuture, handler));
         }
     }
 
@@ -507,15 +507,17 @@ final class NettyStream implements Stream {
         }
     }
 
-    private class OpenChannelFutureListener implements ChannelFutureListener {
+    private static final class OpenChannelFutureListener implements ChannelFutureListener {
+        private final NettyStream stream;
         private final Queue<SocketAddress> socketAddressQueue;
         private final ChannelFuture channelFuture;
         private final AsyncCompletionHandler<Void> handler;
         private final OperationContext operationContext;
 
-        OpenChannelFutureListener(final OperationContext operationContext,
+        OpenChannelFutureListener(final NettyStream stream, final OperationContext operationContext,
                 final Queue<SocketAddress> socketAddressQueue, final ChannelFuture channelFuture,
                 final AsyncCompletionHandler<Void> handler) {
+            this.stream = stream;
             this.operationContext = operationContext;
             this.socketAddressQueue = socketAddressQueue;
             this.channelFuture = channelFuture;
@@ -524,25 +526,40 @@ final class NettyStream implements Stream {
 
         @Override
         public void operationComplete(final ChannelFuture future) {
-            withLock(lock, () -> {
+            withLock(stream.lock, () -> {
                 if (future.isSuccess()) {
-                    if (isClosed) {
+                    if (stream.isClosed) {
                         channelFuture.channel().close();
                     } else {
-                        channel = channelFuture.channel();
-                        channel.closeFuture().addListener((ChannelFutureListener) future1 -> handleReadResponse(null, new IOException("The connection to the server was closed")));
+                        stream.channel = channelFuture.channel();
+                        // CloseChannelFutureListener captures only the NettyStream, never OpenChannelFutureListener.this,
+                        // so the one-shot connection-open handler is not pinned for the lifetime of the pooled channel (JAVA-6250)
+                        stream.channel.closeFuture().addListener(new CloseChannelFutureListener(stream));
                     }
                     handler.completed(null);
                 } else {
-                    if (isClosed) {
+                    if (stream.isClosed) {
                         handler.completed(null);
                     } else if (socketAddressQueue.isEmpty()) {
-                        handler.failed(new MongoSocketOpenException("Exception opening socket", getAddress(), future.cause()));
+                        handler.failed(new MongoSocketOpenException("Exception opening socket", stream.getAddress(), future.cause()));
                     } else {
-                        initializeChannel(operationContext, handler, socketAddressQueue);
+                        stream.initializeChannel(operationContext, handler, socketAddressQueue);
                     }
                 }
             });
+        }
+    }
+
+    private static final class CloseChannelFutureListener implements ChannelFutureListener {
+        private final NettyStream stream;
+
+        CloseChannelFutureListener(final NettyStream stream) {
+            this.stream = stream;
+        }
+
+        @Override
+        public void operationComplete(final ChannelFuture future) {
+            stream.handleReadResponse(null, new IOException("The connection to the server was closed"));
         }
     }
 

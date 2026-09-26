@@ -223,6 +223,10 @@ public final class Entities {
         return getEntity(id + "-identifier", sessionIdentifiers, "session identifier");
     }
 
+    public boolean hasBucket(final String id) {
+        return buckets.containsKey(id);
+    }
+
     public GridFSBucket getBucket(final String id) {
         return getEntity(id, buckets, "bucket");
     }

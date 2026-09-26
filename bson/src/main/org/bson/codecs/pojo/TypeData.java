@@ -16,6 +16,7 @@
 
 package org.bson.codecs.pojo;
 
+import javax.annotation.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
@@ -61,32 +62,70 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
     }
 
     public static <T> TypeData<T> newInstance(final Type genericType, final Class<T> clazz) {
-        TypeData.Builder<T> builder = TypeData.builder(clazz);
-        if (genericType instanceof ParameterizedType) {
-            ParameterizedType pType = (ParameterizedType) genericType;
+        // No enclosing class context: type variables have nothing to resolve against and erase to Object.
+        return newInstance(genericType, clazz, Collections.<TypeVariable<?>>emptyList(), null);
+    }
+
+    static <T> TypeData<T> newInstance(final Type genericParentType, final Class<T> parentClass,
+                                       final List<TypeVariable<?>> currentClassTypeParameters,
+                                       @Nullable final TypeData<?> currentClassTypeData) {
+        TypeData.Builder<T> builder = TypeData.builder(parentClass);
+        if (genericParentType instanceof ParameterizedType) {
+            ParameterizedType pType = (ParameterizedType) genericParentType;
             for (Type argType : pType.getActualTypeArguments()) {
-                getNestedTypeData(builder, argType);
+                builder.addTypeParameter(resolveTypeArgument(argType, currentClassTypeParameters, currentClassTypeData));
             }
         }
         return builder.build();
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private static <T> void getNestedTypeData(final TypeData.Builder<T> builder, final Type type) {
+    private static TypeData<?> resolveTypeArgument(final Type type,
+                                          final List<TypeVariable<?>> currentClassTypeParameters,
+                                          @Nullable final TypeData<?> currentClassTypeData) {
         if (type instanceof ParameterizedType) {
             ParameterizedType pType = (ParameterizedType) type;
             TypeData.Builder paramBuilder = TypeData.builder((Class) pType.getRawType());
             for (Type argType : pType.getActualTypeArguments()) {
-                getNestedTypeData(paramBuilder, argType);
+                paramBuilder.addTypeParameter(resolveTypeArgument(argType, currentClassTypeParameters, currentClassTypeData));
             }
-            builder.addTypeParameter(paramBuilder.build());
-        } else if (type instanceof WildcardType) {
-            builder.addTypeParameter(TypeData.builder((Class) ((WildcardType) type).getUpperBounds()[0]).build());
+            return paramBuilder.build();
         } else if (type instanceof TypeVariable) {
-            builder.addTypeParameter(TypeData.builder(Object.class).build());
+            return resolveTypeVariable((TypeVariable<?>) type, currentClassTypeParameters, currentClassTypeData);
         } else if (type instanceof Class) {
-            builder.addTypeParameter(TypeData.builder((Class) type).build());
+            return TypeData.builder((Class) type).build();
+        } else if (type instanceof WildcardType) {
+            // A wildcard cannot be the top-level type argument of an extends/implements clause (JLS §8.1.4,
+            // §8.1.5), but it can appear nested inside one (e.g. extends Base<List<? extends Number>>) or in a
+            // field/method generic type. Resolve it to its upper bound so any type variable inside the bound is
+            // still substituted against the current context.
+            return resolveTypeArgument(((WildcardType) type).getUpperBounds()[0], currentClassTypeParameters,
+                    currentClassTypeData);
+        } else {
+            // Any other Type (e.g. GenericArrayType) is erased to Object.
+            return TypeData.builder(Object.class).build();
         }
+    }
+
+    private static TypeData<?> resolveTypeVariable(final TypeVariable<?> type, final List<TypeVariable<?>> currentClassTypeParameters,
+                                           @Nullable final TypeData<?> currentClassTypeData) {
+        if (currentClassTypeData != null) {
+            for (int i = 0; i < currentClassTypeParameters.size(); i++) {
+                //  Given 'class B<T> extends A<T> {}':
+                // - JLS §6.3: the scope of B's type parameter T includes the superclass clause.
+                // - JLS §6.5.5.1: T in "extends A<T>" therefore denotes B's T, not A's.
+                // Both reflection paths represent the same declaration, and the TypeVariable
+                // contract states "all instances representing a type variable must be equal() to
+                // each other".
+                if (currentClassTypeParameters.get(i).equals(type)) {
+                    if (i < currentClassTypeData.getTypeParameters().size()) {
+                        return currentClassTypeData.getTypeParameters().get(i);
+                    }
+                    break;
+                }
+            }
+        }
+        return TypeData.builder(Object.class).build();
     }
 
     /**

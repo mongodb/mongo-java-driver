@@ -68,6 +68,7 @@ import static com.mongodb.client.model.Aggregates.project
 import static com.mongodb.client.model.Aggregates.replaceRoot
 import static com.mongodb.client.model.Aggregates.replaceWith
 import static com.mongodb.client.model.Aggregates.sample
+import static com.mongodb.client.model.Aggregates.scoreFusion
 import static com.mongodb.client.model.Aggregates.search
 import static com.mongodb.client.model.Aggregates.searchMeta
 import static com.mongodb.client.model.Aggregates.set
@@ -101,6 +102,7 @@ import static com.mongodb.client.model.search.SearchPath.fieldPath
 import static com.mongodb.client.model.search.SearchPath.wildcardPath
 import static com.mongodb.client.model.search.VectorSearchOptions.approximateVectorSearchOptions
 import static com.mongodb.client.model.search.VectorSearchOptions.exactVectorSearchOptions
+import static com.mongodb.client.model.ScoreFusionOptions.scoreFusionOptions
 import static java.util.Arrays.asList
 import static org.bson.BsonDocument.parse
 
@@ -1361,5 +1363,139 @@ class AggregatesSpecification extends Specification {
         replaceRoot('$a1').hashCode() == replaceRoot('$a1').hashCode()
         replaceRoot('$a1.b').hashCode() == replaceRoot('$a1.b').hashCode()
         replaceRoot('$a1').hashCode() == replaceRoot('$a1').hashCode()
+    }
+
+
+    def 'should create FusionPipeline'() {
+        when:
+        def pipeline = FusionPipeline.of('p1', match(eq('x', 1)), limit(2))
+
+        then:
+        pipeline.name == 'p1'
+        pipeline.pipeline.size() == 2
+        pipeline == FusionPipeline.of('p1', [match(eq('x', 1)), limit(2)])
+
+        when:
+        FusionPipeline.of('', match(eq('x', 1)))
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        FusionPipeline.of('p1', [])
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        FusionPipeline.of(' ', match(eq('x', 1)))
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        FusionPipeline.of('$vector', match(eq('x', 1)))
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        FusionPipeline.of('a.b', match(eq('x', 1)))
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        FusionPipeline.of('a\u0000b', match(eq('x', 1)))
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        FusionPipeline.of(null, match(eq('x', 1)))
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        FusionPipeline.of('p1', match(eq('x', 1)), null)
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def 'should render ScoreFusionCombination and ScoreFusionOptions'() {
+        expect:
+        toBson(ScoreFusionCombination.weighted(new Document('p1', 0.3d).append('p2', 0.7d))) ==
+                parse('{weights: {p1: 0.3, p2: 0.7}}')
+        toBson(ScoreFusionCombination.weighted(new Document('p1', 0.3d)).avg()) ==
+                parse('{weights: {p1: 0.3}, method: "avg"}')
+        toBson(ScoreFusionCombination.expression(new Document('$sum', ['$$p1', '$$p2']))) ==
+                parse('{method: "expression", expression: {$sum: ["$$p1", "$$p2"]}}')
+        toBson(scoreFusionOptions()) == parse('{}')
+        toBson(scoreFusionOptions()
+                .combination(ScoreFusionCombination.expression(new Document('$sum', ['$$p1', '$$p2'])))
+                .scoreDetails(true)) ==
+                parse('{combination: {method: "expression", expression: {$sum: ["$$p1", "$$p2"]}}, scoreDetails: true}')
+        toBson(scoreFusionOptions().option('scoreDetails', true)) == parse('{scoreDetails: true}')
+    }
+
+    def 'should render $scoreFusion'() {
+        expect:
+        toBson(scoreFusion(
+                [FusionPipeline.of('p1', match(eq('x', 1))), FusionPipeline.of('p2', match(eq('x', 2)))],
+                ScoreNormalization.SIGMOID)) ==
+                parse('''{$scoreFusion: {input: {
+                    pipelines: {p1: [{$match: {x: 1}}], p2: [{$match: {x: 2}}]},
+                    normalization: "sigmoid"}}}''')
+
+        toBson(scoreFusion(
+                [FusionPipeline.of('p1', match(eq('x', 1))), FusionPipeline.of('p2', match(eq('x', 2)), limit(5))],
+                ScoreNormalization.MIN_MAX_SCALER,
+                scoreFusionOptions()
+                        .combination(ScoreFusionCombination.weighted(new Document('p1', 0.3d).append('p2', 0.7d)).avg())
+                        .scoreDetails(true))) ==
+                parse('''{$scoreFusion: {input: {
+                    pipelines: {p1: [{$match: {x: 1}}], p2: [{$match: {x: 2}}, {$limit: 5}]},
+                    normalization: "minMaxScaler"},
+                    combination: {weights: {p1: 0.3, p2: 0.7}, method: "avg"},
+                    scoreDetails: true}}''')
+
+        toBson(scoreFusion(
+                [FusionPipeline.of('p1', match(eq('x', 1))), FusionPipeline.of('p2', match(eq('x', 2)))],
+                ScoreNormalization.NONE,
+                scoreFusionOptions().combination(
+                        ScoreFusionCombination.expression(new Document('$sum', ['$$p1', '$$p2']))))) ==
+                parse('''{$scoreFusion: {input: {
+                    pipelines: {p1: [{$match: {x: 1}}], p2: [{$match: {x: 2}}]},
+                    normalization: "none"},
+                    combination: {method: "expression", expression: {$sum: ["$$p1", "$$p2"]}}}}''')
+    }
+
+    def 'should validate $scoreFusion arguments'() {
+        when:
+        scoreFusion([], ScoreNormalization.NONE)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        scoreFusion([FusionPipeline.of('p1', match(eq('x', 1))), FusionPipeline.of('p1', match(eq('x', 2)))],
+                ScoreNormalization.NONE)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        scoreFusion(null, ScoreNormalization.NONE)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        scoreFusion([FusionPipeline.of('p1', match(eq('x', 1)))], null)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 }

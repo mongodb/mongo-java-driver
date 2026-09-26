@@ -20,6 +20,8 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.function.AsyncCallbackSupplier;
+import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.OperationContext;
@@ -30,14 +32,19 @@ import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncConnection;
 import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
+import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRetryControl;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
+import static com.mongodb.internal.operation.SpecRetryPolicy.IndividualPolicies.overloadForWrite;
+import static com.mongodb.internal.operation.SyncOperationHelper.decorateWithRetries;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
 import static com.mongodb.internal.operation.SyncOperationHelper.withConnection;
 import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErrorTransformer;
@@ -54,15 +61,25 @@ public class CreateViewOperation implements WriteOperation<Void> {
     private final String viewOn;
     private final List<BsonDocument> pipeline;
     private final WriteConcern writeConcern;
+    private final boolean retryWrites;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private Collation collation;
 
     public CreateViewOperation(final String databaseName, final String viewName, final String viewOn, final List<BsonDocument> pipeline,
             final WriteConcern writeConcern) {
+        this(databaseName, viewName, viewOn, pipeline, writeConcern, false, null);
+    }
+
+    public CreateViewOperation(final String databaseName, final String viewName, final String viewOn, final List<BsonDocument> pipeline,
+            final WriteConcern writeConcern, final boolean retryWrites, @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.databaseName = notNull("databaseName", databaseName);
         this.viewName = notNull("viewName", viewName);
         this.viewOn = notNull("viewOn", viewOn);
         this.pipeline = notNull("pipeline", pipeline);
         this.writeConcern = notNull("writeConcern", writeConcern);
+        this.retryWrites = retryWrites;
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     public String getDatabaseName() {
@@ -137,26 +154,38 @@ public class CreateViewOperation implements WriteOperation<Void> {
 
     @Override
     public Void execute(final WriteBinding binding, final OperationContext operationContext) {
-        return withConnection(binding, operationContext, (connection, operationContextWithMinRtt) -> {
-            executeCommand(binding, operationContextWithMinRtt,  databaseName, getCommand(), new BsonDocumentCodec(),
-                    writeConcernErrorTransformer(operationContextWithMinRtt.getTimeoutContext()));
-            return null;
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
+                overloadForWrite(retryWrites, maxAdaptiveRetriesSetting),
+                operationContext);
+        Supplier<Void> retryingCommandExecutor = decorateWithRetries(retryControl, operationContext, () -> {
+            retryControl.getPolicy().onCommand(this::getCommandName);
+            return withConnection(binding, operationContext, (connection, operationContextWithMinRtt) -> {
+                executeCommand(binding, operationContextWithMinRtt,  databaseName, getCommand(), new BsonDocumentCodec(),
+                        writeConcernErrorTransformer(operationContextWithMinRtt.getTimeoutContext()));
+                return null;
+            });
         });
+        return retryingCommandExecutor.get();
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<Void> callback) {
-        withAsyncConnection(binding, operationContext, (connection, operationContextWithMinRtt, t) -> {
-            SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-            if (t != null) {
-                errHandlingCallback.onResult(null, t);
-            } else {
-                SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                executeCommandAsync(binding, operationContextWithMinRtt,  databaseName, getCommand(), connection,
-                        writeConcernErrorTransformerAsync(operationContextWithMinRtt.getTimeoutContext()),
-                        wrappedCallback);
-            }
-        });
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
+                overloadForWrite(retryWrites, maxAdaptiveRetriesSetting),
+                operationContext);
+        AsyncCallbackSupplier<Void> retryingCommandExecutor = decorateWithRetriesAsync(retryControl, operationContext, supplierCallback ->
+                withAsyncConnection(binding, operationContext, (connection, operationContextWithMinRtt, t) -> {
+                    SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(supplierCallback, LOGGER);
+                    if (t != null) {
+                        errHandlingCallback.onResult(null, t);
+                    } else {
+                        SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
+                        executeCommandAsync(binding, operationContextWithMinRtt,  databaseName, getCommand(), connection,
+                                writeConcernErrorTransformerAsync(operationContextWithMinRtt.getTimeoutContext()),
+                                wrappedCallback);
+                    }
+                }));
+        retryingCommandExecutor.get(callback);
     }
 
     private BsonDocument getCommand() {
@@ -170,4 +199,5 @@ public class CreateViewOperation implements WriteOperation<Void> {
         appendWriteConcernToCommand(writeConcern, commandDocument);
         return commandDocument;
     }
+
 }

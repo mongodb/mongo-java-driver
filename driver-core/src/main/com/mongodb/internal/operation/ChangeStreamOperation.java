@@ -69,14 +69,15 @@ public class ChangeStreamOperation<T> implements ReadOperationCursor<T> {
     @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PRIVATE)
     public ChangeStreamOperation(final MongoNamespace namespace, final FullDocument fullDocument,
             final FullDocumentBeforeChange fullDocumentBeforeChange, final List<BsonDocument> pipeline, final Decoder<T> decoder) {
-        this(namespace, fullDocument, fullDocumentBeforeChange, pipeline, decoder, ChangeStreamLevel.COLLECTION);
+        this(namespace, fullDocument, fullDocumentBeforeChange, pipeline, decoder, ChangeStreamLevel.COLLECTION, null);
     }
 
     public ChangeStreamOperation(final MongoNamespace namespace, final FullDocument fullDocument,
             final FullDocumentBeforeChange fullDocumentBeforeChange, final List<BsonDocument> pipeline, final Decoder<T> decoder,
-            final ChangeStreamLevel changeStreamLevel) {
+            final ChangeStreamLevel changeStreamLevel,
+            @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.wrapped = new AggregateOperationImpl<>(namespace, pipeline, RAW_BSON_DOCUMENT_CODEC, getAggregateTarget(),
-                getPipelineCreator()).cursorType(CursorType.TailableAwait);
+                getPipelineCreator(), maxAdaptiveRetriesSetting).cursorType(CursorType.TailableAwait);
         this.fullDocument = notNull("fullDocument", fullDocument);
         this.fullDocumentBeforeChange = notNull("fullDocumentBeforeChange", fullDocumentBeforeChange);
         this.decoder = notNull("decoder", decoder);

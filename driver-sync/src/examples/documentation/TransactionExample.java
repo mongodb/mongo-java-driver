@@ -77,7 +77,8 @@ public class TransactionExample {
                 System.out.println("Transaction aborted. Caught exception during transaction.");
 
                 if (e.hasErrorLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL)) {
-                    System.out.println("TransientTransactionError, aborting transaction and retrying ...");
+                    System.out.printf("%s, aborting transaction and retrying ...%n",
+                            MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL);
                 } else {
                     throw e;
                 }
@@ -94,7 +95,8 @@ public class TransactionExample {
             } catch (MongoException e) {
                 // can retry commit
                 if (e.hasErrorLabel(MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
-                    System.out.println("UnknownTransactionCommitResult, retrying commit operation ...");
+                    System.out.printf("%s, retrying commit operation ...%n",
+                            MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL);
                 } else {
                     System.out.println("Exception during commit ...");
                     throw e;

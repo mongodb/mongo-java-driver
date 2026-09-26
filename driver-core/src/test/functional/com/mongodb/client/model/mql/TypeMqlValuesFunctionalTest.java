@@ -190,8 +190,8 @@ class TypeMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
     }
 
     @Test
-    public void asStringTestNestedPre82() {
-        assumeTrue(serverVersionLessThan(8, 2));
+    public void asStringTestNestedPre83() {
+        assumeTrue(serverVersionLessThan(8, 3));
 
         // Arrays and documents are not (yet) supported:
         assertThrows(MongoCommandException.class, () ->
@@ -202,7 +202,7 @@ class TypeMqlValuesFunctionalTest extends AbstractMqlValuesFunctionalTest {
 
     @Test
     public void asStringTestNested() {
-        assumeTrue(serverVersionAtLeast(8, 2));
+        assumeTrue(serverVersionAtLeast(8, 3));
 
         assertExpression("[1,2]", ofIntegerArray(1, 2).asString());
         assertExpression("{\"a\":1}", of(Document.parse("{a: 1}")).asString());

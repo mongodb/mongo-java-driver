@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.lang.Nullable;
 import org.bson.UuidRepresentation;
 
@@ -109,6 +110,14 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <ul>
  * <li>{@code srvServiceName=string}: The SRV service name. See {@link MongoClientOptions#getSrvServiceName()} for details.</li>
  * <li>{@code srvMaxHosts=number}: The maximum number of hosts from the SRV record to connect to.</li>
+ * <li>{@code srvAllowedHostsSuffix=string}: The hostname suffix used to validate hosts returned via SRV lookup, replacing the domain
+ * inferred from the SRV host name. Only valid with the mongodb+srv protocol. <b>WARNING:</b> Modifying the default SRV domain name
+ * validation can create vulnerabilities. This option relaxes a built-in DNS spoofing safeguard. Use the most specific suffix possible for
+ * your deployment rather than a broad company-wide domain. For example, instead of
+ * {@code "mongodb+srv://cluster.test.internal.example.com/?srvAllowedHostsSuffix=.example.com"} which would accept any host across the
+ * entire domain, scope it further like so:
+ * {@code "mongodb+srv://cluster.test.internal.example.com/?srvAllowedHostsSuffix=.internal.example.com"}.
+ * </li>
  * </ul>
  *
  * <p>Connection pool configuration:</p>
@@ -147,10 +156,6 @@ import static com.mongodb.assertions.Assertions.notNull;
  *          <li>Used in combination with {@code w}</li>
  *      </ul>
  *  </li>
- *  <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
- *  Defaults to false.</li>
- *  <li>{@code retryReads=true|false}. If true the driver will retry supported read operations if they fail due to a network error.
- *  Defaults to false.</li>
  * </ul>
  *
  *
@@ -214,10 +219,15 @@ import static com.mongodb.assertions.Assertions.notNull;
  * </ul>
  * <p>General configuration:</p>
  * <ul>
- * <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
- *  Defaults to true.</li>
- * <li>{@code retryReads=true|false}. If true the driver will retry supported read operations if they fail due to a network error.
- *  Defaults to true.</li>
+ * <li>{@code retryWrites=true|false}: Whether attempts to execute write commands should be retried if they fail due to a retryable error.
+ *  Defaults to true. See also {@code maxAdaptiveRetries}.</li>
+ * <li>{@code retryReads=true|false}: Whether attempts to execute read commands should be retried if they fail due to a retryable error.
+ *  Defaults to true. See also {@code maxAdaptiveRetries}.</li>
+ * <li>{@code maxAdaptiveRetries=n}: This is {@linkplain Beta Beta API}.
+ * The maximum number of retry attempts when encountering a retryable overload error.
+ * See {@link MongoClientSettings.Builder#maxAdaptiveRetries(Integer)} for more information.</li>
+* <li>{@code enableOverloadRetargeting=true|false}: Whether to enable overload retargeting. Defaults to false.
+ * See {@link MongoClientSettings.Builder#enableOverloadRetargeting(boolean)} for more information.</li>
  * <li>{@code uuidRepresentation=unspecified|standard|javaLegacy|csharpLegacy|pythonLegacy}.  See
  * {@link MongoClientOptions#getUuidRepresentation()} for documentation of semantics of this parameter.  Defaults to "javaLegacy", but
  * will change to "unspecified" in the next major release.</li>
@@ -381,10 +391,18 @@ public class MongoClientURI {
         if (retryWritesValue != null) {
             builder.retryWrites(retryWritesValue);
         }
-
         Boolean retryReads = proxied.getRetryReads();
         if (retryReads != null) {
             builder.retryReads(retryReads);
+        }
+        Integer maxAdaptiveRetries = proxied.getMaxAdaptiveRetries();
+        if (maxAdaptiveRetries != null) {
+            builder.maxAdaptiveRetries(maxAdaptiveRetries);
+        }
+
+        Boolean enableOverloadRetargeting = proxied.getEnableOverloadRetargeting();
+        if (enableOverloadRetargeting != null) {
+            builder.enableOverloadRetargeting(enableOverloadRetargeting);
         }
 
         Integer maxConnectionPoolSize = proxied.getMaxConnectionPoolSize();
@@ -461,6 +479,10 @@ public class MongoClientURI {
         String srvServiceName = proxied.getSrvServiceName();
         if (srvServiceName != null) {
             builder.srvServiceName(srvServiceName);
+        }
+        String srvAllowedHostsSuffix = proxied.getSrvAllowedHostsSuffix();
+        if (srvAllowedHostsSuffix != null) {
+            builder.srvAllowedHostsSuffix(srvAllowedHostsSuffix);
         }
         Long timeout = proxied.getTimeout();
         if (timeout != null) {

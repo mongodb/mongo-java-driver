@@ -50,6 +50,8 @@ public final class ClientEncryptionSettings {
     private final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers;
     private final Map<String, SSLContext> kmsProviderSslContextMap;
     @Nullable
+    private final KmsConnectCallback kmsConnectCallback;
+    @Nullable
     private final Long timeoutMS;
     @Nullable
     private final Long keyExpirationMS;
@@ -65,6 +67,8 @@ public final class ClientEncryptionSettings {
         private Map<String, Map<String, Object>> kmsProviders;
         private Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<>();
         private Map<String, SSLContext> kmsProviderSslContextMap = new HashMap<>();
+        @Nullable
+        private KmsConnectCallback kmsConnectCallback;
         @Nullable
         private Long timeoutMS;
         @Nullable
@@ -133,6 +137,22 @@ public final class ClientEncryptionSettings {
          */
         public Builder kmsProviderSslContextMap(final Map<String, SSLContext> kmsProviderSslContextMap) {
             this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", kmsProviderSslContextMap);
+            return this;
+        }
+
+        /**
+         * Sets the callback that establishes connections to Key Management Service (KMS) hosts, enabling KMS requests
+         * to be routed through an intermediary such as an HTTP proxy.
+         *
+         * <p>Defaults to {@code null}, in which case the driver connects to KMS hosts directly.</p>
+         *
+         * @param kmsConnectCallback the KMS connect callback, or null to connect to KMS hosts directly
+         * @return this
+         * @see #getKmsConnectCallback()
+         * @since 5.11
+         */
+        public Builder kmsConnectCallback(@Nullable final KmsConnectCallback kmsConnectCallback) {
+            this.kmsConnectCallback = kmsConnectCallback;
             return this;
         }
 
@@ -336,6 +356,17 @@ public final class ClientEncryptionSettings {
     }
 
     /**
+     * Gets the callback that establishes connections to Key Management Service (KMS) hosts.
+     *
+     * @return the KMS connect callback, or null if the driver connects to KMS hosts directly
+     * @since 5.11
+     */
+    @Nullable
+    public KmsConnectCallback getKmsConnectCallback() {
+        return kmsConnectCallback;
+    }
+
+    /**
      * Returns the cache expiration time for data encryption keys.
      *
      * <p>Defaults to {@code null} which defers to libmongocrypt's default which is currently {@code 60000 ms}.
@@ -399,6 +430,7 @@ public final class ClientEncryptionSettings {
         this.kmsProviders = notNull("kmsProviders", builder.kmsProviders);
         this.kmsProviderPropertySuppliers = notNull("kmsProviderPropertySuppliers", builder.kmsProviderPropertySuppliers);
         this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", builder.kmsProviderSslContextMap);
+        this.kmsConnectCallback = builder.kmsConnectCallback;
         this.timeoutMS = builder.timeoutMS;
         this.keyExpirationMS = builder.keyExpirationMS;
     }

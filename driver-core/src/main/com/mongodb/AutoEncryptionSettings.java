@@ -69,6 +69,8 @@ public final class AutoEncryptionSettings {
     private final String keyVaultNamespace;
     private final Map<String, Map<String, Object>> kmsProviders;
     private final Map<String, SSLContext> kmsProviderSslContextMap;
+    @Nullable
+    private final KmsConnectCallback kmsConnectCallback;
     private final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers;
     private final Map<String, BsonDocument> schemaMap;
     private final Map<String, Object> extraOptions;
@@ -88,6 +90,8 @@ public final class AutoEncryptionSettings {
         private String keyVaultNamespace;
         private Map<String, Map<String, Object>> kmsProviders;
         private Map<String, SSLContext> kmsProviderSslContextMap = new HashMap<>();
+        @Nullable
+        private KmsConnectCallback kmsConnectCallback;
         private Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<>();
         private Map<String, BsonDocument> schemaMap = Collections.emptyMap();
         private Map<String, Object> extraOptions = Collections.emptyMap();
@@ -159,6 +163,22 @@ public final class AutoEncryptionSettings {
          */
         public Builder kmsProviderSslContextMap(final Map<String, SSLContext> kmsProviderSslContextMap) {
             this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", kmsProviderSslContextMap);
+            return this;
+        }
+
+        /**
+         * Sets the callback that establishes connections to Key Management Service (KMS) hosts, enabling KMS requests
+         * to be routed through an intermediary such as an HTTP proxy.
+         *
+         * <p>Defaults to {@code null}, in which case the driver connects to KMS hosts directly.</p>
+         *
+         * @param kmsConnectCallback the KMS connect callback, or null to connect to KMS hosts directly
+         * @return this
+         * @see #getKmsConnectCallback()
+         * @since 5.11
+         */
+        public Builder kmsConnectCallback(@Nullable final KmsConnectCallback kmsConnectCallback) {
+            this.kmsConnectCallback = kmsConnectCallback;
             return this;
         }
 
@@ -407,6 +427,17 @@ public final class AutoEncryptionSettings {
     }
 
     /**
+     * Gets the callback that establishes connections to Key Management Service (KMS) hosts.
+     *
+     * @return the KMS connect callback, or null if the driver connects to KMS hosts directly
+     * @since 5.11
+     */
+    @Nullable
+    public KmsConnectCallback getKmsConnectCallback() {
+        return kmsConnectCallback;
+    }
+
+    /**
      * Gets the map of namespace to local JSON schema.
      * <p>
      * Automatic encryption is configured with an "encrypt" field in a collection's JSONSchema. By default, a collection's JSONSchema is
@@ -529,6 +560,7 @@ public final class AutoEncryptionSettings {
         this.keyVaultNamespace = notNull("keyVaultNamespace", builder.keyVaultNamespace);
         this.kmsProviders = notNull("kmsProviders", builder.kmsProviders);
         this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", builder.kmsProviderSslContextMap);
+        this.kmsConnectCallback = builder.kmsConnectCallback;
         this.kmsProviderPropertySuppliers = notNull("kmsProviderPropertySuppliers", builder.kmsProviderPropertySuppliers);
         this.schemaMap = notNull("schemaMap", builder.schemaMap);
         this.extraOptions = notNull("extraOptions", builder.extraOptions);

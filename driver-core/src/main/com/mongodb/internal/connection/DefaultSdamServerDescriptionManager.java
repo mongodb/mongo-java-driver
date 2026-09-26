@@ -137,6 +137,9 @@ final class DefaultSdamServerDescriptionManager implements SdamServerDescription
             serverMonitor.connect();
         } else if (sdamIssue.relatedToNetworkNotTimeout()
                 || (beforeHandshake && (sdamIssue.relatedToNetworkTimeout() || sdamIssue.relatedToAuth()))) {
+            if (sdamIssue.hasSystemOverloadedLabel()) {
+                return;
+            }
             updateDescription(sdamIssue.serverDescription());
             connectionPool.invalidate(sdamIssue.exception().orElse(null));
             serverMonitor.cancelCurrentCheck();

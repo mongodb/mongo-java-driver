@@ -33,7 +33,12 @@ final class DropSearchIndexOperation extends AbstractWriteSearchIndexOperation {
     private final String indexName;
 
     DropSearchIndexOperation(final MongoNamespace namespace, final String indexName) {
-        super(namespace);
+        this(namespace, indexName, false, null);
+    }
+
+    DropSearchIndexOperation(final MongoNamespace namespace, final String indexName,
+            final boolean retryWrites, @Nullable final Integer maxAdaptiveRetriesSetting) {
+        super(namespace, retryWrites, maxAdaptiveRetriesSetting);
         this.indexName = indexName;
     }
 

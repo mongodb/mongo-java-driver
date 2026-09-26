@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.annotations.Reason;
@@ -442,11 +443,14 @@ public class MongoClientOptions {
     }
 
     /**
-     * Returns true if writes should be retried if they fail due to a network error or other retryable error.
+     * Returns whether attempts to execute write commands should be retried if they fail due to a retryable error.
+     * See {@link MongoClientSettings.Builder#retryWrites(boolean)} for more information.
      *
      * <p>Starting with the 3.11.0 release, the default value is true</p>
      *
      * @return the retryWrites value
+     * @see Builder#retryWrites(boolean)
+     * @see #getMaxAdaptiveRetries()
      * @mongodb.server.release 3.6
      * @since 3.6
      */
@@ -455,14 +459,48 @@ public class MongoClientOptions {
     }
 
     /**
-     * Returns true if reads should be retried if they fail due to a network error or other retryable error.
+     * Returns whether attempts to execute read commands should be retried if they fail due to a retryable error.
+     * See {@link MongoClientSettings.Builder#retryReads(boolean)} for more information.
+     * <p>
+     * Default is {@code true}.
      *
      * @return the retryReads value
+     * @see Builder#retryReads(boolean)
+     * @see #getMaxAdaptiveRetries()
      * @mongodb.server.release 3.6
      * @since 3.11
      */
     public boolean getRetryReads() {
         return wrapped.getRetryReads();
+    }
+
+    /**
+     * Returns the maximum number of retry attempts when encountering a retryable overload error.
+     * See {@link MongoClientSettings.Builder#maxAdaptiveRetries(Integer)} for more information.
+     *
+     * @return The maximum number of retry attempts when encountering a retryable overload error.
+     * @see Builder#maxAdaptiveRetries(Integer)
+     * @since 5.12
+     * @mongodb.server.release 9.0
+     */
+    @Beta(Reason.CLIENT)
+    @Nullable
+    public Integer getMaxAdaptiveRetries() {
+        return wrapped.getMaxAdaptiveRetries();
+    }
+
+    /**
+     * Returns whether overload retargeting is enabled.
+     * See {@link MongoClientSettings.Builder#enableOverloadRetargeting(boolean)} for more information.
+     *
+     * @return the enableOverloadRetargeting value
+     * @see MongoClientSettings.Builder#enableOverloadRetargeting(boolean)
+     * @since 5.12
+     * @mongodb.server.release 9.0
+     */
+    @Beta(Reason.CLIENT)
+    public boolean getEnableOverloadRetargeting() {
+        return wrapped.getEnableOverloadRetargeting();
     }
 
     /**
@@ -539,6 +577,23 @@ public class MongoClientOptions {
      */
     public String getSrvServiceName() {
         return wrapped.getClusterSettings().getSrvServiceName();
+    }
+
+    /**
+     * Gets the SRV allowed hosts suffix used to validate hosts returned via SRV lookup.
+     *
+     * <p>If present, its value is used as the domain for SRV host name validation, replacing the domain inferred from
+     * the SRV host name. The value is normalized to always begin with {@code "."}.</p>
+     *
+     * <p><b>WARNING:</b> Modifying the default SRV domain name validation can create vulnerabilities.</p>
+     *
+     * @return the normalized SRV allowed hosts suffix, always beginning with {@code "."}. Defaults to null.
+     * @since 5.13
+     * @see Builder#srvAllowedHostsSuffix(String)
+     */
+    @Nullable
+    public String getSrvAllowedHostsSuffix() {
+        return wrapped.getClusterSettings().getSrvAllowedHostsSuffix();
     }
 
     /**
@@ -1023,14 +1078,16 @@ public class MongoClientOptions {
         }
 
         /**
-         * Sets whether writes should be retried if they fail due to a network error.
+         * Sets whether attempts to execute write commands should be retried if they fail due to a retryable error.
+         * See {@link MongoClientSettings.Builder#retryWrites(boolean)} for more information.
          *
          * <p>Starting with the 3.11.0 release, the default value is true</p>
          *
-         * @param retryWrites sets if writes should be retried if they fail due to a network error.
+         * @param retryWrites sets if write commands should be retried if they fail due to a retryable error.
          * @return {@code this}
          * @mongodb.server.release 3.6
          * @see #getRetryWrites()
+         * @see #maxAdaptiveRetries(Integer)
          * @since 3.6
          */
         public Builder retryWrites(final boolean retryWrites) {
@@ -1039,16 +1096,52 @@ public class MongoClientOptions {
         }
 
         /**
-         * Sets whether reads should be retried if they fail due to a network error.
+         * Sets whether attempts to execute read commands should be retried if they fail due to a retryable error.
+         * See {@link MongoClientSettings.Builder#retryReads(boolean)} for more information.
+         * <p>
+         * Default is {@code true}.
          *
-         * @param retryReads sets if reads should be retried if they fail due to a network error.
+         * @param retryReads sets if read commands should be retried if they fail due to a retryable error.
          * @return {@code this}
          * @mongodb.server.release 3.6
          * @see #getRetryReads()
+         * @see #maxAdaptiveRetries(Integer)
          * @since 3.11
          */
         public Builder retryReads(final boolean retryReads) {
             wrapped.retryReads(retryReads);
+            return this;
+        }
+
+        /**
+         * Sets the maximum number of retry attempts when encountering a retryable overload error.
+         * See {@link MongoClientSettings.Builder#maxAdaptiveRetries(Integer)} for more information.
+         *
+         * @param maxAdaptiveRetries Sets the maximum number of retry attempts when encountering a retryable overload error.
+         * @return {@code this}.
+         * @see #getMaxAdaptiveRetries()
+         * @since 5.12
+         * @mongodb.server.release 9.0
+         */
+        @Beta(Reason.CLIENT)
+        public Builder maxAdaptiveRetries(@Nullable final Integer maxAdaptiveRetries) {
+            wrapped.maxAdaptiveRetries(maxAdaptiveRetries);
+            return this;
+        }
+
+        /**
+         * Sets whether to enable overload retargeting.
+         * See {@link MongoClientSettings.Builder#enableOverloadRetargeting(boolean)} for more information.
+         *
+         * @param enableOverloadRetargeting whether to enable overload retargeting
+         * @return {@code this}
+         * @see #getEnableOverloadRetargeting()
+         * @since 5.12
+         * @mongodb.server.release 9.0
+         */
+        @Beta(Reason.CLIENT)
+        public Builder enableOverloadRetargeting(final boolean enableOverloadRetargeting) {
+            wrapped.enableOverloadRetargeting(enableOverloadRetargeting);
             return this;
         }
 
@@ -1350,6 +1443,25 @@ public class MongoClientOptions {
          */
         public Builder srvServiceName(final String srvServiceName) {
             wrapped.applyToClusterSettings(builder -> builder.srvServiceName(srvServiceName));
+            return this;
+        }
+
+        /**
+         * Sets the SRV allowed hosts suffix used to validate hosts returned via SRV lookup.
+         *
+         * <p>If set, its value is used as the domain for SRV host name validation, replacing the domain inferred from
+         * the SRV host name. The value is normalized: a leading {@code "."} is prepended if absent, so
+         * {@link #getSrvAllowedHostsSuffix()} always returns a value beginning with {@code "."}. This setting is only
+         * used with SRV. Specifying an overly broad suffix (for example a bare TLD) weakens SRV host name validation and
+         * is the responsibility of the caller.</p>
+         *
+         * @param srvAllowedHostsSuffix the SRV allowed hosts suffix; may not be null or empty
+         * @return this
+         * @since 5.13
+         * @see #getSrvAllowedHostsSuffix()
+         */
+        public Builder srvAllowedHostsSuffix(final String srvAllowedHostsSuffix) {
+            wrapped.applyToClusterSettings(builder -> builder.srvAllowedHostsSuffix(srvAllowedHostsSuffix));
             return this;
         }
 

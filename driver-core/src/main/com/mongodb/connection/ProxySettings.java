@@ -323,8 +323,8 @@ public final class ProxySettings {
         return "ProxySettings{"
                 + "host=" + host
                 + ", port=" + port
-                + ", username=" + username
-                + ", password=" + password
+                + ", username=<hidden>"
+                + ", password=<hidden>"
                 + '}';
     }
 

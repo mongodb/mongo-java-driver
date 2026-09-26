@@ -47,8 +47,17 @@ internal data class ArrayCodec<R : Any, V>(private val kClass: KClass<R>, privat
                         else -> Pair(Object::class.java as Class<Any>, emptyList())
                     }
                 }
-            val codec =
-                if (nestedTypes.isEmpty()) codecRegistry.get(valueClass) else codecRegistry.get(valueClass, nestedTypes)
+            // ByteArrays are encoded as compact BSON Binary, not as a BSON Array of Int32.
+            // Resolved directly, as a registry may order ValueCodecProvider ahead of
+            // ArrayCodecProvider.
+            val codec: Codec<Any?> =
+                if (valueClass == ByteArray::class.java) {
+                    LenientByteArrayCodec as Codec<Any?>
+                } else if (nestedTypes.isEmpty()) {
+                    codecRegistry.get(valueClass)
+                } else {
+                    codecRegistry.get(valueClass, nestedTypes)
+                }
             return ArrayCodec(kClass, codec)
         }
     }
