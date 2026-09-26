@@ -62,6 +62,27 @@ final class SearchCollectorTest {
         );
     }
 
+    @Test
+    void facetWithoutOperator() {
+        assertAll(
+                () -> assertThrows(CodecConfigurationException.class, () ->
+                        // facet names must be unique; `BsonCodec` wraps our `IllegalStateException` into `CodecConfigurationException`
+                        SearchCollector.facet(
+                                asList(
+                                        stringFacet("duplicateFacetName", fieldPath("stringFieldName")),
+                                        numberFacet("duplicateFacetName", fieldPath("numberFieldName"), asList(10, 20, 30))))
+                                // we have to render into `BsonDocument` in order to trigger the lazy check
+                                .toBsonDocument()
+                ),
+                () -> assertEquals(
+                        documentWithoutOperator()
+                                .toBsonDocument(),
+                        searchCollectorWithoutOperator()
+                                .toBsonDocument()
+                )
+        );
+    }
+
     private static SearchCollector docExamplePredefined() {
         return SearchCollector.facet(
                 exists(
@@ -88,5 +109,29 @@ final class SearchCollectorTest {
                                         "numberFacetName",
                                         fieldPath("numberFieldName"),
                                         asList(10, 20, 30))))));
+    }
+
+    private static SearchCollector searchCollectorWithoutOperator() {
+        return SearchCollector.facet(
+                asList(
+                        stringFacet(
+                                "stringFacetName",
+                                fieldPath("stringFieldName")),
+                        numberFacet(
+                                "numberFacetName",
+                                fieldPath("numberFieldName"),
+                                asList(10, 20, 30))));
+    }
+
+    private static Document documentWithoutOperator() {
+        return new Document("facet",
+                new Document("facets", combineToBson(asList(
+                        stringFacet(
+                                "stringFacetName",
+                                fieldPath("stringFieldName")),
+                        numberFacet(
+                                "numberFacetName",
+                                fieldPath("numberFieldName"),
+                                asList(10, 20, 30))))));
     }
 }
