@@ -164,12 +164,14 @@ public final class SocksSocket extends Socket {
         final int hostLength = bytesOfHost.length;
 
         AddressType addressType;
-        byte[] ipAddress = null;
-        if (isDomainName(host)) {
+        byte[] ipAddress = InetAddressUtils.ipStringToBytes(host);
+        if (ipAddress != null) {
+            addressType = determineAddressType(ipAddress);
+
+        } else if (isDomainName(host)) {
             addressType = DOMAIN_NAME;
         } else {
-            ipAddress = createByteArrayFromIpAddress(host);
-            addressType = determineAddressType(ipAddress);
+            throw new SocketException(host + IP_PARSING_ERROR_SUFFIX);
         }
         byte[] bufferSent = createBuffer(addressType, hostLength);
         bufferSent[0] = SOCKS_VERSION;
@@ -204,14 +206,6 @@ public final class SocksSocket extends Socket {
     private static void addPort(final byte[] bufferSent, final int index, final int port) {
         bufferSent[index] = (byte) (port >> 8);
         bufferSent[index + 1] = (byte) port;
-    }
-
-    private static byte[] createByteArrayFromIpAddress(final String host) throws SocketException {
-        byte[] bytes = InetAddressUtils.ipStringToBytes(host);
-        if (bytes == null) {
-            throw new SocketException(host + IP_PARSING_ERROR_SUFFIX);
-        }
-        return bytes;
     }
 
     private AddressType determineAddressType(final byte[] ipAddress) {

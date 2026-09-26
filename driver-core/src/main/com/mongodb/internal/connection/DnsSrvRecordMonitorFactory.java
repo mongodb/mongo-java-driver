@@ -16,9 +16,12 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.lang.Nullable;
+
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface DnsSrvRecordMonitorFactory {
-    DnsSrvRecordMonitor create(String hostName, String srvServiceName, DnsSrvRecordInitializer dnsSrvRecordInitializer);
+    DnsSrvRecordMonitor create(String hostName, String srvServiceName, @Nullable String srvAllowedHostsSuffix,
+            DnsSrvRecordInitializer dnsSrvRecordInitializer);
 }

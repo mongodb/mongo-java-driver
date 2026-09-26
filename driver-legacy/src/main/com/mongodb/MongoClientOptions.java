@@ -580,6 +580,23 @@ public class MongoClientOptions {
     }
 
     /**
+     * Gets the SRV allowed hosts suffix used to validate hosts returned via SRV lookup.
+     *
+     * <p>If present, its value is used as the domain for SRV host name validation, replacing the domain inferred from
+     * the SRV host name. The value is normalized to always begin with {@code "."}.</p>
+     *
+     * <p><b>WARNING:</b> Modifying the default SRV domain name validation can create vulnerabilities.</p>
+     *
+     * @return the normalized SRV allowed hosts suffix, always beginning with {@code "."}. Defaults to null.
+     * @since 5.13
+     * @see Builder#srvAllowedHostsSuffix(String)
+     */
+    @Nullable
+    public String getSrvAllowedHostsSuffix() {
+        return wrapped.getClusterSettings().getSrvAllowedHostsSuffix();
+    }
+
+    /**
      * Gets the server API to use when sending commands to the server.
      *
      * @return the server API, which may be null
@@ -1426,6 +1443,25 @@ public class MongoClientOptions {
          */
         public Builder srvServiceName(final String srvServiceName) {
             wrapped.applyToClusterSettings(builder -> builder.srvServiceName(srvServiceName));
+            return this;
+        }
+
+        /**
+         * Sets the SRV allowed hosts suffix used to validate hosts returned via SRV lookup.
+         *
+         * <p>If set, its value is used as the domain for SRV host name validation, replacing the domain inferred from
+         * the SRV host name. The value is normalized: a leading {@code "."} is prepended if absent, so
+         * {@link #getSrvAllowedHostsSuffix()} always returns a value beginning with {@code "."}. This setting is only
+         * used with SRV. Specifying an overly broad suffix (for example a bare TLD) weakens SRV host name validation and
+         * is the responsibility of the caller.</p>
+         *
+         * @param srvAllowedHostsSuffix the SRV allowed hosts suffix; may not be null or empty
+         * @return this
+         * @since 5.13
+         * @see #getSrvAllowedHostsSuffix()
+         */
+        public Builder srvAllowedHostsSuffix(final String srvAllowedHostsSuffix) {
+            wrapped.applyToClusterSettings(builder -> builder.srvAllowedHostsSuffix(srvAllowedHostsSuffix));
             return this;
         }
 
