@@ -114,6 +114,14 @@ functions:
           else
             git clone --depth 1 https://github.com/mongodb-labs/drivers-evergreen-tools.git $DRIVERS_TOOLS
           fi
+          # TODO(DRIVERS-3663): remove once fixed upstream. mongodl's GPG verification of "latest"
+          # downloads creates its keyring under $TMPDIR; with our TMPDIR=$MONGO_ORCHESTRATION_HOME/db
+          # the gpg-agent socket path exceeds the AF_UNIX 108-char limit and orchestration fails.
+          # Create the keyring under /tmp instead (same as the proposed upstream fix).
+          if [ "${VERSION}" = "latest" ]; then
+            perl -i -pe 's/TemporaryDirectory\(prefix="mongodl-gpg"\)/TemporaryDirectory(prefix="mongodl-gpg", dir="\/tmp")/' \
+                $DRIVERS_TOOLS/.evergreen/server_artifacts.py
+          fi
           echo "{ \"releases\": { \"default\": \"$MONGODB_BINARIES\" }}" > $MONGO_ORCHESTRATION_HOME/orchestration.config
 
   "fix-absolute-paths":
