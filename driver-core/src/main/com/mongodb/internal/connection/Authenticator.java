@@ -23,6 +23,9 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerType;
 import com.mongodb.internal.annotations.AsyncLeaf;
+import com.mongodb.internal.annotations.DeadAsync;
+import com.mongodb.internal.annotations.GeneratedAsync;
+import com.mongodb.internal.annotations.HasAsync;
 import com.mongodb.internal.annotations.SyncLeaf;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.NonNull;
@@ -106,11 +109,22 @@ public abstract class Authenticator {
     abstract void authenticateAsync(InternalConnection connection, ConnectionDescription connectionDescription,
             OperationContext operationContext, SingleResultCallback<Void> callback);
 
+    @HasAsync
     public void reauthenticate(final InternalConnection connection, final OperationContext operationContext) {
         authenticate(connection, connection.getDescription(), operationContext.withConnectionEstablishmentSessionContext());
     }
 
+    @GeneratedAsync
     public void reauthenticateAsync(final InternalConnection connection, final OperationContext operationContext,
+            final SingleResultCallback<Void> callback) {
+        beginAsync().thenRun(c -> {
+            authenticateAsync(connection, connection.getDescription(), operationContext.withConnectionEstablishmentSessionContext(), c);
+        }).finish(callback);
+    }
+
+    @DeadAsync("replaced by generated reauthenticateAsync")
+    @SuppressWarnings("unused")
+    public void reauthenticateAsyncDefunct(final InternalConnection connection, final OperationContext operationContext,
                                     final SingleResultCallback<Void> callback) {
         beginAsync().thenRun((c) -> {
             authenticateAsync(connection, connection.getDescription(), operationContext.withConnectionEstablishmentSessionContext(), c);

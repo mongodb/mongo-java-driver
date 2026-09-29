@@ -23,12 +23,15 @@ import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.annotations.DeadAsync;
+import com.mongodb.internal.annotations.GeneratedAsync;
+import com.mongodb.internal.annotations.HasAsync;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
 import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync;
 
@@ -40,6 +43,7 @@ class X509Authenticator extends Authenticator implements SpeculativeAuthenticato
         super(credential, clusterConnectionMode, serverApi);
     }
 
+    @HasAsync
     @Override
     void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription,
             final OperationContext operationContext) {
@@ -54,8 +58,26 @@ class X509Authenticator extends Authenticator implements SpeculativeAuthenticato
         }
     }
 
+    @GeneratedAsync
     @Override
     void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
+            final OperationContext operationContext, final SingleResultCallback<Void> callback) {
+        if (this.speculativeAuthenticateResponse != null) {
+            callback.complete(callback);
+            return;
+        }
+        beginAsync().thenRun(c -> {
+            BsonDocument authCommand = getAuthCommand(getMongoCredential().getUserName());
+            executeCommandAsync(getMongoCredential().getSource(), authCommand, getClusterConnectionMode(), getServerApi(), connection,
+                    operationContext, (r, t) -> c.onResult(null, t));
+        }).onErrorIf(t -> t instanceof MongoCommandException, (e, c) -> {
+            throw new MongoSecurityException(getMongoCredential(), "Exception authenticating", e);
+        }).finish(callback);
+    }
+
+    @DeadAsync("replaced by generated authenticateAsync")
+    @SuppressWarnings("unused")
+    void authenticateAsyncDefunct(final InternalConnection connection, final ConnectionDescription connectionDescription,
             final OperationContext operationContext, final SingleResultCallback<Void> callback) {
         if (speculativeAuthenticateResponse != null) {
             callback.onResult(null, null);
