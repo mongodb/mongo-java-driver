@@ -59,6 +59,7 @@ class DefaultAuthenticator extends Authenticator implements SpeculativeAuthentic
     @Override
     void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
                            final OperationContext operationContext, final SingleResultCallback<Void> callback) {
+        // bug: a failure reaches the callback unwrapped and a setDelegate throw escapes it; sync passes both through wrapException
         setDelegate(connectionDescription);
         delegate.authenticateAsync(connection, connectionDescription, operationContext, callback);
     }
