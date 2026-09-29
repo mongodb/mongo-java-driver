@@ -29,6 +29,7 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.annotations.AsyncLeaf;
+import com.mongodb.internal.annotations.DeadAsync;
 import com.mongodb.internal.annotations.SyncLeaf;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.NonNull;
@@ -151,7 +152,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
             doAsSubject(() -> {
                 SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress(), operationContext);
                 throwIfSaslClientIsNull(saslClient);
-                getNextSaslResponseAsync(saslClient, connection, operationContext, callback);
+                getNextSaslResponseAsyncDefunct(saslClient, connection, operationContext, callback);
                 return null;
             });
         } catch (Throwable t) {
@@ -186,8 +187,11 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
         }
     }
 
-    private void getNextSaslResponseAsync(final SaslClient saslClient, final InternalConnection connection,
+    @DeadAsync("replaced by generated getNextSaslResponseAsync")
+    @SuppressWarnings("unused")
+    private void getNextSaslResponseAsyncDefunct(final SaslClient saslClient, final InternalConnection connection,
             final OperationContext operationContext, final SingleResultCallback<Void> callback) {
+        // bug: saslClient is not disposed on the terminal paths below; sync disposes in finally
         try {
             BsonDocument response = connection.opened() ? null : getSpeculativeAuthenticateResponse();
             if (response == null) {
@@ -216,12 +220,14 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
         }
     }
 
+    @DeadAsync("only used by getNextSaslResponseAsyncDefunct and Continuator; generated runSaslConversation path inlines the check")
     private void verifySaslClientComplete(final SaslClient saslClient, final BsonDocument result,
                                           final SingleResultCallback<Void> callback) {
         if (saslClient.isComplete()) {
             callback.onResult(null, null);
         } else {
             try {
+                // bug: runs outside doAsSubject; sync runs the whole conversation under the Subject
                 saslClient.evaluateChallenge(result.getBinary("payload").getData());
                 if (saslClient.isComplete()) {
                     callback.onResult(null, null);
@@ -348,6 +354,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
         return bytes;
     }
 
+    @DeadAsync("recursive CPS loop used only by getNextSaslResponseAsync; replaced by generated runSaslConversationAsync while-loop chain")
     private final class Continuator implements SingleResultCallback<BsonDocument> {
         private final SaslClient saslClient;
         private final BsonDocument saslStartDocument;
@@ -388,6 +395,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
             try {
                 doAsSubject(() -> {
                     try {
+                        // bug: a null evaluateChallenge result is sent as BsonBinary(null); sync throws MongoSecurityException
                         sendSaslContinueAsync(saslStartDocument.getInt32("conversationId"),
                                 saslClient.evaluateChallenge((result.getBinary("payload")).getData()), connection,
                                 operationContext.withOverride(TimeoutContext::withNewlyStartedMaintenanceTimeout),
@@ -398,6 +406,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
                     return null;
                 });
             } catch (Throwable t) {
+                // bug: not passed through wrapException
                 callback.onResult(null, t);
                 disposeOfSaslClient(saslClient);
             }
