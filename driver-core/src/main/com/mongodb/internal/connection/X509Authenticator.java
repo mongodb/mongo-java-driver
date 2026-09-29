@@ -22,6 +22,7 @@ import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.annotations.DeadAsync;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -64,6 +65,7 @@ class X509Authenticator extends Authenticator implements SpeculativeAuthenticato
                         getClusterConnectionMode(), getServerApi(), connection, operationContext,
                         (nonceResult, t) -> {
                             if (t != null) {
+                                // generated: inlined as the onErrorIf branch
                                 callback.onResult(null, translateThrowable(t));
                             } else {
                                 callback.onResult(null, null);
@@ -102,6 +104,7 @@ class X509Authenticator extends Authenticator implements SpeculativeAuthenticato
         return cmd;
     }
 
+    @DeadAsync("only used by authenticateAsyncDefunct; generated authenticateAsync inlines it as the onErrorIf branch")
     private Throwable translateThrowable(final Throwable t) {
         if (t instanceof MongoCommandException) {
             return new MongoSecurityException(getMongoCredential(), "Exception authenticating", t);

@@ -22,6 +22,8 @@ import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerType;
+import com.mongodb.internal.annotations.AsyncLeaf;
+import com.mongodb.internal.annotations.SyncLeaf;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
@@ -96,9 +98,11 @@ public abstract class Authenticator {
 
     }
 
+    @SyncLeaf(asyncMethod = "authenticateAsync")
     abstract void authenticate(InternalConnection connection, ConnectionDescription connectionDescription,
             OperationContext operationContext);
 
+    @AsyncLeaf(syncMethod = "authenticate")
     abstract void authenticateAsync(InternalConnection connection, ConnectionDescription connectionDescription,
             OperationContext operationContext, SingleResultCallback<Void> callback);
 
