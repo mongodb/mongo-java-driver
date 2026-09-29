@@ -22,6 +22,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.MongoNamespaceHelper;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
@@ -50,6 +51,8 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.assertNull;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -58,6 +61,7 @@ import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.connection.ServerType.STANDALONE;
 import static com.mongodb.internal.connection.BsonWriterHelper.appendElementsToDocument;
+import static com.mongodb.internal.connection.BsonWriterHelper.createMessageSettingsBuilder;
 import static com.mongodb.internal.connection.BsonWriterHelper.backpatchLength;
 import static com.mongodb.internal.connection.BsonWriterHelper.createBsonBinaryWriter;
 import static com.mongodb.internal.connection.BsonWriterHelper.encodeUsingRegistry;
@@ -88,10 +92,20 @@ public final class CommandMessage extends RequestMessage {
      * ({@code {otel: {traceparent: <string>}}}).
      */
     private static final byte PAYLOAD_TYPE_3_TELEMETRY = 3;
+    /**
+     * The exact encoded size of the telemetry section: 1 (section kind byte) + the
+     * {@code {otel: {traceparent: <value>}}} document, whose size is fixed because a W3C traceparent is always
+     * 55 characters: 4 (length) + 1 (0x03) + 5 ("otel\0") + [4 (length) + 1 (0x02) + 12 ("traceparent\0")
+     * + 4 (string length) + 56 (55 chars + "\0") + 1 (terminator)] + 1 (terminator) = 90.
+     * {@code CommandMessageOtelTraceContextTest} asserts this matches the actual encoding.
+     */
+    @VisibleForTesting(otherwise = PRIVATE)
+    static final int TELEMETRY_SECTION_SIZE = 90;
 
     private static final int UNINITIALIZED_POSITION = -1;
 
     private final BsonDocument command;
+    private final String commandName;
     private final FieldNameValidator commandFieldNameValidator;
     private final ReadPreference readPreference;
     private final boolean exhaustAllowed;
@@ -112,7 +126,10 @@ public final class CommandMessage extends RequestMessage {
     /**
      * The command span to attach to the OP_MSG telemetry section during {@linkplain
      * #encode(ByteBufferBsonOutput, OperationContext, Span) encoding}. Set for the duration of that overload's
-     * call and cleared afterward; {@code null} otherwise.
+     * call and cleared afterward; {@code null} otherwise. A field rather than a parameter because the section is
+     * written inside {@link #encodeMessageBody(ByteBufferBsonOutput, OperationContext)}, whose signature is fixed
+     * by the {@link RequestMessage#encode(ByteBufferBsonOutput, OperationContext)} template method shared with
+     * other message types.
      */
     @Nullable
     private Span commandSpanForEncoding;
@@ -147,6 +164,7 @@ public final class CommandMessage extends RequestMessage {
         super(getOpCode(settings, clusterConnectionMode, serverApi), settings);
         this.database = database;
         this.command = command;
+        this.commandName = command.getFirstKey();
         this.commandFieldNameValidator = commandFieldNameValidator;
         this.readPreference = readPreference;
         this.responseExpected = responseExpected;
@@ -222,16 +240,16 @@ public final class CommandMessage extends RequestMessage {
      * key, since encoding only appends fields.
      */
     public String getCommandName() {
-        return command.getFirstKey();
+        return commandName;
     }
 
     /**
      * The cursor id if this is a {@code getMore} command, or {@code null} otherwise.
      */
     @Nullable
-    public BsonInt64 getGetMoreCursorId() {
+    public Long getGetMoreCursorId() {
         BsonValue value = command.get("getMore");
-        return value instanceof BsonInt64 ? (BsonInt64) value : null;
+        return value instanceof BsonInt64 ? ((BsonInt64) value).getValue() : null;
     }
 
     /**
@@ -282,6 +300,7 @@ public final class CommandMessage extends RequestMessage {
      */
     public void encode(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext,
             @Nullable final Span commandSpan) {
+        assertNull(commandSpanForEncoding);
         this.commandSpanForEncoding = commandSpan;
         try {
             encode(bsonOutput, operationContext);
@@ -292,6 +311,13 @@ public final class CommandMessage extends RequestMessage {
 
     @SuppressWarnings("try")
     private int writeOpMsg(final ByteBufferBsonOutput bsonOutput, final OperationContext operationContext) {
+        String traceParent = resolveTraceParent();
+        // Reserve room for the telemetry section (written after the payload sections) so that filling the
+        // message up to the limit while batching cannot make the final message exceed maxMessageSize.
+        MessageSettings payloadSettings = traceParent == null ? getSettings()
+                : createMessageSettingsBuilder(getSettings())
+                        .maxMessageSize(getSettings().getMaxMessageSize() - TELEMETRY_SECTION_SIZE)
+                        .build();
         int messageStartPosition = bsonOutput.getPosition() - MESSAGE_PROLOGUE_LENGTH;
         int flagPosition = bsonOutput.getPosition();
         bsonOutput.writeInt32(0);   // flag bits
@@ -307,7 +333,7 @@ public final class CommandMessage extends RequestMessage {
                     bsonOutput, payload.getPayloadName())) {
                 writePayload(
                         new BsonBinaryWriter(bsonOutput, payload.getFieldNameValidator()),
-                        bsonOutput, getSettings(), messageStartPosition, payload, getSettings().getMaxDocumentSize());
+                        bsonOutput, payloadSettings, messageStartPosition, payload, getSettings().getMaxDocumentSize());
             }
         } else if (sequences instanceof DualMessageSequences) {
             DualMessageSequences dualMessageSequences = (DualMessageSequences) sequences;
@@ -320,7 +346,7 @@ public final class CommandMessage extends RequestMessage {
                         bsonOutputBranch2, dualMessageSequences.getSecondSequenceId())) {
                     encodeDocumentsResult = writeDocumentsOfDualMessageSequences(
                             dualMessageSequences, commandDocumentSizeInBytes, bsonOutputBranch1,
-                            bsonOutputBranch2, getSettings());
+                            bsonOutputBranch2, payloadSettings);
                 }
                 dualMessageSequencesRequireResponse = encodeDocumentsResult.isServerResponseRequired();
                 extraElements.addAll(encodeDocumentsResult.getExtraElements());
@@ -332,25 +358,33 @@ public final class CommandMessage extends RequestMessage {
             fail(sequences.toString());
         }
 
-        writeTelemetryContextSection(bsonOutput);
+        if (traceParent != null) {
+            writeTelemetryContextSection(bsonOutput, traceParent);
+        }
 
         // Write the flag bits
         bsonOutput.writeInt32(flagPosition, getOpMsgFlagBits());
         return commandStartPosition;
     }
 
-    private void writeTelemetryContextSection(final ByteBufferBsonOutput bsonOutput) {
+    /**
+     * The traceparent to attach as a telemetry section, or {@code null} when the gating conditions do not hold:
+     * a {@linkplain #encode(ByteBufferBsonOutput, OperationContext, Span) command span} attached to this encode,
+     * a server with wire version >= 29, and a span whose context yields a W3C traceparent.
+     */
+    @Nullable
+    private String resolveTraceParent() {
         if (getSettings().getMaxWireVersion() < NINE_DOT_ZERO_WIRE_VERSION) {
-            return;
+            return null;
         }
         Span commandSpan = this.commandSpanForEncoding;
         if (commandSpan == null) {
-            return;
+            return null;
         }
-        String traceParent = commandSpan.context().traceParent();
-        if (traceParent == null) {
-            return;
-        }
+        return commandSpan.context().traceParent();
+    }
+
+    private void writeTelemetryContextSection(final ByteBufferBsonOutput bsonOutput, final String traceParent) {
         bsonOutput.writeByte(PAYLOAD_TYPE_3_TELEMETRY);
         // {otel: {traceparent: <value>}}
         BsonBinaryWriter writer = new BsonBinaryWriter(bsonOutput);

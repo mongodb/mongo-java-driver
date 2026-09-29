@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.observability.micrometer;
 
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.MongoNamespace;
 import com.mongodb.lang.Nullable;
 import com.mongodb.observability.micrometer.DefaultMongodbObservationConvention;
@@ -32,6 +33,7 @@ import org.bson.json.JsonWriterSettings;
 
 import java.io.StringWriter;
 
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.observability.micrometer.TracingManager.ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH;
 import static com.mongodb.internal.EnvironmentProvider.getEnv;
 import static java.util.Optional.ofNullable;
@@ -52,6 +54,7 @@ public class MicrometerTracer implements Tracer {
      * on the classpath (e.g. metrics/logging-only observability setups). Guard any use of {@code io.micrometer.tracing.*}
      * types with this flag so that such setups never trigger a {@link NoClassDefFoundError} or {@link LinkageError}.
      */
+    @VisibleForTesting(otherwise = PRIVATE)
     static final boolean MICROMETER_TRACING_ON_CLASSPATH = isMicrometerTracingOnClasspath();
 
     private final ObservationRegistry observationRegistry;
@@ -176,6 +179,13 @@ public class MicrometerTracer implements Tracer {
      * when {@code micrometer-tracing} is absent from the classpath.
      */
     private static final class MicrometerTracingSupport {
+        /**
+         * Computes the W3C {@code traceparent} for {@code observation}'s active span.
+         *
+         * @param observation the observation whose span supplies the trace context
+         * @return the {@code traceparent} as specified by {@link TraceContext#traceParent()}, or {@code null} when
+         *         {@code observation} has no span or its trace/span ids are missing, zero, or malformed
+         */
         @Nullable
         static String traceParent(final Observation observation) {
             io.micrometer.tracing.handler.TracingObservationHandler.TracingContext tracingContext =
