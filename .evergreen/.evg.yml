@@ -114,6 +114,14 @@ functions:
           else
             git clone --depth 1 https://github.com/mongodb-labs/drivers-evergreen-tools.git $DRIVERS_TOOLS
           fi
+          # TODO(DRIVERS-3663): remove once fixed upstream. mongodl's GPG verification of "latest"
+          # downloads creates its keyring under $TMPDIR; with our TMPDIR=$MONGO_ORCHESTRATION_HOME/db
+          # the gpg-agent socket path exceeds the AF_UNIX 108-char limit and orchestration fails.
+          # Create the keyring under /tmp instead (same as the proposed upstream fix).
+          if [ "${VERSION}" = "latest" ]; then
+            perl -i -pe 's/TemporaryDirectory\(prefix="mongodl-gpg"\)/TemporaryDirectory(prefix="mongodl-gpg", dir="\/tmp")/' \
+                $DRIVERS_TOOLS/.evergreen/server_artifacts.py
+          fi
           echo "{ \"releases\": { \"default\": \"$MONGODB_BINARIES\" }}" > $MONGO_ORCHESTRATION_HOME/orchestration.config
 
   "fix-absolute-paths":
@@ -152,13 +160,47 @@ functions:
       params:
         script: |
           ${PREPARE_SHELL}
-          REQUIRE_API_VERSION=${REQUIRE_API_VERSION} LOAD_BALANCER=${LOAD_BALANCER} MONGODB_VERSION=${VERSION} TOPOLOGY=${TOPOLOGY} \
+          REQUIRE_API_VERSION=${REQUIRE_API_VERSION} LOAD_BALANCER=${LOAD_BALANCER} OTEL=${OTEL} MONGODB_VERSION=${VERSION} TOPOLOGY=${TOPOLOGY} \
           AUTH=${AUTH} SSL=${SSL} STORAGE_ENGINE=${STORAGE_ENGINE} ORCHESTRATION_FILE=${ORCHESTRATION_FILE} \
           bash ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
     # run-orchestration generates expansion file with the MONGODB_URI for the cluster
     - command: expansions.update
       params:
         file: mo-expansion.yml
+  "run-otel-tracing-tests":
+    - command: shell.exec
+      type: "test"
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          MONGODB_URI="${MONGODB_URI}" OTEL_TRACE_DIR="${OTEL_TRACE_DIR}" JAVA_VERSION="${JAVA_VERSION}" \
+          .evergreen/run-otel-tracing-tests.sh
+
+  # Uploads the server's exported OTel trace files (DRIVERS-3605) when present. Must run after
+  # "upload-mo-artifacts" in the post block, which assumes the upload role this relies on.
+  "upload-otel-artifacts":
+    - command: shell.exec
+      params:
+        shell: "bash"
+        script: |
+          ${PREPARE_SHELL}
+          if [ -d "$DRIVERS_TOOLS/otel" ]; then
+            tar czf otel-traces.tar.gz -C $DRIVERS_TOOLS otel
+          fi
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${AWS_ACCESS_KEY_ID}
+        aws_secret: ${AWS_SECRET_ACCESS_KEY}
+        aws_session_token: ${AWS_SESSION_TOKEN}
+        local_file: otel-traces.tar.gz
+        remote_file: ${UPLOAD_BUCKET}/${build_variant}/${revision}/${version_id}/${build_id}/otel/${task_id}-${execution}-otel-traces.tar.gz
+        bucket: mciuploads
+        permissions: public-read
+        content_type: "${content_type|application/x-gzip}"
+        display_name: "otel-traces.tar.gz"
+
   "stop-mongo-orchestration":
     - command: shell.exec
       params:
@@ -838,6 +880,7 @@ pre:
 post:
   - func: "stop-mongo-orchestration"
   - func: "upload-mo-artifacts"
+  - func: "upload-otel-artifacts"
   - func: "upload-test-results"
   - func: "assume-aws-test-secrets-role"
   - func: "stop-load-balancer"
@@ -913,6 +956,13 @@ tasks:
           VERSION: "6.0"
           TOPOLOGY: "server"
       - func: "run-reactive-streams-tck-tests"
+
+  - name: "otel-tracing-prose-test-task"
+    commands:
+      - func: "start-mongo-orchestration"
+        vars:
+          OTEL: "true"
+      - func: "run-otel-tracing-tests"
 
   - name: "load-balancer-test-task"
     commands:
@@ -1784,6 +1834,9 @@ axes:
       - id: "linux"
         display_name: "Linux"
         run_on: "rhel80-small"
+      - id: "macos-arm64"
+        display_name: "macOS arm64"
+        run_on: "macos-14-arm64"
       # No single Ubuntu release has server builds for every version we test: 4.4 and 5.0 stop at
       # ubuntu2004, while 9.0 starts at ubuntu2204. mongodl infers the download target from the host
       # distro and does not fall back to an older target, so the host must match the server release.
@@ -2548,6 +2601,16 @@ buildvariants:
       - name: "aws-auth-test-with-aws-credentials-as-environment-variables-task"
       - name: "aws-auth-test-with-aws-credentials-and-session-token-as-environment-variables-task"
       - name: "aws-auth-test-with-web-identity-credentials-task"
+
+  - matrix_name: "otel-tracing"
+    # auth: exercises prose Test 7 (no server spans for auth/monitoring commands) as written.
+    # linux only: macOS server binaries are not compiled with OpenTelemetry support (requires_otel_build),
+    # so no span files are ever exported there — re-add "macos-arm64" if that changes.
+    matrix_spec: { auth: "auth", ssl: "nossl", jdk: "jdk21", version: [ "latest" ], topology: "standalone", os: "linux" }
+    display_name: "OTel Tracing ${version} ${topology} ${os}"
+    tags: [ "tests-variant" ]
+    tasks:
+      - name: "otel-tracing-prose-test-task"
 
   - matrix_name: "accept-api-version-2-test"
     matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk21", version: [ "5.0", "6.0", "7.0", "8.0", "9.0", "latest" ], topology: "standalone",
