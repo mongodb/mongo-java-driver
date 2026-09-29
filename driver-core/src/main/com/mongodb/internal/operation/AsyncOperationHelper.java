@@ -24,6 +24,7 @@ import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.annotations.AsyncLeaf;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.MutableValue;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -84,12 +85,14 @@ final class AsyncOperationHelper {
     }
 
 
+    @AsyncLeaf(syncMethod = "withReadConnectionSource")
     static void withAsyncReadConnectionSource(final AsyncReadBinding binding, final OperationContext operationContext,
                                               final AsyncCallableWithSource callable) {
         binding.getReadConnectionSource(operationContext,
                 new AsyncCallableWithSourceCallback(callable));
     }
 
+    @AsyncLeaf(syncMethod = "withConnection")
     static void withAsyncConnection(final AsyncWriteBinding binding,
                                     final OperationContext originalOperationContext,
                                     final AsyncCallableWithConnection callable) {
@@ -102,6 +105,7 @@ final class AsyncOperationHelper {
     /**
      * @see #withAsyncSuppliedResource(AsyncCallbackFunction, boolean, OperationContext, SingleResultCallback, AsyncCallbackFunction)
      */
+    @AsyncLeaf(syncMethod = "withSourceAndConnection")
     static <R> void withAsyncSourceAndConnection(
             final AsyncCallbackFunction<OperationContext, AsyncConnectionSource> sourceAsyncFunction,
             final boolean wrapConnectionSourceException,
@@ -130,6 +134,7 @@ final class AsyncOperationHelper {
     }
 
 
+    @AsyncLeaf(syncMethod = "withSuppliedResource")
     static <R, T extends ReferenceCounted> void withAsyncSuppliedResource(final AsyncCallbackFunction<OperationContext, T> resourceSupplier,
                                                                           final boolean wrapSourceConnectionException,
                                                                           final OperationContext operationContext,
@@ -347,6 +352,7 @@ final class AsyncOperationHelper {
                 operationContext, transformingReadCallback(transformer, source, connection, operationContext, callback));
     }
 
+    @AsyncLeaf(syncMethod = "decorateWithRetries")
     static <R> AsyncCallbackSupplier<R> decorateWithRetriesAsync(
             final RetryControl<SpecRetryPolicy> retryControl,
             final OperationContext operationContext,

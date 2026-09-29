@@ -28,6 +28,8 @@ import com.mongodb.SubjectProvider;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.annotations.AsyncLeaf;
+import com.mongodb.internal.annotations.SyncLeaf;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
@@ -59,6 +61,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
         super(credential, clusterConnectionMode, serverApi);
     }
 
+    @SyncLeaf(asyncMethod = "authenticateAsync")
     public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription,
                              final OperationContext originalOperationContext) {
         doAsSubject(() -> {
@@ -104,6 +107,7 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
     }
 
     @Override
+    @AsyncLeaf(syncMethod = "authenticate")
     void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
             final OperationContext operationContext, final SingleResultCallback<Void> callback) {
         try {
