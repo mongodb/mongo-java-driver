@@ -30,7 +30,6 @@ import com.mongodb.observability.micrometer.MicrometerObservabilitySettings;
 import com.mongodb.observability.micrometer.MongodbObservation;
 import com.mongodb.observability.micrometer.MongodbObservationContext;
 import io.micrometer.observation.ObservationRegistry;
-import org.bson.BsonInt64;
 
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -221,9 +220,9 @@ public class TracingManager {
             ConnectionId connectionId = connectionIdSupplier.get();
             mongodbContext.setConnectionId(connectionId);
 
-            BsonInt64 getMoreCursorId = message.getGetMoreCursorId();
+            Long getMoreCursorId = message.getGetMoreCursorId();
             if (getMoreCursorId != null) {
-                mongodbContext.setCursorId(getMoreCursorId.longValue());
+                mongodbContext.setCursorId(getMoreCursorId);
             }
 
             SessionContext sessionContext = operationContext.getSessionContext();

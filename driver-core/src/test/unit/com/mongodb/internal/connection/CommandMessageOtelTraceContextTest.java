@@ -31,6 +31,7 @@ import com.mongodb.internal.observability.micrometer.TraceContext;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
+import org.bson.BsonBinary;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -55,6 +56,7 @@ import static com.mongodb.internal.operation.ServerVersionHelper.NINE_DOT_ZERO_W
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Named.named;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 import static org.mockito.Mockito.when;
@@ -210,7 +212,86 @@ class CommandMessageOtelTraceContextTest {
         }
     }
 
+    /**
+     * Guards {@link CommandMessage#TELEMETRY_SECTION_SIZE} against drift from the actual encoding: the constant
+     * is used to reserve space while batching, so it must equal the exact number of bytes the section adds.
+     */
+    @Test
+    void telemetrySectionSizeConstantMatchesEncodedSize() {
+        OperationContext operationContext = buildOperationContext();
+        int untracedSize;
+        int tracedSize;
+        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+            buildCommandMessage(NINE_DOT_ZERO_WIRE_VERSION, EmptyMessageSequences.INSTANCE)
+                    .encode(output, operationContext);
+            untracedSize = output.getPosition();
+        }
+        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+            buildCommandMessage(NINE_DOT_ZERO_WIRE_VERSION, EmptyMessageSequences.INSTANCE)
+                    .encode(output, operationContext, spanWithTraceParent(TRACEPARENT));
+            tracedSize = output.getPosition();
+        }
+        assertEquals(CommandMessage.TELEMETRY_SECTION_SIZE, tracedSize - untracedSize);
+    }
+
+    /**
+     * The payload splitter may fill the message exactly to {@code maxMessageSize}; the telemetry section is
+     * appended afterwards, so its size must be reserved while batching or the final message would exceed the
+     * limit. Documents are sized so that untraced encoding fits both in one message, while traced encoding
+     * must defer the second one to the next batch.
+     */
+    @Test
+    void shouldRespectMaxMessageSizeWhenTelemetrySectionAttached() {
+        int maxMessageSize = 1024;
+        MessageSettings settings = MessageSettings.builder()
+                .maxMessageSize(maxMessageSize)
+                .maxWireVersion(NINE_DOT_ZERO_WIRE_VERSION)
+                .build();
+        BsonDocument insertCommand = new BsonDocument("insert", new BsonString(NAMESPACE.getCollectionName()));
+        OperationContext operationContext = buildOperationContext();
+
+        SplittablePayload untracedPayload = createTwoDocumentInsertPayload();
+        int untracedSize;
+        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+            buildInsertMessage(insertCommand, settings, untracedPayload).encode(output, operationContext);
+            untracedSize = output.getPosition();
+        }
+        assertEquals(2, untracedPayload.getPosition(), "untraced message should fit both documents");
+        assertTrue(maxMessageSize - untracedSize < CommandMessage.TELEMETRY_SECTION_SIZE,
+                "documents must leave less than TELEMETRY_SECTION_SIZE of headroom for this test to be meaningful,"
+                        + " but left " + (maxMessageSize - untracedSize));
+
+        SplittablePayload tracedPayload = createTwoDocumentInsertPayload();
+        try (ByteBufferBsonOutput output = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
+            buildInsertMessage(insertCommand, settings, tracedPayload)
+                    .encode(output, operationContext, spanWithTraceParent(TRACEPARENT));
+
+            assertTrue(output.getPosition() <= maxMessageSize,
+                    "traced message must not exceed maxMessageSize, got " + output.getPosition());
+            assertEquals(1, tracedPayload.getPosition(),
+                    "the second document should have been deferred to the next batch");
+            assertTrue(tracedPayload.hasAnotherSplit());
+            assertEquals(EXPECTED_TELEMETRY_DOCUMENT, readTelemetrySectionDocument(output.toByteArray()));
+        }
+    }
+
     // --- helpers ---
+
+    private static SplittablePayload createTwoDocumentInsertPayload() {
+        // Sized (with the command body and message prologue) to fill a 1024-byte message to within
+        // TELEMETRY_SECTION_SIZE of the limit when both documents are included.
+        return new SplittablePayload(SplittablePayload.Type.INSERT, Stream.of(new byte[441], new byte[460])
+                .map(bytes -> new BsonDocument("_id", new BsonInt32(1)).append("b", new BsonBinary(bytes)))
+                .map(InsertRequest::new)
+                .map(request -> new WriteRequestWithIndex(request, 0))
+                .collect(java.util.stream.Collectors.toList()), true, NoOpFieldNameValidator.INSTANCE);
+    }
+
+    private static CommandMessage buildInsertMessage(final BsonDocument insertCommand, final MessageSettings settings,
+            final SplittablePayload payload) {
+        return new CommandMessage(NAMESPACE.getDatabaseName(), insertCommand, NoOpFieldNameValidator.INSTANCE,
+                ReadPreference.primary(), settings, false, payload, ClusterConnectionMode.MULTIPLE, null);
+    }
 
     private static Span spanWithTraceParent(final String traceParent) {
         TraceContext traceContext = () -> traceParent;
@@ -251,9 +332,9 @@ class CommandMessageOtelTraceContextTest {
     }
 
     /**
-     * Walks the OP_MSG sections skip the type-0 body document, then for each subsequent section read the kind byte;
-     * for kind 1 (document sequence) skip past the {@code int32} section size, and for kind 3 (telemetry) decode and
-     * return the BSON document payload. Returns {@code null} if no kind-3 section is found.
+     * Walks the OP_MSG sections: skips the type-0 body document, then reads the kind byte of each subsequent
+     * section. For kind 1 (document sequence) it skips past the {@code int32} section size; for kind 3 (telemetry)
+     * it decodes and returns the BSON document payload. Returns {@code null} if no kind-3 section is found.
      */
     private static BsonDocument findTelemetrySectionDocument(final byte[] buffer) {
         ByteBuf byteBuf = new ByteBufNIO(ByteBuffer.wrap(buffer));
