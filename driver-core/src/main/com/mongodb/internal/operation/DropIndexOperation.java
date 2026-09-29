@@ -32,6 +32,7 @@ import org.bson.BsonString;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.ReadConcernHelper.appendReadConcernToWriteCommand;
 import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
@@ -149,6 +150,7 @@ public class DropIndexOperation implements WriteOperation<Void> {
                 command.put("index", indexKeys);
             }
             appendWriteConcernToCommand(writeConcern, command);
+            appendReadConcernToWriteCommand(operationContext.getSessionContext(), command);
             return command;
         };
     }

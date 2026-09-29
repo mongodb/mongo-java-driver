@@ -565,14 +565,6 @@ public final class UnifiedTestModifications {
         def.skipNoncompliant("`MongoCluster.getWriteConcern`/`MongoCollection.getWriteConcern` are silently ignored in a transaction")
                 .test("transactions", "client bulkWrite transactions",
                         "client bulkWrite with writeConcern in a transaction causes a transaction error");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-6179")
-                .test("transactions", "retryable-writes", "increment txnNumber")
-                .test("transactions", "commit", "reset session state commit")
-                .test("transactions", "commit", "reset session state abort")
-                .test("transactions-convenient-api", "callback-commits",
-                        "withTransaction still succeeds if callback commits and runs extra op")
-                .test("transactions-convenient-api", "callback-aborts",
-                        "withTransaction still succeeds if callback aborts and runs extra op");
 
         // backpressure
 
