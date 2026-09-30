@@ -19,7 +19,6 @@ package org.bson;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 
 /**
  *  A decoder for {@code LazyBSONObject} instances.
@@ -54,8 +53,7 @@ public class LazyBSONDecoder implements BSONDecoder {
     public int decode(final InputStream in, final BSONCallback callback) throws IOException {
         byte[] documentSizeBuffer = new byte[BYTES_IN_INTEGER];
         int documentSize = Bits.readInt(in, documentSizeBuffer);
-        byte[] documentBytes = Arrays.copyOf(documentSizeBuffer, documentSize);
-        Bits.readFully(in, documentBytes, BYTES_IN_INTEGER, documentSize - BYTES_IN_INTEGER);
+        byte[] documentBytes = Bits.readFully(in, documentSizeBuffer, documentSize);
 
         // note that we are handing off ownership of the documentBytes byte array to the callback
         callback.gotBinary(null, (byte) 0, documentBytes);

@@ -21,6 +21,7 @@ import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.api.Named;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -29,6 +30,8 @@ import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class RawBsonDocumentTest {
 
@@ -70,6 +73,67 @@ class RawBsonDocumentTest {
                         rawDocument.getBackingArray(),
                         rawDocument.getByteOffset(),
                         rawDocument.getByteOffset() + rawDocument.getByteLength()));
+    }
+
+    @Test
+    void sizeShouldRejectMalformedZeroLengthStringValue() {
+        RawBsonDocument malformed = createDocumentWithZeroLengthStringValue();
+        assertThrows(BsonSerializationException.class, malformed::size);
+    }
+
+    @Test
+    void containsKeyShouldRejectMalformedZeroLengthStringWhenKeyNotFound() {
+        // "nonExistent" forces iteration past the malformed "x" field via skipValue().
+        RawBsonDocument malformed = createDocumentWithZeroLengthStringValue();
+        assertThrows(BsonSerializationException.class, () -> malformed.containsKey("nonExistent"));
+    }
+
+    @Test
+    void containsKeyShouldReturnTrueForMalformedFieldKey() {
+        // "x" is the malformed field itself - containsKey matches the key before skipValue() is called.
+        RawBsonDocument malformed = createDocumentWithZeroLengthStringValue();
+        assertTrue(malformed.containsKey("x"));
+    }
+
+    @Test
+    void getShouldRejectMalformedZeroLengthStringWhenKeyNotFound() {
+        // "nonExistent" forces iteration past the malformed "x" field via skipValue().
+        RawBsonDocument malformed = createDocumentWithZeroLengthStringValue();
+        assertThrows(BsonSerializationException.class, () -> malformed.get("nonExistent"));
+    }
+
+    @Test
+    void getFirstKeyShouldSucceedForMalformedDocument() {
+        // getFirstKey() reads the key name but never calls skipValue(), so it succeeds
+        // even when the first field's value is malformed.
+        RawBsonDocument malformed = createDocumentWithZeroLengthStringValue();
+        assertEquals("x", malformed.getFirstKey());
+    }
+
+    /**
+     * Creates a {@link RawBsonDocument} containing a string field whose declared size is zero.
+     * Encodes {"x": "hello", "a": "world"} on a cloned byte array, then corrupts the string size
+     * of "x" to 0. "x" is deliberately the first field so that {@code getFirstKey()} and
+     * {@code containsKey("x")} can short-circuit before the malformed value is reached.
+     */
+    private static RawBsonDocument createDocumentWithZeroLengthStringValue() {
+        BsonDocument doc = new BsonDocument()
+                .append("x", new BsonString("hello"))
+                .append("a", new BsonString("world"));
+        RawBsonDocument raw = new RawBsonDocument(doc, new BsonDocumentCodec());
+        // Clone so the malformed document does not share state with `raw`.
+        byte[] bytes = raw.getBackingArray().clone();
+        int offset = raw.getByteOffset();
+        // BSON layout: [4 docSize] [0x02 type] [x \0 name] [int32 stringSize] [string bytes] ...
+        // The string size field for "x" starts at offset + 4(docSize) + 1(type) + 2(name "x\0") = offset + 7.
+        int stringSizeOffset = offset + 7;
+        assertEquals(6, (bytes[stringSizeOffset] & 0xFF)
+                        | ((bytes[stringSizeOffset + 1] & 0xFF) << 8)
+                        | ((bytes[stringSizeOffset + 2] & 0xFF) << 16)
+                        | ((bytes[stringSizeOffset + 3] & 0xFF) << 24),
+                "Expected test fixture string length 6 (\"hello\\0\") at offset+7; encoding assumptions may have changed");
+        Arrays.fill(bytes, stringSizeOffset, stringSizeOffset + 4, (byte) 0);
+        return new RawBsonDocument(bytes, offset, raw.getByteLength());
     }
 
     private static Named<RawBsonDocument> createFromDocument() {
