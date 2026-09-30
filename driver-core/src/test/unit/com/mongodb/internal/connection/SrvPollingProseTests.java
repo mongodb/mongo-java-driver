@@ -24,6 +24,7 @@ import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerSettings;
+import com.mongodb.connection.SrvHostValidator;
 import com.mongodb.internal.dns.DnsResolver;
 import com.mongodb.lang.Nullable;
 import org.junit.jupiter.api.AfterEach;
@@ -224,7 +225,7 @@ public class SrvPollingProseTests {
 
         @Override
         public List<String> resolveHostFromSrvRecords(final String srvHost, final String srvServiceName,
-                @Nullable final String srvAllowedHostsSuffix) {
+                final SrvHostValidator srvHostValidator) {
             List<String> retVal;
             if (curPos >= responses.size() && lastResponseException != null) {
                 throw lastResponseException;
