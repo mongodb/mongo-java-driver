@@ -64,8 +64,8 @@ abstract class AsyncFunctionsTryCatchTest extends AsyncFunctionsVariableFlowTest
     @Test
     void testTryWithResources() {
         // try-with-resources desugars to declaration + try/finally with close;
-        // close never throws (see Resource), so variations = the body's only
-        // close() never throws, so only the body branches: 1(sync-1 exception) + 1(sync-1 success) = 2
+        // close() never throws (see Resource), so only the body branches:
+        // 1(sync-1 exception) + 1(sync-1 success) = 2
         assertBehavesSameVariations(2,
                 () -> {
                     try (Resource r = new Resource(3)) {
