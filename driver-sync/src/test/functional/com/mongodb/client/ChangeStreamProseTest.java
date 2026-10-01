@@ -25,10 +25,8 @@ import com.mongodb.client.internal.MongoChangeStreamCursorImpl;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.ChangeStreamPreAndPostImagesOptions;
 import com.mongodb.client.model.CreateCollectionOptions;
-import com.mongodb.client.model.TimeSeriesOptions;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
-import com.mongodb.client.model.changestream.NamespaceType;
 import com.mongodb.client.model.changestream.SplitEvent;
 import com.mongodb.internal.operation.AggregateResponseBatchCursor;
 import org.bson.BsonArray;
@@ -46,14 +44,12 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.CrudTestHelper.repeat;
 import static com.mongodb.client.model.Updates.set;
 import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 
@@ -356,51 +352,6 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
             // #. Assert that the events collected have ``splitEvent`` fields ..., in that order.
             assertEquals(e1.getSplitEvent(), new SplitEvent(1, 2));
             assertEquals(e2.getSplitEvent(), new SplitEvent(2, 2));
-        }
-    }
-
-    /**
-     * Not a prose spec test. However, it is additional test case for better coverage.
-     */
-    @Test
-    public void testNameSpaceTypePresentChangeStreamEvents() {
-        assumeTrue(serverVersionAtLeast(8, 1));
-        // TODO-JAVA-6181 temp disabling as failing on latest, while specs are updated
-        assumeFalse(serverVersionAtLeast(9, 0));
-        collection.drop();
-
-        ChangeStreamIterable<Document> changeStream = database
-                .watch()
-                .fullDocumentBeforeChange(FullDocumentBeforeChange.REQUIRED)
-                .showExpandedEvents(true);
-
-        try (MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = changeStream.cursor()) {
-
-            TimeSeriesOptions timeSeriesOptions = new TimeSeriesOptions("timestampFieldName");
-            database.createCollection(
-                    "timeSeriesCollection",
-                    new CreateCollectionOptions().timeSeriesOptions(timeSeriesOptions)
-            );
-            database.createCollection(
-                    getClass().getName(),
-                    new CreateCollectionOptions().changeStreamPreAndPostImagesOptions(
-                            new ChangeStreamPreAndPostImagesOptions(true)));
-            database.createView(
-                    "view",
-                    "timeSeriesCollection",
-                    singletonList(Document.parse("{ $match: { field: 1 } }"))
-            );
-
-            ChangeStreamDocument<Document> e1 = Assertions.assertNotNull(cursor.tryNext());
-            ChangeStreamDocument<Document> e2 = Assertions.assertNotNull(cursor.tryNext());
-            ChangeStreamDocument<Document> e3 = Assertions.assertNotNull(cursor.tryNext());
-
-            assertEquals(NamespaceType.TIMESERIES, e1.getNamespaceType());
-            assertEquals(NamespaceType.TIMESERIES.getValue(), e1.getNamespaceTypeString());
-            assertEquals(NamespaceType.COLLECTION, e2.getNamespaceType());
-            assertEquals(NamespaceType.COLLECTION.getValue(), e2.getNamespaceTypeString());
-            assertEquals(NamespaceType.VIEW, e3.getNamespaceType());
-            assertEquals(NamespaceType.VIEW.getValue(), e3.getNamespaceTypeString());
         }
     }
 

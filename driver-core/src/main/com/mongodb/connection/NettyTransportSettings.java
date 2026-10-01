@@ -85,8 +85,9 @@ public final class NettyTransportSettings extends TransportSettings {
 
         /**
          * Sets the event loop group.
-         *
-         * <p>The application is responsible for shutting down the provided {@code eventLoopGroup}</p>
+         * <p>
+         * The application is responsible for shutting down the provided {@code eventLoopGroup}.
+         * It must not be shut down before or concurrently with {@linkplain AutoCloseable#close() closing} the {@code MongoClient}.
          *
          * @param eventLoopGroup the event loop group that all channels created by this factory will be a part of
          * @return this

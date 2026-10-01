@@ -242,7 +242,7 @@ public class MapReduceToCollectionOperation implements WriteOperation<MapReduceS
         return createExplainableOperation(explainVerbosity);
     }
 
-    private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
+    private ExplainCommandOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
         return new ExplainCommandOperation<>(getNamespace().getDatabaseName(), getCommandName(),
                 (operationContext, serverDescription, connectionDescription) -> {
                     BsonDocument command = getCommandCreator().create(operationContext, serverDescription, connectionDescription);

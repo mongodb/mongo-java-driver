@@ -37,7 +37,7 @@ public interface SingleResultCallback<T> {
      * @param result the result, which may be null.  Always null if e is not null.
      * @param t      the throwable, or null if the operation completed normally
      * @throws RuntimeException Never.
-     * @throws Error Never, on the best effort basis.
+     * @throws Error Never, on the best-effort basis.
      */
     void onResult(@Nullable T result, @Nullable Throwable t);
 

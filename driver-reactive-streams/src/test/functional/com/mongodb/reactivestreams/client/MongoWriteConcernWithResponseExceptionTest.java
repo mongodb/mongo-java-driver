@@ -16,15 +16,13 @@
 
 package com.mongodb.reactivestreams.client;
 
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
-import org.junit.Test;
 
-/**
- * See {@link com.mongodb.client.MongoWriteConcernWithResponseExceptionTest}.
- */
-public class MongoWriteConcernWithResponseExceptionTest {
-    @Test
-    public void doesNotLeak() throws InterruptedException {
-        com.mongodb.client.MongoWriteConcernWithResponseExceptionTest.doesNotLeak(SyncMongoClient::new);
+final class MongoWriteConcernWithResponseExceptionTest extends com.mongodb.client.MongoWriteConcernWithResponseExceptionTest {
+    @Override
+    protected MongoClient createClient(final MongoClientSettings clientSettings) {
+        return new SyncMongoClient(clientSettings);
     }
 }

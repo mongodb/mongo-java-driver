@@ -45,9 +45,11 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
     private boolean upsert;
     private Boolean bypassDocumentValidation;
 
-    public FindAndReplaceOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
+    public FindAndReplaceOperation(final MongoNamespace namespace, final WriteConcern writeConcern,
+            final boolean retryWrites,
+            @Nullable final Integer maxAdaptiveRetriesSetting,
             final Decoder<T> decoder, final BsonDocument replacement) {
-        super(namespace, writeConcern, retryWrites, decoder);
+        super(namespace, writeConcern, retryWrites, maxAdaptiveRetriesSetting, decoder);
         this.replacement = notNull("replacement", replacement);
     }
 

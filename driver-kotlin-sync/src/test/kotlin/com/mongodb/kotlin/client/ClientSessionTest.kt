@@ -50,7 +50,8 @@ class ClientSessionTest {
                 "notifyOperationInitiated",
                 "setRecoveryToken",
                 "setSnapshotTimestamp",
-                "setTransactionContext")
+                "setTransactionContext",
+                "getOverloadRetryPolicyState")
 
         val jClientSessionFunctions = JClientSession::class.functions.map { it.name }.toSet() - internalFunctions
         val kClientSessionFunctions =

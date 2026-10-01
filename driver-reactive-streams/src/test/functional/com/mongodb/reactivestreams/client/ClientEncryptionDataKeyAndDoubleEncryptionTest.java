@@ -192,8 +192,8 @@ public class ClientEncryptionDataKeyAndDoubleEncryptionTest {
                         + "}");
             case "azure":
                 return BsonDocument.parse("{"
-                        + "  \"keyVaultEndpoint\": \"key-vault-csfle.vault.azure.net\","
-                        + "  \"keyName\": \"key-name-csfle\""
+                        + "  \"keyVaultEndpoint\": \"drivers-3392-key-vault.vault.azure.net\","
+                        + "  \"keyName\": \"drivers-3392-keyname\""
                         + "}");
             case "gcp":
                 return BsonDocument.parse("{"

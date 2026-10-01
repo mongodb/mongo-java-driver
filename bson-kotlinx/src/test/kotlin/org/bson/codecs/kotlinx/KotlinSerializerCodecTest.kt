@@ -19,6 +19,7 @@ import java.math.BigDecimal
 import java.util.Base64
 import java.util.stream.Stream
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlinx.datetime.Instant
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -74,6 +75,7 @@ import org.bson.codecs.kotlinx.samples.DataClassSealedB
 import org.bson.codecs.kotlinx.samples.DataClassSealedC
 import org.bson.codecs.kotlinx.samples.DataClassSelfReferential
 import org.bson.codecs.kotlinx.samples.DataClassWithAnnotations
+import org.bson.codecs.kotlinx.samples.DataClassWithArrays
 import org.bson.codecs.kotlinx.samples.DataClassWithBooleanMapKey
 import org.bson.codecs.kotlinx.samples.DataClassWithBsonConstructor
 import org.bson.codecs.kotlinx.samples.DataClassWithBsonDiscriminator
@@ -82,8 +84,12 @@ import org.bson.codecs.kotlinx.samples.DataClassWithBsonId
 import org.bson.codecs.kotlinx.samples.DataClassWithBsonIgnore
 import org.bson.codecs.kotlinx.samples.DataClassWithBsonProperty
 import org.bson.codecs.kotlinx.samples.DataClassWithBsonRepresentation
+import org.bson.codecs.kotlinx.samples.DataClassWithByteArray
+import org.bson.codecs.kotlinx.samples.DataClassWithByteArrayAsBsonBinary
+import org.bson.codecs.kotlinx.samples.DataClassWithByteArrayAsBsonBinaryNullable
 import org.bson.codecs.kotlinx.samples.DataClassWithCamelCase
 import org.bson.codecs.kotlinx.samples.DataClassWithCollections
+import org.bson.codecs.kotlinx.samples.DataClassWithContextualByteArray
 import org.bson.codecs.kotlinx.samples.DataClassWithContextualDateValues
 import org.bson.codecs.kotlinx.samples.DataClassWithDataClassMapKey
 import org.bson.codecs.kotlinx.samples.DataClassWithDateValues
@@ -297,6 +303,132 @@ class KotlinSerializerCodecTest {
                 LocalDate.fromEpochDays(1))
 
         assertRoundTrips(expected, expectedDataClass)
+    }
+
+    @Test
+    fun testDataClassWithByteArrayEncodesAsBsonArrayByDefault() {
+        // kotlinx.serialization's built-in ByteArray serializer encodes one int32 element per byte.
+        val expected = """{"byteArray": [1, 2, 3, 4]}"""
+
+        assertRoundTrips(expected, DataClassWithByteArray(byteArrayOf(1, 2, 3, 4)))
+    }
+
+    @Test
+    fun testDataClassWithByteArrayAsBsonBinary() {
+        val expected = """{"byteArray": {"${'$'}binary": {"base64": "AQIDBA==", "subType": "00"}}}"""
+
+        assertRoundTrips(expected, DataClassWithByteArrayAsBsonBinary(byteArrayOf(1, 2, 3, 4)))
+    }
+
+    @Test
+    fun testDataClassWithEmptyByteArrayAsBsonBinary() {
+        val expected = """{"byteArray": {"${'$'}binary": {"base64": "", "subType": "00"}}}"""
+
+        assertRoundTrips(expected, DataClassWithByteArrayAsBsonBinary(byteArrayOf()))
+    }
+
+    @Test
+    fun testDataClassWithNullableByteArrayAsBsonBinary() {
+        // Nulls are omitted by default (explicitNulls = false).
+        assertRoundTrips("{}", DataClassWithByteArrayAsBsonBinaryNullable(null))
+        assertRoundTrips(
+            """{"byteArray": {"${'$'}binary": {"base64": "AQI=", "subType": "00"}}}""",
+            DataClassWithByteArrayAsBsonBinaryNullable(byteArrayOf(1, 2)))
+    }
+
+    @Test
+    fun testDataClassWithContextualByteArrayAsBsonBinary() {
+        val expected = """{"byteArray": {"${'$'}binary": {"base64": "AQIDBA==", "subType": "00"}}}"""
+
+        assertRoundTrips(
+            expected,
+            DataClassWithContextualByteArray(byteArrayOf(1, 2, 3, 4)),
+            serializersModule = ByteArrayAsBsonBinary.serializersModule)
+    }
+
+    @Test
+    fun testByteArrayAsBsonBinaryDecodesLegacyBsonArray() {
+        // The built-in ByteArray serializer, and bson-kotlin 5.2.0 - 5.9.x,
+        // regressed and encoded a ByteArray as a BSON Array of Int32. Those documents must still
+        // decode.
+        assertDecodesTo("""{"byteArray": [1, 2, 3, 4]}""", DataClassWithByteArrayAsBsonBinary(byteArrayOf(1, 2, 3, 4)))
+        assertDecodesTo(
+            """{"byteArray": [-128, -1, 0, 127]}""", DataClassWithByteArrayAsBsonBinary(byteArrayOf(-128, -1, 0, 127)))
+        assertDecodesTo("""{"byteArray": []}""", DataClassWithByteArrayAsBsonBinary(byteArrayOf()))
+    }
+
+    @Test
+    fun testContextualByteArrayAsBsonBinaryDecodesLegacyBsonArray() {
+        assertDecodesTo(
+            """{"byteArray": [1, 2, 3, 4]}""",
+            DataClassWithContextualByteArray(byteArrayOf(1, 2, 3, 4)),
+            serializersModule = ByteArrayAsBsonBinary.serializersModule)
+    }
+
+    @Test
+    fun testByteArrayAsBsonBinaryDecodesNestedLegacyBsonArrays() {
+        assertDecodesTo(
+            """{
+            | "arraySimple": ["a"],
+            | "nestedArrays": [["e"]],
+            | "arrayOfMaps": [{"A": ["aa"]}],
+            | "byteArray": [1, 2, 3, 4],
+            | "nestedByteArrays": [[1, 2], [3, 4, 5]]
+            |}"""
+                .trimMargin(),
+            DataClassWithArrays(
+                arrayOf("a"),
+                arrayOf(arrayOf("e")),
+                arrayOf(mapOf("A" to arrayOf("aa"))),
+                byteArrayOf(1, 2, 3, 4),
+                arrayOf(byteArrayOf(1, 2), byteArrayOf(3, 4, 5))))
+    }
+
+    @Test
+    fun testByteArrayAsBsonBinaryFailsToDecodeInvalidLegacyBsonArrayElements() {
+        listOf("[1, 128]", "[1, -129]", "[1, 300]", """[1, "2"]""", "[1, 2.0]", """[1, {"${'$'}numberLong": "2"}]""")
+            .forEach { array ->
+                val exception =
+                    assertThrows<BsonInvalidOperationException>(array) {
+                        deserialize<DataClassWithByteArrayAsBsonBinary>(BsonDocument.parse("""{"byteArray": $array}"""))
+                    }
+                assertTrue(exception.message!!.contains("expected an INT32 in the range -128..127"), exception.message)
+            }
+    }
+
+    @Test
+    fun testByteArrayAsBsonBinaryFailsToDecodeUnsupportedBsonType() {
+        assertThrows<BsonInvalidOperationException> {
+            deserialize<DataClassWithByteArrayAsBsonBinary>(BsonDocument.parse("""{"byteArray": "abc"}"""))
+        }
+    }
+
+    @Test
+    fun testDataClassWithObjectArrayEncodesAsBsonArray() {
+        // The annotation inside `Array<@Serializable(...) ByteArray>` applies per element.
+        val expected =
+            """{
+            | "arraySimple": ["a", "b", "c", "d"],
+            | "nestedArrays": [["e", "f"], [], ["g", "h"]],
+            | "arrayOfMaps": [{"A": ["aa"], "B": ["bb"]}, {}, {"C": ["cc", "ccc"]}],
+            | "byteArray": {"${'$'}binary": {"base64": "AQIDBA==", "subType": "00"}},
+            | "nestedByteArrays": [
+            |     {"${'$'}binary": {"base64": "AQI=", "subType": "00"}},
+            |     {"${'$'}binary": {"base64": "AwQF", "subType": "00"}}
+            | ]
+            |}"""
+                .trimMargin()
+
+        val dataClass =
+            DataClassWithArrays(
+                arrayOf("a", "b", "c", "d"),
+                arrayOf(arrayOf("e", "f"), emptyArray(), arrayOf("g", "h")),
+                arrayOf(
+                    mapOf("A" to arrayOf("aa"), "B" to arrayOf("bb")), emptyMap(), mapOf("C" to arrayOf("cc", "ccc"))),
+                byteArrayOf(1, 2, 3, 4),
+                arrayOf(byteArrayOf(1, 2), byteArrayOf(3, 4, 5)))
+
+        assertRoundTrips(expected, dataClass)
     }
 
     @Test

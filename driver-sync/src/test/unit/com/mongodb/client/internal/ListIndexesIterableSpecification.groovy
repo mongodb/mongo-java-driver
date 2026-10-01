@@ -49,7 +49,7 @@ class ListIndexesIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null])
         def listIndexesIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference,
-                executor, true, TIMEOUT_SETTINGS).batchSize(100)
+                executor, true, null, TIMEOUT_SETTINGS).batchSize(100)
 
         when: 'default input should be as expected'
         listIndexesIterable.iterator()
@@ -58,7 +58,7 @@ class ListIndexesIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new ListIndexesOperation<Document>(namespace, new DocumentCodec())
+        expect operation, isTheSameAs(new ListIndexesOperation<Document>(namespace, new DocumentCodec(), null)
                 .batchSize(100).retryReads(true))
         readPreference == secondary()
 
@@ -70,7 +70,7 @@ class ListIndexesIterableSpecification extends Specification {
         operation = executor.getReadOperation() as ListIndexesOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new ListIndexesOperation<Document>(namespace, new DocumentCodec())
+        expect operation, isTheSameAs(new ListIndexesOperation<Document>(namespace, new DocumentCodec(), null)
                 .batchSize(99).retryReads(true))
     }
 
@@ -81,7 +81,7 @@ class ListIndexesIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([batchCursor, batchCursor])
         def listIndexesIterable = new ListIndexesIterableImpl<Document>(clientSession, namespace, Document, codecRegistry, readPreference,
-                executor, true, TIMEOUT_SETTINGS)
+                executor, true, null, TIMEOUT_SETTINGS)
 
         when:
         listIndexesIterable.first()
@@ -123,7 +123,7 @@ class ListIndexesIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()])
         def mongoIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference,
-                executor, true, TIMEOUT_SETTINGS)
+                executor, true, null, TIMEOUT_SETTINGS)
 
         when:
         def results = mongoIterable.first()
@@ -167,7 +167,7 @@ class ListIndexesIterableSpecification extends Specification {
         when:
         def batchSize = 5
         def mongoIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference,
-                Stub(OperationExecutor), true, TIMEOUT_SETTINGS)
+                Stub(OperationExecutor), true, null, TIMEOUT_SETTINGS)
 
         then:
         mongoIterable.getBatchSize() == null

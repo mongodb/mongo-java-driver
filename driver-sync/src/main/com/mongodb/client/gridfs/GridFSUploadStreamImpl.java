@@ -91,12 +91,13 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
             closed = true;
         });
 
+        BsonDocument chunksFilter = GridFSFilters.eq("files_id", fileId);
         if (clientSession != null) {
             withNullableTimeout(chunksCollection, timeout)
-                    .deleteMany(clientSession, new Document("files_id", fileId));
+                    .deleteMany(clientSession, chunksFilter);
         } else {
             withNullableTimeout(chunksCollection, timeout)
-                    .deleteMany(new Document("files_id", fileId));
+                    .deleteMany(chunksFilter);
         }
     }
 

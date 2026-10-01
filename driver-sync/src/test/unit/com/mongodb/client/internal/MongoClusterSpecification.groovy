@@ -29,6 +29,7 @@ import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import com.mongodb.internal.connection.Cluster
 import com.mongodb.internal.session.ServerSessionPool
 import com.mongodb.internal.observability.micrometer.TracingManager
+import com.mongodb.internal.thread.AsyncClientExecutor
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.UuidCodec
@@ -77,7 +78,7 @@ class MongoClusterSpecification extends Specification {
 
         where:
         expectedDatabase << new MongoDatabaseImpl('name', CODEC_REGISTRY, secondary(),
-                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, UNSPECIFIED, null,
+                WriteConcern.MAJORITY, true, true, null, ReadConcern.MAJORITY, UNSPECIFIED, null,
                 TIMEOUT_SETTINGS, new TestOperationExecutor([]))
     }
 
@@ -162,14 +163,14 @@ class MongoClusterSpecification extends Specification {
 
         then:
         expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<>(session, Document,
-                CLIENT_SETTINGS.codecRegistry, primary(), executor, true, TIMEOUT_SETTINGS))
+                CLIENT_SETTINGS.codecRegistry, primary(), executor, true, null, TIMEOUT_SETTINGS))
 
         when:
         listDatabasesIterable = execute(listDatabasesMethod, session, BsonDocument)
 
         then:
         expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<>(session, BsonDocument,
-                CLIENT_SETTINGS.codecRegistry, primary(), executor, true, TIMEOUT_SETTINGS))
+                CLIENT_SETTINGS.codecRegistry, primary(), executor, true, null, TIMEOUT_SETTINGS))
 
         when:
         def listDatabaseNamesIterable = execute(listDatabasesNamesMethod, session) as MongoIterable<String>
@@ -177,7 +178,7 @@ class MongoClusterSpecification extends Specification {
         then:
         // listDatabaseNamesIterable is an instance of a MappingIterable, so have to get the mapped iterable inside it
         expect listDatabaseNamesIterable.getMapped(), isTheSameAs(new ListDatabasesIterableImpl<>(session, BsonDocument,
-                CLIENT_SETTINGS.codecRegistry, primary(), executor, true, TIMEOUT_SETTINGS)
+                CLIENT_SETTINGS.codecRegistry, primary(), executor, true, null, TIMEOUT_SETTINGS)
                 .nameOnly(true))
 
         where:
@@ -203,7 +204,7 @@ class MongoClusterSpecification extends Specification {
 
         then:
         expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace, settings.codecRegistry,
-                readPreference, readConcern, executor, [], Document, ChangeStreamLevel.CLIENT, true, TIMEOUT_SETTINGS),
+                readPreference, readConcern, executor, [], Document, ChangeStreamLevel.CLIENT, true, null, TIMEOUT_SETTINGS),
                 ['codec'])
 
         when:
@@ -212,7 +213,7 @@ class MongoClusterSpecification extends Specification {
         then:
         expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace, settings.codecRegistry,
                 readPreference, readConcern, executor, [new Document('$match', 1)], Document, ChangeStreamLevel.CLIENT,
-                true, TIMEOUT_SETTINGS), ['codec'])
+                true, null, TIMEOUT_SETTINGS), ['codec'])
 
         when:
         changeStreamIterable = execute(watchMethod, session, [new Document('$match', 1)], BsonDocument)
@@ -220,7 +221,7 @@ class MongoClusterSpecification extends Specification {
         then:
         expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace, settings.codecRegistry,
                 readPreference, readConcern, executor, [new Document('$match', 1)], BsonDocument,
-                ChangeStreamLevel.CLIENT, true, TIMEOUT_SETTINGS), ['codec'])
+                ChangeStreamLevel.CLIENT, true, null, TIMEOUT_SETTINGS), ['codec'])
 
         where:
         session << [null, Stub(ClientSession)]
@@ -258,8 +259,9 @@ class MongoClusterSpecification extends Specification {
 
     MongoClusterImpl createMongoCluster(final MongoClientSettings settings, final OperationExecutor operationExecutor) {
         new MongoClusterImpl(null, cluster, settings.codecRegistry, null, null,
-                originator, operationExecutor, settings.readConcern, settings.readPreference, settings.retryReads, settings.retryWrites,
-                null, serverSessionPool, TimeoutSettings.create(settings), settings.uuidRepresentation,
-                settings.writeConcern, TracingManager.NO_OP)
+                originator, operationExecutor, settings.readConcern, settings.readPreference,
+                settings.retryReads, settings.retryWrites, null,
+                settings.enableOverloadRetargeting, null, serverSessionPool, TimeoutSettings.create(settings), settings.uuidRepresentation,
+                settings.writeConcern, AsyncClientExecutor.NO_OP, TracingManager.NO_OP)
     }
 }

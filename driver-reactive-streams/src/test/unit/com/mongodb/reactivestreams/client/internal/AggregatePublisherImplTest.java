@@ -59,7 +59,8 @@ public class AggregatePublisherImplTest extends TestHelper {
                 new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
 
         AggregateOperation<Document> expectedOperation = new AggregateOperation<>(NAMESPACE, pipeline,
-                                                                                  getDefaultCodecRegistry().get(Document.class))
+                                                                                  getDefaultCodecRegistry().get(Document.class),
+                null)
                 .batchSize(Integer.MAX_VALUE)
                 .retryReads(true);
 
@@ -80,8 +81,10 @@ public class AggregatePublisherImplTest extends TestHelper {
                 .maxAwaitTime(1001, MILLISECONDS)
                 .maxTime(101, MILLISECONDS);
 
-        expectedOperation = new AggregateOperation<>(NAMESPACE, pipeline,
-                getDefaultCodecRegistry().get(Document.class))
+        expectedOperation = new AggregateOperation<>(
+                NAMESPACE, pipeline,
+                getDefaultCodecRegistry().get(Document.class),
+                null)
                 .retryReads(true)
                 .allowDiskUse(true)
                 .batchSize(100)
@@ -103,8 +106,10 @@ public class AggregatePublisherImplTest extends TestHelper {
         AggregatePublisher<Document> publisher =
                 new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
 
-        AggregateOperation<Document> expectedOperation = new AggregateOperation<>(NAMESPACE, pipeline,
-                                                                                  getDefaultCodecRegistry().get(Document.class))
+        AggregateOperation<Document> expectedOperation = new AggregateOperation<>(
+                NAMESPACE, pipeline,
+                getDefaultCodecRegistry().get(Document.class),
+                null)
                 .batchSize(Integer.MAX_VALUE)
                 .retryReads(true);
 
@@ -127,8 +132,10 @@ public class AggregatePublisherImplTest extends TestHelper {
         AggregatePublisher<Document> publisher =
                 new AggregatePublisherImpl<>(null, createMongoOperationPublisher(executor), pipeline, AggregationLevel.COLLECTION);
 
-        AggregateOperation<Document> expectedOperation = new AggregateOperation<>(NAMESPACE, pipeline,
-                                                                                  getDefaultCodecRegistry().get(Document.class))
+        AggregateOperation<Document> expectedOperation = new AggregateOperation<>(
+                NAMESPACE, pipeline,
+                getDefaultCodecRegistry().get(Document.class),
+                null)
                 .batchSize(Integer.MAX_VALUE)
                 .retryReads(true);
 
@@ -190,7 +197,7 @@ public class AggregatePublisherImplTest extends TestHelper {
         assertOperationIsTheSameAs(expectedOperation, operation.getReadOperation());
 
         FindOperation<Document> expectedFindOperation =
-                new FindOperation<>(collectionNamespace, getDefaultCodecRegistry().get(Document.class))
+                new FindOperation<>(collectionNamespace, getDefaultCodecRegistry().get(Document.class), null)
                         .batchSize(100)
                         .collation(COLLATION)
                         .filter(new BsonDocument())
@@ -368,7 +375,7 @@ public class AggregatePublisherImplTest extends TestHelper {
         assertOperationIsTheSameAs(expectedOperation, operation.getReadOperation());
 
         FindOperation<Document> expectedFindOperation =
-                new FindOperation<>(collectionNamespace, getDefaultCodecRegistry().get(Document.class))
+                new FindOperation<>(collectionNamespace, getDefaultCodecRegistry().get(Document.class), null)
                         .batchSize(100)
                         .collation(COLLATION)
                         .filter(new BsonDocument())
@@ -422,7 +429,7 @@ public class AggregatePublisherImplTest extends TestHelper {
         assertOperationIsTheSameAs(expectedOperation, operation.getReadOperation());
 
         FindOperation<Document> expectedFindOperation =
-                new FindOperation<>(collectionNamespace, getDefaultCodecRegistry().get(Document.class))
+                new FindOperation<>(collectionNamespace, getDefaultCodecRegistry().get(Document.class), null)
                 .filter(new BsonDocument())
                 .batchSize(Integer.MAX_VALUE)
                 .retryReads(true);

@@ -50,6 +50,16 @@ final class VectorSearchConstructibleBson extends AbstractConstructibleBson<Vect
     }
 
     @Override
+    public VectorSearchOptions parentFilter(final Bson parentFilter) {
+        return newAppended("parentFilter", notNull("parentFilter", parentFilter));
+    }
+
+    @Override
+    public VectorSearchOptions nestedOptions(final VectorSearchNestedOptions nestedOptions) {
+        return newAppended("nestedOptions", notNull("nestedOptions", nestedOptions));
+    }
+
+    @Override
     public VectorSearchOptions returnStoredSource(final boolean returnStoredSource) {
         return newAppended("returnStoredSource", new BsonBoolean(returnStoredSource));
     }

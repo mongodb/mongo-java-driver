@@ -29,11 +29,13 @@ import org.bson.BsonDocument;
  * @since 5.6
  * @mongodb.server.release 8.2
  * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
+ * @deprecated Use {@link StringOptions} instead.
  */
+@Deprecated
 @Alpha(Reason.SERVER)
 public class TextOptions {
-    private Boolean caseSensitive;
-    private Boolean diacriticSensitive;
+    private boolean caseSensitive;
+    private boolean diacriticSensitive;
     @Nullable
     private BsonDocument prefixOptions;
     @Nullable
@@ -184,4 +186,14 @@ public class TextOptions {
         return substringOptions;
     }
 
+    @Override
+    public String toString() {
+        return "TextOptions{"
+                + "caseSensitive=" + caseSensitive
+                + ", diacriticSensitive=" + diacriticSensitive
+                + ", prefixOptions=" + prefixOptions
+                + ", suffixOptions=" + suffixOptions
+                + ", substringOptions=" + substringOptions
+                + '}';
+    }
 }

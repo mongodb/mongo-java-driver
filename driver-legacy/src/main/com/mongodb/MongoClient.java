@@ -41,7 +41,9 @@ import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.session.ServerSessionPool;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
@@ -255,13 +257,14 @@ public class MongoClient implements Closeable {
         StreamFactoryFactory syncStreamFactoryFactory = getSyncStreamFactoryFactory(
                 settings.getTransportSettings(),
                 getInetAddressResolver(settings));
-
+        AsyncClientExecutor clientExecutor = AsyncClientExecutor.NO_OP;
         Cluster cluster = Clusters.createCluster(
                 settings,
                 wrappedMongoDriverInformation,
-                syncStreamFactoryFactory);
+                syncStreamFactoryFactory,
+                clientExecutor);
 
-        delegate = new MongoClientImpl(cluster, settings, wrappedMongoDriverInformation, syncStreamFactoryFactory);
+        delegate = new MongoClientImpl(cluster, wrappedMongoDriverInformation, settings, syncStreamFactoryFactory, clientExecutor);
         this.options = options != null ? options : MongoClientOptions.builder(settings).build();
         cursorCleaningService = this.options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
         this.closed = new AtomicBoolean();
@@ -860,7 +863,7 @@ public class MongoClient implements Closeable {
             ServerCursorAndNamespace cur;
             while ((cur = orphanedCursors.poll()) != null) {
                 OperationContext operationContext = new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
-                        new TimeoutContext(getTimeoutSettings()), options.getServerApi());
+                        new TimeoutContext(getTimeoutSettings()), delegate.getClientExecutor(), TracingManager.NO_OP, options.getServerApi(), null);
 
                 ReadWriteBinding binding = new SingleServerBinding(delegate.getCluster(), cur.serverCursor.getAddress());
                 try {

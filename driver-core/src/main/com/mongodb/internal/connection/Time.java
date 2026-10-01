@@ -20,7 +20,11 @@ package com.mongodb.internal.connection;
  * To enable unit testing of classes that rely on System.nanoTime
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ *
+ * @deprecated Use {@link com.mongodb.internal.time.SystemNanoTime} in production code,
+ * and {@code Mockito.mockStatic} in test code to tamper with it.
  */
+@Deprecated
 public final class Time {
     static final long CONSTANT_TIME = 42;
 

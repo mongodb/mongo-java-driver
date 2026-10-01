@@ -31,7 +31,6 @@ import com.mongodb.reactivestreams.client.gridfs.GridFSBucket;
 import com.mongodb.reactivestreams.client.gridfs.GridFSDownloadPublisher;
 import com.mongodb.reactivestreams.client.gridfs.GridFSFindPublisher;
 import com.mongodb.reactivestreams.client.gridfs.GridFSUploadPublisher;
-import org.bson.BsonDocument;
 import org.bson.BsonObjectId;
 import org.bson.BsonValue;
 import org.bson.Document;
@@ -220,7 +219,7 @@ public final class GridFSBucketImpl implements GridFSBucket {
     public GridFSDownloadPublisher downloadToPublisher(final BsonValue id) {
 
         Function<Timeout, GridFSFindPublisher> findPublisherCreator =
-                operationTimeout -> createGridFSFindPublisher(filesCollection, null, new BsonDocument("_id", id), operationTimeout);
+                operationTimeout -> createGridFSFindPublisher(filesCollection, null, GridFSFilters.eq("_id", id), operationTimeout);
         return createGridFSDownloadPublisher(chunksCollection, null, findPublisherCreator);
     }
 
@@ -244,7 +243,7 @@ public final class GridFSBucketImpl implements GridFSBucket {
     @Override
     public GridFSDownloadPublisher downloadToPublisher(final ClientSession clientSession, final BsonValue id) {
         Function<Timeout, GridFSFindPublisher> findPublisherCreator =
-                operationTimeout -> createGridFSFindPublisher(filesCollection, clientSession, new BsonDocument("_id", id), operationTimeout);
+                operationTimeout -> createGridFSFindPublisher(filesCollection, clientSession, GridFSFilters.eq("_id", id), operationTimeout);
         return createGridFSDownloadPublisher(chunksCollection, notNull("clientSession", clientSession), findPublisherCreator);
     }
 
