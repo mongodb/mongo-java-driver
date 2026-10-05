@@ -34,7 +34,7 @@ public class MongoCollectionTest extends AbstractMongoCollectionTest {
 
     private com.mongodb.client.MongoClient createMongoClient() {
         if (mongoClient == null) {
-            mongoClient = new SyncMongoClient(MongoClients.create(getMongoClientSettingsBuilder().build()));
+            mongoClient = new SyncMongoClient(getMongoClientSettingsBuilder());
         }
         return mongoClient;
     }

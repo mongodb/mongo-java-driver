@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.LoggerSettings;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
@@ -32,7 +33,7 @@ import org.junit.Test;
 
 import java.util.Collections;
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
+import static com.mongodb.ClusterFixture.CLIENT_METADATA;
 import static com.mongodb.ClusterFixture.getClusterConnectionMode;
 import static com.mongodb.ClusterFixture.getServerApi;
 import static com.mongodb.ClusterFixture.getSslSettings;
@@ -52,8 +53,8 @@ public class PlainAuthenticatorTest {
         userName = System.getProperty("org.mongodb.test.userName");
         source = System.getProperty("org.mongod.test.source");
         password = System.getProperty("org.mongodb.test.password");
-        internalConnection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE, streamFactory, null, null,
-                null, Collections.emptyList(), LoggerSettings.builder().build(), null, getServerApi()
+        internalConnection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE, streamFactory, null, CLIENT_METADATA,
+                Collections.emptyList(), LoggerSettings.builder().build(), null, getServerApi()
         ).create(new ServerId(new ClusterId(),
                 new ServerAddress(host)));
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
@@ -68,14 +69,14 @@ public class PlainAuthenticatorTest {
     public void testSuccessfulAuthentication() {
         PlainAuthenticator authenticator = new PlainAuthenticator(getCredentialWithCache(userName, source, password.toCharArray()),
                 getClusterConnectionMode(), getServerApi());
-        authenticator.authenticate(internalConnection, connectionDescription, OPERATION_CONTEXT);
+        authenticator.authenticate(internalConnection, connectionDescription, ClusterFixture.createOperationContext());
     }
 
     @Test(expected = MongoSecurityException.class)
     public void testUnsuccessfulAuthentication() {
         PlainAuthenticator authenticator = new PlainAuthenticator(getCredentialWithCache(userName, source, "wrong".toCharArray()),
                 getClusterConnectionMode(), getServerApi());
-        authenticator.authenticate(internalConnection, connectionDescription, OPERATION_CONTEXT);
+        authenticator.authenticate(internalConnection, connectionDescription, ClusterFixture.createOperationContext());
     }
 
     private static MongoCredentialWithCache getCredentialWithCache(final String userName, final String source, final char[] password) {

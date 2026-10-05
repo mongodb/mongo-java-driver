@@ -19,6 +19,7 @@ package com.mongodb.internal.connection
 import com.mongodb.ClusterFixture
 import com.mongodb.LoggerSettings
 import com.mongodb.MongoCompressor
+import com.mongodb.MongoDriverInformation
 import com.mongodb.SubjectProvider
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
@@ -29,7 +30,7 @@ import spock.lang.Specification
 import javax.security.auth.login.LoginContext
 
 import static com.mongodb.AuthenticationMechanism.GSSAPI
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.ClusterFixture.getLoginContextName
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getServerApi
@@ -49,12 +50,14 @@ class GSSAPIAuthenticatorSpecification extends Specification {
         def credential = ClusterFixture.getCredential().withMechanismProperty(JAVA_SUBJECT_PROVIDER_KEY, subjectProvider)
         def credentialWithCache = new MongoCredentialWithCache(credential)
         def streamFactory = new SocketStreamFactory(new DefaultInetAddressResolver(), SocketSettings.builder().build(), getSslSettings())
-        def internalConnection = new InternalStreamConnectionFactory(SINGLE, streamFactory, credentialWithCache, null,
-                null, Collections.<MongoCompressor> emptyList(), LoggerSettings.builder().build(), null, getServerApi())
+        def internalConnection = new InternalStreamConnectionFactory(
+                SINGLE, streamFactory,
+                credentialWithCache, new ClientMetadata("test", MongoDriverInformation.builder().build()),
+                Collections.<MongoCompressor> emptyList(), LoggerSettings.builder().build(), null, getServerApi())
                 .create(new ServerId(new ClusterId(), getPrimary()))
 
         when:
-        internalConnection.open(OPERATION_CONTEXT)
+        internalConnection.open(createOperationContext())
 
         then:
         1 * subjectProvider.getSubject() >> subject

@@ -41,7 +41,9 @@ import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.session.ServerSessionPool;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
@@ -66,7 +68,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
 import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
 import static com.mongodb.internal.connection.ServerAddressHelper.getInetAddressResolver;
 import static com.mongodb.internal.connection.StreamFactoryHelper.getSyncStreamFactoryFactory;
@@ -256,17 +257,19 @@ public class MongoClient implements Closeable {
         StreamFactoryFactory syncStreamFactoryFactory = getSyncStreamFactoryFactory(
                 settings.getTransportSettings(),
                 getInetAddressResolver(settings));
-
+        AsyncClientExecutor clientExecutor = AsyncClientExecutor.NO_OP;
         Cluster cluster = Clusters.createCluster(
                 settings,
                 wrappedMongoDriverInformation,
-                syncStreamFactoryFactory);
+                syncStreamFactoryFactory,
+                clientExecutor);
 
-        delegate = new MongoClientImpl(cluster, settings, wrappedMongoDriverInformation, syncStreamFactoryFactory);
+        delegate = new MongoClientImpl(cluster, wrappedMongoDriverInformation, settings, syncStreamFactoryFactory, clientExecutor);
         this.options = options != null ? options : MongoClientOptions.builder(settings).build();
         cursorCleaningService = this.options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
         this.closed = new AtomicBoolean();
-        BsonDocument clientMetadataDocument = createClientMetadataDocument(settings.getApplicationName(), mongoDriverInformation);
+
+        BsonDocument clientMetadataDocument = delegate.getCluster().getClientMetadata().getBsonDocument();
         LOGGER.info(format("MongoClient with metadata %s created with settings %s", clientMetadataDocument.toJson(), settings));
     }
 
@@ -856,29 +859,36 @@ public class MongoClient implements Closeable {
     }
 
     private void cleanCursors() {
-        ServerCursorAndNamespace cur;
-        while ((cur = orphanedCursors.poll()) != null) {
-            ReadWriteBinding binding = new SingleServerBinding(delegate.getCluster(), cur.serverCursor.getAddress(),
-                    new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
-                            new TimeoutContext(getTimeoutSettings()), options.getServerApi()));
-            try {
-                ConnectionSource source = binding.getReadConnectionSource();
+        try {
+            ServerCursorAndNamespace cur;
+            while ((cur = orphanedCursors.poll()) != null) {
+                OperationContext operationContext = new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
+                        new TimeoutContext(getTimeoutSettings()), delegate.getClientExecutor(), TracingManager.NO_OP, options.getServerApi(), null);
+
+                ReadWriteBinding binding = new SingleServerBinding(delegate.getCluster(), cur.serverCursor.getAddress());
                 try {
-                    Connection connection = source.getConnection();
+                    OperationContext serverSelectionOperationContext = operationContext.withOverride(TimeoutContext::withComputedServerSelectionTimeout);
+                    ConnectionSource source = binding.getReadConnectionSource(serverSelectionOperationContext);
                     try {
-                        BsonDocument killCursorsCommand = new BsonDocument("killCursors", new BsonString(cur.namespace.getCollectionName()))
-                                .append("cursors", new BsonArray(singletonList(new BsonInt64(cur.serverCursor.getId()))));
-                        connection.command(cur.namespace.getDatabaseName(), killCursorsCommand, NoOpFieldNameValidator.INSTANCE,
-                                ReadPreference.primary(), new BsonDocumentCodec(), source.getOperationContext());
+                        Connection connection = source.getConnection(serverSelectionOperationContext);
+                        try {
+                            BsonDocument killCursorsCommand = new BsonDocument("killCursors", new BsonString(cur.namespace.getCollectionName()))
+                                    .append("cursors", new BsonArray(singletonList(new BsonInt64(cur.serverCursor.getId()))));
+                            connection.command(cur.namespace.getDatabaseName(), killCursorsCommand, NoOpFieldNameValidator.INSTANCE,
+                                    ReadPreference.primary(), new BsonDocumentCodec(), operationContext);
+                        } finally {
+                            connection.release();
+                        }
                     } finally {
-                        connection.release();
+                        source.release();
                     }
                 } finally {
-                    source.release();
+                    binding.release();
                 }
-            } finally {
-                binding.release();
             }
+        } catch (Throwable t) {
+            LOGGER.error(this + " stopped cleaning cursors. You may want to recreate the MongoClient", t);
+            throw t;
         }
     }
 

@@ -21,11 +21,10 @@ import com.mongodb.ExplainVerbosity;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.client.model.FindOptions;
-import com.mongodb.internal.operation.AsyncExplainableReadOperation;
-import com.mongodb.internal.operation.AsyncOperations;
-import com.mongodb.internal.operation.AsyncReadOperation;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperationCursor;
+import com.mongodb.internal.operation.ReadOperationExplainable;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.FindPublisher;
@@ -217,22 +216,22 @@ final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements Find
         notNull("explainDocumentClass", explainResultClass);
         return getMongoOperationPublisher().createReadOperationMono(
                 getTimeoutSettings(),
-                () -> asAsyncReadOperation(0)
-                        .asAsyncExplainableOperation(verbosity, getCodecRegistry().get(explainResultClass)), getClientSession());
+                () -> asReadOperation(0)
+                        .asExplainableOperation(verbosity, getCodecRegistry().get(explainResultClass)), getClientSession());
     }
 
     @Override
-    AsyncExplainableReadOperation<AsyncBatchCursor<T>> asAsyncReadOperation(final int initialBatchSize) {
+    ReadOperationExplainable<T> asReadOperation(final int initialBatchSize) {
         return getOperations().find(filter, getDocumentClass(), findOptions.withBatchSize(initialBatchSize));
     }
 
     @Override
-    Function<AsyncOperations<?>, TimeoutSettings> getTimeoutSettings() {
-        return (asyncOperations -> asyncOperations.createTimeoutSettings(findOptions));
+    Function<Operations<?>, TimeoutSettings> getTimeoutSettings() {
+        return (operations -> operations.createTimeoutSettings(findOptions));
     }
 
     @Override
-    AsyncReadOperation<AsyncBatchCursor<T>> asAsyncFirstReadOperation() {
+    ReadOperationCursor<T> asReadOperationFirst() {
         return getOperations().findFirst(filter, getDocumentClass(), findOptions);
     }
 }

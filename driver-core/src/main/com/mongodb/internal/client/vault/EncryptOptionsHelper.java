@@ -17,7 +17,11 @@ package com.mongodb.internal.client.vault;
 
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.model.vault.RangeOptions;
+import com.mongodb.client.model.vault.StringOptions;
+import com.mongodb.client.model.vault.TextOptions;
 import com.mongodb.internal.crypt.capi.MongoExplicitEncryptOptions;
+import com.mongodb.lang.Nullable;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
@@ -70,8 +74,52 @@ public final class EncryptOptionsHelper {
             }
             encryptOptionsBuilder.rangeOptions(rangeOptionsBsonDocument);
         }
+
+        StringOptions stringOptions = resolveStringOptions(options);
+        if (stringOptions != null) {
+            BsonDocument stringOptionsDocument = new BsonDocument();
+            stringOptionsDocument.put("caseSensitive", BsonBoolean.valueOf(stringOptions.getCaseSensitive()));
+            stringOptionsDocument.put("diacriticSensitive", BsonBoolean.valueOf(stringOptions.getDiacriticSensitive()));
+
+            BsonDocument substringOptions = stringOptions.getSubstringOptions();
+            if (substringOptions != null) {
+                stringOptionsDocument.put("substring", substringOptions);
+            }
+
+            BsonDocument prefixOptions = stringOptions.getPrefixOptions();
+            if (prefixOptions != null) {
+                stringOptionsDocument.put("prefix", prefixOptions);
+            }
+
+            BsonDocument suffixOptions = stringOptions.getSuffixOptions();
+            if (suffixOptions != null) {
+                stringOptionsDocument.put("suffix", suffixOptions);
+            }
+            encryptOptionsBuilder.textOptions(stringOptionsDocument);
+        }
+
         return encryptOptionsBuilder.build();
     }
+
+    @SuppressWarnings("deprecation")
+    @Nullable
+    private static StringOptions resolveStringOptions(final EncryptOptions options) {
+        StringOptions stringOptions = options.getStringOptions();
+        if (stringOptions != null) {
+            return stringOptions;
+        }
+        TextOptions textOptions = options.getTextOptions();
+        if (textOptions == null) {
+            return null;
+        }
+        return new StringOptions()
+                .caseSensitive(textOptions.getCaseSensitive())
+                .diacriticSensitive(textOptions.getDiacriticSensitive())
+                .prefixOptions(textOptions.getPrefixOptions())
+                .suffixOptions(textOptions.getSuffixOptions())
+                .substringOptions(textOptions.getSubstringOptions());
+    }
+
     private EncryptOptionsHelper() {
     }
 }

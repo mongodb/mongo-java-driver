@@ -20,13 +20,15 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.ReadConcern;
-import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
-import com.mongodb.connection.ServerConnectionState;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
+import com.mongodb.internal.connection.ClientMetadata;
 import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.connection.StreamFactoryFactory;
+import com.mongodb.internal.mockito.MongoMockito;
+import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.session.ServerSessionPool;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.ListDatabasesPublisher;
@@ -44,6 +46,7 @@ import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 
 public class MongoClientImplTest extends TestHelper {
@@ -178,15 +181,8 @@ public class MongoClientImplTest extends TestHelper {
 
     @Test
     void testStartSession() {
-        ServerDescription serverDescription = ServerDescription.builder()
-                .address(new ServerAddress())
-                .state(ServerConnectionState.CONNECTED)
-                .maxWireVersion(8)
-                .build();
-
-        MongoClientImpl mongoClient = createMongoClient();
         ServerSessionPool serverSessionPool = mock(ServerSessionPool.class);
-        ClientSessionHelper clientSessionHelper = new ClientSessionHelper(mongoClient, serverSessionPool);
+        ClientSessionHelper clientSessionHelper = new ClientSessionHelper(mongoClient, serverSessionPool, TracingManager.NO_OP);
 
         assertAll("Start Session Tests",
                   () -> assertAll("check validation",
@@ -208,8 +204,25 @@ public class MongoClientImplTest extends TestHelper {
                   });
     }
 
+    @Test
+    void close() {
+        com.mongodb.client.MongoClientTest.assertClose((cluster, mongoDriverInformation, streamFactoryFactory, clientExecutor) ->
+                new MongoClientImpl(
+                        cluster,
+                        mongoDriverInformation,
+                        MongoClientSettings.builder().build(),
+                        streamFactoryFactory,
+                        clientExecutor));
+    }
+
     private MongoClientImpl createMongoClient() {
-        return new MongoClientImpl(MongoClientSettings.builder().build(),
-                MongoDriverInformation.builder().driverName("reactive-streams").build(), mock(Cluster.class), OPERATION_EXECUTOR);
+        MongoDriverInformation mongoDriverInformation = MongoDriverInformation.builder().driverName("reactive-streams").build();
+        Cluster cluster = MongoMockito.mock(Cluster.class, mock -> {
+            when(mock.getClientMetadata())
+                    .thenReturn(new ClientMetadata("test", mongoDriverInformation));
+        });
+        StreamFactoryFactory streamFactoryFactory = MongoMockito.mock(StreamFactoryFactory.class);
+        return new MongoClientImpl(cluster, mongoDriverInformation, MongoClientSettings.builder().build(), streamFactoryFactory,
+                AsyncClientExecutor.NO_OP, OPERATION_EXECUTOR);
     }
 }

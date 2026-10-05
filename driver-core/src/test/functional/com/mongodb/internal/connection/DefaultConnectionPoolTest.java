@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.MongoServerUnavailableException;
 import com.mongodb.ServerAddress;
@@ -60,17 +61,18 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Stream;
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
 import static com.mongodb.ClusterFixture.OPERATION_CONTEXT_FACTORY;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.ClusterFixture.createOperationContext;
 import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_EXPIRED;
 import static java.lang.Long.MAX_VALUE;
+import static java.lang.Thread.sleep;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -125,12 +127,39 @@ public class DefaultConnectionPoolTest {
 
         // when
         TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(provider, timeoutSettings);
-        new Thread(connectionGetter).start();
+        cachedExecutor.execute(connectionGetter);
 
         connectionGetter.getLatch().await();
 
         // then
         assertTrue(connectionGetter.isGotTimeout());
+    }
+
+    @Test
+    public void shouldNotUseMaxAwaitTimeMSWhenTimeoutMsIsSet() throws InterruptedException {
+        // given
+        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
+                ConnectionPoolSettings.builder()
+                        .maxSize(1)
+                        .build(),
+                mockSdamProvider(), OPERATION_CONTEXT_FACTORY);
+        provider.ready();
+        TimeoutSettings timeoutSettings = TIMEOUT_SETTINGS
+                .withTimeout(100L, MILLISECONDS)
+                .withMaxWaitTimeMS(50);
+
+        InternalConnection internalConnection = provider.get(createOperationContext(timeoutSettings));
+
+        // when
+        TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(provider, timeoutSettings);
+        cachedExecutor.execute(connectionGetter);
+
+        sleep(70); // wait for more than maxWaitTimeMS but less than timeoutMs.
+        internalConnection.close();
+        connectionGetter.getLatch().await();
+
+        // then
+        assertFalse(connectionGetter.isGotTimeout());
     }
 
     @Test
@@ -144,7 +173,7 @@ public class DefaultConnectionPoolTest {
 
         String expectedExceptionMessage = "The server at 127.0.0.1:27017 is no longer available";
         MongoServerUnavailableException exception;
-        exception = assertThrows(MongoServerUnavailableException.class, () -> provider.get(OPERATION_CONTEXT));
+        exception = assertThrows(MongoServerUnavailableException.class, () -> provider.get(ClusterFixture.createOperationContext()));
         assertEquals(expectedExceptionMessage, exception.getMessage());
         SupplyingCallback<InternalConnection> supplyingCallback = new SupplyingCallback<>();
         provider.getAsync(createOperationContext(TIMEOUT_SETTINGS.withMaxWaitTimeMS(50)), supplyingCallback);
@@ -165,10 +194,10 @@ public class DefaultConnectionPoolTest {
         provider.ready();
 
         // when
-        provider.get(OPERATION_CONTEXT).close();
-        Thread.sleep(100);
+        provider.get(ClusterFixture.createOperationContext()).close();
+        sleep(100);
         provider.doMaintenance();
-        provider.get(OPERATION_CONTEXT);
+        provider.get(ClusterFixture.createOperationContext());
 
         // then
         assertTrue(connectionFactory.getNumCreatedConnections() >= 2);  // should really be two, but it's racy
@@ -186,8 +215,8 @@ public class DefaultConnectionPoolTest {
         provider.ready();
 
         // when
-        InternalConnection connection = provider.get(OPERATION_CONTEXT);
-        Thread.sleep(50);
+        InternalConnection connection = provider.get(ClusterFixture.createOperationContext());
+        sleep(50);
         connection.close();
 
         // then
@@ -207,10 +236,10 @@ public class DefaultConnectionPoolTest {
         provider.ready();
 
         // when
-        provider.get(OPERATION_CONTEXT).close();
-        Thread.sleep(100);
+        provider.get(ClusterFixture.createOperationContext()).close();
+        sleep(100);
         provider.doMaintenance();
-        provider.get(OPERATION_CONTEXT);
+        provider.get(ClusterFixture.createOperationContext());
 
         // then
         assertTrue(connectionFactory.getNumCreatedConnections() >= 2);  // should really be two, but it's racy
@@ -229,10 +258,10 @@ public class DefaultConnectionPoolTest {
         provider.ready();
 
         // when
-        provider.get(OPERATION_CONTEXT).close();
-        Thread.sleep(50);
+        provider.get(ClusterFixture.createOperationContext()).close();
+        sleep(50);
         provider.doMaintenance();
-        provider.get(OPERATION_CONTEXT);
+        provider.get(ClusterFixture.createOperationContext());
 
         // then
         assertTrue(connectionFactory.getCreatedConnections().get(0).isClosed());
@@ -251,10 +280,10 @@ public class DefaultConnectionPoolTest {
         provider.ready();
 
         // when
-        provider.get(OPERATION_CONTEXT).close();
-        Thread.sleep(50);
+        provider.get(ClusterFixture.createOperationContext()).close();
+        sleep(50);
         provider.doMaintenance();
-        InternalConnection secondConnection = provider.get(OPERATION_CONTEXT);
+        InternalConnection secondConnection = provider.get(ClusterFixture.createOperationContext());
 
         // then
         assertNotNull(secondConnection);
@@ -273,11 +302,11 @@ public class DefaultConnectionPoolTest {
                         .build(),
                 mockSdamProvider(), OPERATION_CONTEXT_FACTORY);
         provider.ready();
-        provider.get(OPERATION_CONTEXT).close();
+        provider.get(ClusterFixture.createOperationContext()).close();
 
 
         // when
-        Thread.sleep(10);
+        sleep(10);
         provider.doMaintenance();
 
         // then
@@ -293,7 +322,7 @@ public class DefaultConnectionPoolTest {
         List<InternalConnection> connections = new ArrayList<>();
         try {
             for (int i = 0; i < 2 * defaultMaxSize; i++) {
-                connections.add(provider.get(OPERATION_CONTEXT));
+                connections.add(provider.get(ClusterFixture.createOperationContext()));
             }
         } finally {
             connections.forEach(connection -> {
@@ -594,7 +623,7 @@ public class DefaultConnectionPoolTest {
      */
     private static void sleepMillis(final long millis) {
         try {
-            Thread.sleep(millis);
+            sleep(millis);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }

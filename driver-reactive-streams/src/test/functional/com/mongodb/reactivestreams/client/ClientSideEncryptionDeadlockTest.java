@@ -26,6 +26,6 @@ import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 public class ClientSideEncryptionDeadlockTest extends AbstractClientSideEncryptionDeadlockTest {
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
+        return new SyncMongoClient(settings);
     }
 }

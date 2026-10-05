@@ -64,7 +64,7 @@ class GridFSBucketSpecification extends Specification {
     def registry = MongoClientSettings.getDefaultCodecRegistry()
     def database = databaseWithExecutor(Stub(OperationExecutor))
     def databaseWithExecutor(OperationExecutor executor) {
-        new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, false, false, readConcern,
+        new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, false, false, null, readConcern,
                 JAVA_LEGACY, null, TIMEOUT_SETTINGS, executor)
     }
 
@@ -160,7 +160,7 @@ class GridFSBucketSpecification extends Specification {
         given:
         def defaultChunkSizeBytes = 255 * 1024
         def database = new MongoDatabaseImpl('test', fromProviders(new DocumentCodecProvider()), secondary(), WriteConcern.ACKNOWLEDGED,
-                false, false, readConcern, JAVA_LEGACY, null,
+                false, false, null, readConcern, JAVA_LEGACY, null,
                 new TimeoutSettings(0, 0, 0, null, 0),
                 new TestOperationExecutor([]))
 
@@ -361,7 +361,7 @@ class GridFSBucketSpecification extends Specification {
         } else {
             1 * filesCollection.find() >> findIterable
         }
-        1 * findIterable.filter(new BsonDocument('_id', bsonFileId)) >> findIterable
+        1 * findIterable.filter(new BsonDocument('_id', new BsonDocument('$eq', bsonFileId))) >> findIterable
         1 * findIterable.first() >> fileInfo
 
         then:
@@ -412,7 +412,7 @@ class GridFSBucketSpecification extends Specification {
         } else {
             1 * filesCollection.find() >> findIterable
         }
-        1 * findIterable.filter(new BsonDocument('_id', bsonFileId)) >> findIterable
+        1 * findIterable.filter(new BsonDocument('_id', new BsonDocument('$eq', bsonFileId))) >> findIterable
         1 * findIterable.first() >> fileInfo
 
         then:
@@ -515,7 +515,7 @@ class GridFSBucketSpecification extends Specification {
             1 * filesCollection.find() >> findIterable
         }
 
-        1 * findIterable.filter(new Document('_id', bsonFileId)) >> findIterable
+        1 * findIterable.filter(new Document('_id', new BsonDocument('$eq', bsonFileId))) >> findIterable
         1 * findIterable.first() >> null
 
         then:
@@ -604,7 +604,8 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         executor.getReadPreference() == primary()
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(new MongoNamespace('test.fs.files'), decoder)
+        expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(new MongoNamespace('test.fs.files'), decoder,
+                null)
                 .filter(new BsonDocument()))
 
         when:
@@ -615,7 +616,7 @@ class GridFSBucketSpecification extends Specification {
         then:
         executor.getReadPreference() == secondary()
         expect executor.getReadOperation(), isTheSameAs(
-                new FindOperation<GridFSFile>(new MongoNamespace('test.fs.files'), decoder).filter(filter))
+                new FindOperation<GridFSFile>(new MongoNamespace('test.fs.files'), decoder, null).filter(filter))
     }
 
     def 'should throw an exception if file not found when opening by name'() {
@@ -765,10 +766,11 @@ class GridFSBucketSpecification extends Specification {
         gridFSBucket.delete(fileId)
 
         then: 'Delete from the files collection first'
-        1 * filesCollection.deleteOne(new Document('_id', new BsonObjectId(fileId))) >> DeleteResult.acknowledged(1)
+        1 * filesCollection.deleteOne(new Document('_id', new BsonDocument('$eq', new BsonObjectId(fileId)))) >>
+                DeleteResult.acknowledged(1)
 
         then:
-        1 * chunksCollection.deleteMany(new Document('files_id', new BsonObjectId(fileId)))
+        1 * chunksCollection.deleteMany(new Document('files_id', new BsonDocument('$eq', new BsonObjectId(fileId))))
     }
 
     def 'should throw an exception when deleting if no record in the files collection'() {
@@ -782,10 +784,11 @@ class GridFSBucketSpecification extends Specification {
         gridFSBucket.delete(fileId)
 
         then: 'Delete from the files collection first'
-        1 * filesCollection.deleteOne(new Document('_id', new BsonObjectId(fileId))) >> DeleteResult.acknowledged(0)
+        1 * filesCollection.deleteOne(new Document('_id', new BsonDocument('$eq', new BsonObjectId(fileId)))) >>
+                DeleteResult.acknowledged(0)
 
         then: 'Should still delete any orphan chunks'
-        1 * chunksCollection.deleteMany(new Document('files_id', new BsonObjectId(fileId)))
+        1 * chunksCollection.deleteMany(new Document('files_id', new BsonDocument('$eq', new BsonObjectId(fileId))))
 
         then:
         thrown(MongoGridFSException)
@@ -803,7 +806,7 @@ class GridFSBucketSpecification extends Specification {
         gridFSBucket.rename(id, newFilename)
 
         then:
-        1 * filesCollection.updateOne(new BsonDocument('_id', fileId),
+        1 * filesCollection.updateOne(new BsonDocument('_id', new BsonDocument('$eq', fileId)),
                 new BsonDocument('$set',
                         new BsonDocument('filename', new BsonString(newFilename)))) >> new UpdateResult.UnacknowledgedUpdateResult()
 
@@ -811,7 +814,7 @@ class GridFSBucketSpecification extends Specification {
         gridFSBucket.rename(fileId, newFilename)
 
         then:
-        1 * filesCollection.updateOne(new BsonDocument('_id', fileId),
+        1 * filesCollection.updateOne(new BsonDocument('_id', new BsonDocument('$eq', fileId)),
                 new BsonDocument('$set',
                         new BsonDocument('filename', new BsonString(newFilename)))) >> new UpdateResult.UnacknowledgedUpdateResult()
     }

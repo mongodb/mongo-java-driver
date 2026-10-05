@@ -22,6 +22,8 @@ import java.util.concurrent.TimeUnit;
  * A point in time used to track how much time has elapsed. In contrast to a
  * Timeout, it is guaranteed to not be in the future, and is never infinite.
  *
+ * Implementations of this interface must be immutable.
+ *
  * @see TimePoint
  */
 public interface StartTime {
@@ -57,6 +59,6 @@ public interface StartTime {
      * @return a StartPoint, as of now
      */
     static StartTime now() {
-        return TimePoint.at(System.nanoTime());
+        return TimePoint.at(SystemNanoTime.get());
     }
 }

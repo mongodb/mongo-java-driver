@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
+import com.mongodb.MongoStalePrimaryException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterId;
@@ -77,8 +78,11 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         }
     }
 
-    AbstractMultiServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
-        super(clusterId, settings, serverFactory);
+    AbstractMultiServerCluster(final ClusterId clusterId,
+                               final ClusterSettings settings,
+                               final ClusterableServerFactory serverFactory,
+                               final ClientMetadata clientMetadata) {
+        super(clusterId, settings, serverFactory, clientMetadata);
         isTrue("connection mode is multiple", settings.getMode() == MULTIPLE);
         clusterType = settings.getRequiredClusterType();
         replicaSetName = settings.getRequiredReplicaSetName();
@@ -227,7 +231,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
 
     private boolean handleReplicaSetMemberChanged(final ServerDescription newDescription) {
         if (!newDescription.isReplicaSetMember()) {
-            LOGGER.error(format("Expecting replica set member, but found a %s.  Removing %s from client view of cluster.",
+            LOGGER.warn(format("Expecting replica set member, but found a %s.  Removing %s from client view of cluster.",
                                 newDescription.getType(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
             return true;
@@ -243,7 +247,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         }
 
         if (!replicaSetName.equals(newDescription.getSetName())) {
-            LOGGER.error(format("Expecting replica set member from set '%s', but found one from set '%s'.  "
+            LOGGER.warn(format("Expecting replica set member from set '%s', but found one from set '%s'.  "
                                  + "Removing %s from client view of cluster.",
                                  replicaSetName, newDescription.getSetName(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
@@ -255,7 +259,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         if (newDescription.getCanonicalAddress() != null
                 && !newDescription.getAddress().equals(new ServerAddress(newDescription.getCanonicalAddress()))
                 && !newDescription.isPrimary()) {
-            LOGGER.info(format("Canonical address %s does not match server address.  Removing %s from client view of cluster",
+            LOGGER.warn(format("Canonical address %s does not match server address.  Removing %s from client view of cluster",
                     newDescription.getCanonicalAddress(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
             return true;
@@ -266,7 +270,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         }
 
         if (isStalePrimary(newDescription)) {
-            invalidatePotentialPrimary(newDescription);
+            invalidatePotentialPrimary(newDescription, new MongoStalePrimaryException("Primary marked stale due to electionId/setVersion mismatch"));
             return false;
         }
 
@@ -297,12 +301,13 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
         }
      }
 
-    private void invalidatePotentialPrimary(final ServerDescription newDescription) {
+    private void invalidatePotentialPrimary(final ServerDescription newDescription, final MongoStalePrimaryException cause) {
         LOGGER.info(format("Invalidating potential primary %s whose (set version, election id) tuple of (%d, %s) "
                         + "is less than one already seen of (%d, %s)",
                 newDescription.getAddress(), newDescription.getSetVersion(), newDescription.getElectionId(),
                 maxSetVersion, maxElectionId));
-        addressToServerTupleMap.get(newDescription.getAddress()).server.resetToConnecting();
+
+        addressToServerTupleMap.get(newDescription.getAddress()).server.resetToConnecting(cause);
     }
 
     /**
@@ -337,7 +342,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
 
     private boolean handleShardRouterChanged(final ServerDescription newDescription) {
         if (!newDescription.isShardRouter()) {
-            LOGGER.error(format("Expecting a %s, but found a %s.  Removing %s from client view of cluster.",
+            LOGGER.warn(format("Expecting a %s, but found a %s.  Removing %s from client view of cluster.",
                     SHARD_ROUTER, newDescription.getType(), newDescription.getAddress()));
             removeServer(newDescription.getAddress());
         }
@@ -346,7 +351,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
 
     private boolean handleStandAloneChanged(final ServerDescription newDescription) {
         if (getSettings().getHosts().size() > 1) {
-            LOGGER.error(format("Expecting a single %s, but found more than one.  Removing %s from client view of cluster.",
+            LOGGER.warn(format("Expecting a single %s, but found more than one.  Removing %s from client view of cluster.",
                                  STANDALONE, newDescription.getAddress()));
             clusterType = UNKNOWN;
             removeServer(newDescription.getAddress());
@@ -377,7 +382,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
                 if (LOGGER.isInfoEnabled()) {
                     LOGGER.info(format("Rediscovering type of existing primary %s", serverTuple.description.getAddress()));
                 }
-                serverTuple.server.invalidate();
+                serverTuple.server.invalidate(new MongoStalePrimaryException("Primary marked stale due to discovery of newer primary"));
             }
         }
     }

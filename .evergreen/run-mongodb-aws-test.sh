@@ -11,7 +11,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #            Main Program                  #
 ############################################
 RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
-. "${RELATIVE_DIR_PATH}/javaConfig.bash"
+. "${RELATIVE_DIR_PATH}/setup-env.bash"
 
 echo "Running MONGODB-AWS authentication tests"
 
@@ -28,4 +28,4 @@ echo "Running tests with Java ${JAVA_VERSION}"
 # to run cleanTest to ensure that the test actually executes each run
 ./gradlew -PjavaVersion="${JAVA_VERSION}" -Dorg.mongodb.test.uri="${MONGODB_URI}" \
 -Dorg.mongodb.test.aws.credential.provider="${AWS_CREDENTIAL_PROVIDER}" \
---stacktrace --debug --info --no-build-cache driver-core:cleanTest driver-core:test --tests AwsAuthenticationSpecification
+--stacktrace --debug --info driver-core:cleanTest driver-core:test --tests AwsAuthenticationSpecification

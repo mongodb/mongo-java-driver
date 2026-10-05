@@ -355,6 +355,29 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
         }
     }
 
+    /**
+     * Not a prose spec test. However, it is additional test case for better coverage.
+     */
+    @Test
+    public void testNameSpaceTypeAbsentChangeStreamEvents() {
+        assumeTrue(serverVersionAtLeast(8, 1));
+        collection.drop();
+
+        ChangeStreamIterable<Document> changeStream = database
+                .watch()
+                .fullDocumentBeforeChange(FullDocumentBeforeChange.REQUIRED);
+
+        try (MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = changeStream.cursor()) {
+
+            collection.insertOne(new Document("test", new BsonString("test")));
+
+            ChangeStreamDocument<Document> e1 = Assertions.assertNotNull(cursor.tryNext());
+
+            assertNull(e1.getNamespaceType());
+            assertNull(e1.getNamespaceTypeString());
+        }
+    }
+
     private void setFailPoint(final String command, final int errCode) {
         failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
                 .append("mode", new BsonDocument("times", new BsonInt32(1)))

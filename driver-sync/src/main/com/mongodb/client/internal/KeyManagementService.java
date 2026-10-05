@@ -16,25 +16,20 @@
 
 package com.mongodb.client.internal;
 
+import com.mongodb.KmsConnectCallback;
 import com.mongodb.ServerAddress;
 import com.mongodb.internal.TimeoutContext;
-import com.mongodb.internal.connection.SslHelper;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import com.mongodb.lang.NonNull;
 
-import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.ByteBuffer;
@@ -48,10 +43,14 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
 class KeyManagementService {
     private static final Logger LOGGER = Loggers.getLogger("client");
     private final Map<String, SSLContext> kmsProviderSslContextMap;
+    @Nullable
+    private final KmsConnectCallback kmsConnectCallback;
     private final int timeoutMillis;
 
-    KeyManagementService(final Map<String, SSLContext> kmsProviderSslContextMap, final int timeoutMillis) {
+    KeyManagementService(final Map<String, SSLContext> kmsProviderSslContextMap,
+            @Nullable final KmsConnectCallback kmsConnectCallback, final int timeoutMillis) {
         this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", kmsProviderSslContextMap);
+        this.kmsConnectCallback = kmsConnectCallback;
         this.timeoutMillis = timeoutMillis;
     }
 
@@ -61,18 +60,15 @@ class KeyManagementService {
         LOGGER.info("Connecting to KMS server at " + serverAddress);
         SSLContext sslContext = kmsProviderSslContextMap.get(kmsProvider);
 
-        SocketFactory sslSocketFactory = sslContext == null
-                    ? SSLSocketFactory.getDefault() : sslContext.getSocketFactory();
-        SSLSocket socket = (SSLSocket) sslSocketFactory.createSocket();
-        enableHostNameVerification(socket);
+        SSLSocket socket = KmsSocketConnector.connect(sslContext, kmsConnectCallback, serverAddress,
+                timeoutMillis, remainingMillis(operationTimeout));
 
-        try {
-            socket.setSoTimeout(timeoutMillis);
-            socket.connect(new InetSocketAddress(InetAddress.getByName(serverAddress.getHost()), serverAddress.getPort()), timeoutMillis);
-        } catch (IOException e) {
+        // A KmsConnectCallback performs blocking I/O and may overrun the deadline it was given, which cannot be
+        // preempted. Re-check before issuing a request whose time budget is already spent.
+        Timeout.nullAsInfinite(operationTimeout).onExpired(() -> {
             closeSocket(socket);
-            throw e;
-        }
+            TimeoutContext.throwMongoTimeoutException("Connecting to KMS server exceeded the timeout limit.");
+        });
 
         try {
             OutputStream outputStream = socket.getOutputStream();
@@ -94,13 +90,20 @@ class KeyManagementService {
         }
     }
 
-    private void enableHostNameVerification(final SSLSocket socket) {
-        SSLParameters sslParameters = socket.getSSLParameters();
-        if (sslParameters == null) {
-            sslParameters = new SSLParameters();
-        }
-        SslHelper.enableHostNameVerification(sslParameters);
-        socket.setSSLParameters(sslParameters);
+    /**
+     * Determines the time available for reaching the KMS server, which the specification requires to be the time
+     * remaining in the operation when a client-side operation timeout is in use.
+     *
+     * <p>Visible for testing.</p>
+     *
+     * @return the remaining time available for connecting to the KMS server, in milliseconds, never larger than the
+     * configured connect timeout.
+     */
+    long remainingMillis(@Nullable final Timeout operationTimeout) {
+        return Timeout.nullAsInfinite(operationTimeout).call(MILLISECONDS,
+                () -> (long) timeoutMillis,
+                (ms) -> Math.min(ms, timeoutMillis),
+                () -> TimeoutContext.throwMongoTimeoutException("Connecting to KMS server exceeded the timeout limit."));
     }
 
     private void closeSocket(final Socket socket) {

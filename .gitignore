@@ -51,10 +51,21 @@ local.properties
 # shell scripts
 *.sh
 !.evergreen/*.sh
+!scripts/*.sh
 
 # security-sensitive files
 *.gpg
 
+# per-developer Agent overrides
+.AGENTS.md
+.claude/settings.local.json
+.claude/docs
+CLAUDE.local.md
+
+# Eclipse annotation processing
+driver-benchmarks/.factorypath
+
 # bin build directories
 **/bin
 
+docs/superpowers/

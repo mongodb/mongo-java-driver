@@ -20,6 +20,9 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
+
+import java.util.concurrent.TimeUnit;
+
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -77,6 +80,7 @@ public abstract class AbstractServerSelectionProseTest {
         MongoClientSettings clientSettings = getMongoClientSettingsBuilder()
                 .applicationName(appName)
                 .applyConnectionString(multiMongosConnectionString)
+                .applyToClusterSettings(builder -> builder.localThreshold(30_000L, TimeUnit.MILLISECONDS))
                 .applyToConnectionPoolSettings(builder -> builder
                         .minSize(tasks))
                 .addCommandListener(commandListener)

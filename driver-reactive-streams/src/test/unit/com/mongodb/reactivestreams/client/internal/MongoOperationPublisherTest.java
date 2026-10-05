@@ -54,7 +54,7 @@ public class MongoOperationPublisherTest {
 
     private static final MongoOperationPublisher<Document> DEFAULT_MOP = new MongoOperationPublisher<>(
             MONGO_NAMESPACE, Document.class, MongoClientSettings.getDefaultCodecRegistry(), ReadPreference.primary(),
-            ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, true, true, UuidRepresentation.STANDARD,
+            ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, true, true, null, UuidRepresentation.STANDARD,
             null, TIMEOUT_SETTINGS_WITH_TIMEOUT, OPERATION_EXECUTOR);
 
     @Test
@@ -66,7 +66,7 @@ public class MongoOperationPublisherTest {
 
     @Test
     public void withDatabase() {
-        assertEquals(new MongoNamespace("c.ignored"), DEFAULT_MOP.withDatabase("c").getNamespace());
+        assertEquals(new MongoNamespace("c._ignored"), DEFAULT_MOP.withDatabase("c").getNamespace());
     }
 
     @Test
@@ -79,7 +79,7 @@ public class MongoOperationPublisherTest {
     public void withDatabaseAndDocumentClass() {
         MongoOperationPublisher<BsonDocument> alternative = DEFAULT_MOP.withDatabaseAndDocumentClass("c", BsonDocument.class);
         assertEquals(BsonDocument.class, alternative.getDocumentClass());
-        assertEquals(new MongoNamespace("c.ignored"), alternative.getNamespace());
+        assertEquals(new MongoNamespace("c._ignored"), alternative.getNamespace());
     }
 
     @Test

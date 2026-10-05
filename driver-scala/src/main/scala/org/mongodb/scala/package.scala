@@ -215,18 +215,47 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
 
     /**
      * An error label indicating that the exception can be treated as a transient transaction error.
+     * See the documentation linked below for more information.
      *
+     * @see [[https://www.mongodb.com/docs/manual/core/transactions-in-applications/#std-label-transient-transaction-error TransientTransactionError]]
      * @since 2.4
      */
     val TRANSIENT_TRANSACTION_ERROR_LABEL: String = com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL
 
     /**
      * An error label indicating that the exception can be treated as an unknown transaction commit result.
+     * See the documentation linked below for more information.
      *
+     * @see [[https://www.mongodb.com/docs/manual/core/transactions-in-applications/#std-label-unknown-transaction-commit-result UnknownTransactionCommitResult]]
      * @since 2.4
      */
     val UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL: String =
       com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL
+
+    /**
+     * Server is overloaded and shedding load.
+     * If an application retries explicitly, it should use exponential backoff because the server has indicated overload.
+     * This label on its own does not mean that the operation can be [[MongoException.RETRYABLE_ERROR_LABEL safely retried]].
+     *
+     * @see [[https://www.mongodb.com/docs/manual/reference/parameters/#mongodb-parameter-param.overloadAwareServerSelectionEnabled overloadAwareServerSelectionEnabled]]
+     * @since 5.12
+     * @note Requires MongoDB 9.0 or greater
+     */
+    val SYSTEM_OVERLOADED_ERROR_LABEL: String = com.mongodb.MongoException.SYSTEM_OVERLOADED_ERROR_LABEL
+
+    /**
+     * The operation is safe to retry, that is,
+     * retry without rereading the relevant data or considering the semantics of the operation.
+     *
+     * For more information on how transactions affect retries,
+     * see the documentation of the
+     * [[MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL "TransientTransactionError"]],
+     * [[MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL "UnknownTransactionCommitResult"]] error labels.
+     *
+     * @since 5.12
+     * @note Requires MongoDB 9.0 or greater
+     */
+    val RETRYABLE_ERROR_LABEL: String = com.mongodb.MongoException.RETRYABLE_ERROR_LABEL
   }
 
   /**
@@ -295,6 +324,15 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
   type MongoNodeIsRecoveringException = com.mongodb.MongoNodeIsRecoveringException
 
   /**
+   * Exception thrown when a replica set primary is identified as a stale primary during Server Discovery and Monitoring (SDAM).
+   * This occurs when a new primary is discovered, causing the previously known primary to be marked stale, typically during network
+   * partitions or elections.
+   *
+   * @since 5.6
+   */
+  type MongoStalePrimaryException = com.mongodb.MongoStalePrimaryException
+
+  /**
    * An exception indicating that the server is a member of a replica set but is not the primary, and therefore refused to execute either a
    * write operation or a read operation that required a primary.  This can happen during a replica set election.
    */
@@ -351,6 +389,15 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
   type MongoSocketWriteException = com.mongodb.MongoSocketWriteException
 
   /**
+   * This exception is thrown when an error occurs while connecting via a SOCKS5 proxy. This
+   * covers both failures connecting to the proxy itself and failures where the proxy is
+   * reachable but cannot connect to the target server on our behalf.
+   *
+   * @since 5.12
+   */
+  type MongoSocksProxyException = com.mongodb.MongoSocksProxyException
+
+  /**
    * An exception indicating that the driver has timed out waiting for either a server or a connection to become available.
    */
   type MongoTimeoutException = com.mongodb.MongoTimeoutException
@@ -367,6 +414,14 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
    @since 5.0
    */
   type MongoOperationTimeoutException = com.mongodb.MongoOperationTimeoutException
+
+  /**
+   * An exception indicating that the convenient transactions API (`withTransaction`) exceeded its overall timeout
+   * while retrying the user-supplied callback or the commit loop.
+   *
+   * @since 5.12
+   */
+  type WithTransactionTimeoutException = com.mongodb.WithTransactionTimeoutException
 
   /**
    * An exception indicating a failure to apply the write concern to the requested write operation
@@ -432,6 +487,21 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
    * @since 2.7
    */
   type AutoEncryptionSettings = com.mongodb.AutoEncryptionSettings
+
+  /**
+   * A callback that establishes the connection used for a Key Management Service (KMS) request made by in-use
+   * encryption.
+   *
+   * @since 5.11
+   */
+  type KmsConnectCallback = com.mongodb.KmsConnectCallback
+
+  /**
+   * The details of a Key Management Service (KMS) connection that a `KmsConnectCallback` is asked to establish.
+   *
+   * @since 5.11
+   */
+  type KmsConnectContext = com.mongodb.KmsConnectContext
 
   /**
    * The client-side settings for data key creation and explicit encryption.

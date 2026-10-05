@@ -343,8 +343,8 @@ public class DBTest extends DatabaseTestCase {
     }
 
     BsonDocument getCollectionInfo(final String collectionName) {
-        return new ListCollectionsOperation<>(getDefaultDatabaseName(), new BsonDocumentCodec())
-                .filter(new BsonDocument("name", new BsonString(collectionName))).execute(getBinding()).next().get(0);
+        return new ListCollectionsOperation<>(getDefaultDatabaseName(), new BsonDocumentCodec(), null)
+                .filter(new BsonDocument("name", new BsonString(collectionName))).execute(getBinding(), ClusterFixture.createOperationContext()).next().get(0);
     }
 
     private boolean isCapped(final DBCollection collection) {

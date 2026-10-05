@@ -22,6 +22,7 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -44,14 +45,18 @@ import static java.util.Collections.singletonList;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
+public class EstimatedDocumentCountOperation implements ReadOperationSimple<Long> {
+    private static final String COMMAND_NAME = "count";
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
     private final MongoNamespace namespace;
     private boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private BsonValue comment;
 
-    public EstimatedDocumentCountOperation(final MongoNamespace namespace) {
+    public EstimatedDocumentCountOperation(final MongoNamespace namespace, @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.namespace = notNull("namespace", namespace);
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     public EstimatedDocumentCountOperation retryReads(final boolean retryReads) {
@@ -70,21 +75,31 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
     }
 
     @Override
-    public Long execute(final ReadBinding binding) {
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    @Override
+    public Long execute(final ReadBinding binding, final OperationContext operationContext) {
         try {
-            return executeRetryableRead(binding, namespace.getDatabaseName(),
+            return executeRetryableRead(binding, operationContext, namespace.getDatabaseName(),
                                         getCommandCreator(), CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")),
-                                        transformer(), retryReads);
+                                        transformer(), retryReads, maxAdaptiveRetriesSetting);
         } catch (MongoCommandException e) {
             return assertNotNull(rethrowIfNotNamespaceError(e, 0L));
         }
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        executeRetryableReadAsync(binding, namespace.getDatabaseName(),
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<Long> callback) {
+        executeRetryableReadAsync(binding, operationContext,  namespace.getDatabaseName(),
                                   getCommandCreator(), CommandResultDocumentCodec.create(DECODER, singletonList("firstBatch")),
-                                  asyncTransformer(), retryReads,
+                                  asyncTransformer(), retryReads, maxAdaptiveRetriesSetting,
                                   (result, t) -> {
                     if (isNamespaceError(t)) {
                         callback.onResult(0L, null);
@@ -95,11 +110,11 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
     }
 
     private CommandReadTransformer<BsonDocument, Long> transformer() {
-        return (result, source, connection) -> transformResult(result, connection.getDescription());
+        return (result, source, connection, operationContext) -> transformResult(result, connection.getDescription());
     }
 
     private CommandReadTransformerAsync<BsonDocument, Long> asyncTransformer() {
-        return (result, source, connection) -> transformResult(result, connection.getDescription());
+        return (result, source, connection, operationContext) -> transformResult(result, connection.getDescription());
     }
 
     private long transformResult(final BsonDocument result, final ConnectionDescription connectionDescription) {
@@ -108,7 +123,7 @@ public class EstimatedDocumentCountOperation implements AsyncReadOperation<Long>
 
     private CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
-            BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
+            BsonDocument document = new BsonDocument(getCommandName(), new BsonString(namespace.getCollectionName()));
             appendReadConcernToCommand(operationContext.getSessionContext(), connectionDescription.getMaxWireVersion(), document);
             if (comment != null) {
                 document.put("comment", comment);

@@ -35,7 +35,6 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
@@ -63,7 +62,6 @@ public abstract class AbstractClientSideEncryptionUniqueIndexKeyAltNamesTest {
     public void setUp() {
         assumeTrue(serverVersionAtLeast(6, 0));
         assumeFalse(isStandalone());
-        assumeFalse(isServerlessTest());
 
         encryptedClient = createMongoClient(getMongoClientSettingsBuilder().build());
 

@@ -15,18 +15,18 @@
  */
 package org.mongodb.scala.syncadapter
 
-import com.mongodb.{ ReadConcern, ReadPreference, WriteConcern }
 import com.mongodb.client.model.{ CreateCollectionOptions, CreateViewOptions }
 import com.mongodb.client.{ ClientSession, MongoDatabase => JMongoDatabase }
+import com.mongodb.{ ReadConcern, ReadPreference, WriteConcern }
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
-import org.mongodb.scala.MongoDatabase
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
+import org.mongodb.scala.{ documentToUntypedDocument, MongoDatabase, SingleObservableFuture }
 
 import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
-import scala.concurrent.duration.MILLISECONDS
+import scala.concurrent.duration.{ Duration, MILLISECONDS }
 import scala.reflect.ClassTag
 
 case class SyncMongoDatabase(wrapped: MongoDatabase) extends JMongoDatabase {
@@ -51,13 +51,15 @@ case class SyncMongoDatabase(wrapped: MongoDatabase) extends JMongoDatabase {
   override def withCodecRegistry(codecRegistry: CodecRegistry) =
     SyncMongoDatabase(wrapped.withCodecRegistry(codecRegistry))
 
-  override def withReadPreference(readPreference: ReadPreference) = throw new UnsupportedOperationException
+  override def withReadPreference(readPreference: ReadPreference) =
+    SyncMongoDatabase(wrapped.withReadPreference(readPreference))
 
-  override def withWriteConcern(writeConcern: WriteConcern) = throw new UnsupportedOperationException
+  override def withWriteConcern(writeConcern: WriteConcern) = SyncMongoDatabase(wrapped.withWriteConcern(writeConcern))
 
-  override def withReadConcern(readConcern: ReadConcern) = throw new UnsupportedOperationException
+  override def withReadConcern(readConcern: ReadConcern) = SyncMongoDatabase(wrapped.withReadConcern(readConcern))
 
-  override def withTimeout(timeout: Long, timeUnit: TimeUnit) = throw new UnsupportedOperationException
+  override def withTimeout(timeout: Long, timeUnit: TimeUnit) =
+    SyncMongoDatabase(wrapped.withTimeout(Duration(timeout, timeUnit)))
 
   override def getCollection(collectionName: String) =
     SyncMongoCollection[Document](wrapped.getCollection(collectionName))
@@ -170,7 +172,7 @@ case class SyncMongoDatabase(wrapped: MongoDatabase) extends JMongoDatabase {
   }
 
   override def createView(viewName: String, viewOn: String, pipeline: java.util.List[_ <: Bson]): Unit = {
-    throw new UnsupportedOperationException
+    wrapped.createView(viewName, viewOn, pipeline.asScala.toList).toFuture().get()
   }
 
   override def createView(
@@ -179,7 +181,7 @@ case class SyncMongoDatabase(wrapped: MongoDatabase) extends JMongoDatabase {
       pipeline: java.util.List[_ <: Bson],
       createViewOptions: CreateViewOptions
   ): Unit = {
-    throw new UnsupportedOperationException
+    wrapped.createView(viewName, viewOn, pipeline.asScala.toList, createViewOptions).toFuture().get()
   }
 
   override def createView(
@@ -188,7 +190,7 @@ case class SyncMongoDatabase(wrapped: MongoDatabase) extends JMongoDatabase {
       viewOn: String,
       pipeline: java.util.List[_ <: Bson]
   ): Unit = {
-    throw new UnsupportedOperationException
+    wrapped.createView(unwrap(clientSession), viewName, viewOn, pipeline.asScala.toList).toFuture().get()
   }
 
   override def createView(
@@ -198,7 +200,13 @@ case class SyncMongoDatabase(wrapped: MongoDatabase) extends JMongoDatabase {
       pipeline: java.util.List[_ <: Bson],
       createViewOptions: CreateViewOptions
   ): Unit = {
-    throw new UnsupportedOperationException
+    wrapped.createView(
+      unwrap(clientSession),
+      viewName,
+      viewOn,
+      pipeline.asScala.toList,
+      createViewOptions
+    ).toFuture().get()
   }
 
   override def watch = new SyncChangeStreamIterable[Document](wrapped.watch[Document]())

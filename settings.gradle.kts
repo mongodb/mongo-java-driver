@@ -42,8 +42,8 @@ include(":driver-kotlin-sync")
 include(":driver-scala")
 
 include(":driver-benchmarks")
+include(":testing:osgi-test")
 include(":driver-lambda")
-include(":driver-workload-executor")
 if (providers.gradleProperty("includeGraalvm").isPresent) {
     include(":graalvm-native-image-app")
 }

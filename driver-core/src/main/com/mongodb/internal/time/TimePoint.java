@@ -50,6 +50,7 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
     @Nullable
     private final Long nanos;
 
+    @VisibleForTesting(otherwise = PRIVATE)
     TimePoint(@Nullable final Long nanos) {
         this.nanos = nanos;
     }
@@ -61,14 +62,14 @@ class TimePoint implements Comparable<TimePoint>, StartTime, Timeout {
 
     @VisibleForTesting(otherwise = PRIVATE)
     long currentNanos() {
-        return System.nanoTime();
+        return SystemNanoTime.get();
     }
 
     /**
      * Returns the current {@link TimePoint}.
      */
     static TimePoint now() {
-        return at(System.nanoTime());
+        return at(SystemNanoTime.get());
     }
 
     /**

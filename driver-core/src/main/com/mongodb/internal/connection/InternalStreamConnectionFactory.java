@@ -19,24 +19,21 @@ package com.mongodb.internal.connection;
 import com.mongodb.AuthenticationMechanism;
 import com.mongodb.LoggerSettings;
 import com.mongodb.MongoCompressor;
-import com.mongodb.MongoDriverInformation;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ServerId;
 import com.mongodb.event.CommandListener;
 import com.mongodb.lang.Nullable;
-import org.bson.BsonDocument;
 
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
 
 class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final ClusterConnectionMode clusterConnectionMode;
     private final boolean isMonitoringConnection;
     private final StreamFactory streamFactory;
-    private final BsonDocument clientMetadataDocument;
+    private final ClientMetadata clientMetadata;
     private final List<MongoCompressor> compressorList;
     private final LoggerSettings loggerSettings;
     private final CommandListener commandListener;
@@ -45,19 +42,20 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final MongoCredentialWithCache credential;
 
     InternalStreamConnectionFactory(final ClusterConnectionMode clusterConnectionMode,
-            final StreamFactory streamFactory,
-            @Nullable final MongoCredentialWithCache credential,
-            @Nullable final String applicationName, @Nullable final MongoDriverInformation mongoDriverInformation,
-            final List<MongoCompressor> compressorList,
-            final LoggerSettings loggerSettings, @Nullable final CommandListener commandListener, @Nullable final ServerApi serverApi) {
-        this(clusterConnectionMode, false, streamFactory, credential, applicationName, mongoDriverInformation, compressorList,
+                                    final StreamFactory streamFactory,
+                                    @Nullable final MongoCredentialWithCache credential,
+                                    final ClientMetadata clientMetadata,
+                                    final List<MongoCompressor> compressorList,
+                                    final LoggerSettings loggerSettings, @Nullable final CommandListener commandListener,
+                                    @Nullable final ServerApi serverApi) {
+        this(clusterConnectionMode, false, streamFactory, credential, clientMetadata, compressorList,
                 loggerSettings, commandListener, serverApi);
     }
 
     InternalStreamConnectionFactory(final ClusterConnectionMode clusterConnectionMode, final boolean isMonitoringConnection,
-            final StreamFactory streamFactory,
-            @Nullable final MongoCredentialWithCache credential,
-            @Nullable final String applicationName, @Nullable final MongoDriverInformation mongoDriverInformation,
+                                    final StreamFactory streamFactory,
+                                    @Nullable final MongoCredentialWithCache credential,
+                                    final ClientMetadata clientMetadata,
             final List<MongoCompressor> compressorList,
             final LoggerSettings loggerSettings, @Nullable final CommandListener commandListener, @Nullable final ServerApi serverApi) {
         this.clusterConnectionMode = clusterConnectionMode;
@@ -67,7 +65,7 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
         this.loggerSettings = loggerSettings;
         this.commandListener = commandListener;
         this.serverApi = serverApi;
-        this.clientMetadataDocument = createClientMetadataDocument(applicationName, mongoDriverInformation);
+        this.clientMetadata = clientMetadata;
         this.credential = credential;
     }
 
@@ -75,7 +73,7 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     public InternalConnection create(final ServerId serverId, final ConnectionGenerationSupplier connectionGenerationSupplier) {
         Authenticator authenticator = credential == null ? null : createAuthenticator(credential);
         InternalStreamConnectionInitializer connectionInitializer = new InternalStreamConnectionInitializer(
-                clusterConnectionMode, authenticator, clientMetadataDocument, compressorList, serverApi);
+                clusterConnectionMode, authenticator, clientMetadata.getBsonDocument(), compressorList, serverApi);
         return new InternalStreamConnection(
                 clusterConnectionMode, authenticator,
                 isMonitoringConnection, serverId, connectionGenerationSupplier,

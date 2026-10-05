@@ -19,12 +19,13 @@ package com.mongodb.internal.operation;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 
-import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
-import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
+import static com.mongodb.internal.operation.SpecRetryPolicy.IndividualPolicies.overloadForWrite;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
 
 /**
@@ -32,30 +33,50 @@ import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryabl
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOperation<T> {
-    private final String databaseName;
-    private final CommandCreator commandCreator;
-    private final Decoder<T> decoder;
+public final class CommandReadOperation<T> extends AbstractCommandReadOperation<T> {
+    private final boolean retryReads;
+    private final boolean retryWrites;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
+
+    public CommandReadOperation(final String databaseName, final BsonDocument command, final Decoder<T> decoder,
+                                final boolean retryReads, final boolean retryWrites,
+                                @Nullable final Integer maxAdaptiveRetriesSetting) {
+        super(databaseName, command, decoder);
+        this.retryReads = retryReads;
+        this.retryWrites = retryWrites;
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
+    }
 
     public CommandReadOperation(final String databaseName, final BsonDocument command, final Decoder<T> decoder) {
-        this(databaseName, (operationContext, serverDescription, connectionDescription) -> command, decoder);
-    }
-
-    public CommandReadOperation(final String databaseName, final CommandCreator commandCreator, final Decoder<T> decoder) {
-        this.databaseName = notNull("databaseName", databaseName);
-        this.commandCreator = notNull("commandCreator", commandCreator);
-        this.decoder = notNull("decoder", decoder);
+        this(databaseName, command, decoder, false, false, null);
     }
 
     @Override
-    public T execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, databaseName, commandCreator, decoder,
-                                    (result, source, connection) -> result, false);
+    public T execute(final ReadBinding binding, final OperationContext operationContext) {
+        return executeRetryableRead(binding,
+                operationContext,
+                getDatabaseName(),
+                getCommandCreator(),
+                getDecoder(),
+                transformer(),
+                createRetryPolicy());
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<T> callback) {
-        executeRetryableReadAsync(binding, databaseName, commandCreator, decoder,
-                                  (result, source, connection) -> result, false, callback);
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext,
+                             final SingleResultCallback<T> callback) {
+        executeRetryableReadAsync(binding,
+                operationContext,
+                getDatabaseName(),
+                getCommandCreator(),
+                getDecoder(),
+                asyncTransformer(),
+                createRetryPolicy(),
+                callback);
+    }
+
+    private SpecRetryPolicy.IndividualPolicies createRetryPolicy() {
+        return overloadForWrite(retryReads && retryWrites, maxAdaptiveRetriesSetting);
     }
 }

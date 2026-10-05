@@ -23,6 +23,9 @@ import org.bson.conversions.Bson;
 /**
  * Represents optional fields of the {@code $vectorSearch} pipeline stage of an aggregation pipeline.
  *
+ * <p>This includes options for searching against nested (embedded) embeddings and arrays of embeddings,
+ * via {@link #parentFilter(Bson)} and {@link #nestedOptions(VectorSearchNestedOptions)}.</p>
+ *
  * @see Aggregates#vectorSearch(FieldSearchPath, Iterable, String, long, VectorSearchOptions)
  * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
  * @mongodb.server.release 6.0.11
@@ -40,6 +43,51 @@ public interface VectorSearchOptions extends Bson {
      * @return A new {@link VectorSearchOptions}.
      */
     VectorSearchOptions filter(Bson filter);
+
+    /**
+     * Creates a new {@link VectorSearchOptions} with the parent filter specified.
+     *
+     * <p>Applies only when searching against a nested (embedded) field: this filter is applied to the
+     * parent (root) documents, while {@link #filter(Bson)} is applied to the leaf (embedded) documents.
+     * For a non-nested search, use {@link #filter(Bson)} instead.</p>
+     * <p>Unlike some other MongoDB drivers, the Java driver does not automatically re-route a top-level
+     * {@link #filter(Bson)} to {@code parentFilter} based on the path: you must call
+     * {@link #parentFilter(Bson)} explicitly to specify a parent (root-level) filter for a nested search.</p>
+     *
+     * @param parentFilter A filter applied to the parent documents of a nested {@code $vectorSearch}.
+     * One may use {@link Filters} to create this filter, though not all filters may be supported.
+     * See the MongoDB documentation for the list of supported filters.
+     * @return A new {@link VectorSearchOptions}.
+     * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
+     * @mongodb.server.release 8.3
+     * @since 5.10
+     */
+    VectorSearchOptions parentFilter(Bson parentFilter);
+
+    /**
+     * Creates a new {@link VectorSearchOptions} with the {@code nestedOptions} specified.
+     *
+     * <p>Applies only when searching against arrays of embeddings within nested (embedded) documents;
+     * for example it controls how the scores of the individual matching embeddings within a document are
+     * aggregated (see {@link VectorSearchNestedOptions#scoreMode(VectorSearchScoreMode)}).</p>
+     *
+     * @param nestedOptions The options for a nested (embedded) {@code $vectorSearch}.
+     * @return A new {@link VectorSearchOptions}.
+     * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
+     * @mongodb.server.release 8.3
+     * @since 5.10
+     */
+    VectorSearchOptions nestedOptions(VectorSearchNestedOptions nestedOptions);
+
+    /**
+     * Creates a new {@link VectorSearchOptions} that instructs to return only stored source fields.
+     *
+     * @param returnStoredSource The option to return only stored source fields.
+     * @return A new {@link VectorSearchOptions}.
+     * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
+     * @since 5.8
+     */
+    VectorSearchOptions returnStoredSource(boolean returnStoredSource);
 
     /**
      * Creates a new {@link VectorSearchOptions} with the specified option in situations when there is no builder method

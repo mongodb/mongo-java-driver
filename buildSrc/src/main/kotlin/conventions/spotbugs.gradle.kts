@@ -16,14 +16,14 @@
 package conventions
 
 import com.github.spotbugs.snom.SpotBugsTask
+import libs
 import org.gradle.kotlin.dsl.dependencies
-import project.libs
 
 // Performs quality checks on your project's Java source files using SpotBug
 // https://plugins.gradle.org/plugin/com.github.spotbugs
 plugins {
     id("java-library")
-    id("com.github.spotbugs")
+    alias(libs.plugins.spotbugs)
 }
 
 dependencies {
@@ -40,10 +40,17 @@ spotbugs {
 
 tasks.withType<SpotBugsTask>().configureEach {
     if (name == "spotbugsMain") {
-        reports {
-            register("xml") { required.set(project.buildingWith("xmlReports.enabled")) }
-            register("html") { required.set(!project.buildingWith("xmlReports.enabled")) }
-            register("sarif") { required.set(project.buildingWith("ssdlcReport.enabled")) }
+        reports.create("xml") {
+            required.set(project.buildingWith("xmlReports.enabled"))
+            outputLocation.set(file("$buildDir/reports/spotbugs/spotbugs.xml"))
+        }
+        reports.create("html") {
+            required.set(!project.buildingWith("xmlReports.enabled"))
+            outputLocation.set(file("$buildDir/reports/spotbugs/spotbugs.html"))
+        }
+        reports.create("sarif") {
+            required.set(project.buildingWith("ssdlcReport.enabled"))
+            outputLocation.set(file("$buildDir/reports/spotbugs/spotbugs.sarif"))
         }
     } else if (name == "spotbugsTest") {
         enabled = false

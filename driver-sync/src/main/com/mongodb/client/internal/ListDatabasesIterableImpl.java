@@ -21,9 +21,8 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.operation.BatchCursor;
-import com.mongodb.internal.operation.ReadOperation;
-import com.mongodb.internal.operation.SyncOperations;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -41,7 +40,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListDatabasesIterable<TResult> {
-    private final SyncOperations<BsonDocument> operations;
+    private final Operations<BsonDocument> operations;
     private final Class<TResult> resultClass;
 
     private long maxTimeMS;
@@ -52,9 +51,10 @@ public class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResul
 
     public ListDatabasesIterableImpl(@Nullable final ClientSession clientSession, final Class<TResult> resultClass,
             final CodecRegistry codecRegistry, final ReadPreference readPreference, final OperationExecutor executor,
-            final boolean retryReads, final TimeoutSettings timeoutSettings) {
+            final boolean retryReads, @Nullable final Integer maxAdaptiveRetriesSetting, final TimeoutSettings timeoutSettings) {
         super(clientSession, executor, ReadConcern.DEFAULT, readPreference, retryReads, timeoutSettings); // TODO: read concern?
-        this.operations = new SyncOperations<>(BsonDocument.class, readPreference, codecRegistry, retryReads, timeoutSettings);
+        this.operations = new Operations<>(
+                BsonDocument.class, readPreference, codecRegistry, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
         this.resultClass = notNull("clazz", resultClass);
     }
 
@@ -108,10 +108,9 @@ public class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    public ReadOperation<BatchCursor<TResult>> asReadOperation() {
+    public ReadOperationCursor<TResult> asReadOperation() {
         return operations.listDatabases(resultClass, filter, nameOnly, authorizedDatabasesOnly, comment);
     }
-
 
     protected OperationExecutor getExecutor() {
         return getExecutor(operations.createTimeoutSettings(maxTimeMS));

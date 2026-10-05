@@ -68,7 +68,7 @@ public class AwsAuthenticator extends SaslAuthenticator {
     }
 
     @Override
-    protected SaslClient createSaslClient(final ServerAddress serverAddress) {
+    protected SaslClient createSaslClient(final ServerAddress serverAddress, final OperationContext operationContext) {
         return new AwsSaslClient(getMongoCredential());
     }
 

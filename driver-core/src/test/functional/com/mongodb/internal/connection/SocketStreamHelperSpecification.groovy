@@ -18,8 +18,11 @@ package com.mongodb.internal.connection
 
 import com.mongodb.ClusterFixture
 import com.mongodb.MongoInternalException
+import com.mongodb.MongoOperationTimeoutException
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
+import com.mongodb.internal.TimeoutContext
+import com.mongodb.internal.TimeoutSettings
 import jdk.net.ExtendedSocketOptions
 import spock.lang.IgnoreIf
 import spock.lang.Specification
@@ -30,7 +33,6 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 import java.lang.reflect.Method
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS
 import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.ClusterFixture.getPrimary
@@ -40,6 +42,8 @@ import static java.util.concurrent.TimeUnit.SECONDS
 
 class SocketStreamHelperSpecification extends Specification {
 
+    // TCP_KEEPCOUNT is Linux-specific and not available on Windows
+    @IgnoreIf({ System.getProperty('os.name').toLowerCase().contains('windows') })
     def 'should configure socket with settings()'() {
         given:
         Socket socket = SocketFactory.default.createSocket()
@@ -78,12 +82,37 @@ class SocketStreamHelperSpecification extends Specification {
         socket?.close()
     }
 
+    def 'should throw MongoOperationTimeoutException during initialization when timeoutMS expires'() {
+        given:
+        Socket socket = SocketFactory.default.createSocket()
+
+        when:
+        SocketStreamHelper.initialize(
+                createOperationContext().withTimeoutContext(new TimeoutContext(
+                                new TimeoutSettings(
+                                        1,
+                                        100,
+                                        100,
+                                        1,
+                                        100))),
+                socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
+                SocketSettings.builder().build(), SslSettings.builder().build())
+
+        then:
+        thrown(MongoOperationTimeoutException)
+
+        cleanup:
+        socket?.close()
+    }
+
+
     def 'should connect socket()'() {
         given:
         Socket socket = SocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
+        SocketStreamHelper.initialize(createOperationContext(), socket, getSocketAddresses(getPrimary(),
+                new DefaultInetAddressResolver()).get(0),
                 SocketSettings.builder().build(), SslSettings.builder().build())
 
         then:
@@ -99,7 +128,8 @@ class SocketStreamHelperSpecification extends Specification {
         SSLSocket socket = SSLSocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
+        SocketStreamHelper.initialize(createOperationContext(), socket, getSocketAddresses(getPrimary(),
+                new DefaultInetAddressResolver()).get(0),
                 SocketSettings.builder().build(), sslSettings)
 
         then:
@@ -120,7 +150,8 @@ class SocketStreamHelperSpecification extends Specification {
         SSLSocket socket = SSLSocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
+        SocketStreamHelper.initialize(createOperationContext(), socket, getSocketAddresses(getPrimary(),
+                new DefaultInetAddressResolver()).get(0),
                 SocketSettings.builder().build(), sslSettings)
 
         then:
@@ -139,7 +170,8 @@ class SocketStreamHelperSpecification extends Specification {
         Socket socket = SocketFactory.default.createSocket()
 
         when:
-        SocketStreamHelper.initialize(OPERATION_CONTEXT, socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
+        SocketStreamHelper.initialize(createOperationContext(), socket, getSocketAddresses(getPrimary(),
+                new DefaultInetAddressResolver()).get(0),
                 SocketSettings.builder().build(), SslSettings.builder().enabled(true).build())
 
         then:

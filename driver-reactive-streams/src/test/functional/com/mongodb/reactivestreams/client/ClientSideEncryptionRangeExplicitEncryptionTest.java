@@ -29,7 +29,7 @@ import com.mongodb.reactivestreams.client.vault.ClientEncryptions;
 public class ClientSideEncryptionRangeExplicitEncryptionTest extends AbstractClientSideEncryptionRangeExplicitEncryptionTest {
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
+        return new SyncMongoClient(settings);
     }
 
     @Override

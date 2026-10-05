@@ -21,6 +21,7 @@ import com.mongodb.TransactionOptions
 import com.mongodb.client.ClientSession as JClientSession
 import com.mongodb.client.TransactionBody
 import com.mongodb.internal.TimeoutContext
+import com.mongodb.internal.observability.micrometer.TransactionSpan
 import com.mongodb.kotlin.client.coroutine.ClientSession
 import com.mongodb.session.ServerSession
 import kotlinx.coroutines.runBlocking
@@ -89,4 +90,8 @@ class SyncClientSession(internal val wrapped: ClientSession, private val origina
         throw UnsupportedOperationException()
 
     override fun getTimeoutContext(): TimeoutContext? = wrapped.getTimeoutContext()
+
+    override fun getOverloadRetryPolicyState(): Any = wrapped.getOverloadRetryPolicyState()
+
+    override fun getTransactionSpan(): TransactionSpan? = null
 }

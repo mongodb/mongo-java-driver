@@ -29,8 +29,9 @@ import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
 
+import static com.mongodb.ClusterFixture.CLIENT_METADATA
 import static com.mongodb.ClusterFixture.LEGACY_HELLO
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.ClusterFixture.getClusterConnectionMode
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
@@ -42,14 +43,16 @@ class CommandHelperSpecification extends Specification {
     InternalConnection connection
 
     def setup() {
+        InternalStreamConnection.setRecordEverything(true)
         connection = new InternalStreamConnectionFactory(ClusterConnectionMode.SINGLE,
                 new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                getCredentialWithCache(), null, null, [], LoggerSettings.builder().build(), null, getServerApi())
+                getCredentialWithCache(), CLIENT_METADATA, [], LoggerSettings.builder().build(), null, getServerApi())
                 .create(new ServerId(new ClusterId(), getPrimary()))
-        connection.open(OPERATION_CONTEXT)
+        connection.open(createOperationContext())
     }
 
     def cleanup() {
+        InternalStreamConnection.setRecordEverything(false)
         connection?.close()
     }
 
@@ -59,19 +62,19 @@ class CommandHelperSpecification extends Specification {
         Throwable receivedException = null
         def latch1 = new CountDownLatch(1)
         executeCommandAsync('admin', new BsonDocument(LEGACY_HELLO, new BsonInt32(1)), getClusterConnectionMode(),
-                getServerApi(), connection, OPERATION_CONTEXT)
+                getServerApi(), connection, createOperationContext())
                 { document, exception -> receivedDocument = document; receivedException = exception; latch1.countDown() }
         latch1.await()
 
         then:
+        !receivedException
         !receivedDocument.isEmpty()
         receivedDocument.containsKey('ok')
-        !receivedException
 
         when:
         def latch2 = new CountDownLatch(1)
         executeCommandAsync('admin', new BsonDocument('non-existent-command', new BsonInt32(1)), getClusterConnectionMode(),
-                getServerApi(), connection, OPERATION_CONTEXT)
+                getServerApi(), connection, createOperationContext())
                 { document, exception -> receivedDocument = document; receivedException = exception; latch2.countDown() }
         latch2.await()
 
@@ -79,5 +82,4 @@ class CommandHelperSpecification extends Specification {
         !receivedDocument
         receivedException instanceof MongoCommandException
     }
-
 }

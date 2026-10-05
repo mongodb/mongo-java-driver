@@ -18,6 +18,7 @@ package com.mongodb.internal.binding;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.connection.OperationContext;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -28,9 +29,10 @@ public interface AsyncClusterAwareReadWriteBinding extends AsyncReadWriteBinding
      * Returns a connection source to the specified server
      *
      * @param serverAddress the server address
+     * @param operationContext the operation context to use
      * @param callback the to be passed the connection source
      */
-    void getConnectionSource(ServerAddress serverAddress, SingleResultCallback<AsyncConnectionSource> callback);
+    void getConnectionSource(ServerAddress serverAddress, OperationContext operationContext, SingleResultCallback<AsyncConnectionSource> callback);
 
     @Override
     AsyncClusterAwareReadWriteBinding retain();

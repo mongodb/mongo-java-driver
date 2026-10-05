@@ -28,8 +28,8 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.BatchCursor;
-import com.mongodb.internal.operation.ExplainableReadOperation;
-import com.mongodb.internal.operation.SyncOperations;
+import com.mongodb.internal.operation.Operations;
+import com.mongodb.internal.operation.ReadOperationExplainable;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 import org.bson.Document;
@@ -40,9 +40,12 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements FindIterable<TResult> {
+/**
+ * This class is not part of the public API and may be removed or changed at any time.
+ */
+public class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements FindIterable<TResult> {
 
-    private final SyncOperations<TDocument> operations;
+    private final Operations<TDocument> operations;
 
     private final Class<TResult> resultClass;
     private final FindOptions findOptions;
@@ -50,12 +53,13 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
 
     private Bson filter;
 
-    FindIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
+    public FindIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace,
+            final Class<TDocument> documentClass,
             final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-            final ReadConcern readConcern, final OperationExecutor executor, final Bson filter, final boolean retryReads,
-            final TimeoutSettings timeoutSettings) {
+            final ReadConcern readConcern, final OperationExecutor executor, final Bson filter,
+            final boolean retryReads, @Nullable final Integer maxAdaptiveRetriesSetting, final TimeoutSettings timeoutSettings) {
         super(clientSession, executor, readConcern, readPreference, retryReads, timeoutSettings);
-        this.operations = new SyncOperations<>(namespace, documentClass, readPreference, codecRegistry, retryReads, timeoutSettings);
+        this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
         this.resultClass = notNull("resultClass", resultClass);
         this.filter = notNull("filter", filter);
         this.findOptions = new FindOptions();
@@ -244,7 +248,7 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
                 asReadOperation().asExplainableOperation(verbosity, codecRegistry.get(explainResultClass)), getReadPreference(), getReadConcern(), getClientSession());
     }
 
-    public ExplainableReadOperation<BatchCursor<TResult>> asReadOperation() {
+    public ReadOperationExplainable<TResult> asReadOperation() {
         return operations.find(filter, resultClass, findOptions);
     }
 

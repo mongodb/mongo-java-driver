@@ -235,6 +235,16 @@ package object search {
   type QueryStringSearchOperator = com.mongodb.client.model.search.QueryStringSearchOperator
 
   /**
+   * A `SearchOperator` that performs vector search within the `\$search` pipeline stage.
+   *
+   * @see `SearchOperator.vectorSearch`
+   * @since 5.8
+   */
+  @Sealed
+  @Beta(Array(Reason.CLIENT))
+  type VectorSearchOperator = com.mongodb.client.model.search.VectorSearchOperator
+
+  /**
    * Fuzzy search options that may be used with some [[SearchOperator]]s.
    *
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/autocomplete/ autocomplete operator]]
@@ -259,7 +269,7 @@ package object search {
    * @see `SearchCollector.facet(SearchOperator, Iterable)`
    */
   @Sealed
-  @Beta(Array(Reason.CLIENT, Reason.SERVER))
+  @Beta(Array(Reason.CLIENT))
   type FacetSearchCollector = com.mongodb.client.model.search.FacetSearchCollector
 
   /**
@@ -272,6 +282,27 @@ package object search {
   type SearchOptions = com.mongodb.client.model.search.SearchOptions
 
   /**
+   * A query specification for MongoDB Atlas vector search with automated embedding.
+   *
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
+   * @since 5.7
+   */
+  @Sealed
+  @Beta(Array(Reason.SERVER))
+  type VectorSearchQuery = com.mongodb.client.model.search.VectorSearchQuery
+
+  /**
+   * A text-based vector search query for MongoDB Atlas auto-embedding.
+   *
+   * @see `VectorSearchQuery.textQuery(String)`
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
+   * @since 5.7
+   */
+  @Sealed
+  @Beta(Array(Reason.SERVER))
+  type TextVectorSearchQuery = com.mongodb.client.model.search.TextVectorSearchQuery
+
+  /**
    * Represents optional fields of the `\$vectorSearch` pipeline stage of an aggregation pipeline.
    *
    * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
@@ -279,7 +310,6 @@ package object search {
    * @since 4.11
    */
   @Sealed
-  @Beta(Array(Reason.SERVER))
   type VectorSearchOptions = com.mongodb.client.model.search.VectorSearchOptions
 
   /**
@@ -292,7 +322,6 @@ package object search {
    * @since 5.2
    */
   @Sealed
-  @Beta(Array(Reason.SERVER))
   type ApproximateVectorSearchOptions = com.mongodb.client.model.search.ApproximateVectorSearchOptions
 
   /**
@@ -306,8 +335,25 @@ package object search {
    * @since 5.2
    */
   @Sealed
-  @Beta(Array(Reason.SERVER))
   type ExactVectorSearchOptions = com.mongodb.client.model.search.ExactVectorSearchOptions
+
+  /**
+   * Represents the optional `nestedOptions` sub-document of the `\$vectorSearch` pipeline stage,
+   * used when searching against arrays of embeddings within nested (embedded) documents.
+   *
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
+   * @since 5.10
+   */
+  @Sealed
+  type VectorSearchNestedOptions = com.mongodb.client.model.search.VectorSearchNestedOptions
+
+  /**
+   * The score aggregation mode for a `\$vectorSearch` against arrays of embeddings in nested (embedded) documents.
+   *
+   * @see [[https://www.mongodb.com/docs/atlas/atlas-vector-search/vector-search-stage/ \$vectorSearch]]
+   * @since 5.10
+   */
+  type VectorSearchScoreMode = com.mongodb.client.model.search.VectorSearchScoreMode
 
   /**
    * Highlighting options.
@@ -329,21 +375,21 @@ package object search {
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/counting/ Counting]]
    */
   @Sealed
-  @Beta(Array(Reason.CLIENT, Reason.SERVER))
+  @Beta(Array(Reason.CLIENT))
   type SearchCount = com.mongodb.client.model.search.SearchCount
 
   /**
    * @see `SearchCount.total()`
    */
   @Sealed
-  @Beta(Array(Reason.CLIENT, Reason.SERVER))
+  @Beta(Array(Reason.CLIENT))
   type TotalSearchCount = com.mongodb.client.model.search.TotalSearchCount
 
   /**
    * @see `SearchCount.lowerBound()`
    */
   @Sealed
-  @Beta(Array(Reason.CLIENT, Reason.SERVER))
+  @Beta(Array(Reason.CLIENT))
   type LowerBoundSearchCount = com.mongodb.client.model.search.LowerBoundSearchCount
 
   /**
@@ -352,28 +398,28 @@ package object search {
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/facet/#facet-definition Facet definition]]
    */
   @Sealed
-  @Beta(Array(Reason.CLIENT, Reason.SERVER))
+  @Beta(Array(Reason.CLIENT))
   type SearchFacet = com.mongodb.client.model.search.SearchFacet
 
   /**
    * @see `SearchFacet.stringFacet(String, FieldSearchPath)`
    */
   @Sealed
-  @Beta(Array(Reason.CLIENT, Reason.SERVER))
+  @Beta(Array(Reason.CLIENT))
   type StringSearchFacet = com.mongodb.client.model.search.StringSearchFacet
 
   /**
    * @see `SearchFacet.numberFacet(String, FieldSearchPath, Iterable)`
    */
   @Sealed
-  @Beta(Array(Reason.CLIENT, Reason.SERVER))
+  @Beta(Array(Reason.CLIENT))
   type NumberSearchFacet = com.mongodb.client.model.search.NumberSearchFacet
 
   /**
    * @see `SearchFacet.dateFacet(String, FieldSearchPath, Iterable)`
    */
   @Sealed
-  @Beta(Array(Reason.CLIENT, Reason.SERVER))
+  @Beta(Array(Reason.CLIENT))
   type DateSearchFacet = com.mongodb.client.model.search.DateSearchFacet
 
   /**

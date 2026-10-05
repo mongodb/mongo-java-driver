@@ -17,19 +17,21 @@
 package com.mongodb.internal.authentication;
 
 import com.mongodb.AwsCredential;
+import com.mongodb.internal.EnvironmentProvider;
 import org.bson.BsonDocument;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.authentication.HttpHelper.getHttpContents;
 
 class BuiltInAwsCredentialSupplier implements Supplier<AwsCredential> {
 
     @Override
     public AwsCredential get() {
-        if (System.getenv("AWS_ACCESS_KEY_ID") != null) {
+        if (EnvironmentProvider.getEnv("AWS_ACCESS_KEY_ID") != null) {
             return obtainFromEnvironmentVariables();
         } else {
             return obtainFromEc2OrEcsResponse();
@@ -38,13 +40,13 @@ class BuiltInAwsCredentialSupplier implements Supplier<AwsCredential> {
 
     private static AwsCredential obtainFromEnvironmentVariables() {
         return new AwsCredential(
-                System.getenv("AWS_ACCESS_KEY_ID"),
-                System.getenv("AWS_SECRET_ACCESS_KEY"),
-                System.getenv("AWS_SESSION_TOKEN"));
+                notNull("accessKeyId", EnvironmentProvider.getEnv("AWS_ACCESS_KEY_ID")),
+                notNull("secretAccessKey", EnvironmentProvider.getEnv("AWS_SECRET_ACCESS_KEY")),
+                EnvironmentProvider.getEnv("AWS_SESSION_TOKEN"));
     }
 
     private static AwsCredential obtainFromEc2OrEcsResponse() {
-        String path = System.getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI");
+        String path = EnvironmentProvider.getEnv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI");
         BsonDocument ec2OrEcsResponse = path == null ? BsonDocument.parse(getEc2Response()) : BsonDocument.parse(getEcsResponse(path));
 
         return new AwsCredential(

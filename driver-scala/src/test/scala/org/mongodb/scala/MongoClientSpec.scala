@@ -19,7 +19,7 @@ package org.mongodb.scala
 import com.mongodb.reactivestreams.client.{ MongoClient => JMongoClient }
 import org.bson.BsonDocument
 import org.mockito.Mockito.verify
-import org.mongodb.scala.model.bulk.{ ClientBulkWriteOptions, ClientBulkWriteResult, ClientNamespacedWriteModel }
+import org.mongodb.scala.model.bulk.{ ClientBulkWriteOptions, ClientNamespacedWriteModel }
 import org.scalatestplus.mockito.MockitoSugar
 
 import scala.collection.JavaConverters._
@@ -37,7 +37,7 @@ class MongoClientSpec extends BaseSpec with MockitoSugar {
 
     wrapped.foreach((name: String) => {
       val cleanedName = name.stripPrefix("get")
-      assert(local.contains(name) | local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
+      assert(local.contains(name) || local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
     })
   }
 
@@ -135,5 +135,11 @@ class MongoClientSpec extends BaseSpec with MockitoSugar {
   it should "call the underlying getClusterDescription" in {
     mongoClient.getClusterDescription
     verify(wrapped).getClusterDescription
+  }
+
+  it should "call the underlying appendMetadata" in {
+    val driverInformation = MongoDriverInformation.builder().build()
+    mongoClient.appendMetadata(driverInformation)
+    verify(wrapped).appendMetadata(driverInformation)
   }
 }

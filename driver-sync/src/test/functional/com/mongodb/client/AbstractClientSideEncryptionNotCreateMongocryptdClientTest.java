@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
-import static com.mongodb.client.AbstractClientSideEncryptionTest.cryptSharedLibPathSysPropValue;
+import static com.mongodb.ClusterFixture.cryptSharedLibPathSysPropValue;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.unified.UnifiedClientEncryptionHelper.localKmsProviderKey;
 import static java.lang.Math.toIntExact;

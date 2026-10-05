@@ -44,7 +44,6 @@ import static com.mongodb.MongoCredential.createPlainCredential
 import static com.mongodb.MongoCredential.createScramSha1Credential
 import static com.mongodb.MongoCredential.createScramSha256Credential
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
-import static com.mongodb.internal.connection.ClientMetadataHelperProseTest.createExpectedClientMetadataDocument
 import static com.mongodb.internal.connection.MessageHelper.LEGACY_HELLO
 import static com.mongodb.internal.connection.MessageHelper.buildSuccessfulReply
 import static com.mongodb.internal.connection.MessageHelper.decodeCommand
@@ -54,7 +53,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def serverId = new ServerId(new ClusterId(), new ServerAddress())
     def internalConnection = new TestInternalConnection(serverId, ServerType.STANDALONE)
-    def operationContext = simpleOperationContext(TimeoutSettings.DEFAULT, null)
+    def operationContext = simpleOperationContext(TimeoutSettings.DEFAULT)
 
     def 'should create correct description'() {
         given:
@@ -202,6 +201,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         def initializer = new InternalStreamConnectionInitializer(SINGLE, null, clientMetadataDocument, [], null)
         def expectedHelloCommandDocument = new BsonDocument(LEGACY_HELLO, new BsonInt32(1))
                 .append('helloOk', BsonBoolean.TRUE)
+                .append('backpressure', new BsonString('2'))
                 .append('\$db', new BsonString('admin'))
         if (clientMetadataDocument != null) {
              expectedHelloCommandDocument.append('client', clientMetadataDocument)
@@ -225,7 +225,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         decodeCommand(internalConnection.getSent()[0]) == expectedHelloCommandDocument
 
         where:
-        [clientMetadataDocument, async] << [[createExpectedClientMetadataDocument('appName'), null],
+        [clientMetadataDocument, async] << [[ClientMetadataTest.createExpectedClientMetadataDocument('appName'), null],
                                             [true, false]].combinations()
     }
 
@@ -234,6 +234,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         def initializer = new InternalStreamConnectionInitializer(SINGLE, null, null, compressors, null)
         def expectedHelloCommandDocument = new BsonDocument(LEGACY_HELLO, new BsonInt32(1))
                 .append('helloOk', BsonBoolean.TRUE)
+                .append('backpressure', new BsonString('2'))
                 .append('\$db', new BsonString('admin'))
 
         def compressionArray = new BsonArray()
@@ -404,7 +405,8 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         ((SpeculativeAuthenticator) authenticator).getSpeculativeAuthenticateResponse() == null
         ((SpeculativeAuthenticator) authenticator)
                 .createSpeculativeAuthenticateCommand(internalConnection) == null
-        BsonDocument.parse("{$LEGACY_HELLO: 1, helloOk: true, '\$db': 'admin'}") == decodeCommand(internalConnection.getSent()[0])
+        BsonDocument.parse("{$LEGACY_HELLO: 1, helloOk: true, backpressure: \"2\", '\$db': 'admin'}") ==
+                decodeCommand(internalConnection.getSent()[0])
 
         where:
         async << [true, false]
@@ -501,7 +503,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def createHelloCommand(final String firstClientChallenge, final String mechanism,
                               final boolean hasSaslSupportedMechs) {
-        String hello = "{$LEGACY_HELLO: 1, helloOk: true, " +
+        String hello = "{$LEGACY_HELLO: 1, helloOk: true, backpressure: \"2\", " +
                 (hasSaslSupportedMechs ? 'saslSupportedMechs: "database.user", ' : '') +
                 (mechanism == 'MONGODB-X509' ?
                         'speculativeAuthenticate: { authenticate: 1, ' +

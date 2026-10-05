@@ -27,6 +27,7 @@ import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.binding.AsyncWriteBinding
 import com.mongodb.internal.connection.AsyncConnection
+import com.mongodb.internal.connection.OperationContext
 import com.mongodb.internal.session.SessionContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
@@ -35,7 +36,7 @@ import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.Decoder
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync
@@ -73,26 +74,24 @@ class AsyncOperationHelperSpecification extends Specification {
             _ * getDescription() >> connectionDescription
         }
 
-        def operationContext = OPERATION_CONTEXT.withSessionContext(
+        def operationContext = createOperationContext().withSessionContext(
                 Stub(SessionContext) {
                     hasSession() >> true
                     hasActiveTransaction() >> false
                     getReadConcern() >> ReadConcern.DEFAULT
                 })
         def connectionSource = Stub(AsyncConnectionSource) {
-            getConnection(_) >> { it[0].onResult(connection, null) }
+            getConnection(_ as OperationContext, _ as SingleResultCallback) >> { it[1].onResult(connection, null) }
             getServerDescription() >> serverDescription
-            getOperationContext() >> operationContext
         }
         def asyncWriteBinding = Stub(AsyncWriteBinding) {
-            getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
-            getOperationContext() >> operationContext
+            getWriteConnectionSource(_ as OperationContext, _ as SingleResultCallback) >> { it[1].onResult(connectionSource, null) }
         }
 
         when:
-        executeRetryableWriteAsync(asyncWriteBinding, dbName, primary(),
+        executeRetryableWriteAsync(asyncWriteBinding, operationContext, dbName, primary(),
                 NoOpFieldNameValidator.INSTANCE, decoder, commandCreator, FindAndModifyHelper.asyncTransformer(),
-                { cmd -> cmd }, callback)
+                { cmd -> cmd }, true, null, callback)
 
         then:
         2 * connection.commandAsync(dbName, command, _, primary(), decoder, *_) >> { it.last().onResult(results.poll(), null) }
@@ -109,15 +108,15 @@ class AsyncOperationHelperSpecification extends Specification {
         def callback = Stub(SingleResultCallback)
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
-            getConnection(_) >> { it[0].onResult(connection, null) }
+            getConnection(_ as OperationContext, _ as SingleResultCallback) >> { it[1].onResult(connection, null) }
         }
         def asyncWriteBinding = Stub(AsyncWriteBinding) {
-            getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+            getWriteConnectionSource(_ as OperationContext, _ as SingleResultCallback) >> { it[1].onResult(connectionSource, null) }
         }
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeCommandAsync(asyncWriteBinding, dbName, command, connection, { t, conn -> t }, callback)
+        executeCommandAsync(asyncWriteBinding, createOperationContext(), dbName, command, connection, { t, conn -> t }, callback)
 
         then:
         _ * connection.getDescription() >> connectionDescription
@@ -135,18 +134,17 @@ class AsyncOperationHelperSpecification extends Specification {
         def function = Stub(CommandReadTransformerAsync)
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
-            getOperationContext() >> OPERATION_CONTEXT
-            getConnection(_) >> { it[0].onResult(connection, null) }
+            getConnection(_ as OperationContext, _ as SingleResultCallback) >> { it[1].onResult(connection, null) }
             getReadPreference() >> readPreference
         }
         def asyncReadBinding = Stub(AsyncReadBinding) {
-            getOperationContext() >> OPERATION_CONTEXT
-            getReadConnectionSource(_)  >> { it[0].onResult(connectionSource, null) }
+            getReadConnectionSource(_ as OperationContext, _ as SingleResultCallback)  >> { it[1].onResult(connectionSource, null) }
         }
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeRetryableReadAsync(asyncReadBinding, dbName, commandCreator, decoder, function, false, callback)
+        executeRetryableReadAsync(asyncReadBinding, createOperationContext(), dbName, commandCreator, decoder, function,
+                false, null, callback)
 
         then:
         _ * connection.getDescription() >> connectionDescription

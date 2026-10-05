@@ -17,11 +17,13 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoCommandException;
+import com.mongodb.MongoException;
 import com.mongodb.MongoNodeIsRecoveringException;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketReadTimeoutException;
+import com.mongodb.MongoStalePrimaryException;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ServerDescription;
@@ -44,11 +46,20 @@ import static com.mongodb.internal.connection.ServerDescriptionHelper.unknownCon
 @ThreadSafe
 interface SdamServerDescriptionManager {
     /**
+     * Receives candidate {@link ServerDescription} from the monitoring activity.
+     *
      * @param candidateDescription A {@link ServerDescription} that may or may not be applied
      *                             {@linkplain TopologyVersionHelper#newer(TopologyVersion, TopologyVersion) depending on}
      *                             its {@link ServerDescription#getTopologyVersion() topology version}.
      */
-    void update(ServerDescription candidateDescription);
+    void monitorUpdate(ServerDescription candidateDescription);
+
+    /**
+     * @param candidateDescription A {@link ServerDescription} that may or may not be applied
+     *                             {@linkplain TopologyVersionHelper#newer(TopologyVersion, TopologyVersion) depending on}
+     *                             its {@link ServerDescription#getTopologyVersion() topology version}.
+     */
+    void updateToUnknown(ServerDescription candidateDescription);
 
     void handleExceptionBeforeHandshake(SdamIssue sdamIssue);
 
@@ -84,32 +95,15 @@ interface SdamServerDescriptionManager {
             this.context = assertNotNull(context);
         }
 
-        /**
-         * @see #unspecified(Context)
-         */
-        static SdamIssue specific(final Throwable exception, final Context context) {
+        static SdamIssue of(final Throwable exception, final Context context) {
             return new SdamIssue(assertNotNull(exception), assertNotNull(context));
         }
 
         /**
-         * @see #specific(Throwable, Context)
-         */
-        static SdamIssue unspecified(final Context context) {
-            return new SdamIssue(null, assertNotNull(context));
-        }
-
-        /**
-         * @return An exception if and only if this {@link SdamIssue} is {@linkplain #specific()}.
+         * @return An exception that caused this {@link SdamIssue}.
          */
         Optional<Throwable> exception() {
             return Optional.ofNullable(exception);
-        }
-
-        /**
-         * @return {@code true} if and only if this {@link SdamIssue} has an exception {@linkplain #specific(Throwable, Context) specified}.
-         */
-        boolean specific() {
-            return exception != null;
         }
 
         ServerDescription serverDescription() {
@@ -125,6 +119,10 @@ interface SdamServerDescriptionManager {
          */
         boolean relatedToStateChange() {
             return exception instanceof MongoNotPrimaryException || exception instanceof MongoNodeIsRecoveringException;
+        }
+
+        boolean relatedToStalePrimary() {
+            return exception instanceof MongoStalePrimaryException;
         }
 
         /**
@@ -163,6 +161,11 @@ interface SdamServerDescriptionManager {
 
         boolean relatedToWriteConcern() {
             return exception instanceof MongoWriteConcernWithResponseException;
+        }
+
+        boolean hasSystemOverloadedLabel() {
+            return exception instanceof MongoException
+                    && ((MongoException) exception).hasErrorLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL);
         }
 
         private static boolean stale(@Nullable final Throwable t, final ServerDescription currentServerDescription) {

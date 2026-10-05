@@ -48,7 +48,8 @@ public final class LogMessage {
     public enum Component {
         COMMAND("command"),
         CONNECTION("connection"),
-        SERVER_SELECTION("serverSelection");
+        SERVER_SELECTION("serverSelection"),
+        TOPOLOGY("topology");
 
         private static final Map<String, Component> INDEX;
 
@@ -103,10 +104,8 @@ public final class LogMessage {
             COMMAND_NAME("commandName"),
             REQUEST_ID("requestId"),
             OPERATION_ID("operationId"),
-            /**
-             * Not supported.
-             */
             OPERATION("operation"),
+            AWAITED("awaited"),
             SERVICE_ID("serviceId"),
             SERVER_CONNECTION_ID("serverConnectionId"),
             DRIVER_CONNECTION_ID("driverConnectionId"),
@@ -121,10 +120,13 @@ public final class LogMessage {
             MIN_POOL_SIZE("minPoolSize"),
             MAX_POOL_SIZE("maxPoolSize"),
             MAX_CONNECTING("maxConnecting"),
-            WAIT_QUEUE_TIMEOUT_MS("waitQueueTimeoutMS"),
+            MAX_WAIT_TIMEOUT_MS("waitQueueTimeoutMS"),
             SELECTOR("selector"),
             TOPOLOGY_DESCRIPTION("topologyDescription"),
-            REMAINING_TIME_MS("remainingTimeMS");
+            REMAINING_TIME_MS("remainingTimeMS"),
+            TOPOLOGY_ID("topologyId"),
+            TOPOLOGY_PREVIOUS_DESCRIPTION("previousDescription"),
+            TOPOLOGY_NEW_DESCRIPTION("newDescription");
 
             private final String value;
 

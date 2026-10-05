@@ -22,14 +22,13 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 
+import static com.mongodb.internal.TimeoutContext.DEFAULT_TIMEOUT_MESSAGE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class TimeoutHelper {
-    private static final String DEFAULT_TIMEOUT_MESSAGE = "Operation exceeded the timeout limit.";
-
     private TimeoutHelper() {
         //NOP
     }

@@ -22,6 +22,7 @@ import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -45,21 +46,26 @@ import static com.mongodb.internal.operation.SyncOperationHelper.singleBatchCurs
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
+public class DistinctOperation<T> implements ReadOperationCursor<T> {
+    private static final String COMMAND_NAME = "distinct";
     private static final String VALUES = "values";
     private final MongoNamespace namespace;
     private final String fieldName;
     private final Decoder<T> decoder;
     private boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private BsonDocument filter;
     private Collation collation;
     private BsonValue comment;
     private BsonValue hint;
 
-    public DistinctOperation(final MongoNamespace namespace, final String fieldName, final Decoder<T> decoder) {
+    public DistinctOperation(final MongoNamespace namespace, final String fieldName, final Decoder<T> decoder,
+            @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.namespace = notNull("namespace", namespace);
         this.fieldName = notNull("fieldName", fieldName);
         this.decoder = notNull("decoder", decoder);
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     public BsonDocument getFilter() {
@@ -108,15 +114,26 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
     }
 
     @Override
-    public BatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, namespace.getDatabaseName(), getCommandCreator(), createCommandDecoder(),
-                singleBatchCursorTransformer(VALUES), retryReads);
+    public String getCommandName() {
+        return COMMAND_NAME;
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        executeRetryableReadAsync(binding, namespace.getDatabaseName(),
-                                  getCommandCreator(), createCommandDecoder(), asyncSingleBatchCursorTransformer(VALUES), retryReads,
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    @Override
+    public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
+        return executeRetryableRead(binding, operationContext, namespace.getDatabaseName(), getCommandCreator(), createCommandDecoder(),
+                singleBatchCursorTransformer(VALUES), retryReads, maxAdaptiveRetriesSetting);
+    }
+
+    @Override
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        executeRetryableReadAsync(binding, operationContext,  namespace.getDatabaseName(),
+                                  getCommandCreator(), createCommandDecoder(), asyncSingleBatchCursorTransformer(VALUES),
+                                  retryReads, maxAdaptiveRetriesSetting,
                                   errorHandlingCallback(callback, LOGGER));
     }
 
@@ -126,7 +143,7 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
 
     private CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
-            BsonDocument commandDocument = new BsonDocument("distinct", new BsonString(namespace.getCollectionName()));
+            BsonDocument commandDocument = new BsonDocument(getCommandName(), new BsonString(namespace.getCollectionName()));
             appendReadConcernToCommand(operationContext.getSessionContext(), connectionDescription.getMaxWireVersion(), commandDocument);
             commandDocument.put("key", new BsonString(fieldName));
             putIfNotNull(commandDocument, "query", filter);

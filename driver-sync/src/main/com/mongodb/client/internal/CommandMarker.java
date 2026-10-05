@@ -84,11 +84,11 @@ class CommandMarker implements Closeable {
         }
     }
 
-    RawBsonDocument mark(final String databaseName, final RawBsonDocument command, @Nullable final Timeout operationTimeout) {
+    RawBsonDocument mark(final String databaseName, final RawBsonDocument command, @Nullable final Timeout timeout) {
         if (client != null) {
             try {
                 try {
-                    return executeCommand(databaseName, command, operationTimeout);
+                    return executeCommand(databaseName, command, timeout);
                 } catch (MongoOperationTimeoutException e){
                     throw e;
                 } catch (MongoTimeoutException e) {
@@ -96,7 +96,7 @@ class CommandMarker implements Closeable {
                         throw e;
                     }
                     startProcess(processBuilder);
-                    return executeCommand(databaseName, command, operationTimeout);
+                    return executeCommand(databaseName, command, timeout);
                 }
             } catch (MongoException e) {
                 throw wrapInClientException(e);
@@ -113,14 +113,17 @@ class CommandMarker implements Closeable {
         }
     }
 
-    private RawBsonDocument executeCommand(final String databaseName, final RawBsonDocument markableCommand, @Nullable final Timeout operationTimeout) {
+    private RawBsonDocument executeCommand(
+            final String databaseName,
+            final RawBsonDocument markableCommand,
+            @Nullable final Timeout timeout) {
         assertNotNull(client);
 
         MongoDatabase mongoDatabase = client.getDatabase(databaseName)
                 .withReadConcern(ReadConcern.DEFAULT)
                 .withReadPreference(ReadPreference.primary());
 
-        return databaseWithTimeout(mongoDatabase, TIMEOUT_ERROR_MESSAGE, operationTimeout)
+        return databaseWithTimeout(mongoDatabase, TIMEOUT_ERROR_MESSAGE, timeout)
                 .runCommand(markableCommand, RawBsonDocument.class);
     }
 

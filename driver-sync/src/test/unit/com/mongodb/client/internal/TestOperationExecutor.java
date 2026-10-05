@@ -42,7 +42,7 @@ public class TestOperationExecutor implements OperationExecutor {
     }
 
     @Override
-    public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern) {
+    public <T> T execute(final ReadOperation<T, ?> operation, final ReadPreference readPreference, final ReadConcern readConcern) {
         return execute(operation, readPreference, readConcern, null);
     }
 
@@ -52,7 +52,7 @@ public class TestOperationExecutor implements OperationExecutor {
     }
 
     @Override
-    public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
+    public <T> T execute(final ReadOperation<T, ?> operation, final ReadPreference readPreference, final ReadConcern readConcern,
                          @Nullable final ClientSession session) {
         clientSessions.add(session);
         readOperations.add(operation);

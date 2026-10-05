@@ -35,6 +35,7 @@ import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.DnsClient;
 
@@ -65,6 +66,7 @@ public final class DefaultClusterFactory {
                                  final StreamFactory streamFactory,
                                  final TimeoutSettings heartbeatTimeoutSettings,
                                  final StreamFactory heartbeatStreamFactory,
+                                 final AsyncClientExecutor clientExecutor,
                                  @Nullable final MongoCredential credential,
                                  final LoggerSettings loggerSettings,
                                  @Nullable final CommandListener commandListener,
@@ -103,31 +105,33 @@ public final class DefaultClusterFactory {
 
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = new DefaultDnsSrvRecordMonitorFactory(clusterId, serverSettings, dnsClient);
         InternalOperationContextFactory clusterOperationContextFactory =
-                new InternalOperationContextFactory(clusterTimeoutSettings, serverApi);
+                new InternalOperationContextFactory(clusterTimeoutSettings, serverApi, clientExecutor);
         InternalOperationContextFactory heartBeatOperationContextFactory =
-                new InternalOperationContextFactory(heartbeatTimeoutSettings, serverApi);
+                new InternalOperationContextFactory(heartbeatTimeoutSettings, serverApi, clientExecutor);
+
+        ClientMetadata clientMetadata = new ClientMetadata(
+                applicationName,
+                mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build());
 
         if (clusterSettings.getMode() == ClusterConnectionMode.LOAD_BALANCED) {
             ClusterableServerFactory serverFactory = new LoadBalancedClusterableServerFactory(serverSettings,
                     connectionPoolSettings, internalConnectionPoolSettings, streamFactory, credential, loggerSettings, commandListener,
-                    applicationName, mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(),
                     compressorList, serverApi, clusterOperationContextFactory);
-            return new LoadBalancedCluster(clusterId, clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
+            return new LoadBalancedCluster(clusterId, clusterSettings, serverFactory, clientMetadata, dnsSrvRecordMonitorFactory);
         } else {
             ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(serverSettings,
                     connectionPoolSettings, internalConnectionPoolSettings,
                     clusterOperationContextFactory, streamFactory, heartBeatOperationContextFactory, heartbeatStreamFactory, credential,
-                    loggerSettings, commandListener, applicationName,
-                    mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(), compressorList,
+                    loggerSettings, commandListener, compressorList,
                     serverApi, FaasEnvironment.getFaasEnvironment() != FaasEnvironment.UNKNOWN);
 
             if (clusterSettings.getMode() == ClusterConnectionMode.SINGLE) {
-                return new SingleServerCluster(clusterId, clusterSettings, serverFactory);
+                return new SingleServerCluster(clusterId, clusterSettings, serverFactory, clientMetadata);
             } else if (clusterSettings.getMode() == ClusterConnectionMode.MULTIPLE) {
                 if (clusterSettings.getSrvHost() == null) {
-                    return new MultiServerCluster(clusterId, clusterSettings, serverFactory);
+                    return new MultiServerCluster(clusterId, clusterSettings, serverFactory, clientMetadata);
                 } else {
-                    return new DnsMultiServerCluster(clusterId, clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
+                    return new DnsMultiServerCluster(clusterId, clusterSettings, serverFactory, clientMetadata, dnsSrvRecordMonitorFactory);
                 }
             } else {
                 throw new UnsupportedOperationException("Unsupported cluster mode: " + clusterSettings.getMode());

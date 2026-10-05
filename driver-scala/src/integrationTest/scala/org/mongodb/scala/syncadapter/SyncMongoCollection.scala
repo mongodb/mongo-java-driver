@@ -29,11 +29,10 @@ import com.mongodb.{ MongoNamespace, ReadConcern, ReadPreference, WriteConcern }
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
-import org.mongodb.scala.MongoCollection
+import org.mongodb.scala.{ MongoCollection, ObservableFuture, SingleObservableFuture }
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.result.{ InsertManyResult, InsertOneResult }
 
-import java.util
 import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.{ Duration, MILLISECONDS }
@@ -588,18 +587,18 @@ case class SyncMongoCollection[T](wrapped: MongoCollection[T]) extends JMongoCol
     )
 
   override def renameCollection(newCollectionNamespace: MongoNamespace): Unit = {
-    throw new UnsupportedOperationException
+    wrapped.renameCollection(newCollectionNamespace).toFuture().get()
   }
 
   override def renameCollection(
       newCollectionNamespace: MongoNamespace,
       renameCollectionOptions: RenameCollectionOptions
   ): Unit = {
-    throw new UnsupportedOperationException
+    wrapped.renameCollection(newCollectionNamespace, renameCollectionOptions).toFuture().get()
   }
 
   override def renameCollection(clientSession: ClientSession, newCollectionNamespace: MongoNamespace): Unit = {
-    throw new UnsupportedOperationException
+    wrapped.renameCollection(unwrap(clientSession), newCollectionNamespace).toFuture().get()
   }
 
   override def renameCollection(
@@ -607,6 +606,6 @@ case class SyncMongoCollection[T](wrapped: MongoCollection[T]) extends JMongoCol
       newCollectionNamespace: MongoNamespace,
       renameCollectionOptions: RenameCollectionOptions
   ): Unit = {
-    throw new UnsupportedOperationException
+    wrapped.renameCollection(unwrap(clientSession), newCollectionNamespace, renameCollectionOptions).toFuture().get()
   }
 }

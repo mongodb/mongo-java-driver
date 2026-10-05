@@ -91,63 +91,70 @@ class MongoChangeStreamCursorSpecification extends Specification {
 
     def 'should get next from batch cursor'() {
         given:
-        def firstBatch = [RawBsonDocument.parse('{ _id: { _data: 1 }, x: 1 }'),
+
+        def firstBatchFromBatchCursor = [RawBsonDocument.parse('{ _id: { _data: 1 }, x: 1 }'),
                           RawBsonDocument.parse('{ _id: { _data: 2 }, x: 1 }')]
-        def secondBatch = [RawBsonDocument.parse('{ _id: { _data: 3 }, x: 2 }')]
+        def expectedFirstBatch = firstBatchFromBatchCursor.collect()
+        def secondBatchFromBatchCursor = [RawBsonDocument.parse('{ _id: { _data: 3 }, x: 2 }')]
+        def expectedSecondBatch = secondBatchFromBatchCursor.collect()
 
         def batchCursor = Stub(AggregateResponseBatchCursor)
         def codec = new RawBsonDocumentCodec()
         def resumeToken = Mock(BsonDocument)
 
         batchCursor.hasNext() >>> [true, true, true, true, false]
-        batchCursor.next() >>> [firstBatch, secondBatch]
+        batchCursor.next() >>> [firstBatchFromBatchCursor, secondBatchFromBatchCursor]
 
         def cursor = new MongoChangeStreamCursorImpl(batchCursor, codec, resumeToken)
 
         expect:
         cursor.hasNext()
-        cursor.next() == firstBatch[0]
+        cursor.next() == expectedFirstBatch[0]
         cursor.hasNext()
-        cursor.next() == firstBatch[1]
+        cursor.next() == expectedFirstBatch[1]
         cursor.hasNext()
-        cursor.next() == secondBatch[0]
+        cursor.next() == expectedSecondBatch[0]
         !cursor.hasNext()
     }
 
     def 'should try next from batch cursor'() {
         given:
-        def firstBatch = [RawBsonDocument.parse('{ _id: { _data: 1 }, x: 1 }'),
-                          RawBsonDocument.parse('{ _id: { _data: 2 }, x: 1 }')]
-        def secondBatch = [RawBsonDocument.parse('{ _id: { _data: 3 }, x: 2 }')]
+        def firstBatchFromBatchCursor = [RawBsonDocument.parse('{ _id: { _data: 1 }, x: 1 }'),
+                                         RawBsonDocument.parse('{ _id: { _data: 2 }, x: 1 }')]
+        def expectedFirstBatch = firstBatchFromBatchCursor.collect()
+        def secondBatchFromBatchCursor = [RawBsonDocument.parse('{ _id: { _data: 3 }, x: 2 }')]
+        def expectedSecondBatch = secondBatchFromBatchCursor.collect()
 
         def batchCursor = Stub(AggregateResponseBatchCursor)
         def codec = new RawBsonDocumentCodec()
         def resumeToken = Mock(BsonDocument)
 
-        batchCursor.tryNext() >>> [firstBatch, null, secondBatch, null]
+        batchCursor.tryNext() >>> [firstBatchFromBatchCursor, null, secondBatchFromBatchCursor, null]
 
         def cursor = new MongoChangeStreamCursorImpl(batchCursor, codec, resumeToken)
 
         expect:
-        cursor.tryNext() == firstBatch[0]
-        cursor.tryNext() == firstBatch[1]
+        cursor.tryNext() == expectedFirstBatch[0]
+        cursor.tryNext() == expectedFirstBatch[1]
         cursor.tryNext() == null
-        cursor.tryNext() == secondBatch[0]
+        cursor.tryNext() == expectedSecondBatch[0]
         cursor.tryNext() == null
     }
 
     def 'should get cached resume token after next'() {
         given:
-        def firstBatch = [RawBsonDocument.parse('{ _id: { _data: 1 }, x: 1 }'),
-                          RawBsonDocument.parse('{ _id: { _data: 2 }, x: 1 }')]
-        List<BsonDocument> secondBatch = [RawBsonDocument.parse('{ _id: { _data: 3 }, x: 2 }')]
+        def firstBatchFromBatchCursor = [RawBsonDocument.parse('{ _id: { _data: 1 }, x: 1 }'),
+                                         RawBsonDocument.parse('{ _id: { _data: 2 }, x: 1 }')]
+        def expectedFirstBatch = firstBatchFromBatchCursor.collect()
+        def secondBatchFromBatchCursor = [RawBsonDocument.parse('{ _id: { _data: 3 }, x: 2 }')]
+        def expectedSecondBatch = secondBatchFromBatchCursor.collect()
 
         def batchCursor = Stub(AggregateResponseBatchCursor)
         def codec = new RawBsonDocumentCodec()
         def resumeToken = new BsonDocument('_data', new BsonInt32(1))
 
         batchCursor.hasNext() >>> [true, true, true, false]
-        batchCursor.next() >>> [firstBatch, secondBatch]
+        batchCursor.next() >>> [firstBatchFromBatchCursor, secondBatchFromBatchCursor]
         batchCursor.getPostBatchResumeToken() >>> [new BsonDocument('_data', new BsonInt32(2)),
                                                    new BsonDocument('_data', new BsonInt32(2)),
                                                    new BsonDocument('_data', new BsonInt32(3)),
@@ -157,26 +164,29 @@ class MongoChangeStreamCursorSpecification extends Specification {
 
         expect:
         cursor.getResumeToken() == resumeToken
-        cursor.next() == firstBatch.head()
+        cursor.next() == expectedFirstBatch.head()
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(1))
-        cursor.next() == firstBatch.last()
+        cursor.next() == expectedFirstBatch.last()
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(2))
-        cursor.next() == secondBatch.head()
+        cursor.next() == expectedSecondBatch.head()
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(3))
     }
 
     def 'should get cached resume token after tryNext'() {
         given:
-        def firstBatch = [RawBsonDocument.parse('{ _id: { _data: 1 }, x: 1 }'),
-                          RawBsonDocument.parse('{ _id: { _data: 2 }, x: 1 }')]
-        def secondBatch = [RawBsonDocument.parse('{ _id: { _data: 3 }, x: 2 }')]
+        def firstBatchFromBatchCursor = [RawBsonDocument.parse('{ _id: { _data: 1 }, x: 1 }'),
+                                         RawBsonDocument.parse('{ _id: { _data: 2 }, x: 1 }')]
+        def expectedFirstBatch = firstBatchFromBatchCursor.collect()
+        def secondBatchFromBatchCursor = [RawBsonDocument.parse('{ _id: { _data: 3 }, x: 2 }')]
+        def expectedSecondBatch = secondBatchFromBatchCursor.collect()
+
 
         def batchCursor = Stub(AggregateResponseBatchCursor)
         def codec = new RawBsonDocumentCodec()
         def resumeToken = new BsonDocument('_data', new BsonInt32(1))
 
         batchCursor.hasNext() >>> [true, true, true, false]
-        batchCursor.tryNext() >>> [firstBatch, null, secondBatch, null]
+        batchCursor.tryNext() >>> [firstBatchFromBatchCursor, null, secondBatchFromBatchCursor, null]
         batchCursor.getPostBatchResumeToken() >>> [new BsonDocument('_data', new BsonInt32(2)),
                                                    new BsonDocument('_data', new BsonInt32(2)),
                                                    new BsonDocument('_data', new BsonInt32(2)),
@@ -189,13 +199,13 @@ class MongoChangeStreamCursorSpecification extends Specification {
 
         expect:
         cursor.getResumeToken() == resumeToken
-        cursor.tryNext() == firstBatch.head()
+        cursor.tryNext() == expectedFirstBatch.head()
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(1))
-        cursor.tryNext() == firstBatch.last()
+        cursor.tryNext() == expectedFirstBatch.last()
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(2))
         cursor.tryNext() == null
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(2))
-        cursor.tryNext() == secondBatch.head()
+        cursor.tryNext() == expectedSecondBatch.head()
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(3))
         cursor.tryNext() == null
         cursor.getResumeToken() == new BsonDocument('_data', new BsonInt32(3))

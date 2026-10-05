@@ -15,11 +15,13 @@
  */
 package com.mongodb.internal.operation;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerCursor;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.ReferenceCounted;
 import com.mongodb.internal.connection.Connection;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.mockito.MongoMockito;
 import org.junit.jupiter.api.Test;
 
@@ -42,18 +44,18 @@ final class CursorResourceManagerTest {
             }
 
             @Override
-            void doClose() {
+            void doClose(final OperationContext operationContext) {
             }
         };
         cursorResourceManager.tryStartOperation();
         try {
             assertDoesNotThrow(() -> {
-                cursorResourceManager.close();
-                cursorResourceManager.close();
+                cursorResourceManager.close(ClusterFixture.createOperationContext());
+                cursorResourceManager.close(ClusterFixture.createOperationContext());
                 cursorResourceManager.setServerCursor(null);
             });
         } finally {
-            cursorResourceManager.endOperation();
+            cursorResourceManager.endOperation(ClusterFixture.createOperationContext());
         }
     }
 }

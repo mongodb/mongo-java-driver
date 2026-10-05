@@ -16,7 +16,11 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.MongoNamespace;
+import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.connection.OperationContext;
 
 /**
  * An operation which writes to a MongoDB server.
@@ -26,10 +30,30 @@ import com.mongodb.internal.binding.WriteBinding;
 public interface WriteOperation<T> {
 
     /**
+     * @return the command name of the operation, e.g. "insert", "update", "delete", "bulkWrite", etc.
+     */
+    String getCommandName();
+
+    /**
+     * @return the namespace of the operation
+     */
+    MongoNamespace getNamespace();
+
+    /**
      * General execute which can return anything of type T
      *
      * @param binding the binding to execute in the context of
+     * @param operationContext the operation context to use
      * @return T, the result of the execution
      */
-    T execute(WriteBinding binding);
+    T execute(WriteBinding binding, OperationContext operationContext);
+
+    /**
+     * General execute which can return anything of type T
+     *
+     * @param binding the binding to execute in the context of
+     * @param operationContext the operation context to use
+     * @param callback the callback to be called when the operation has been executed
+     */
+    void executeAsync(AsyncWriteBinding binding, OperationContext operationContext, SingleResultCallback<T> callback);
 }

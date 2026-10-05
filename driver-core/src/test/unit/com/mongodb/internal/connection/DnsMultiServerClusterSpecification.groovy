@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection
 
+import com.mongodb.ClusterFixture
 import com.mongodb.MongoConfigurationException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
@@ -54,7 +55,8 @@ class DnsMultiServerClusterSpecification extends Specification {
         DnsSrvRecordInitializer initializer
         def dnsSrvRecordMonitorFactory = new DnsSrvRecordMonitorFactory() {
             @Override
-            DnsSrvRecordMonitor create(final String hostName, String srvServiceName, final DnsSrvRecordInitializer dnsSrvRecordListener) {
+            DnsSrvRecordMonitor create(final String hostName, String srvServiceName, final String srvAllowedHostsSuffix,
+                    final DnsSrvRecordInitializer dnsSrvRecordListener) {
                 initializer = dnsSrvRecordListener
                 dnsSrvRecordMonitor
             }
@@ -67,7 +69,7 @@ class DnsMultiServerClusterSpecification extends Specification {
                         .srvHost(srvHost)
                         .mode(MULTIPLE)
                         .build(),
-                factory, dnsSrvRecordMonitorFactory)
+                factory, ClusterFixture.CLIENT_METADATA, dnsSrvRecordMonitorFactory)
 
         then: 'the monitor is created and started'
         initializer != null

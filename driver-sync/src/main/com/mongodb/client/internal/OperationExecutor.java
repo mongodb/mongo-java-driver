@@ -40,7 +40,7 @@ public interface OperationExecutor {
      * @param readConcern    the read concern
      * @return the result of executing the operation.
      */
-    <T> T execute(ReadOperation<T> operation, ReadPreference readPreference, ReadConcern readConcern);
+    <T> T execute(ReadOperation<T, ?> operation, ReadPreference readPreference, ReadConcern readConcern);
 
     /**
      * Execute the write operation.
@@ -62,7 +62,7 @@ public interface OperationExecutor {
      * @param session        the session to associate this operation with
      * @return the result of executing the operation.
      */
-    <T> T execute(ReadOperation<T> operation, ReadPreference readPreference, ReadConcern readConcern, @Nullable ClientSession session);
+    <T> T execute(ReadOperation<T, ?> operation, ReadPreference readPreference, ReadConcern readConcern, @Nullable ClientSession session);
 
     /**
      * Execute the write operation.

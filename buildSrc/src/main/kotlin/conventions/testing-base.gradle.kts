@@ -16,6 +16,7 @@
 package conventions
 
 import com.adarshr.gradle.testlogger.theme.ThemeType
+import libs
 import project.DEFAULT_JAVA_VERSION
 
 // Default test configuration for projects
@@ -24,14 +25,17 @@ import project.DEFAULT_JAVA_VERSION
 // https://plugins.gradle.org/plugin/com.adarshr.test-logger
 plugins {
     id("java-library")
-    id("com.adarshr.test-logger")
+    alias(libs.plugins.test.logger)
 }
 
 tasks.withType<Test> {
-    maxHeapSize = "4g"
+    // Override with -PtestMaxHeapSize=<size> (e.g. "1g", "512m"). Defaults to 4g.
+    maxHeapSize = findProperty("testMaxHeapSize")?.toString() ?: "4g"
     maxParallelForks = 1
 
     useJUnitPlatform()
+
+    jvmArgs.add("-Dio.netty.leakDetection.level=paranoid")
 
     // Pass any `org.mongodb.*` system settings
     systemProperties =

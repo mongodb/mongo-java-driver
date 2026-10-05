@@ -21,6 +21,7 @@ import com.mongodb.ClientBulkWriteException;
 import com.mongodb.Function;
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.MongoWriteException;
@@ -36,7 +37,9 @@ import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.internal.connection.TestCommandListener;
+import com.mongodb.internal.event.ConfigureFailPointCommandListener;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
@@ -66,7 +69,6 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
@@ -75,6 +77,7 @@ import static com.mongodb.client.Fixture.getPrimary;
 import static com.mongodb.client.model.bulk.ClientBulkWriteOptions.clientBulkWriteOptions;
 import static com.mongodb.client.model.bulk.ClientNamespacedWriteModel.insertOne;
 import static com.mongodb.client.model.bulk.ClientUpdateOneOptions.clientUpdateOneOptions;
+import static com.mongodb.internal.operation.CommandOperationHelper.RETRYABLE_WRITE_ERROR_LABEL;
 import static java.lang.String.join;
 import static java.util.Arrays.asList;
 import static java.util.Collections.nCopies;
@@ -118,12 +121,14 @@ public class CrudProseTest {
              FailPoint ignored = FailPoint.enable(failPointDocument, getPrimary())) {
             MongoWriteConcernException actual = assertThrows(MongoWriteConcernException.class, () ->
                     droppedCollection(client, Document.class).insertOne(Document.parse("{ x: 1 }")));
-            assertEquals(actual.getWriteConcernError().getCode(), 100);
+            assertEquals(100, actual.getWriteConcernError().getCode());
             assertEquals("UnsatisfiableWriteConcern", actual.getWriteConcernError().getCodeName());
-            assertEquals(actual.getWriteConcernError().getDetails(), new BsonDocument("writeConcern",
-                    new BsonDocument("w", new BsonInt32(2))
-                            .append("wtimeout", new BsonInt32(0))
-                            .append("provenance", new BsonString("clientSupplied"))));
+            assertEquals(
+                    new BsonDocument("writeConcern",
+                            new BsonDocument("w", new BsonInt32(2))
+                                    .append("wtimeout", new BsonInt32(0))
+                                    .append("provenance", new BsonString("clientSupplied"))),
+                    actual.getWriteConcernError().getDetails());
         }
     }
 
@@ -167,7 +172,6 @@ public class CrudProseTest {
     @Test
     void testBulkWriteSplitsWhenExceedingMaxWriteBatchSize() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         TestCommandListener commandListener = new TestCommandListener();
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder().addCommandListener(commandListener))) {
             int maxWriteBatchSize = droppedDatabase(client).runCommand(new Document("hello", 1)).getInteger("maxWriteBatchSize");
@@ -189,7 +193,6 @@ public class CrudProseTest {
     @Test
     void testBulkWriteSplitsWhenExceedingMaxMessageSizeBytes() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         TestCommandListener commandListener = new TestCommandListener();
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder().addCommandListener(commandListener))) {
             Document helloResponse = droppedDatabase(client).runCommand(new Document("hello", 1));
@@ -214,9 +217,8 @@ public class CrudProseTest {
     @DisplayName("5. MongoClient.bulkWrite collects WriteConcernErrors across batches")
     @Test
     @SuppressWarnings("try")
-    protected void testBulkWriteCollectsWriteConcernErrorsAcrossBatches() throws InterruptedException {
+    void testBulkWriteCollectsWriteConcernErrorsAcrossBatches() throws InterruptedException {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         TestCommandListener commandListener = new TestCommandListener();
         BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
                 .append("mode", new BsonDocument("times", new BsonInt32(2)))
@@ -242,11 +244,10 @@ public class CrudProseTest {
     }
 
     @DisplayName("6. MongoClient.bulkWrite handles individual WriteErrors across batches")
-    @ParameterizedTest
+    @ParameterizedTest(name = "6. MongoClient.bulkWrite handles individual WriteErrors across batches--ordered:{0}")
     @ValueSource(booleans = {false, true})
-    protected void testBulkWriteHandlesWriteErrorsAcrossBatches(final boolean ordered) {
+    void testBulkWriteHandlesWriteErrorsAcrossBatches(final boolean ordered) {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         TestCommandListener commandListener = new TestCommandListener();
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
                 .retryWrites(false)
@@ -270,17 +271,49 @@ public class CrudProseTest {
     @Test
     void testBulkWriteHandlesCursorRequiringGetMore() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         assertBulkWriteHandlesCursorRequiringGetMore(false);
     }
 
     @DisplayName("8. MongoClient.bulkWrite handles a cursor requiring getMore within a transaction")
     @Test
-    protected void testBulkWriteHandlesCursorRequiringGetMoreWithinTransaction() {
+    void testBulkWriteHandlesCursorRequiringGetMoreWithinTransaction() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         assumeFalse(isStandalone());
         assertBulkWriteHandlesCursorRequiringGetMore(true);
+    }
+
+    /**
+     * This test is not from the specification.
+     */
+    @DisplayName("MongoClient.bulkWrite must not retry the bulkWrite command when the corresponding getMore command fails with an error"
+            + " eligible for retry under the write retry policy")
+    @Test
+    void testBulkWriteCommandNotRetriedWhenGetMoreFails() throws Exception {
+        assumeTrue(serverVersionAtLeast(8, 0));
+        TestCommandListener commandListener = new TestCommandListener();
+        BsonDocument configureFailPointFromListener = BsonDocument.parse(
+                "{\n"
+                + "    configureFailPoint: \"failCommand\",\n"
+                + "    mode: { times: 1 },\n"
+                + "    data: {\n"
+                + "        failCommands: ['getMore'],\n"
+                + "        errorCode: 6,\n"
+                + "        errorLabels: ['" + RETRYABLE_WRITE_ERROR_LABEL + "']\n"
+                + "    }\n"
+                + "}\n");
+        try (ConfigureFailPointCommandListener failGetMoreAfterBulkWrite =
+                     new ConfigureFailPointCommandListener(configureFailPointFromListener, getPrimary(), commandEvent ->
+                             (commandEvent instanceof CommandSucceededEvent) && commandEvent.getCommandName().equals("bulkWrite"));
+             MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
+                .retryWrites(true)
+                .addCommandListener(commandListener)
+                .addCommandListener(failGetMoreAfterBulkWrite))) {
+            assertThrows(MongoException.class, () -> clientBulkWriteWithGetMore(client, false));
+        } finally {
+            assertEquals(1, commandListener.getCommandStartedEvents("bulkWrite").size());
+            assertEquals(1, commandListener.getCommandStartedEvents("getMore").size());
+            assertEquals(1, commandListener.getCommandFailedEvents("getMore").size());
+        }
     }
 
     private void assertBulkWriteHandlesCursorRequiringGetMore(final boolean transaction) {
@@ -288,39 +321,40 @@ public class CrudProseTest {
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
                 .retryWrites(false)
                 .addCommandListener(commandListener))) {
-            int maxBsonObjectSize = droppedDatabase(client).runCommand(new Document("hello", 1)).getInteger("maxBsonObjectSize");
-            try (ClientSession session = transaction ? client.startSession() : null) {
-                BiFunction<List<? extends ClientNamespacedWriteModel>, ClientBulkWriteOptions, ClientBulkWriteResult> bulkWrite =
-                        (models, options) -> session == null
-                                ? client.bulkWrite(models, options)
-                                : client.bulkWrite(session, models, options);
-                Supplier<ClientBulkWriteResult> action = () -> bulkWrite.apply(asList(
-                        ClientNamespacedWriteModel.updateOne(
-                                NAMESPACE,
-                                Filters.eq(join("", nCopies(maxBsonObjectSize / 2, "a"))),
-                                Updates.set("x", 1),
-                                clientUpdateOneOptions().upsert(true)),
-                        ClientNamespacedWriteModel.updateOne(
-                                NAMESPACE,
-                                Filters.eq(join("", nCopies(maxBsonObjectSize / 2, "b"))),
-                                Updates.set("x", 1),
-                                clientUpdateOneOptions().upsert(true))),
-                        clientBulkWriteOptions().verboseResults(true)
-                );
+            ClientBulkWriteResult result = clientBulkWriteWithGetMore(client, transaction);
+            assertEquals(2, result.getUpsertedCount());
+            assertEquals(2, result.getVerboseResults().orElseThrow(Assertions::fail).getUpdateResults().size());
+            assertEquals(1, commandListener.getCommandStartedEvents("getMore").size());
+        }
+    }
 
-                ClientBulkWriteResult result = transaction ? runInTransaction(session, action) : action.get();
-                assertEquals(2, result.getUpsertedCount());
-                assertEquals(2, result.getVerboseResults().orElseThrow(Assertions::fail).getUpdateResults().size());
-                assertEquals(1, commandListener.getCommandStartedEvents("bulkWrite").size());
-            }
+    private static ClientBulkWriteResult clientBulkWriteWithGetMore(final MongoClient client, final boolean transaction) {
+        int maxBsonObjectSize = droppedDatabase(client).runCommand(new Document("hello", 1)).getInteger("maxBsonObjectSize");
+        try (ClientSession session = transaction ? client.startSession() : null) {
+            BiFunction<List<? extends ClientNamespacedWriteModel>, ClientBulkWriteOptions, ClientBulkWriteResult> bulkWrite =
+                    (models, options) -> session == null
+                            ? client.bulkWrite(models, options)
+                            : runInTransaction(session, () -> client.bulkWrite(session, models, options));
+            return bulkWrite.apply(asList(
+                            ClientNamespacedWriteModel.updateOne(
+                                    NAMESPACE,
+                                    Filters.eq(join("", nCopies(maxBsonObjectSize / 2, "a"))),
+                                    Updates.set("x", 1),
+                                    clientUpdateOneOptions().upsert(true)),
+                            ClientNamespacedWriteModel.updateOne(
+                                    NAMESPACE,
+                                    Filters.eq(join("", nCopies(maxBsonObjectSize / 2, "b"))),
+                                    Updates.set("x", 1),
+                                    clientUpdateOneOptions().upsert(true))),
+                    clientBulkWriteOptions().verboseResults(true)
+            );
         }
     }
 
     @DisplayName("11. MongoClient.bulkWrite batch splits when the addition of a new namespace exceeds the maximum message size")
     @Test
-    protected void testBulkWriteSplitsWhenExceedingMaxMessageSizeBytesDueToNsInfo() {
+    void testBulkWriteSplitsWhenExceedingMaxMessageSizeBytesDueToNsInfo() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         assertAll(
                 () -> {
                     // Case 1: No batch-splitting required
@@ -388,11 +422,10 @@ public class CrudProseTest {
     }
 
     @DisplayName("12. MongoClient.bulkWrite returns an error if no operations can be added to ops")
-    @ParameterizedTest
+    @ParameterizedTest(name = "12. MongoClient.bulkWrite returns an error if no operations can be added to ops--tooLarge:{0}")
     @ValueSource(strings = {"document", "namespace"})
-    protected void testBulkWriteSplitsErrorsForTooLargeOpsOrNsInfo(final String tooLarge) {
+    void testBulkWriteSplitsErrorsForTooLargeOpsOrNsInfo(final String tooLarge) {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder())) {
             int maxMessageSizeBytes = droppedDatabase(client).runCommand(new Document("hello", 1)).getInteger("maxMessageSizeBytes");
             ClientNamespacedWriteModel model;
@@ -419,9 +452,8 @@ public class CrudProseTest {
 
     @DisplayName("13. MongoClient.bulkWrite returns an error if auto-encryption is configured")
     @Test
-    protected void testBulkWriteErrorsForAutoEncryption() {
+    void testBulkWriteErrorsForAutoEncryption() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         HashMap<String, Object> awsKmsProviderProperties = new HashMap<>();
         awsKmsProviderProperties.put("accessKeyId", "foo");
         awsKmsProviderProperties.put("secretAccessKey", "bar");
@@ -441,9 +473,8 @@ public class CrudProseTest {
 
     @DisplayName("15. MongoClient.bulkWrite with unacknowledged write concern uses w:0 for all batches")
     @Test
-    protected void testWriteConcernOfAllBatchesWhenUnacknowledgedRequested() {
+    void testWriteConcernOfAllBatchesWhenUnacknowledgedRequested() {
         assumeTrue(serverVersionAtLeast(8, 0));
-        assumeFalse(isServerlessTest());
         TestCommandListener commandListener = new TestCommandListener();
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder().addCommandListener(commandListener)
                 .writeConcern(WriteConcern.UNACKNOWLEDGED))) {
@@ -476,9 +507,10 @@ public class CrudProseTest {
     /**
      * This test is not from the specification.
      */
-    @ParameterizedTest
+    @DisplayName("insertMustGenerateIdAtMostOnce")
+    @ParameterizedTest(name = "insertMustGenerateIdAtMostOnce--documentClass:{0}, expectIdGenerated:{1}")
     @MethodSource("insertMustGenerateIdAtMostOnceArgs")
-    protected <TDocument> void insertMustGenerateIdAtMostOnce(
+    <TDocument> void insertMustGenerateIdAtMostOnce(
             final Class<TDocument> documentClass,
             final boolean expectIdGenerated,
             final Supplier<TDocument> documentSupplier) {
@@ -529,7 +561,7 @@ public class CrudProseTest {
                 .append("mode", new BsonDocument("times", new BsonInt32(1)))
                 .append("data", new BsonDocument()
                         .append("failCommands", new BsonArray(singletonList(new BsonString(commandName))))
-                        .append("errorLabels", new BsonArray(singletonList(new BsonString("RetryableWriteError"))))
+                        .append("errorLabels", new BsonArray(singletonList(new BsonString(RETRYABLE_WRITE_ERROR_LABEL))))
                         .append("writeConcernError", new BsonDocument("code", new BsonInt32(91))
                                 .append("errmsg", new BsonString("Replication is being shut down"))));
         try (MongoClient client = createMongoClient(getMongoClientSettingsBuilder()
@@ -574,11 +606,11 @@ public class CrudProseTest {
         return MongoClients.create(mongoClientSettingsBuilder.build());
     }
 
-    private <TDocument> MongoCollection<TDocument> droppedCollection(final MongoClient client, final Class<TDocument> documentClass) {
+    private static <TDocument> MongoCollection<TDocument> droppedCollection(final MongoClient client, final Class<TDocument> documentClass) {
         return droppedDatabase(client).getCollection(NAMESPACE.getCollectionName(), documentClass);
     }
 
-    private MongoDatabase droppedDatabase(final MongoClient client) {
+    private static MongoDatabase droppedDatabase(final MongoClient client) {
         MongoDatabase database = client.getDatabase(NAMESPACE.getDatabaseName());
         database.drop();
         return database;

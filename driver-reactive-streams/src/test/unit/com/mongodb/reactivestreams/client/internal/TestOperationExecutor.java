@@ -19,8 +19,8 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.operation.AsyncReadOperation;
-import com.mongodb.internal.operation.AsyncWriteOperation;
+import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import reactor.core.publisher.Mono;
@@ -35,15 +35,15 @@ public class TestOperationExecutor implements OperationExecutor {
     private final List<ClientSession> clientSessions = new ArrayList<>();
     private final List<ReadPreference> readPreferences = new ArrayList<>();
 
-    private final List<AsyncReadOperation> readOperations = new ArrayList<>();
-    private final List<AsyncWriteOperation> writeOperations = new ArrayList<>();
+    private final List<ReadOperation> readOperations = new ArrayList<>();
+    private final List<WriteOperation> writeOperations = new ArrayList<>();
 
     public TestOperationExecutor(final List<Object> responses) {
         this.responses = new ArrayList<>(responses);
     }
 
     @Override
-    public <T> Mono<T> execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
+    public <T> Mono<T> execute(final ReadOperation<?, T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
                                @Nullable final ClientSession session) {
         readPreferences.add(readPreference);
         clientSessions.add(session);
@@ -53,7 +53,7 @@ public class TestOperationExecutor implements OperationExecutor {
 
 
     @Override
-    public <T> Mono<T> execute(final AsyncWriteOperation<T> operation, final ReadConcern readConcern,
+    public <T> Mono<T> execute(final WriteOperation<T> operation, final ReadConcern readConcern,
                                @Nullable final ClientSession session) {
         clientSessions.add(session);
         writeOperations.add(operation);
@@ -92,7 +92,7 @@ public class TestOperationExecutor implements OperationExecutor {
     }
 
     @Nullable
-    AsyncReadOperation getReadOperation() {
+    ReadOperation getReadOperation() {
         return readOperations.isEmpty() ? null : readOperations.remove(0);
     }
 
@@ -102,7 +102,7 @@ public class TestOperationExecutor implements OperationExecutor {
     }
 
     @Nullable
-    AsyncWriteOperation getWriteOperation() {
+    WriteOperation getWriteOperation() {
         return writeOperations.isEmpty() ? null : writeOperations.remove(0);
     }
 

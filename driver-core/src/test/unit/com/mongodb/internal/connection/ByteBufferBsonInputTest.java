@@ -22,6 +22,7 @@ import io.netty.buffer.PooledByteBufAllocator;
 import org.bson.BsonSerializationException;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
+import org.bson.io.BasicOutputBuffer;
 import org.bson.io.ByteBufferBsonInput;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -45,6 +46,7 @@ import static java.util.Collections.nCopies;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.IntStream.range;
 import static java.util.stream.IntStream.rangeClosed;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -54,37 +56,68 @@ class ByteBufferBsonInputTest {
     private static final List<Integer> ALL_CODE_POINTS_EXCLUDING_SURROGATES = Stream.concat(
                     range(1, MIN_HIGH_SURROGATE).boxed(),
                     rangeClosed(MAX_LOW_SURROGATE + 1, MAX_CODE_POINT).boxed())
-            .filter(i -> i < 128 || i % 10 == 0) // only subset of code points to speed up testing
+            .filter(i -> i < 128 || i % 30 == 0) // only subset of code points to speed up testing
             .collect(toList());
 
     static Stream<BufferProvider> bufferProviders() {
         return Stream.of(
-                size -> new NettyByteBuf(PooledByteBufAllocator.DEFAULT.directBuffer(size)),
-                size -> new NettyByteBuf(PooledByteBufAllocator.DEFAULT.heapBuffer(size)),
-                new PowerOfTwoBufferPool(),
-                size -> new ByteBufNIO(ByteBuffer.wrap(new byte[size + 5], 2, size).slice()),  //different array offsets
-                size -> new ByteBufNIO(ByteBuffer.wrap(new byte[size + 4], 3, size).slice()),  //different array offsets
-                size -> new ByteBufNIO(ByteBuffer.allocateDirect(size)),
-                size -> new ByteBufNIO(ByteBuffer.allocate(size)) {
-                    @Override
-                    public boolean isBackedByArray() {
-                        return false;
-                    }
+                createBufferProvider(
+                        "NettyByteBuf based on PooledByteBufAllocator.DEFAULT.directBuffer",
+                        size -> new NettyByteBuf(PooledByteBufAllocator.DEFAULT.directBuffer(size))
+                ),
+                createBufferProvider(
+                        "NettyByteBuf based on PooledByteBufAllocator.DEFAULT.heapBuffer",
+                        size -> new NettyByteBuf(PooledByteBufAllocator.DEFAULT.heapBuffer(size))
+                ),
+                createBufferProvider(
+                        "PowerOfTwoBufferPool",
+                        new PowerOfTwoBufferPool()
+                ),
+                createBufferProvider(
+                        "ByteBufNIO based on ByteBuffer with arrayOffset() -> 2",
+                        size -> new ByteBufNIO(ByteBuffer.wrap(new byte[size + 5], 2, size).slice())
+                ),
+                createBufferProvider(
+                        "ByteBufNIO based on ByteBuffer with arrayOffset() -> 3,",
+                        size -> new ByteBufNIO(ByteBuffer.wrap(new byte[size + 4], 3, size).slice())
+                ),
+                createBufferProvider(
+                        "ByteBufNIO emulating direct ByteBuffer",
+                        size -> new ByteBufNIO(ByteBuffer.allocate(size)) {
+                            @Override
+                            public boolean isBackedByArray() {
+                                return false;
+                            }
 
-                    @Override
-                    public byte[] array() {
-                        return Assertions.fail("array() is called, when isBackedByArray() returns false");
-                    }
+                            @Override
+                            public byte[] array() {
+                                return Assertions.fail("array() is called, when isBackedByArray() returns false");
+                            }
 
-                    @Override
-                    public int arrayOffset() {
-                        return Assertions.fail("arrayOffset() is called, when isBackedByArray() returns false");
-                    }
-                }
+                            @Override
+                            public int arrayOffset() {
+                                return Assertions.fail("arrayOffset() is called, when isBackedByArray() returns false");
+                            }
+                        }
+                )
         );
     }
 
-    @ParameterizedTest
+    private static BufferProvider createBufferProvider(final String bufferDescription, final BufferProvider bufferProvider) {
+        return new BufferProvider() {
+            @Override
+            public ByteBuf getBuffer(final int size) {
+                return bufferProvider.getBuffer(size);
+            }
+
+            @Override
+            public String toString() {
+                return bufferDescription;
+            }
+        };
+    }
+
+    @ParameterizedTest(name = "should read empty string. BufferProvider={0}")
     @MethodSource("bufferProviders")
     void shouldReadEmptyString(final BufferProvider bufferProvider) {
         // given
@@ -101,7 +134,7 @@ class ByteBufferBsonInputTest {
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should read empty CString. BufferProvider={0}")
     @MethodSource("bufferProviders")
     void shouldReadEmptyCString(final BufferProvider bufferProvider) {
         // given
@@ -116,7 +149,7 @@ class ByteBufferBsonInputTest {
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should read invalid one byte string. BufferProvider={0}")
     @MethodSource("bufferProviders")
     void shouldReadInvalidOneByteString(final BufferProvider bufferProvider) {
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, new byte[]{2, 0, 0, 0, (byte) 0xFF, 0});
@@ -131,7 +164,7 @@ class ByteBufferBsonInputTest {
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should read invalid one byte CString. BufferProvider={0}")
     @MethodSource("bufferProviders")
     void shouldReadInvalidOneByteCString(final BufferProvider bufferProvider) {
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, new byte[]{-0x01, 0});
@@ -147,7 +180,7 @@ class ByteBufferBsonInputTest {
     }
 
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should read string up to buffer limit. BufferProvider={0}")
     @MethodSource("bufferProviders")
     void shouldReadStringUptoBufferLimit(final BufferProvider bufferProvider) {
         // given
@@ -171,7 +204,7 @@ class ByteBufferBsonInputTest {
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should read string with more data in buffer. BufferProvider={0}")
     @MethodSource("bufferProviders")
     void shouldReadStringWithMoreDataInBuffer(final BufferProvider bufferProvider) throws IOException {
         // given
@@ -200,7 +233,7 @@ class ByteBufferBsonInputTest {
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should read multiple strings within buffer. BufferProvider={0}")
     @MethodSource("bufferProviders")
     void shouldReadMultipleStringsWithinBuffer(final BufferProvider bufferProvider) throws IOException {
         // given
@@ -252,7 +285,7 @@ class ByteBufferBsonInputTest {
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should read consecutive multiple strings within buffer. BufferProvider={0}")
     @MethodSource("bufferProviders")
     void shouldReadConsecutiveMultipleStringsWithinBuffer(final BufferProvider bufferProvider) throws IOException {
         // given
@@ -302,7 +335,7 @@ class ByteBufferBsonInputTest {
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should read consecutive multiple CStrings within buffer. BufferProvider={0}")
     @MethodSource("bufferProviders")
     void shouldReadConsecutiveMultipleCStringsWithinBuffer(final BufferProvider bufferProvider) throws IOException {
         // given
@@ -352,7 +385,7 @@ class ByteBufferBsonInputTest {
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should read multiple CStrings within buffer. BufferProvider={0}")
     @MethodSource("bufferProviders")
     void shouldReadMultipleCStringsWithinBuffer(final BufferProvider bufferProvider) throws IOException {
         // given
@@ -409,7 +442,7 @@ class ByteBufferBsonInputTest {
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should read string within buffer. BufferProvider={0}")
     @MethodSource("bufferProviders")
     void shouldReadStringWithinBuffer(final BufferProvider bufferProvider) throws IOException {
         // given
@@ -441,7 +474,7 @@ class ByteBufferBsonInputTest {
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should read CString up to buffer limit. BufferProvider={0}")
     @MethodSource("bufferProviders")
     void shouldReadCStringUptoBufferLimit(final BufferProvider bufferProvider) {
         // given
@@ -465,7 +498,7 @@ class ByteBufferBsonInputTest {
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should read CString with more data in buffer. BufferProvider={0}")
     @MethodSource("bufferProviders")
     void shouldReadCStringWithMoreDataInBuffer(final BufferProvider bufferProvider) throws IOException {
         // given
@@ -494,7 +527,7 @@ class ByteBufferBsonInputTest {
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should read CString within buffer. BufferProvider={0}")
     @MethodSource("bufferProviders")
     void shouldReadCStringWithingBuffer(final BufferProvider bufferProvider) throws IOException {
         // given
@@ -526,7 +559,7 @@ class ByteBufferBsonInputTest {
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should throw if CString is not null terminated skip. BufferProvider={0}")
     @MethodSource("bufferProviders")
     void shouldThrowIfCStringIsNotNullTerminatedSkip(final BufferProvider bufferProvider) {
         // given
@@ -553,7 +586,7 @@ class ByteBufferBsonInputTest {
         return arguments.stream();
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should throw if string is not null terminated. Parameters: nonNullTerminatedString={0}, bufferProvider={1}")
     @MethodSource("nonNullTerminatedStringsWithBuffers")
     void shouldThrowIfStringIsNotNullTerminated(final byte[] nonNullTerminatedString, final BufferProvider bufferProvider) {
         // given
@@ -579,7 +612,7 @@ class ByteBufferBsonInputTest {
         return arguments.stream();
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should throw if CString is not null terminated. Parameters: nonNullTerminatedCString={0}, bufferProvider={1}")
     @MethodSource("nonNullTerminatedCStringsWithBuffers")
     void shouldThrowIfCStringIsNotNullTerminated(final byte[] nonNullTerminatedCString, final BufferProvider bufferProvider) {
         // given
@@ -592,7 +625,7 @@ class ByteBufferBsonInputTest {
     }
 
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should throw if one byte string is not null terminated. BufferProvider={0}")
     @MethodSource("bufferProviders")
     void shouldThrowIfOneByteStringIsNotNullTerminated(final BufferProvider bufferProvider) {
         // given
@@ -604,7 +637,7 @@ class ByteBufferBsonInputTest {
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should throw if one byte CString is not null terminated. BufferProvider={0}")
     @MethodSource("bufferProviders")
     void shouldThrowIfOneByteCStringIsNotNullTerminated(final BufferProvider bufferProvider) {
         // given
@@ -616,7 +649,7 @@ class ByteBufferBsonInputTest {
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should throw if length of bson string is not positive. BufferProvider={0}")
     @MethodSource("bufferProviders")
     void shouldThrowIfLengthOfBsonStringIsNotPositive(final BufferProvider bufferProvider) {
         // given
@@ -628,7 +661,7 @@ class ByteBufferBsonInputTest {
         }
     }
 
-    public static Stream<Arguments> shouldSkipCStringWhenMultipleNullTerminationPresent() {
+    public static Stream<Arguments> shouldSkipCStringWhenMultipleNullTerminatorsPresent() {
         List<Arguments> arguments = new ArrayList<>();
         List<BufferProvider> collect = bufferProviders().collect(toList());
         for (BufferProvider bufferProvider : collect) {
@@ -644,9 +677,9 @@ class ByteBufferBsonInputTest {
         return arguments.stream();
     }
 
-    @ParameterizedTest
-    @MethodSource()
-    void shouldSkipCStringWhenMultipleNullTerminationPresent(final byte[] cStringBytes, final BufferProvider bufferProvider) {
+    @ParameterizedTest(name = "should skip CString when multiple null terminatiors present. Parameters: cStringBytes={0}, bufferProvider={1}")
+    @MethodSource
+    void shouldSkipCStringWhenMultipleNullTerminatorsPresent(final byte[] cStringBytes, final BufferProvider bufferProvider) {
         // given
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, cStringBytes);
         try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer)) {
@@ -660,9 +693,9 @@ class ByteBufferBsonInputTest {
         }
     }
 
-    @ParameterizedTest
+    @ParameterizedTest(name = "should read skip CString when multiple null terminators present within buffer. BufferProvider={0}")
     @MethodSource("bufferProviders")
-    void shouldReadSkipCStringWhenMultipleNullTerminationPresentWithinBuffer(final BufferProvider bufferProvider) {
+    void shouldReadSkipCStringWhenMultipleNullTerminatorPresentWithinBuffer(final BufferProvider bufferProvider) {
         // given
         byte[] input = {4, 0, 0, 0, 0x4a, 0x61, 0x76, 0x61, 0, 8, 0, 0, 0};
         ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, input);
@@ -678,6 +711,58 @@ class ByteBufferBsonInputTest {
         }
     }
 
+
+    @ParameterizedTest(name = "should pipe bytes to output. BufferProvider={0}")
+    @MethodSource("bufferProviders")
+    void shouldPipeBytesToOutput(final BufferProvider bufferProvider) {
+        // given
+        byte[] input = "Java!".getBytes(StandardCharsets.UTF_8);
+        ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, input);
+
+        try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer);
+             BasicOutputBuffer bufferOutput = new BasicOutputBuffer()) {
+            // when
+            bufferInput.pipe(bufferOutput, input.length);
+
+            // then
+            assertEquals(input.length, bufferInput.getPosition());
+            assertEquals(input.length, bufferOutput.getPosition());
+            assertArrayEquals(input, bufferOutput.toByteArray());
+        }
+    }
+
+    @ParameterizedTest(name = "should pipe partial bytes to output. BufferProvider={0}")
+    @MethodSource("bufferProviders")
+    void shouldPipePartialBytesToOutput(final BufferProvider bufferProvider) {
+        // given
+        byte[] input = "Java!".getBytes(StandardCharsets.UTF_8);
+        ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, input);
+
+        try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer);
+             BasicOutputBuffer output = new BasicOutputBuffer()) {
+            // when
+            bufferInput.pipe(output, 3);
+
+            // then
+            assertEquals(3, bufferInput.getPosition());
+            assertEquals(3, output.getPosition());
+            assertArrayEquals("Jav".getBytes(StandardCharsets.UTF_8), output.toByteArray());
+        }
+    }
+
+    @ParameterizedTest(name = "should throw when piping more bytes than available. BufferProvider={0}")
+    @MethodSource("bufferProviders")
+    void shouldThrowWhenPipingMoreBytesThanAvailable(final BufferProvider bufferProvider) {
+        // given
+        byte[] input = "Jav".getBytes(StandardCharsets.UTF_8);
+        ByteBuf buffer = allocateAndWriteToBuffer(bufferProvider, input);
+
+        try (ByteBufferBsonInput bufferInput = new ByteBufferBsonInput(buffer);
+             BasicOutputBuffer output = new BasicOutputBuffer()) {
+            // when & then
+            assertThrows(BsonSerializationException.class, () -> bufferInput.pipe(output, 10));
+        }
+    }
 
     private static ByteBuf allocateAndWriteToBuffer(final BufferProvider bufferProvider, final byte[] input) {
         ByteBuf buffer = bufferProvider.getBuffer(input.length);

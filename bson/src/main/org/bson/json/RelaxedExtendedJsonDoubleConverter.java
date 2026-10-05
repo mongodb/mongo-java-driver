@@ -24,7 +24,7 @@ class RelaxedExtendedJsonDoubleConverter implements Converter<Double> {
         if (value.isNaN() || value.isInfinite()) {
             FALLBACK_CONVERTER.convert(value, writer);
         } else {
-            writer.writeNumber(Double.toString(value));
+            writer.writeNumber(JsonDoubleHelper.toString(value));
         }
     }
 }

@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketReadTimeoutException;
@@ -42,7 +43,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT;
+import static com.mongodb.ClusterFixture.CLIENT_METADATA;
 import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.internal.connection.DescriptionHelper.createServerDescription;
@@ -81,7 +82,8 @@ public class AbstractServerDiscoveryAndMonitoringTest {
     }
 
     protected void applyApplicationError(final BsonDocument applicationError) {
-        Timeout serverSelectionTimeout = OPERATION_CONTEXT.getTimeoutContext().computeServerSelectionTimeout();
+        OperationContext operationContext = ClusterFixture.createOperationContext();
+        Timeout serverSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
         ServerAddress serverAddress = new ServerAddress(applicationError.getString("address").getValue());
         TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS);
         int errorGeneration = applicationError.getNumber("generation",
@@ -97,7 +99,7 @@ public class AbstractServerDiscoveryAndMonitoringTest {
         switch (type) {
             case "command":
                 exception = getCommandFailureException(applicationError.getDocument("response"), serverAddress,
-                        OPERATION_CONTEXT.getTimeoutContext());
+                        operationContext.getTimeoutContext());
                 break;
             case "network":
                 exception = new MongoSocketReadException("Read error", serverAddress, new IOException());
@@ -111,12 +113,13 @@ public class AbstractServerDiscoveryAndMonitoringTest {
 
         switch (when) {
             case "beforeHandshakeCompletes":
+                BackpressureErrorLabeler.applyLabelsIfEligible(exception);
                 server.sdamServerDescriptionManager().handleExceptionBeforeHandshake(
-                        SdamIssue.specific(exception, new SdamIssue.Context(server.serverId(), errorGeneration, maxWireVersion)));
+                        SdamIssue.of(exception, new SdamIssue.Context(server.serverId(), errorGeneration, maxWireVersion)));
                 break;
             case "afterHandshakeCompletes":
                 server.sdamServerDescriptionManager().handleExceptionAfterHandshake(
-                        SdamIssue.specific(exception, new SdamIssue.Context(server.serverId(), errorGeneration, maxWireVersion)));
+                        SdamIssue.of(exception, new SdamIssue.Context(server.serverId(), errorGeneration, maxWireVersion)));
                 break;
             default:
                 throw new UnsupportedOperationException("Unsupported `when` value: " + when);
@@ -187,11 +190,11 @@ public class AbstractServerDiscoveryAndMonitoringTest {
                 : ClusterSettings.builder(settings).addClusterListener(clusterListener).build();
 
         if (settings.getMode() == ClusterConnectionMode.SINGLE) {
-            cluster = new SingleServerCluster(clusterId, clusterSettings, factory);
+            cluster = new SingleServerCluster(clusterId, clusterSettings, factory, CLIENT_METADATA);
         } else if (settings.getMode() == ClusterConnectionMode.MULTIPLE) {
-            cluster = new MultiServerCluster(clusterId, clusterSettings, factory);
+            cluster = new MultiServerCluster(clusterId, clusterSettings, factory, CLIENT_METADATA);
         } else {
-            cluster = new LoadBalancedCluster(clusterId, clusterSettings, factory, null);
+            cluster = new LoadBalancedCluster(clusterId, clusterSettings, factory, CLIENT_METADATA, null);
         }
     }
 

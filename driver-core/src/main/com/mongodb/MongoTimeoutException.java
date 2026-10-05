@@ -18,9 +18,12 @@ package com.mongodb;
 
 import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Reason;
+import com.mongodb.lang.Nullable;
 
 /**
- * An exception indicating that the driver has timed out waiting for either a server or a connection to become available.
+ * An exception indicating that the driver has timed out doing something.
+ *
+ * @see MongoExecutionTimeoutException
  */
 public class MongoTimeoutException extends MongoClientException {
 
@@ -42,7 +45,7 @@ public class MongoTimeoutException extends MongoClientException {
      * @since 5.2
      */
     @Alpha(Reason.CLIENT)
-    public MongoTimeoutException(final String message, final Throwable cause) {
+    public MongoTimeoutException(final String message, @Nullable final Throwable cause) {
         super(message, cause);
     }
 }

@@ -47,7 +47,6 @@ import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.getEnv;
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
@@ -60,7 +59,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
-import static org.junit.jupiter.params.ParameterizedTest.DISPLAY_NAME_PLACEHOLDER;
+import static org.junit.jupiter.params.ParameterizedInvocationConstants.DISPLAY_NAME_PLACEHOLDER;
 
 /**
  * See <a href="https://github.com/mongodb/specifications/tree/master/source/client-side-encryption/tests#automatic-data-encryption-keys">
@@ -78,7 +77,6 @@ public abstract class AbstractClientSideEncryptionAutoDataKeysTest {
     public void setUp() {
         assumeTrue(serverVersionAtLeast(7, 0));
         assumeFalse(isStandalone());
-        assumeFalse(isServerlessTest());
 
         client = createMongoClient(getMongoClientSettings());
         Set<KmsProvider> kmsProviders = KmsProvider.detect();

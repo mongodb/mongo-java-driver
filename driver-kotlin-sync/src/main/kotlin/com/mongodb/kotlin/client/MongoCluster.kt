@@ -78,7 +78,11 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
      * - `0` means infinite timeout.
      * - `> 0` The time limit to use for the full execution of an operation.
      *
+     * Note: This timeout does not limit socket writes, therefore there is a possibility that the operation might not be
+     * timed out when expected.
+     *
      * @return the optional timeout duration
+     * @since 5.2
      */
     @Alpha(Reason.CLIENT)
     public fun timeout(timeUnit: TimeUnit = TimeUnit.MILLISECONDS): Long? = wrapped.getTimeout(timeUnit)
@@ -130,6 +134,9 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
      * Create a new MongoCluster instance with the set time limit for the full execution of an operation.
      * - `0` means an infinite timeout
      * - `> 0` The time limit to use for the full execution of an operation.
+     *
+     * Note: This timeout does not limit socket writes, therefore there is a possibility that the operation might not be
+     * timed out when expected.
      *
      * @param timeout the timeout, which must be greater than or equal to 0
      * @param timeUnit the time unit, defaults to Milliseconds
@@ -322,8 +329,6 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
      * `bulkWrite` commands. The eligibility for retries is determined per each `bulkWrite` command:
      * [ClientNamespacedUpdateManyModel], [ClientNamespacedDeleteManyModel] in a command render it non-retryable.
      *
-     * This operation is not supported by MongoDB Atlas Serverless instances.
-     *
      * @param models The [individual write operations][ClientNamespacedWriteModel].
      * @return The [ClientBulkWriteResult] if the operation is successful.
      * @throws ClientBulkWriteException If and only if the operation is unsuccessful or partially unsuccessful, and
@@ -343,8 +348,6 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
      * `models`, encoded size of `models`, and the size limits in effect, executing this operation may require multiple
      * `bulkWrite` commands. The eligibility for retries is determined per each `bulkWrite` command:
      * [ClientNamespacedUpdateManyModel], [ClientNamespacedDeleteManyModel] in a command render it non-retryable.
-     *
-     * This operation is not supported by MongoDB Atlas Serverless instances.
      *
      * @param models The [individual write operations][ClientNamespacedWriteModel].
      * @param options The [options][ClientBulkWriteOptions].
@@ -372,8 +375,6 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
      * `bulkWrite` commands. The eligibility for retries is determined per each `bulkWrite` command:
      * [ClientNamespacedUpdateManyModel], [ClientNamespacedDeleteManyModel] in a command render it non-retryable.
      *
-     * This operation is not supported by MongoDB Atlas Serverless instances.
-     *
      * @param clientSession The [client session][ClientSession] with which to associate this operation.
      * @param models The [individual write operations][ClientNamespacedWriteModel].
      * @return The [ClientBulkWriteResult] if the operation is successful.
@@ -397,8 +398,6 @@ public open class MongoCluster protected constructor(private val wrapped: JMongo
      * number of `models`, encoded size of `models`, and the size limits in effect, executing this operation may require
      * multiple `bulkWrite` commands. The eligibility for retries is determined per each `bulkWrite` command:
      * [ClientNamespacedUpdateManyModel], [ClientNamespacedDeleteManyModel] in a command render it non-retryable.
-     *
-     * This operation is not supported by MongoDB Atlas Serverless instances.
      *
      * @param clientSession The [client session][ClientSession] with which to associate this operation.
      * @param models The [individual write operations][ClientNamespacedWriteModel].

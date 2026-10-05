@@ -27,6 +27,6 @@ import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
  */
 public class AtlasSearchIndexManagementProseTest extends AbstractAtlasSearchIndexManagementProseTest {
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
+        return new SyncMongoClient(settings);
     }
 }

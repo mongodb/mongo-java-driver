@@ -50,7 +50,7 @@ public class MongoWriteException extends MongoServerException {
      * @since 5.0
      */
     public MongoWriteException(final WriteError error, final ServerAddress serverAddress, final Collection<String> errorLabels) {
-        super(error.getCode(), "Write operation error on server " + serverAddress + ". Write error: " + error + ".", serverAddress);
+        super(error.getCode(), "Write operation error on MongoDB server " + serverAddress + ". Write error: " + error + ".", serverAddress);
         this.error = error;
         addLabels(errorLabels);
     }

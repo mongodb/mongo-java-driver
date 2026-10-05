@@ -19,10 +19,14 @@ package conventions
 
 val gitVersion: Provider<String> =
     providers
-        .exec { commandLine("git", "describe", "--tags", "--always", "--dirty") }
+        .exec {
+            commandLine("git", "describe", "--tags", "--always", "--dirty")
+            isIgnoreExitValue = true
+        }
         .standardOutput
         .asText
         .map { it.trim().removePrefix("r") }
+        .orElse("UNKNOWN")
 
 // Allows access to gitVersion extension to other conventions
 extensions.add("gitVersion", gitVersion)

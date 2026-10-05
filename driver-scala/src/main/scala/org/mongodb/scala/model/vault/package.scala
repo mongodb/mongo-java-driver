@@ -16,10 +16,11 @@
 
 package org.mongodb.scala.model
 
-import com.mongodb.annotations.{ Beta, Reason }
 import com.mongodb.client.model.vault.{ DataKeyOptions => JDataKeyOptions }
 import com.mongodb.client.model.vault.{ EncryptOptions => JEncryptOptions }
 import com.mongodb.client.model.vault.{ RangeOptions => JRangeOptions }
+import com.mongodb.client.model.vault.{ RewrapManyDataKeyResult => JRewrapManyDataKeyResult }
+import com.mongodb.client.model.vault.{ RewrapManyDataKeyOptions => JRewrapManyDataKeyOptions }
 
 /**
  * This package contains options classes for the key vault API
@@ -65,4 +66,28 @@ package object vault {
     def apply(): RangeOptions = new JRangeOptions()
   }
 
+  /**
+   * The result of the rewrapping of data keys
+   *
+   * @since 5.6
+   */
+  type RewrapManyDataKeyResult = JRewrapManyDataKeyResult
+
+  /**
+   * The result of the rewrapping of data keys
+   *
+   * @since 5.6
+   */
+  type RewrapManyDataKeyOptions = JRewrapManyDataKeyOptions
+
+  /**
+   * The rewrap many data key options
+   *
+   * The `getMasterKey` document MUST have the fields corresponding to the given provider as specified in masterKey.
+   *
+   * @since 5.6
+   */
+  object RewrapManyDataKeyOptions {
+    def apply() = new JRewrapManyDataKeyOptions()
+  }
 }

@@ -28,7 +28,7 @@ import com.mongodb.reactivestreams.client.vault.ClientEncryptions;
 public class ClientSideEncryptionDecryptionEventsTest extends AbstractClientSideEncryptionDecryptionEventsTest {
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
+        return new SyncMongoClient(settings);
     }
 
     @Override

@@ -21,7 +21,10 @@ import com.mongodb.client.internal.MongoDatabaseImpl
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.model.geojson.MultiPolygon
 import com.mongodb.connection.ClusterSettings
+import com.mongodb.internal.connection.ClientMetadata
 import com.mongodb.internal.connection.Cluster
+import com.mongodb.internal.connection.StreamFactoryFactory
+import com.mongodb.internal.thread.AsyncClientExecutor
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.UuidCodec
@@ -35,6 +38,7 @@ import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
 import static com.mongodb.MongoCredential.createMongoX509Credential
 import static com.mongodb.ReadPreference.secondary
+import static com.mongodb.assertions.Assertions.fail
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -309,7 +313,13 @@ class MongoClientSpecification extends Specification {
     def 'should validate the ChangeStreamIterable pipeline data correctly'() {
         given:
         def executor = new TestOperationExecutor([])
-        def client = new MongoClientImpl(Stub(Cluster), null, MongoClientSettings.builder().build(), null, executor)
+
+        def clusterStub = Stub(Cluster)
+        clusterStub.getClientMetadata() >> new ClientMetadata("test", MongoDriverInformation.builder().build())
+
+        def client = new MongoClientImpl(
+                clusterStub, null, MongoClientSettings.builder().build(), mockStreamFactoryFactory(),
+                AsyncClientExecutor.NO_OP, executor)
 
         when:
         client.watch((Class) null)
@@ -340,7 +350,7 @@ class MongoClientSpecification extends Specification {
 
         then:
         expect database, isTheSameAs(new MongoDatabaseImpl('name', client.getCodecRegistry(), secondary(),
-                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, STANDARD, null,
+                WriteConcern.MAJORITY, true, true, null, ReadConcern.MAJORITY, STANDARD, null,
                 TIMEOUT_SETTINGS.withMaxWaitTimeMS(120_000), client.getOperationExecutor()))
     }
 
@@ -359,5 +369,13 @@ class MongoClientSpecification extends Specification {
 
         cleanup:
         client?.close()
+    }
+
+    def mockStreamFactoryFactory() {
+        Mock(StreamFactoryFactory) {
+            getExecutor() >> {
+                fail()
+            }
+        }
     }
 }

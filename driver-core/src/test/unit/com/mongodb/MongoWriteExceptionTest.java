@@ -32,7 +32,7 @@ public class MongoWriteExceptionTest {
         WriteError writeError = new WriteError(11000, "Duplicate key", new BsonDocument("x", new BsonInt32(1)));
         MongoWriteException e = new MongoWriteException(writeError, new ServerAddress("host1"), Collections.emptySet());
 
-        assertEquals("Write operation error on server host1:27017. Write error: WriteError{code=11000, message='Duplicate key', "
+        assertEquals("Write operation error on MongoDB server host1:27017. Write error: WriteError{code=11000, message='Duplicate key', "
                 + "details={\"x\": 1}}.",
                 e.getMessage());
         assertEquals(writeError.getCode(), e.getCode());

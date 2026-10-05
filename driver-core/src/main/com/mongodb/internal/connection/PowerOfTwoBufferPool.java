@@ -16,6 +16,8 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
@@ -34,6 +36,7 @@ import java.util.concurrent.TimeUnit;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class PowerOfTwoBufferPool implements BufferProvider {
+    private static final Logger LOGGER = Loggers.getLogger("connection");
 
     /**
      * The global default pool.  Pruning is enabled on this pool. Idle buffers are pruned after one minute.
@@ -137,7 +140,12 @@ public class PowerOfTwoBufferPool implements BufferProvider {
     }
 
     private void prune() {
-        powerOfTwoToPoolMap.values().forEach(BufferPool::prune);
+        try {
+            powerOfTwoToPoolMap.values().forEach(BufferPool::prune);
+        } catch (Throwable t) {
+            LOGGER.error(this + " stopped pruning idle buffer pools. You may want to recreate the MongoClient", t);
+            throw t;
+        }
     }
 
     static int log2(final int powerOfTwo) {

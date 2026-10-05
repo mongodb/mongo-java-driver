@@ -42,17 +42,7 @@ MongoDB project, please report it according to the [instructions here](https://w
 
 ## Versioning
 
-Major increments (such as 4.x -> 5.x) will occur when breaking changes are being made to the public API.  All methods and
-classes removed in a major release will have been deprecated in a prior release of the previous major release branch, and/or otherwise
-called out in the release notes.
-
-Minor 5.x increments (such as 5.1, 5.2, etc) will occur when non-trivial new functionality is added or significant enhancements or bug
-fixes occur that may have behavioral changes that may affect some edge cases (such as dependence on behavior resulting from a bug). An
-example of an enhancement is a method or class added to support new functionality added to the MongoDB server.   Minor releases will
-almost always be binary compatible with prior minor releases from the same major release branch, except as noted below.
-
-Patch 5.x.y increments (such as 5.0.0 -> 5.0.1, 5.1.1 -> 5.1.2, etc) will occur for bug fixes only and will always be binary compatible
-with prior patch releases of the same minor release branch.
+We follow [semantic versioning](https://semver.org/spec/v2.0.0.html) when releasing.
 
 #### @Alpha
 
@@ -84,7 +74,7 @@ time.
 ## Binaries
 
 Binaries and dependency information for Maven, Gradle, Ivy and others can be found at
-[http://search.maven.org](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.mongodb%22%20AND%20a%3A%22mongodb-driver-sync%22).
+[https://central.sonatype.com/search](https://central.sonatype.com/search?namespace=org.mongodb&name=mongodb-driver-sync).
 
 Example for Maven:
 
@@ -95,17 +85,24 @@ Example for Maven:
     <version>x.y.z</version>
 </dependency>
 ```
-Snapshot builds are also published regulary via Sonatype.
+Snapshot builds are also published regularly via Sonatype.
 
 Example for Maven:
 
 ```xml
-    <repositories>
-        <repository>
-            <id>sonatype-snapshot</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </repository>
-    </repositories>
+<repositories>
+    <repository>
+        <name>Central Portal Snapshots</name>
+        <id>central-portal-snapshots</id>
+        <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+        <releases>
+            <enabled>false</enabled>
+        </releases>
+        <snapshots>
+            <enabled>true</enabled>
+        </snapshots>
+    </repository>
+</repositories>
 ```
 
 ## Build
@@ -127,6 +124,20 @@ $ mongod --dbpath ./data/db --logpath ./data/mongod.log --port 27017 --logappend
 
 If you encounter `"Too many open files"` errors when running the tests then you will need to increase 
 the number of available file descriptors prior to starting mongod as described in [https://www.mongodb.com/docs/manual/reference/ulimit/](https://www.mongodb.com/docs/manual/reference/ulimit/)
+
+## AI Agent Configuration
+
+This repository uses [agentskills.io](https://agentskills.io) conventions for AI coding
+agent instructions. `AGENTS.md` is the canonical source of truth — tool-specific files
+like `CLAUDE.md` are generated references.
+
+### Adding a nested AGENTS.md
+
+1. Create an `AGENTS.md` in the target directory.
+2. Run `scripts/sync-claude-md.sh` to generate the companion `CLAUDE.md`.
+   This script should be run before staging — it creates/removes `CLAUDE.md` files
+   to match staged `AGENTS.md` changes and maintains the `.claude/skills` symlink.
+3. Stage and commit both files.
 
 ## IntelliJ IDEA
 

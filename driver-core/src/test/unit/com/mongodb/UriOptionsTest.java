@@ -43,7 +43,6 @@ public class UriOptionsTest extends AbstractConnectionStringTest {
         assumeFalse(getDescription().contains("tlsDisableCertificateRevocationCheck"));
         // Skip because Java driver does not support the tlsDisableOCSPEndpointCheck option
         assumeFalse(getDescription().contains("tlsDisableOCSPEndpointCheck"));
-
         // No CANONICALIZE_HOST_NAME support https://jira.mongodb.org/browse/JAVA-4278
         assumeFalse(getDescription().equals("Valid auth options are parsed correctly (GSSAPI)"));
 

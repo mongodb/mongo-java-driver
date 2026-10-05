@@ -35,13 +35,13 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getDefaultDatabase;
@@ -52,11 +52,14 @@ import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static com.mongodb.fixture.EncryptionFixture.getKmsProviders;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import static util.JsonPoweredTestHelper.getTestDocument;
 
+/**
+ * @see <a href="https://github.com/mongodb/specifications/blob/master/source/client-side-encryption/tests/README.md#12-explicit-encryption">
+ *     Client Side Encryption spec explicit encryption prose tests</a>
+ */
 public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
     private static final BsonString ENCRYPTED_INDEXED_VALUE = new BsonString("encrypted indexed value");
     private static final BsonString ENCRYPTED_UNINDEXED_VALUE = new BsonString("encrypted unindexed value");
@@ -71,10 +74,10 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
     public void setUp() {
         assumeTrue(serverVersionAtLeast(7, 0));
         assumeFalse(isStandalone());
-        assumeFalse(isServerlessTest());
 
         MongoNamespace dataKeysNamespace = new MongoNamespace("keyvault.datakeys");
         BsonDocument encryptedFields = bsonDocumentFromPath("encryptedFields.json");
+        BsonDocument encryptedFieldsC10 = bsonDocumentFromPath("encryptedFields-c10.json");
         BsonDocument key1Document = bsonDocumentFromPath("keys/key1-document.json");
 
         MongoDatabase explicitEncryptionDatabase = getDefaultDatabase();
@@ -82,6 +85,11 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
                 .drop(new DropCollectionOptions().encryptedFields(encryptedFields));
         explicitEncryptionDatabase.createCollection("explicit_encryption",
                 new CreateCollectionOptions().encryptedFields(encryptedFields));
+
+        explicitEncryptionDatabase.getCollection("explicit_encryption_c10")
+                .drop(new DropCollectionOptions().encryptedFields(encryptedFieldsC10));
+        explicitEncryptionDatabase.createCollection("explicit_encryption_c10",
+                new CreateCollectionOptions().encryptedFields(encryptedFieldsC10));
 
         MongoCollection<BsonDocument> dataKeysCollection = getMongoClient()
                 .getDatabase(dataKeysNamespace.getDatabaseName())
@@ -122,6 +130,7 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
     }
 
     @Test
+    @DisplayName("Case 1: can insert encrypted indexed and find")
     public void canInsertEncryptedIndexedAndFind() {
         EncryptOptions encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).contentionFactor(0L);
         BsonBinary insertPayload = clientEncryption.encrypt(ENCRYPTED_INDEXED_VALUE, encryptOptions);
@@ -139,29 +148,22 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
     }
 
     @Test
+    @DisplayName("Case 2: can insert encrypted indexed and find with non-zero contention")
     public void canInsertEncryptedIndexedAndFindWithNonZeroContention() {
         EncryptOptions encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).contentionFactor(10L);
         MongoCollection<BsonDocument> coll = encryptedClient.getDatabase(getDefaultDatabaseName())
-                .getCollection("explicit_encryption", BsonDocument.class);
+                .getCollection("explicit_encryption_c10", BsonDocument.class);
 
         for (int i = 0; i < 10; i++) {
             BsonBinary insertPayload = clientEncryption.encrypt(ENCRYPTED_INDEXED_VALUE, encryptOptions);
             coll.insertOne(new BsonDocument("encryptedIndexed", insertPayload));
         }
 
-        encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).queryType("equality").contentionFactor(0L);
+        // Find with matching contentionFactor returns all 10 documents.
+        encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).contentionFactor(10L).queryType("equality");
         BsonBinary findPayload = clientEncryption.encrypt(ENCRYPTED_INDEXED_VALUE, encryptOptions);
 
         List<BsonDocument> values = coll.find(new BsonDocument("encryptedIndexed", findPayload)).into(new ArrayList<>());
-        assertTrue(values.size() < 10);
-        values.forEach(v ->
-            assertEquals(ENCRYPTED_INDEXED_VALUE, v.get("encryptedIndexed"))
-        );
-
-        encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).contentionFactor(10L).queryType("equality");
-        BsonBinary findPayload2 = clientEncryption.encrypt(ENCRYPTED_INDEXED_VALUE, encryptOptions);
-
-        values = coll.find(new BsonDocument("encryptedIndexed", findPayload2)).into(new ArrayList<>());
 
         assertEquals(10, values.size());
         values.forEach(v ->
@@ -170,6 +172,7 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
     }
 
     @Test
+    @DisplayName("Case 3: can insert encrypted unindexed")
     public void canInsertEncryptedUnindexed() {
         EncryptOptions encryptOptions = new EncryptOptions("Unindexed").keyId(key1Id);
         MongoCollection<BsonDocument> coll = encryptedClient.getDatabase(getDefaultDatabaseName())
@@ -185,6 +188,7 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
     }
 
     @Test
+    @DisplayName("Case 4: can roundtrip encrypted indexed")
     public void canRoundtripEncryptedIndexed() {
         EncryptOptions encryptOptions = new EncryptOptions("Indexed").keyId(key1Id).contentionFactor(0L);
 
@@ -195,6 +199,7 @@ public abstract class AbstractClientSideEncryptionExplicitEncryptionTest {
     }
 
     @Test
+    @DisplayName("Case 5: can roundtrip encrypted unindexed")
     public void canRoundtripEncryptedUnindexed() {
         EncryptOptions encryptOptions = new EncryptOptions("Unindexed").keyId(key1Id);
 

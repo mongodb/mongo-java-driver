@@ -31,6 +31,8 @@ import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.event.ServerOpeningEvent;
 import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -53,6 +55,8 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
  */
 @ThreadSafe
 final class AsynchronousClusterEventListener implements ClusterListener, ServerListener, ServerMonitorListener {
+    private static final Logger LOGGER = Loggers.getLogger("cluster");
+
     private final BlockingQueue<Supplier<Boolean>> eventPublishers = new LinkedBlockingQueue<>();
     private final ClusterListener clusterListener;
     private final ServerListener serverListener;
@@ -162,16 +166,21 @@ final class AsynchronousClusterEventListener implements ClusterListener, ServerL
     }
 
     private void publishEvents() {
-        while (true) {
-            try {
-                Supplier<Boolean> eventPublisher = eventPublishers.take();
-                boolean isLastEvent = eventPublisher.get();
-                if (isLastEvent) {
-                    break;
+        try {
+            while (true) {
+                try {
+                    Supplier<Boolean> eventPublisher = eventPublishers.take();
+                    boolean isLastEvent = eventPublisher.get();
+                    if (isLastEvent) {
+                        break;
+                    }
+                } catch (Exception e) {
+                    // ignore exceptions thrown from listeners, also ignore interrupts that user code may cause
                 }
-            } catch (Exception e) {
-                // ignore exceptions thrown from listeners, also ignore interrupts that user code may cause
             }
+        } catch (Throwable t) {
+            LOGGER.error(this + " stopped working. You may want to recreate the MongoClient", t);
+            throw t;
         }
     }
 }

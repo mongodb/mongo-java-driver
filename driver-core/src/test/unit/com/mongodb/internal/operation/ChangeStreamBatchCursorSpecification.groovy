@@ -16,10 +16,19 @@
 
 package com.mongodb.internal.operation
 
+import com.mongodb.MongoClientSettings
+import com.mongodb.internal.IgnorableRequestContext
+import com.mongodb.internal.TimeoutContext
+import com.mongodb.internal.TimeoutSettings
 import com.mongodb.internal.binding.ReadBinding
+import com.mongodb.internal.connection.NoOpSessionContext
+import com.mongodb.internal.connection.OperationContext
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.RawBsonDocument
 import spock.lang.Specification
+
+import java.util.concurrent.TimeUnit
 
 import static java.util.Collections.emptyList
 
@@ -29,10 +38,13 @@ class ChangeStreamBatchCursorSpecification extends Specification {
         given:
         def changeStreamOperation = Stub(ChangeStreamOperation)
         def binding = Stub(ReadBinding)
-        def wrapped = Mock(CommandBatchCursor)
         def resumeToken = new BsonDocument('_id': new BsonInt32(1))
-        def cursor = new ChangeStreamBatchCursor(changeStreamOperation, wrapped, binding, resumeToken,
+        def operationContext = getOperationContext()
+        Cursor<RawBsonDocument> wrapped = Mock(Cursor)
+        def cursor = new ChangeStreamBatchCursor(changeStreamOperation,
+                wrapped, binding, operationContext, resumeToken,
                 ServerVersionHelper.FOUR_DOT_FOUR_WIRE_VERSION)
+
 
         when:
         cursor.setBatchSize(10)
@@ -44,27 +56,35 @@ class ChangeStreamBatchCursorSpecification extends Specification {
         cursor.tryNext()
 
         then:
-        1 * wrapped.tryNext()
+        1 * wrapped.tryNext(_ as OperationContext)
         1 * wrapped.getPostBatchResumeToken()
 
         when:
         cursor.next()
 
         then:
-        1 * wrapped.next() >> emptyList()
+        1 * wrapped.next(_ as OperationContext) >> emptyList()
         1 * wrapped.getPostBatchResumeToken()
 
         when:
         cursor.close()
 
         then:
-        1 * wrapped.close()
+        1 * wrapped.close(_ as OperationContext)
 
         when:
         cursor.close()
 
         then:
-        0 * wrapped.close()
+        0 * wrapped.close(_ as OperationContext)
     }
 
+    OperationContext getOperationContext() {
+        def timeoutContext = Spy(new TimeoutContext(TimeoutSettings.create(
+                MongoClientSettings.builder().timeout(3, TimeUnit.SECONDS).build())))
+        Spy(new OperationContext(
+                IgnorableRequestContext.INSTANCE,
+                NoOpSessionContext.INSTANCE,
+                timeoutContext, null));
+    }
 }

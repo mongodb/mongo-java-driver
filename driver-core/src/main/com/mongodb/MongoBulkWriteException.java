@@ -53,7 +53,7 @@ public class MongoBulkWriteException extends MongoServerException {
     public MongoBulkWriteException(final BulkWriteResult writeResult, final List<BulkWriteError> writeErrors,
                                    @Nullable final WriteConcernError writeConcernError, final ServerAddress serverAddress,
                                    final Set<String> errorLabels) {
-        super("Bulk write operation error on server " + serverAddress + ". "
+        super("Bulk write operation error on MongoDB server " + serverAddress + ". "
                 + (writeErrors.isEmpty() ? "" : "Write errors: " + writeErrors + ". ")
                 + (writeConcernError == null ? "" : "Write concern error: " + writeConcernError + ". "), serverAddress);
         this.writeResult = writeResult;

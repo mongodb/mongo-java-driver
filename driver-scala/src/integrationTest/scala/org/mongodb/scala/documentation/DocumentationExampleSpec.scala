@@ -16,13 +16,13 @@
 
 package org.mongodb.scala.documentation
 
-import java.util.concurrent.atomic.AtomicBoolean
 import com.mongodb.client.model.changestream.{ ChangeStreamDocument, FullDocument }
 import org.mongodb.scala.TestMongoClientHelper.hasSingleHost
 import org.mongodb.scala._
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.bson.{ BsonArray, BsonDocument, BsonNull, BsonString, BsonValue }
 
+import java.util.concurrent.atomic.AtomicBoolean
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
 import scala.language.reflectiveCalls
@@ -595,8 +595,8 @@ class DocumentationExampleSpec extends RequiresMongoDBISpec with FuturesSpec {
   }
 
   it should "be able to watch" in withCollection { collection =>
-    assume(serverVersionAtLeast(List(3, 6, 0)) && !hasSingleHost)
-    val inventory: MongoCollection[Document] = collection
+    assume(serverVersionAtLeast(List(3, 6, 0)) && !hasSingleHost())
+    val inventory: MongoCollection[Document] = collection.withDocumentClass[Document]()
     val stop: AtomicBoolean = new AtomicBoolean(false)
     new Thread(new Runnable {
       override def run(): Unit = {
@@ -612,12 +612,13 @@ class DocumentationExampleSpec extends RequiresMongoDBISpec with FuturesSpec {
       }
     }).start()
 
-    val observer = new Observer[ChangeStreamDocument[Document]] {
+    class ResumeTokenObserver extends Observer[ChangeStreamDocument[Document]] {
       def getResumeToken: BsonDocument = Document().underlying
       override def onNext(result: ChangeStreamDocument[Document]): Unit = {}
       override def onError(e: Throwable): Unit = {}
       override def onComplete(): Unit = {}
     }
+    val observer = new ResumeTokenObserver()
 
     // Start Changestream Example 1
     var observable: ChangeStreamObservable[Document] = inventory.watch()
@@ -625,13 +626,13 @@ class DocumentationExampleSpec extends RequiresMongoDBISpec with FuturesSpec {
     // End Changestream Example 1
 
     // Start Changestream Example 2
-    observable = inventory.watch.fullDocument(FullDocument.UPDATE_LOOKUP)
+    observable = inventory.watch().fullDocument(FullDocument.UPDATE_LOOKUP)
     observable.subscribe(observer)
     // End Changestream Example 2
 
     // Start Changestream Example 3
     val resumeToken: BsonDocument = observer.getResumeToken
-    observable = inventory.watch.resumeAfter(resumeToken)
+    observable = inventory.watch().resumeAfter(resumeToken)
     observable.subscribe(observer)
     // End Changestream Example 3
 

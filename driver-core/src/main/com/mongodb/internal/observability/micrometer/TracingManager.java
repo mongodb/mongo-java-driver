@@ -1,0 +1,287 @@
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.mongodb.internal.observability.micrometer;
+
+import com.mongodb.MongoNamespace;
+import com.mongodb.ServerAddress;
+import com.mongodb.UnixServerAddress;
+import com.mongodb.connection.ConnectionId;
+import com.mongodb.internal.MongoNamespaceHelper;
+import com.mongodb.internal.connection.CommandMessage;
+import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.session.SessionContext;
+import com.mongodb.lang.Nullable;
+import com.mongodb.observability.ObservabilitySettings;
+import com.mongodb.observability.micrometer.MicrometerObservabilitySettings;
+import com.mongodb.observability.micrometer.MongodbObservation;
+import com.mongodb.observability.micrometer.MongodbObservationContext;
+import io.micrometer.observation.ObservationRegistry;
+import org.bson.BsonDocument;
+
+import java.util.function.Predicate;
+import java.util.function.Supplier;
+
+import static com.mongodb.observability.micrometer.MongodbObservation.MONGODB_COMMAND;
+import static com.mongodb.observability.micrometer.MongodbObservation.MONGODB_OPERATION;
+import static com.mongodb.observability.micrometer.MongodbObservation.MONGODB_TRANSACTION;
+import static com.mongodb.internal.EnvironmentProvider.getEnv;
+
+/**
+ * Manages tracing spans for MongoDB driver activities.
+ * <p>
+ * This class provides methods to create and manage spans for commands, operations and transactions.
+ * It integrates with a {@link Tracer} to propagate tracing information and record telemetry.
+ * </p>
+ */
+public class TracingManager {
+    /**
+     * A no-op instance of the TracingManager used when tracing is disabled.
+     */
+    public static final TracingManager NO_OP = new TracingManager(null);
+    private final Tracer tracer;
+    private final boolean enableCommandPayload;
+
+    /**
+     * If set, this will enable/disable tracing even when an observationRegistry has been passed
+     */
+    public static final String ENV_OBSERVABILITY_ENABLED = "OBSERVABILITY_MONGODB_ENABLED";
+
+    /**
+     * If set, this will truncate the command payload captured in the tracing span to the specified length.
+     */
+    public static final String ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH = "OBSERVABILITY_MONGODB_QUERY_TEXT_MAX_LENGTH";
+
+    /**
+     * Constructs a new TracingManager with the specified observation registry.
+     * @param observabilitySettings The observation registry to use for tracing operations, may be null.
+     */
+    public TracingManager(@Nullable final ObservabilitySettings observabilitySettings) {
+        if (observabilitySettings == null) {
+            tracer = Tracer.NO_OP;
+            enableCommandPayload = false;
+
+        } else {
+            MicrometerObservabilitySettings settings;
+            if (observabilitySettings instanceof MicrometerObservabilitySettings) {
+                settings = (MicrometerObservabilitySettings) observabilitySettings;
+            } else {
+                throw new IllegalArgumentException("Only Micrometer based observability is currently supported");
+            }
+
+            String envOtelInstrumentationEnabled = getEnv(ENV_OBSERVABILITY_ENABLED);
+            boolean enableTracing = true;
+            if (envOtelInstrumentationEnabled != null) {
+                enableTracing = Boolean.parseBoolean(envOtelInstrumentationEnabled);
+            }
+
+            ObservationRegistry observationRegistry = settings.getObservationRegistry();
+            tracer = enableTracing && observationRegistry != null
+                    ? new MicrometerTracer(observationRegistry, settings.isEnableCommandPayloadTracing(),
+                            settings.getMaxQueryTextLength(), settings.getObservationConvention())
+                    : Tracer.NO_OP;
+
+            this.enableCommandPayload = tracer.includeCommandPayload();
+        }
+    }
+
+    /**
+     * Creates a new span with the specified observation type, name and parent trace context.
+     *
+     * @param observationType The observation type (operation or command).
+     * @param name            The name of the span.
+     * @param parentContext   The parent trace context to associate with the span.
+     * @return The created span.
+     */
+    public Span addSpan(final MongodbObservation observationType, final String name,
+            @Nullable final TraceContext parentContext) {
+        return tracer.nextSpan(observationType, name, parentContext, null);
+    }
+
+    /**
+     * Creates a new span with the specified observation type, name, parent trace context,
+     * and MongoDB namespace.
+     *
+     * @param observationType The observation type (operation or command).
+     * @param name            The name of the span.
+     * @param parentContext   The parent trace context to associate with the span.
+     * @param namespace       The MongoDB namespace associated with the operation.
+     * @return The created span.
+     */
+    public Span addSpan(final MongodbObservation observationType, final String name,
+            @Nullable final TraceContext parentContext, final MongoNamespace namespace) {
+        return tracer.nextSpan(observationType, name, parentContext, namespace);
+    }
+
+    /**
+     * Creates a new transaction span for the specified server session.
+     *
+     * @return The created transaction span.
+     */
+    public Span addTransactionSpan() {
+        return tracer.nextSpan(MONGODB_TRANSACTION, "transaction", null, null);
+    }
+
+    /**
+     * Checks whether tracing is enabled.
+     *
+     * @return True if tracing is enabled, false otherwise.
+     */
+    public boolean isEnabled() {
+        return tracer.isEnabled();
+    }
+
+    /**
+     * Checks whether command payload tracing is enabled.
+     *
+     * @return True if command payload tracing is enabled, false otherwise.
+     */
+    public boolean isCommandPayloadEnabled() {
+        return enableCommandPayload;
+    }
+
+
+    /** Create a tracing span for the given command message.
+     * <p>
+     * The span is only created if tracing is enabled and the command is not security-sensitive.
+     * It populates domain fields on the span's {@link MongodbObservationContext} (command name, namespace,
+     * server address, connection ID, session/transaction info, cursor ID for getMore commands).
+     * The {@link com.mongodb.observability.micrometer.DefaultMongodbObservationConvention} reads these fields at observation stop time
+     * to produce the final tag key-values.
+     *
+     * @param message          the command message to trace
+     * @param operationContext the operation context containing tracing and session information
+     * @param commandDocumentSupplier a supplier that provides the command document when needed
+     * @param isSensitiveCommand a predicate that determines if a command is security-sensitive based on its name
+     * @param serverAddressSupplier a supplier that provides the server address when needed
+     * @param connectionIdSupplier a supplier that provides the connection ID when needed
+     * @return the created {@link Span}, or {@code null} if tracing is not enabled or the command is security-sensitive
+     */
+    @Nullable
+    public Span createTracingSpan(final CommandMessage message,
+            final OperationContext operationContext,
+            final Supplier<BsonDocument> commandDocumentSupplier,
+            final Predicate<String> isSensitiveCommand,
+            final Supplier<ServerAddress> serverAddressSupplier,
+            final Supplier<ConnectionId> connectionIdSupplier
+            ) {
+
+       if (!isEnabled()) {
+            return null;
+        }
+        BsonDocument command = commandDocumentSupplier.get();
+        String commandName = command.getFirstKey();
+        if (isSensitiveCommand.test(commandName)) {
+            return null;
+        }
+
+        Span operationSpan = operationContext.getTracingSpan();
+        Span span = addSpan(MONGODB_COMMAND, commandName, operationSpan != null ? operationSpan.context() : null);
+
+        // Resolve namespace from parent operation span or message
+        String namespace;
+        String collection = "";
+        if (operationSpan != null) {
+            MongoNamespace parentNamespace = operationSpan.getNamespace();
+            if (parentNamespace != null) {
+                namespace = parentNamespace.getDatabaseName();
+                collection =
+                        MongoNamespaceHelper.COMMAND_COLLECTION_NAME.equalsIgnoreCase(parentNamespace.getCollectionName()) ? ""
+                                : parentNamespace.getCollectionName();
+            } else {
+                namespace = message.getDatabase();
+            }
+        } else {
+            namespace = message.getDatabase();
+        }
+
+        // Populate domain fields on MongodbObservationContext — the convention reads these to produce tags
+        MongodbObservationContext mongodbContext = span.getMongodbObservationContext();
+        if (mongodbContext != null) {
+            mongodbContext.setCommandName(commandName);
+            mongodbContext.setDatabaseName(namespace);
+            if (!collection.isEmpty()) {
+                mongodbContext.setCollectionName(collection);
+            }
+
+            ServerAddress serverAddress = serverAddressSupplier.get();
+            mongodbContext.setServerAddress(serverAddress);
+            mongodbContext.setUnixSocket(serverAddress instanceof UnixServerAddress);
+
+            ConnectionId connectionId = connectionIdSupplier.get();
+            mongodbContext.setConnectionId(connectionId);
+
+            if (command.containsKey("getMore")) {
+                long cursorId = command.getInt64("getMore").longValue();
+                mongodbContext.setCursorId(cursorId);
+            }
+
+            SessionContext sessionContext = operationContext.getSessionContext();
+            if (sessionContext.hasSession() && !sessionContext.isImplicitSession()) {
+                mongodbContext.setTransactionNumber(sessionContext.getTransactionNumber());
+                mongodbContext.setSessionId(String.valueOf(sessionContext.getSessionId()
+                        .get(sessionContext.getSessionId().getFirstKey())
+                        .asBinary().asUuid()));
+            }
+        }
+
+        return span;
+    }
+
+    /**
+     * Creates an operation-level tracing span for a database command.
+     * <p>
+     * The span is named "{commandName} {database}[.{collection}]" and tagged with standard
+     * low-cardinality attributes (system, namespace, collection, operation name, operation summary).
+     * The span is also set on the {@link OperationContext} for use by downstream command-level tracing.
+     *
+     * @param transactionSpan  the active transaction span (for parent context), or null
+     * @param operationContext the operation context to attach the span to
+     * @param commandName      the name of the command (e.g. "find", "insert")
+     * @param namespace        the MongoDB namespace for the operation
+     * @return the created span, or null if tracing is disabled
+     */
+    @Nullable
+    public Span createOperationSpan(@Nullable final TransactionSpan transactionSpan,
+            final OperationContext operationContext, final String commandName, final MongoNamespace namespace) {
+        if (!isEnabled()) {
+            return null;
+        }
+        TraceContext parentContext = null;
+        if (transactionSpan != null) {
+            parentContext = transactionSpan.getContext();
+        }
+        String name = commandName + " " + namespace.getDatabaseName()
+                + (MongoNamespaceHelper.COMMAND_COLLECTION_NAME.equalsIgnoreCase(namespace.getCollectionName())
+                ? ""
+                : "." + namespace.getCollectionName());
+
+        Span span = addSpan(MONGODB_OPERATION, name, parentContext, namespace);
+
+        // Populate domain fields on MongodbObservationContext — the convention reads these to produce tags
+        MongodbObservationContext mongodbContext = span.getMongodbObservationContext();
+        if (mongodbContext != null) {
+            mongodbContext.setCommandName(commandName);
+            mongodbContext.setDatabaseName(namespace.getDatabaseName());
+            if (!MongoNamespaceHelper.COMMAND_COLLECTION_NAME.equalsIgnoreCase(namespace.getCollectionName())) {
+                mongodbContext.setCollectionName(namespace.getCollectionName());
+            }
+        }
+
+        operationContext.setTracingSpan(span);
+        return span;
+    }
+}

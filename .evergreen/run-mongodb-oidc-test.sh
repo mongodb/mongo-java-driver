@@ -5,7 +5,7 @@ set -eu
 
 echo "Running MONGODB-OIDC authentication tests"
 echo "OIDC_ENV $OIDC_ENV"
-
+FULL_DESCRIPTION=$OIDC_ENV
 if [ $OIDC_ENV == "test" ]; then
     if [ -z "$DRIVERS_TOOLS" ]; then
         echo "Must specify DRIVERS_TOOLS"
@@ -14,7 +14,7 @@ if [ $OIDC_ENV == "test" ]; then
     source ${DRIVERS_TOOLS}/.evergreen/auth_oidc/secrets-export.sh
     # java will not need to be installed, but we need to config
     RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
-    source "${RELATIVE_DIR_PATH}/javaConfig.bash"
+    source "${RELATIVE_DIR_PATH}/setup-env.bash"
 elif [ $OIDC_ENV == "azure" ]; then
     source ./env.sh
 elif [ $OIDC_ENV == "gcp" ]; then
@@ -27,6 +27,7 @@ elif [ $OIDC_ENV == "k8s" ]; then
         exit 1
     fi
 
+    FULL_DESCRIPTION="${OIDC_ENV} - ${K8S_VARIANT}"
     # fix for git permissions issue:
     git config --global --add safe.directory /tmp/test
 else
@@ -34,11 +35,15 @@ else
     exit 1
 fi
 
-
 if ! which java ; then
     echo "Installing java..."
     sudo apt install openjdk-17-jdk -y
     echo "Installed java."
+fi
+
+if ! which gpg ; then
+    echo "Installing gpg..."
+    sudo apt install gnupg -y
 fi
 
 which java
@@ -49,7 +54,21 @@ TO_REPLACE="mongodb://"
 REPLACEMENT="mongodb://$OIDC_ADMIN_USER:$OIDC_ADMIN_PWD@"
 ADMIN_URI=${MONGODB_URI/$TO_REPLACE/$REPLACEMENT}
 
-./gradlew -Dorg.mongodb.test.uri="$ADMIN_URI" \
-  --stacktrace --debug --info --no-build-cache driver-core:cleanTest \
-  driver-sync:test --tests OidcAuthenticationProseTests --tests UnifiedAuthTest \
-  driver-reactive-streams:test --tests OidcAuthenticationAsyncProseTests \
+# Limit memory for the containers
+GRADLE_EXTRA_VARS="--no-daemon -Dorg.gradle.jvmargs=-Xmx512m -PtestMaxHeapSize=1g"
+
+echo "Running gradle version"
+./gradlew $GRADLE_EXTRA_VARS -version
+
+echo "Running gradle classes compile for driver-sync and driver-reactive-streams: ${FULL_DESCRIPTION}"
+./gradlew $GRADLE_EXTRA_VARS --parallel --stacktrace --info  \
+  driver-sync:classes driver-reactive-streams:classes
+
+echo "Running OIDC authentication tests against driver-sync: ${FULL_DESCRIPTION}"
+./gradlew $GRADLE_EXTRA_VARS -Dorg.mongodb.test.uri="$ADMIN_URI" \
+  --stacktrace --debug --info \
+  driver-sync:test --tests OidcAuthenticationProseTests --tests UnifiedAuthTest
+
+echo "Running OIDC authentication tests against driver-reactive-streams: ${FULL_DESCRIPTION}"
+./gradlew $GRADLE_EXTRA_VARS -Dorg.mongodb.test.uri="$ADMIN_URI" \
+  --stacktrace --debug --info driver-reactive-streams:test --tests OidcAuthenticationAsyncProseTests

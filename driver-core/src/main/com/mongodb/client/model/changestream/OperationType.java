@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model.changestream;
 
+import com.mongodb.lang.Nullable;
+
 /**
  * The {@code $changeStream} operation type.
  *
@@ -95,9 +97,9 @@ public enum OperationType {
      * Returns the ChangeStreamOperationType from the string value.
      *
      * @param operationTypeName the string value.
-     * @return the read concern
+     * @return the operation type.
      */
-    public static OperationType fromString(final String operationTypeName) {
+    public static OperationType fromString(@Nullable final String operationTypeName) {
         if (operationTypeName != null) {
             for (OperationType operationType : OperationType.values()) {
                 if (operationTypeName.equals(operationType.value)) {

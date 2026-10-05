@@ -24,13 +24,12 @@ import com.mongodb.client.model.DBCreateViewOptions;
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
 import com.mongodb.internal.TimeoutSettings;
-import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.CommandReadOperation;
 import com.mongodb.internal.operation.CreateCollectionOperation;
 import com.mongodb.internal.operation.CreateViewOperation;
 import com.mongodb.internal.operation.DropDatabaseOperation;
 import com.mongodb.internal.operation.ListCollectionsOperation;
-import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
@@ -196,7 +195,8 @@ public class DB {
      */
     public void dropDatabase() {
         try {
-            getExecutor().execute(new DropDatabaseOperation(getName(), getWriteConcern()), getReadConcern());
+            getExecutor().execute(new DropDatabaseOperation(getName(), getWriteConcern(),
+                    mongo.getMongoClientOptions().getRetryWrites(), mongo.getMongoClientOptions().getMaxAdaptiveRetries()), getReadConcern());
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
         }
@@ -219,12 +219,13 @@ public class DB {
      * @mongodb.driver.manual reference/method/db.getCollectionNames/ getCollectionNames()
      */
     public Set<String> getCollectionNames() {
+        MongoClientOptions options = mongo.getMongoClientOptions();
         List<String> collectionNames =
                 new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT, primary(),
-                                                mongo.getMongoClientOptions().getRetryReads(), DB.this.getTimeoutSettings()) {
+                                                options.getRetryReads(), DB.this.getTimeoutSettings()) {
                     @Override
-                    public ReadOperation<BatchCursor<DBObject>> asReadOperation() {
-                        return new ListCollectionsOperation<>(name, commandCodec).nameOnly(true);
+                    public ReadOperationCursor<DBObject> asReadOperation() {
+                        return new ListCollectionsOperation<>(name, commandCodec, options.getMaxAdaptiveRetries()).nameOnly(true);
                     }
 
                     @Override
@@ -310,7 +311,8 @@ public class DB {
             notNull("options", options);
             DBCollection view = getCollection(viewName);
             executor.execute(new CreateViewOperation(name, viewName, viewOn,
-                    view.preparePipeline(pipeline), writeConcern)
+                    view.preparePipeline(pipeline), writeConcern,
+                    mongo.getMongoClientOptions().getRetryWrites(), mongo.getMongoClientOptions().getMaxAdaptiveRetries())
                     .collation(options.getCollation()), getReadConcern());
             return view;
         } catch (MongoWriteConcernException e) {
@@ -387,7 +389,7 @@ public class DB {
         }
         Collation collation = DBObjectCollationHelper.createCollationFromOptions(options);
         return new CreateCollectionOperation(getName(), collectionName,
-                getWriteConcern())
+                getWriteConcern(), mongo.getMongoClientOptions().getRetryWrites(), mongo.getMongoClientOptions().getMaxAdaptiveRetries())
                    .capped(capped)
                    .collation(collation)
                    .sizeInBytes(sizeInBytes)

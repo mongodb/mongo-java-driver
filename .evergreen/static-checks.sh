@@ -7,9 +7,12 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #            Main Program                  #
 ############################################
 RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE[0]:-$0}")"
-. "${RELATIVE_DIR_PATH}/javaConfig.bash"
+. "${RELATIVE_DIR_PATH}/setup-env.bash"
 
 echo "Compiling JVM drivers"
 
 ./gradlew -version
 ./gradlew -PxmlReports.enabled=true --info -x test -x integrationTest -x spotlessApply clean check scalaCheck jar testClasses docs
+
+echo "Running OSGi bundle resolution tests"
+./gradlew -PxmlReports.enabled=true --info :testing:osgi-test:check

@@ -24,8 +24,8 @@ import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.unified.UnifiedTest;
 import com.mongodb.client.unified.UnifiedTestModifications;
 import com.mongodb.client.vault.ClientEncryption;
+import com.mongodb.connection.TransportSettings;
 import com.mongodb.lang.NonNull;
-import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBuckets;
 import com.mongodb.reactivestreams.client.internal.vault.ClientEncryptionImpl;
 import com.mongodb.reactivestreams.client.syncadapter.SyncClientEncryption;
@@ -36,6 +36,7 @@ import org.junit.jupiter.params.provider.Arguments;
 
 import java.util.Collection;
 
+import static com.mongodb.ClusterFixture.getOverriddenTransportSettings;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier;
 import static com.mongodb.client.unified.UnifiedTestModifications.TestDef;
 import static com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient.disableSleep;
@@ -50,7 +51,10 @@ public abstract class UnifiedReactiveStreamsTest extends UnifiedTest {
 
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
+        TransportSettings overriddenTransportSettings = getOverriddenTransportSettings();
+        MongoClientSettings clientSettings = overriddenTransportSettings == null ? settings
+                : MongoClientSettings.builder(settings).transportSettings(overriddenTransportSettings).build();
+        return new SyncMongoClient(clientSettings);
     }
 
     @Override

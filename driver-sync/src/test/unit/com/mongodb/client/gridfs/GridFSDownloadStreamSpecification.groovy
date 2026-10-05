@@ -45,7 +45,7 @@ class GridFSDownloadStreamSpecification extends Specification {
         when:
         def twoBytes = new byte[2]
         def oneByte = new byte[1]
-        def findQuery = new BsonDocument('files_id', fileInfo.getId())
+        def findQuery = new BsonDocument('files_id', new BsonDocument('$eq', fileInfo.getId()))
                 .append('n', new BsonDocument('$gte', new BsonInt32(0)))
         def sort = new BsonDocument('n', new BsonInt32(1))
         def chunkDocument = new BsonDocument('files_id', fileInfo.getId())
@@ -115,10 +115,10 @@ class GridFSDownloadStreamSpecification extends Specification {
         when:
         def twoBytes = new byte[2]
         def oneByte = new byte[1]
-        def findQuery = new BsonDocument('files_id', fileInfo.getId()).append('n',
+        def findQuery = new BsonDocument('files_id', new BsonDocument('$eq', fileInfo.getId())).append('n',
                 new BsonDocument('$gte',
                 new BsonInt32(0)))
-        def secondFindQuery = new BsonDocument('files_id', fileInfo.getId())
+        def secondFindQuery = new BsonDocument('files_id', new BsonDocument('$eq', fileInfo.getId()))
                 .append('n', new BsonDocument('$gte', new BsonInt32(1)))
         def sort = new BsonDocument('n', new BsonInt32(1))
         def chunkDocument = new BsonDocument('files_id', fileInfo.getId())
@@ -203,9 +203,9 @@ class GridFSDownloadStreamSpecification extends Specification {
 
         def sort = new BsonDocument('n', new BsonInt32(1))
 
-        def findQueries = [new BsonDocument('files_id', fileInfo.getId())
+        def findQueries = [new BsonDocument('files_id', new BsonDocument('$eq', fileInfo.getId()))
                                    .append('n', new BsonDocument('$gte', new BsonInt32(0))),
-                           new BsonDocument('files_id', fileInfo.getId())
+                           new BsonDocument('files_id', new BsonDocument('$eq', fileInfo.getId()))
                                    .append('n', new BsonDocument('$gte', new BsonInt32(131071)))]
         def chunkDocuments =
                 [new BsonDocument('files_id', fileInfo.getId())

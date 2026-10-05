@@ -41,8 +41,8 @@ import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.mongodb.ClusterFixture.cryptSharedLibPathSysPropValue;
 import static com.mongodb.client.AbstractClientSideEncryptionNotCreateMongocryptdClientTest.findAvailableMongocryptdLoopbackPort;
-import static com.mongodb.client.AbstractClientSideEncryptionTest.cryptSharedLibPathSysPropValue;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.unified.UnifiedClientEncryptionHelper.localKmsProviderKey;
 import static java.lang.String.format;

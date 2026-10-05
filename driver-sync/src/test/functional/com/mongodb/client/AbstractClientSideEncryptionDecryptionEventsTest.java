@@ -24,6 +24,7 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoSocketReadException;
+import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.vault.ClientEncryption;
@@ -44,7 +45,6 @@ import java.util.List;
 import java.util.Map;
 
 import static com.mongodb.ClusterFixture.configureFailPoint;
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
@@ -77,7 +77,6 @@ public abstract class AbstractClientSideEncryptionDecryptionEventsTest {
         assumeTrue(serverVersionAtLeast(6, 0));
         assumeFalse(isStandalone());
         assumeFalse(isSharded());
-        assumeFalse(isServerlessTest());
 
         getDefaultDatabase().getCollection("decryption_events").drop();
         getDefaultDatabase().createCollection("decryption_events");
@@ -97,7 +96,7 @@ public abstract class AbstractClientSideEncryptionDecryptionEventsTest {
 
         // Copy ciphertext into a variable named malformedCiphertext. Change the last byte. This will produce an invalid HMAC tag.
         byte[] malformedBytes = ciphertext.getData().clone();
-        malformedBytes[malformedBytes.length - 1] = (byte) (malformedBytes[malformedBytes.length - 1] == 0 ? 0 : 1);
+        malformedBytes[malformedBytes.length - 1] = (byte) (malformedBytes[malformedBytes.length - 1] == 0 ? 1 : 0);
         malformedCiphertext = new BsonBinary(ciphertext.getType(), malformedBytes);
 
         commandListener = new TestCommandListener();
@@ -108,6 +107,7 @@ public abstract class AbstractClientSideEncryptionDecryptionEventsTest {
                                 .kmsProviders(kmsProviders)
                                 .build())
                 .retryReads(false)
+                .writeConcern(WriteConcern.MAJORITY)
                 .addCommandListener(commandListener)
                 .build());
     }

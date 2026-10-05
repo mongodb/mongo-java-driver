@@ -51,9 +51,7 @@ final class CAPIHelper {
     }
 
     static RawBsonDocument toDocument(final mongocrypt_binary_t binary) {
-        ByteBuffer byteBuffer = toByteBuffer(binary);
-        byte[] bytes = new byte[byteBuffer.remaining()];
-        byteBuffer.get(bytes);
+        byte[] bytes = toByteArray(binary);
         return new RawBsonDocument(bytes);
     }
 

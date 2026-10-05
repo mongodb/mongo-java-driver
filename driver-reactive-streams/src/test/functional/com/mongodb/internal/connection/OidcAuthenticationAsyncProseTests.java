@@ -33,7 +33,7 @@ public class OidcAuthenticationAsyncProseTests extends OidcAuthenticationProseTe
 
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
+        return new SyncMongoClient(settings);
     }
 
     @Test

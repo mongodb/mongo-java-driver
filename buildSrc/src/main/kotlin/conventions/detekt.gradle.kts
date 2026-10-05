@@ -16,10 +16,11 @@
 package conventions
 
 import io.gitlab.arturbosch.detekt.Detekt
+import libs
 
 // Static code analysis for Kotlin
 // https://plugins.gradle.org/plugin/io.gitlab.arturbosch.detekt
-plugins { id("io.gitlab.arturbosch.detekt") }
+plugins { alias(libs.plugins.detekt) }
 
 detekt {
     allRules = true // fail build on any finding

@@ -19,7 +19,6 @@ package com.mongodb.internal.connection;
 import com.mongodb.LoggerSettings;
 import com.mongodb.MongoCompressor;
 import com.mongodb.MongoCredential;
-import com.mongodb.MongoDriverInformation;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
 import com.mongodb.annotations.ThreadSafe;
@@ -47,8 +46,6 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
     private final MongoCredentialWithCache credential;
     private final LoggerSettings loggerSettings;
     private final CommandListener commandListener;
-    private final String applicationName;
-    private final MongoDriverInformation mongoDriverInformation;
     private final List<MongoCompressor> compressorList;
     private final ServerApi serverApi;
     private final InternalOperationContextFactory operationContextFactory;
@@ -59,7 +56,6 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
             final StreamFactory streamFactory, @Nullable final MongoCredential credential,
             final LoggerSettings loggerSettings,
             @Nullable final CommandListener commandListener,
-            @Nullable final String applicationName, final MongoDriverInformation mongoDriverInformation,
             final List<MongoCompressor> compressorList, @Nullable final ServerApi serverApi,
             final InternalOperationContextFactory operationContextFactory) {
         this.serverSettings = serverSettings;
@@ -69,8 +65,6 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
         this.credential = credential == null ? null : new MongoCredentialWithCache(credential);
         this.loggerSettings = loggerSettings;
         this.commandListener = commandListener;
-        this.applicationName = applicationName;
-        this.mongoDriverInformation = mongoDriverInformation;
         this.compressorList = compressorList;
         this.serverApi = serverApi;
         this.operationContextFactory = operationContextFactory;
@@ -79,8 +73,8 @@ public class LoadBalancedClusterableServerFactory implements ClusterableServerFa
     @Override
     public ClusterableServer create(final Cluster cluster, final ServerAddress serverAddress) {
         ConnectionPool connectionPool = new DefaultConnectionPool(new ServerId(cluster.getClusterId(), serverAddress),
-                new InternalStreamConnectionFactory(ClusterConnectionMode.LOAD_BALANCED, streamFactory, credential, applicationName,
-                        mongoDriverInformation, compressorList, loggerSettings, commandListener, serverApi),
+                new InternalStreamConnectionFactory(ClusterConnectionMode.LOAD_BALANCED, streamFactory, credential, cluster.getClientMetadata(),
+                        compressorList, loggerSettings, commandListener, serverApi),
                 connectionPoolSettings, internalConnectionPoolSettings, EmptyProvider.instance(), operationContextFactory);
         connectionPool.ready();
 

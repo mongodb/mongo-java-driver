@@ -60,7 +60,8 @@ public interface BatchCursor<T> extends Iterator<List<T>>, Closeable {
     boolean hasNext();
 
     /**
-     * Returns the next batch of results.  A tailable cursor will block until another batch exists.
+     * Returns the next batch of results as a mutable list. Modifications to the list will not affect the cursor state.
+     * A tailable cursor will block until another batch exists.
      *
      * @return the next batch of results
      * @throws java.util.NoSuchElementException if no next batch exists
@@ -89,7 +90,8 @@ public interface BatchCursor<T> extends Iterator<List<T>>, Closeable {
     int getBatchSize();
 
     /**
-     * A special {@code next()} case that returns the next batch if available or null.
+     * A special {@code next()} case that returns the next batch as a mutable list if available or null.
+     * Modifications to the list will not affect the cursor state.
      *
      * <p>Tailable cursors are an example where this is useful. A call to {@code tryNext()} may return null, but in the future calling
      * {@code tryNext()} would return a new batch if a document had been added to the capped collection.</p>

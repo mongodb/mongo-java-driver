@@ -22,11 +22,16 @@ import com.mongodb.client.model.densify.DensifyRange;
 import com.mongodb.client.model.fill.FillOptions;
 import com.mongodb.client.model.fill.FillOutputField;
 import com.mongodb.client.model.geojson.Point;
+import com.mongodb.internal.client.model.search.AbstractVectorSearchQuery;
 import com.mongodb.client.model.search.FieldSearchPath;
 import com.mongodb.client.model.search.SearchCollector;
 import com.mongodb.client.model.search.SearchOperator;
 import com.mongodb.client.model.search.SearchOptions;
+import com.mongodb.client.model.search.TextVectorSearchQuery;
+import com.mongodb.client.model.search.VectorSearchNestedOptions;
 import com.mongodb.client.model.search.VectorSearchOptions;
+import com.mongodb.client.model.search.VectorSearchQuery;
+import com.mongodb.client.model.search.VectorSearchScoreMode;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -38,22 +43,28 @@ import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.BinaryVector;
+import org.bson.annotations.Beta;
+import org.bson.annotations.Reason;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.model.GeoNearOptions.geoNearOptions;
+import static com.mongodb.client.model.ScoreOptions.scoreOptions;
 import static com.mongodb.client.model.densify.DensifyOptions.densifyOptions;
 import static com.mongodb.client.model.search.SearchOptions.searchOptions;
 import static com.mongodb.internal.Iterables.concat;
 import static com.mongodb.internal.client.model.Util.sizeAtLeast;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 /**
  * Builders for aggregation pipeline stages.
@@ -64,6 +75,9 @@ import static java.util.Arrays.asList;
  */
 @SuppressWarnings("overloads")
 public final class Aggregates {
+
+    private Aggregates() {
+    }
 
     /**
      * Creates an $addFields pipeline stage
@@ -942,6 +956,13 @@ public final class Aggregates {
      * You may use the {@code $meta: "vectorSearchScore"} expression, e.g., via {@link Projections#metaVectorSearchScore(String)},
      * to extract the relevance score assigned to each found document.
      *
+     * <p>The {@code path} may reference a nested (embedded) field using dot notation, in which case the
+     * search is performed against embeddings in the embedded documents. For a nested search, use
+     * {@link VectorSearchOptions#filter(Bson)} to filter the leaf (embedded) documents,
+     * {@link VectorSearchOptions#parentFilter(Bson)} to filter the parent documents, and
+     * {@link VectorSearchOptions#nestedOptions(VectorSearchNestedOptions)} (e.g.
+     * {@link VectorSearchNestedOptions#scoreMode(VectorSearchScoreMode)}) to control score aggregation.</p>
+     *
      * @param queryVector The query vector. The number of dimensions must match that of the {@code index}.
      * @param path The field to be searched.
      * @param index The name of the index to use.
@@ -965,6 +986,41 @@ public final class Aggregates {
         notNull("index", index);
         notNull("options", options);
         return new VectorSearchBson(path, queryVector, index, limit, options);
+    }
+
+    /**
+     * Creates a {@code $vectorSearch} pipeline stage supported by MongoDB Atlas with automated embedding.
+     * You may use the {@code $meta: "vectorSearchScore"} expression, e.g., via {@link Projections#metaVectorSearchScore(String)},
+     * to extract the relevance score assigned to each found document.
+     * <p>
+     * This overload is used for auto-embedding in Atlas. The server will automatically generate embeddings
+     * for the query using the model specified in the index definition or via {@link TextVectorSearchQuery#model(String)}.
+     * </p>
+     *
+     * @param path The field to be searched.
+     * @param query The query specification, typically created via {@link VectorSearchQuery#textQuery(String)}.
+     * @param index The name of the index to use.
+     * @param limit The limit on the number of documents produced by the pipeline stage.
+     * @param options Optional {@code $vectorSearch} pipeline stage fields.
+     * @return The {@code $vectorSearch} pipeline stage.
+     *
+     * @mongodb.atlas.manual atlas-vector-search/vector-search-stage/ $vectorSearch
+     * @mongodb.atlas.manual atlas-search/scoring/ Scoring
+     * @mongodb.server.release 6.0.11
+     * @since 5.7.0
+     */
+    @Beta(Reason.SERVER)
+    public static Bson vectorSearch(
+            final FieldSearchPath path,
+            final VectorSearchQuery query,
+            final String index,
+            final long limit,
+            final VectorSearchOptions options) {
+        notNull("path", path);
+        notNull("query", query);
+        notNull("index", index);
+        notNull("options", options);
+        return new VectorSearchQueryBson(path, query, index, limit, options);
     }
 
     /**
@@ -995,6 +1051,169 @@ public final class Aggregates {
         notNull("index", index);
         notNull("options", options);
         return new VectorSearchBson(path, queryVector, index, limit, options);
+    }
+
+    /**
+     * Creates a {@code $rerank} pipeline stage supported by MongoDB Atlas.
+     * You may use the {@code $meta: "score"} expression to extract the relevance score
+     * assigned to each reranked document.
+     *
+     * @param query           The query to rerank against, created via {@link RerankQuery#rerankQuery(String)}
+     *                        or {@link RerankQuery#rerankQuery(Bson)}.
+     * @param path            The document field to send to the reranker.
+     * @param numDocsToRerank The maximum number of documents to rerank (currently 1-1000).
+     * @param model           The reranking model name. Currently accepted:
+     *                        {@code "rerank-2.5"}, {@code "rerank-2.5-lite"}, {@code "rerank-2"}, {@code "rerank-2-lite"}.
+     * @return The {@code $rerank} pipeline stage.
+     * @mongodb.server.release 8.3
+     * @since 5.8
+     */
+    @Beta(Reason.SERVER)
+    public static Bson rerank(
+            final RerankQuery query,
+            final String path,
+            final int numDocsToRerank,
+            final String model) {
+        notNull("path", path);
+        return rerank(query, singletonList(path), numDocsToRerank, model);
+    }
+
+    /**
+     * Creates a {@code $rerank} pipeline stage supported by MongoDB Atlas.
+     * You may use the {@code $meta: "score"} expression to extract the relevance score
+     * assigned to each reranked document.
+     *
+     * @param query           The query to rerank against, created via {@link RerankQuery#rerankQuery(String)}.
+     * @param paths           The document field(s) to send to the reranker.
+     * @param numDocsToRerank The maximum number of documents to rerank (1-1000).
+     * @param model           The reranking model name. Accepted values:
+     *                        {@code "rerank-2.5"}, {@code "rerank-2.5-lite"}, {@code "rerank-2"}, {@code "rerank-2-lite"}.
+     * @return The {@code $rerank} pipeline stage.
+     * @mongodb.server.release 8.3
+     * @since 5.8
+     */
+    @Beta(Reason.SERVER)
+    public static Bson rerank(
+            final RerankQuery query,
+            final List<String> paths,
+            final int numDocsToRerank,
+            final String model) {
+        notNull("query", query);
+        notNull("paths", paths);
+        isTrueArgument("paths must not be empty", !paths.isEmpty());
+        notNull("model", model);
+        return new RerankBson(query, paths, numDocsToRerank, model);
+    }
+
+    /**
+     * Creates a {@code $scoreFusion} pipeline stage, which combines the results of the given input pipelines,
+     * normalizing and combining the scores they produce. It must be the first stage of an aggregation pipeline
+     * run on a collection, and the input pipelines must be scored selection pipelines on the same collection,
+     * e.g., starting with a {@link #search(SearchOperator, SearchOptions) $search}
+     * or {@link #vectorSearch(FieldSearchPath, Iterable, String, long, VectorSearchOptions) $vectorSearch} stage.
+     * You may use the {@code $meta: "score"} expression to extract the combined score of a document.
+     *
+     * @param pipelines The non-empty input pipelines with unique names.
+     * @param normalization The way in which the scores produced by the input pipelines are normalized.
+     * @return The {@code $scoreFusion} pipeline stage.
+     * @mongodb.driver.manual reference/operator/aggregation/scoreFusion/ $scoreFusion
+     * @mongodb.server.release 8.2
+     * @since 5.10
+     */
+    public static Bson scoreFusion(final List<FusionPipeline> pipelines, final ScoreNormalization normalization) {
+        return scoreFusion(pipelines, normalization, ScoreFusionOptions.scoreFusionOptions());
+    }
+
+    /**
+     * Creates a {@code $scoreFusion} pipeline stage, which combines the results of the given input pipelines,
+     * normalizing and combining the scores they produce. It must be the first stage of an aggregation pipeline
+     * run on a collection, and the input pipelines must be scored selection pipelines on the same collection,
+     * e.g., starting with a {@link #search(SearchOperator, SearchOptions) $search}
+     * or {@link #vectorSearch(FieldSearchPath, Iterable, String, long, VectorSearchOptions) $vectorSearch} stage.
+     * You may use the {@code $meta: "score"} expression to extract the combined score of a document.
+     *
+     * @param pipelines The non-empty input pipelines with unique names.
+     * @param normalization The way in which the scores produced by the input pipelines are normalized.
+     * @param options Optional {@code $scoreFusion} pipeline stage fields.
+     * @return The {@code $scoreFusion} pipeline stage.
+     * @mongodb.driver.manual reference/operator/aggregation/scoreFusion/ $scoreFusion
+     * @mongodb.server.release 8.2
+     * @since 5.10
+     */
+    public static Bson scoreFusion(final List<FusionPipeline> pipelines, final ScoreNormalization normalization,
+            final ScoreFusionOptions options) {
+        notNull("pipelines", pipelines);
+        isTrueArgument("pipelines must not be empty", !pipelines.isEmpty());
+        Set<String> names = new HashSet<>();
+        for (FusionPipeline pipeline : pipelines) {
+            notNull("pipeline", pipeline);
+            isTrueArgument("pipeline names must be unique", names.add(pipeline.getName()));
+        }
+        notNull("normalization", normalization);
+        notNull("options", options);
+        return new ScoreFusionStage(pipelines, normalization, options);
+    }
+
+    /**
+     * Creates a {@code $score} pipeline stage that computes a new score for each document
+     * and attaches it as {@code score} metadata.
+     * You may use the {@code $meta: "score"} expression to extract the computed score.
+     *
+     * @param score the expression that computes the score. Must evaluate to a numeric value.
+     * @param <TExpression> the score expression type
+     * @return the {@code $score} pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/score/ $score
+     * @mongodb.server.release 8.2
+     * @since 5.10
+     */
+    public static <TExpression> Bson score(final TExpression score) {
+        return score(score, scoreOptions());
+    }
+
+    /**
+     * Creates a {@code $score} pipeline stage that computes a new score for each document
+     * and attaches it as {@code score} metadata, with optional normalization, weighting and score details.
+     * You may use the {@code $meta: "score"} expression to extract the computed score.
+     *
+     * @param score the expression that computes the score. Must evaluate to a numeric value.
+     * @param options optional {@code $score} pipeline stage fields
+     * @param <TExpression> the score expression type
+     * @return the {@code $score} pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/score/ $score
+     * @mongodb.server.release 8.2
+     * @since 5.10
+     */
+    public static <TExpression> Bson score(final TExpression score, final ScoreOptions options) {
+        notNull("score", score);
+        notNull("options", options);
+        return new Bson() {
+            @Override
+            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+                BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+                writer.writeStartDocument();
+                writer.writeStartDocument("$score");
+
+                writer.writeName("score");
+                BuildersHelper.encodeValue(writer, score, codecRegistry);
+
+                options.toBsonDocument(documentClass, codecRegistry).forEach((optionName, optionValue) -> {
+                    writer.writeName(optionName);
+                    BuildersHelper.encodeValue(writer, optionValue, codecRegistry);
+                });
+
+                writer.writeEndDocument();
+                writer.writeEndDocument();
+                return writer.getDocument();
+            }
+
+            @Override
+            public String toString() {
+                return "Stage{name='$score'"
+                        + ", score=" + score
+                        + ", options=" + options
+                        + '}';
+            }
+        };
     }
 
     /**
@@ -2155,6 +2374,60 @@ public final class Aggregates {
         }
     }
 
+
+    /**
+     * Same as {@link Aggregates.VectorSearchBson} but uses a query expression instead of a query vector.
+     */
+    private static class VectorSearchQueryBson implements Bson {
+        private final FieldSearchPath path;
+        private final VectorSearchQuery query;
+        private final String index;
+        private final long limit;
+        private final VectorSearchOptions options;
+
+        /**
+         * Given model name must be compatible with the one in the index definition.
+         */
+        private final String embeddingModelName;
+
+        VectorSearchQueryBson(final FieldSearchPath path, final VectorSearchQuery query,
+                final String index, final long limit,
+                final VectorSearchOptions options) {
+            this.path = path;
+            this.query = query;
+            this.index = index;
+            this.limit = limit;
+            this.options = options;
+            // when null then model name from the index definition will be used by the server
+            this.embeddingModelName = ((AbstractVectorSearchQuery) query).getModel();
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+            Document specificationDoc = new Document("path", path.toValue())
+                    .append("query", query)
+                    .append("index", index)
+                    .append("limit", limit);
+            if (embeddingModelName != null) {
+                specificationDoc.append("model", embeddingModelName);
+            }
+            specificationDoc.putAll(options.toBsonDocument(documentClass, codecRegistry));
+            return new Document("$vectorSearch", specificationDoc).toBsonDocument(documentClass, codecRegistry);
+        }
+
+        @Override
+        public String toString() {
+            return "Stage{name=$vectorSearch"
+                    + ", path=" + path
+                    + ", query=" + query
+                    + ", index=" + index
+                    + ", limit=" + limit
+                    + ", model=" + embeddingModelName
+                    + ", options=" + options
+                    + '}';
+        }
+    }
+
     private static class VectorSearchBson implements Bson {
         private final FieldSearchPath path;
         private final Object queryVector;
@@ -2194,6 +2467,76 @@ public final class Aggregates {
         }
     }
 
-    private Aggregates() {
+    private static final class ScoreFusionStage implements Bson {
+        private final List<FusionPipeline> pipelines;
+        private final ScoreNormalization normalization;
+        private final ScoreFusionOptions options;
+
+        ScoreFusionStage(final List<FusionPipeline> pipelines, final ScoreNormalization normalization,
+                final ScoreFusionOptions options) {
+            this.pipelines = pipelines;
+            this.normalization = normalization;
+            this.options = options;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+            BsonDocument pipelinesDoc = new BsonDocument();
+            for (FusionPipeline pipeline : pipelines) {
+                BsonArray stages = new BsonArray();
+                for (Bson stage : pipeline.getPipeline()) {
+                    stages.add(stage.toBsonDocument(documentClass, codecRegistry));
+                }
+                pipelinesDoc.append(pipeline.getName(), stages);
+            }
+            BsonDocument specificationDoc = new BsonDocument("input",
+                    new BsonDocument("pipelines", pipelinesDoc)
+                            .append("normalization", new BsonString(normalization.getValue())));
+            specificationDoc.putAll(options.toBsonDocument(documentClass, codecRegistry));
+            return new BsonDocument("$scoreFusion", specificationDoc);
+        }
+
+        @Override
+        public String toString() {
+            return "Stage{name=$scoreFusion"
+                    + ", pipelines=" + pipelines
+                    + ", normalization=" + normalization
+                    + ", options=" + options
+                    + '}';
+        }
+    }
+
+    private static class RerankBson implements Bson {
+        private final RerankQuery query;
+        private final List<String> paths;
+        private final int numDocsToRerank;
+        private final String model;
+
+        RerankBson(final RerankQuery query, final List<String> paths, final int numDocsToRerank,
+                   final String model) {
+            this.query = query;
+            this.paths = paths;
+            this.numDocsToRerank = numDocsToRerank;
+            this.model = model;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+            Document specificationDoc = new Document("query", query)
+                    .append("path", paths.size() == 1 ? paths.get(0) : paths)
+                    .append("numDocsToRerank", numDocsToRerank)
+                    .append("model", model);
+            return new Document("$rerank", specificationDoc).toBsonDocument(documentClass, codecRegistry);
+        }
+
+        @Override
+        public String toString() {
+            return "Stage{name=$rerank"
+                    + ", query=" + query
+                    + ", paths=" + paths
+                    + ", numDocsToRerank=" + numDocsToRerank
+                    + ", model=" + model
+                    + '}';
+        }
     }
 }

@@ -28,10 +28,10 @@ import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.Reason;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
+import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.client.model.bulk.ClientNamespacedDeleteManyModel;
 import com.mongodb.client.model.bulk.ClientNamespacedUpdateManyModel;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
-import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.lang.Nullable;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -110,6 +110,9 @@ public interface MongoCluster {
      *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
      * </ul>
      *
+     *  <p>Note: This timeout does not limit socket writes, therefore there is a possibility that the
+     *  operation might not be timed out when expected.
+     *
      * @param timeUnit the time unit
      * @return the timeout in the given time unit
      * @since 5.2
@@ -168,6 +171,9 @@ public interface MongoCluster {
      *   <li>{@code 0} means infinite timeout.</li>
      *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
      * </ul>
+     *
+     *  <p>Note: This timeout does not limit socket writes, therefore there is a possibility that the
+     *  operation might not be timed out when expected.
      *
      * @param timeout the timeout, which must be greater than or equal to 0
      * @param timeUnit the time unit
@@ -371,8 +377,6 @@ public interface MongoCluster {
      * executing this operation may require multiple {@code bulkWrite} commands.
      * The eligibility for retries is determined per each {@code bulkWrite} command:
      * {@link ClientNamespacedUpdateManyModel}, {@link ClientNamespacedDeleteManyModel} in a command render it non-retryable.</p>
-     * <p>
-     * This operation is not supported by MongoDB Atlas Serverless instances.</p>
      *
      * @param models The {@linkplain ClientNamespacedWriteModel individual write operations}.
      * @return The {@link ClientBulkWriteResult} if the operation is successful.
@@ -395,8 +399,6 @@ public interface MongoCluster {
      * executing this operation may require multiple {@code bulkWrite} commands.
      * The eligibility for retries is determined per each {@code bulkWrite} command:
      * {@link ClientNamespacedUpdateManyModel}, {@link ClientNamespacedDeleteManyModel} in a command render it non-retryable.</p>
-     * <p>
-     * This operation is not supported by MongoDB Atlas Serverless instances.</p>
      *
      * @param models The {@linkplain ClientNamespacedWriteModel individual write operations}.
      * @param options The options.
@@ -424,8 +426,6 @@ public interface MongoCluster {
      * executing this operation may require multiple {@code bulkWrite} commands.
      * The eligibility for retries is determined per each {@code bulkWrite} command:
      * {@link ClientNamespacedUpdateManyModel}, {@link ClientNamespacedDeleteManyModel} in a command render it non-retryable.</p>
-     * <p>
-     * This operation is not supported by MongoDB Atlas Serverless instances.</p>
      *
      * @param clientSession The {@linkplain ClientSession client session} with which to associate this operation.
      * @param models The {@linkplain ClientNamespacedWriteModel individual write operations}.
@@ -451,8 +451,6 @@ public interface MongoCluster {
      * executing this operation may require multiple {@code bulkWrite} commands.
      * The eligibility for retries is determined per each {@code bulkWrite} command:
      * {@link ClientNamespacedUpdateManyModel}, {@link ClientNamespacedDeleteManyModel} in a command render it non-retryable.</p>
-     * <p>
-     * This operation is not supported by MongoDB Atlas Serverless instances.</p>
      *
      * @param clientSession The {@linkplain ClientSession client session} with which to associate this operation.
      * @param models The {@linkplain ClientNamespacedWriteModel individual write operations}.

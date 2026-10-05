@@ -2,16 +2,17 @@
 
 set -o xtrace   # Write all commands first to stderr
 set -o errexit  # Exit the script with error if any of the commands fail
+set -o pipefail # Exit if any command in a pipe fails
 
 # Supported/used environment variables:
 #   AUTH                                 Set to enable authentication. Values are: "auth" / "noauth" (default)
 #   SSL                                  Set to enable SSL. Values are "ssl" / "nossl" (default)
-#   NETTY_SSL_PROVIDER                   The Netty TLS/SSL protocol provider. Ignored unless SSL is "ssl" and STREAM_TYPE is "netty". Values are "JDK", "OPENSSL", null (a.k.a. "" or '') (default).
+#   NETTY_SSL_PROVIDER                   The Netty TLS/SSL protocol provider. Ignored unless SSL is "ssl" and ASYNC_TRANSPORT is "netty". Values are "JDK", "OPENSSL", null (a.k.a. "" or '') (default).
 #   MONGODB_URI                          Set the suggested connection MONGODB_URI (including credentials and topology info)
 #   TOPOLOGY                             Allows you to modify variables and the MONGODB_URI based on test topology
 #                                        Supported values: "server", "replica_set", "sharded_cluster"
 #   COMPRESSOR                           Set to enable compression. Values are "snappy" and "zlib" (default is no compression)
-#   STREAM_TYPE                          Set the stream type.  Values are "nio2" or "netty".  Defaults to "nio2".
+#   ASYNC_TRANSPORT                      Set the async transport.  Values are "nio2" or "netty".
 #   JDK                                  Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
 #   SLOW_TESTS_ONLY                      Set to true to only run the slow tests
 #   AWS_ACCESS_KEY_ID                    The AWS access key identifier for client-side encryption
@@ -34,18 +35,19 @@ SSL=${SSL:-nossl}
 MONGODB_URI=${MONGODB_URI:-}
 TOPOLOGY=${TOPOLOGY:-server}
 COMPRESSOR=${COMPRESSOR:-}
-STREAM_TYPE=${STREAM_TYPE:-nio2}
 TESTS=${TESTS:-test}
 SLOW_TESTS_ONLY=${SLOW_TESTS_ONLY:-false}
 
-export ASYNC_TYPE="-Dorg.mongodb.test.async.type=${STREAM_TYPE}"
+if [ -n "${ASYNC_TRANSPORT}" ]; then
+  readonly JAVA_SYSPROP_ASYNC_TRANSPORT="-Dorg.mongodb.test.async.transport=${ASYNC_TRANSPORT}"
+fi
 
-if [ "${SSL}" = "ssl" ] && [ "${STREAM_TYPE}" = "netty" ] && [ "${NETTY_SSL_PROVIDER}" != "" ]; then
+if [ "${SSL}" = "ssl" ] && [ "${ASYNC_TRANSPORT}" = "netty" ] && [ -n "${NETTY_SSL_PROVIDER}" ]; then
   readonly JAVA_SYSPROP_NETTY_SSL_PROVIDER="-Dorg.mongodb.test.netty.ssl.provider=${NETTY_SSL_PROVIDER}"
 fi
 
 RELATIVE_DIR_PATH="$(dirname "${BASH_SOURCE:-$0}")"
-. "${RELATIVE_DIR_PATH}/javaConfig.bash"
+. "${RELATIVE_DIR_PATH}/setup-env.bash"
 
 ############################################
 #            Functions                     #
@@ -60,8 +62,16 @@ provision_ssl () {
   cp ${JAVA_HOME}/lib/security/cacerts mongo-truststore
   ${JAVA_HOME}/bin/keytool -importcert -trustcacerts -file ${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem -keystore mongo-truststore -storepass changeit -storetype JKS -noprompt
 
+  # Use native paths on Windows (cygwin paths like /cygdrive/c/... are not understood by the JDK)
+  local CURRENT_DIR
+  if [ "Windows_NT" == "$OS" ]; then
+    CURRENT_DIR=$(cygpath -m "$(pwd)")
+  else
+    CURRENT_DIR=$(pwd)
+  fi
+
   # We add extra gradle arguments for SSL
-  export GRADLE_EXTRA_VARS="-Pssl.enabled=true -Pssl.keyStoreType=pkcs12 -Pssl.keyStore=`pwd`/client.pkc -Pssl.keyStorePassword=bithere -Pssl.trustStoreType=jks -Pssl.trustStore=`pwd`/mongo-truststore -Pssl.trustStorePassword=changeit"
+  export GRADLE_EXTRA_VARS="-Pssl.enabled=true -Pssl.keyStoreType=pkcs12 -Pssl.keyStore=${CURRENT_DIR}/client.pkc -Pssl.keyStorePassword=bithere -Pssl.trustStoreType=jks -Pssl.trustStore=${CURRENT_DIR}/mongo-truststore -Pssl.trustStorePassword=changeit"
 }
 
 provision_multi_mongos_uri_for_ssl () {
@@ -122,13 +132,19 @@ if [ ! -z "$REQUIRE_API_VERSION" ]; then
   export API_VERSION="-Dorg.mongodb.test.api.version=1"
 fi
 
+
 echo "Running $AUTH tests over $SSL for $TOPOLOGY and connecting to $MONGODB_URI"
 
 echo "Running tests with Java ${JAVA_VERSION}"
 ./gradlew -version
 
 ./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
-          ${MULTI_MONGOS_URI_SYSTEM_PROPERTY} ${API_VERSION} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} \
-          ${JAVA_SYSPROP_NETTY_SSL_PROVIDER} \
+          ${MULTI_MONGOS_URI_SYSTEM_PROPERTY} ${API_VERSION} ${GRADLE_EXTRA_VARS} \
+          ${JAVA_SYSPROP_ASYNC_TRANSPORT}  ${JAVA_SYSPROP_NETTY_SSL_PROVIDER} \
           -Dorg.mongodb.test.fle.on.demand.credential.test.failure.enabled=true \
-          --stacktrace --info --continue ${TESTS}
+          --stacktrace --info --continue ${TESTS} | tee -a logs.txt
+
+if grep -q 'LEAK:' logs.txt ; then
+    echo "Netty Leak detected, please inspect build log"
+    exit 1
+fi

@@ -39,6 +39,6 @@ public class ReactiveInitialDnsSeedlistDiscoveryTest extends InitialDnsSeedlistD
 
     @Override
     public MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
+        return new SyncMongoClient(settings);
     }
 }

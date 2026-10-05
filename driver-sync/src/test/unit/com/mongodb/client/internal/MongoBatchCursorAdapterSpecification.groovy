@@ -80,42 +80,46 @@ class MongoBatchCursorAdapterSpecification extends Specification {
 
     def 'should get next from batch cursor'() {
         given:
-        def firstBatch = [new Document('x', 1), new Document('x', 1)]
-        def secondBatch = [new Document('x', 2)]
+        def firstBatchFromBatchCursor = [new Document('x', 1), new Document('x', 1)]
+        def expectedFirstBatch = firstBatchFromBatchCursor.collect()
+        def secondBatchFromBatchCursor = [new Document('x', 2)]
+        def expectedSecondBatch = secondBatchFromBatchCursor.collect()
 
         def batchCursor = Stub(BatchCursor)
 
         batchCursor.hasNext() >>> [true, true, true, true, false]
-        batchCursor.next() >>> [firstBatch, secondBatch]
+        batchCursor.next() >>> [firstBatchFromBatchCursor, secondBatchFromBatchCursor]
 
         def cursor = new MongoBatchCursorAdapter(batchCursor)
 
         expect:
         cursor.hasNext()
-        cursor.next() == firstBatch[0]
+        cursor.next() == expectedFirstBatch[0]
         cursor.hasNext()
-        cursor.next() == firstBatch[1]
+        cursor.next() == expectedFirstBatch[1]
         cursor.hasNext()
-        cursor.next() == secondBatch[0]
+        cursor.next() == expectedSecondBatch[0]
         !cursor.hasNext()
     }
 
     def 'should try next from batch cursor'() {
         given:
-        def firstBatch = [new Document('x', 1), new Document('x', 1)]
-        def secondBatch = [new Document('x', 2)]
+        def firstBatchFromBatchCursor = [new Document('x', 1), new Document('x', 1)]
+        def expectedFirstBatch = firstBatchFromBatchCursor.collect()
+        def secondBatchFromBatchCursor = [new Document('x', 2)]
+        def expectedSecondBatch = secondBatchFromBatchCursor.collect()
 
         def batchCursor = Stub(BatchCursor)
 
-        batchCursor.tryNext() >>> [firstBatch, null, secondBatch, null]
+        batchCursor.tryNext() >>> [firstBatchFromBatchCursor, null, secondBatchFromBatchCursor, null]
 
         def cursor = new MongoBatchCursorAdapter(batchCursor)
 
         expect:
-        cursor.tryNext() == firstBatch[0]
-        cursor.tryNext() == firstBatch[1]
+        cursor.tryNext() == expectedFirstBatch[0]
+        cursor.tryNext() == expectedFirstBatch[1]
         cursor.tryNext() == null
-        cursor.tryNext() == secondBatch[0]
+        cursor.tryNext() == expectedSecondBatch[0]
         cursor.tryNext() == null
     }
 

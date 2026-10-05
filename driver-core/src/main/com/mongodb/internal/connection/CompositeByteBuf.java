@@ -49,7 +49,7 @@ class CompositeByteBuf implements ByteBuf {
         limit = components.get(components.size() - 1).endOffset;
     }
 
-    CompositeByteBuf(final CompositeByteBuf from) {
+    private CompositeByteBuf(final CompositeByteBuf from) {
         components = from.components;
         position = from.position();
         limit = from.limit();
@@ -58,7 +58,7 @@ class CompositeByteBuf implements ByteBuf {
     @Override
     public ByteBuf order(final ByteOrder byteOrder) {
         if (byteOrder == ByteOrder.BIG_ENDIAN) {
-            throw new UnsupportedOperationException(format("Only %s is supported", ByteOrder.BIG_ENDIAN));
+            throw new UnsupportedOperationException(format("Only %s is supported", ByteOrder.LITTLE_ENDIAN));
         }
         return this;
     }

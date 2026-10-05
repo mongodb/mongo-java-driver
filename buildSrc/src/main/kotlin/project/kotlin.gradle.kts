@@ -15,11 +15,12 @@
  */
 package project
 
+import libs
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile
 
 plugins {
-    kotlin("jvm")
+    alias(libs.plugins.kotlin.gradle)
     id("project.base")
     id("conventions.bnd")
     id("conventions.detekt")

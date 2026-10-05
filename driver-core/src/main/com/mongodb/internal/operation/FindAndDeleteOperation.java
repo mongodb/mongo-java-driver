@@ -35,9 +35,11 @@ import org.bson.codecs.Decoder;
  */
 public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
 
-    public FindAndDeleteOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
+    public FindAndDeleteOperation(final MongoNamespace namespace, final WriteConcern writeConcern,
+            final boolean retryWrites,
+            @Nullable final Integer maxAdaptiveRetriesSetting,
             final Decoder<T> decoder) {
-        super(namespace, writeConcern, retryWrites, decoder);
+        super(namespace, writeConcern, retryWrites, maxAdaptiveRetriesSetting, decoder);
     }
 
     @Override
@@ -88,12 +90,13 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
         return this;
     }
 
+    @Override
     protected FieldNameValidator getFieldNameValidator() {
         return NoOpFieldNameValidator.INSTANCE;
     }
 
+    @Override
     protected void specializeCommand(final BsonDocument commandDocument, final ConnectionDescription connectionDescription) {
         commandDocument.put("remove", BsonBoolean.TRUE);
     }
-
 }

@@ -16,14 +16,12 @@
 
 package com.mongodb.client;
 
-import com.mongodb.ClusterFixture;
 import com.mongodb.client.unified.UnifiedSyncTest;
 import org.junit.jupiter.params.provider.Arguments;
 
 import java.util.Collection;
 
 import static org.junit.jupiter.api.Assumptions.assumeFalse;
-
 
 // See https://github.com/mongodb/specifications/tree/master/source/client-side-operation-timeout/tests
 public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
@@ -43,22 +41,6 @@ public class ClientSideOperationTimeoutTest extends UnifiedSyncTest {
     }
 
     public static void skipOperationTimeoutTests(final String fileDescription, final String testDescription) {
-
-        if (ClusterFixture.isServerlessTest()) {
-
-            // It is not possible to create capped collections on serverless instances.
-            assumeFalse(fileDescription.equals("timeoutMS behaves correctly for tailable awaitData cursors"));
-            assumeFalse(fileDescription.equals("timeoutMS behaves correctly for tailable non-awaitData cursors"));
-
-            /* Drivers MUST NOT execute a killCursors command because the pinned connection is no longer under a load balancer. */
-            assumeFalse(testDescription.equals("timeoutMS is refreshed for close"));
-
-            /* Flaky tests. We have to retry them once we have a Junit5 rule. */
-            assumeFalse(testDescription.equals("remaining timeoutMS applied to getMore if timeoutMode is unset"));
-            assumeFalse(testDescription.equals("remaining timeoutMS applied to getMore if timeoutMode is cursor_lifetime"));
-            assumeFalse(testDescription.equals("timeoutMS is refreshed for getMore if timeoutMode is iteration - success"));
-            assumeFalse(testDescription.equals("timeoutMS is refreshed for getMore if timeoutMode is iteration - failure"));
-        }
         assumeFalse(testDescription.contains("maxTimeMS is ignored if timeoutMS is set - createIndex on collection"),
                 "No maxTimeMS parameter for createIndex() method");
         assumeFalse(fileDescription.startsWith("runCursorCommand"), "No run cursor command");

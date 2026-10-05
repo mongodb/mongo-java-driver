@@ -15,10 +15,12 @@
  */
 package conventions
 
+import libs
+
 // Dokka, the documentation engine for Kotlin
 // https://plugins.gradle.org/plugin/org.jetbrains.dokka
 plugins {
-    id("org.jetbrains.dokka")
+    alias(libs.plugins.dokka)
     id("conventions.publishing")
 }
 

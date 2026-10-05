@@ -36,7 +36,7 @@ class GridFSBucketSpec extends BaseSpec with MockitoSugar {
 
     wrapped.foreach((name: String) => {
       val cleanedName = name.stripPrefix("get").replace("Publisher", "Observable")
-      assert(local.contains(name) | local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
+      assert(local.contains(name) || local.contains(cleanedName.head.toLower + cleanedName.tail), s"Missing: $name")
     })
   }
 

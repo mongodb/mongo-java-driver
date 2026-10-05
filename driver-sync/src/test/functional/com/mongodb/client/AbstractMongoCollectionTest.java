@@ -49,7 +49,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.mongodb.ClusterFixture.isServerlessTest;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
@@ -60,7 +59,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 public abstract class AbstractMongoCollectionTest {
 
@@ -153,8 +151,6 @@ public abstract class AbstractMongoCollectionTest {
     @SuppressWarnings("deprecation")
     @Test
     public void testMapReduceWithGenerics() {
-        assumeFalse(isServerlessTest());
-
         // given
         CodecRegistry codecRegistry = fromProviders(asList(new DocumentCodecProvider(), new NameCodecProvider()));
         getCollection().insertMany(asList(new Document("name", "Pete").append("job", "handyman"),
@@ -178,8 +174,6 @@ public abstract class AbstractMongoCollectionTest {
 
     @Test
     public void testAggregationToACollection() {
-        assumeFalse(isServerlessTest());
-
         // given
         List<Document> documents = asList(new Document("_id", 1), new Document("_id", 2));
         getCollection().insertMany(documents);

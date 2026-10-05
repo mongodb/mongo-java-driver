@@ -188,10 +188,11 @@ public abstract class AbstractConnectionPoolTest {
                 pool = new ConnectionIdAdjustingConnectionPool(new DefaultConnectionPool(serverId,
                         new InternalStreamConnectionFactory(
                                 connectionMode,
-                                createStreamFactory(SocketSettings.builder().build(), ClusterFixture.getSslSettings()),
+                                createStreamFactory(SocketSettings.builder().build(),
+                                        ClusterFixture.getSslSettings()),
                                 ClusterFixture.getCredentialWithCache(),
-                                poolOptions.getString("appName", new BsonString(fileName + ": " + description)).getValue(),
-                                MongoDriverInformation.builder().build(),
+                                new ClientMetadata(poolOptions.getString("appName", new BsonString(fileName + ": " + description)).getValue(),
+                                        MongoDriverInformation.builder().build()),
                                 Collections.emptyList(),
                                 LoggerSettings.builder().build(),
                                 new TestCommandListener(),
@@ -540,7 +541,7 @@ public abstract class AbstractConnectionPoolTest {
 
     private static void executeAdminCommand(final BsonDocument command) {
         new CommandReadOperation<>("admin", command, new BsonDocumentCodec())
-                .execute(ClusterFixture.getBinding());
+                .execute(ClusterFixture.getBinding(), ClusterFixture.createOperationContext());
     }
 
     private void setFailPoint() {

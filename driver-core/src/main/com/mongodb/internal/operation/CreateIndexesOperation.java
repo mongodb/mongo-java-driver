@@ -26,9 +26,12 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.function.AsyncCallbackSupplier;
+import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.bulk.IndexRequest;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -41,13 +44,18 @@ import org.bson.BsonString;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
+import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRetryControl;
 import static com.mongodb.internal.operation.IndexHelper.generateIndexName;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFourDotFour;
+import static com.mongodb.internal.operation.SpecRetryPolicy.IndividualPolicies.overloadForWrite;
+import static com.mongodb.internal.operation.SyncOperationHelper.decorateWithRetries;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
 import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErrorTransformer;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
@@ -57,17 +65,29 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
+public class CreateIndexesOperation implements WriteOperation<Void> {
+    private static final String COMMAND_NAME = "createIndexes";
     private final MongoNamespace namespace;
     private final List<IndexRequest> requests;
     private final WriteConcern writeConcern;
+    private final boolean retryWrites;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private CreateIndexCommitQuorum commitQuorum;
 
     public CreateIndexesOperation(final MongoNamespace namespace, final List<IndexRequest> requests,
             @Nullable final WriteConcern writeConcern) {
+        this(namespace, requests, writeConcern, false, null);
+    }
+
+    public CreateIndexesOperation(final MongoNamespace namespace, final List<IndexRequest> requests,
+            @Nullable final WriteConcern writeConcern, final boolean retryWrites,
+            @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.namespace = notNull("namespace", namespace);
         this.requests = notNull("indexRequests", requests);
         this.writeConcern = writeConcern;
+        this.retryWrites = retryWrites;
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     public WriteConcern getWriteConcern() {
@@ -100,26 +120,49 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     }
 
     @Override
-    public Void execute(final WriteBinding binding) {
+    public String getCommandName() {
+        return COMMAND_NAME;
+    }
+
+    @Override
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    @Override
+    public Void execute(final WriteBinding binding, final OperationContext operationContext) {
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
+                overloadForWrite(retryWrites, maxAdaptiveRetriesSetting),
+                operationContext);
+        Supplier<Void> retryingCommandExecutor = decorateWithRetries(retryControl, operationContext, () -> {
+            retryControl.getPolicy().onCommand(this::getCommandName);
+            return executeCommand(binding, operationContext, namespace.getDatabaseName(), getCommandCreator(),
+                    writeConcernErrorTransformer(operationContext.getTimeoutContext()));
+        });
         try {
-            return executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(), writeConcernErrorTransformer(
-                    binding.getOperationContext().getTimeoutContext()));
+            return retryingCommandExecutor.get();
         } catch (MongoCommandException e) {
             throw checkForDuplicateKeyError(e);
         }
     }
 
     @Override
-    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        executeCommandAsync(binding, namespace.getDatabaseName(), getCommandCreator(), writeConcernErrorTransformerAsync(binding
-                        .getOperationContext().getTimeoutContext()),
-                ((result, t) -> {
-                    if (t != null) {
-                        callback.onResult(null, translateException(t));
-                    } else {
-                        callback.onResult(result, null);
-                    }
-                }));
+    public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<Void> callback) {
+        RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
+                overloadForWrite(retryWrites, maxAdaptiveRetriesSetting),
+                operationContext);
+        AsyncCallbackSupplier<Void> retryingCommandExecutor = decorateWithRetriesAsync(retryControl, operationContext, supplierCallback -> {
+            retryControl.getPolicy().onCommand(this::getCommandName);
+            executeCommandAsync(binding, operationContext, namespace.getDatabaseName(), getCommandCreator(),
+                    writeConcernErrorTransformerAsync(operationContext.getTimeoutContext()), supplierCallback);
+        });
+        retryingCommandExecutor.get((result, t) -> {
+            if (t != null) {
+                callback.onResult(null, translateException(t));
+            } else {
+                callback.onResult(result, null);
+            }
+        });
     }
 
     @SuppressWarnings("deprecation")
@@ -189,7 +232,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
 
     private CommandOperationHelper.CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
-            BsonDocument command = new BsonDocument("createIndexes", new BsonString(namespace.getCollectionName()));
+            BsonDocument command = new BsonDocument(getCommandName(), new BsonString(namespace.getCollectionName()));
             List<BsonDocument> values = new ArrayList<>();
             for (IndexRequest request : requests) {
                 values.add(getIndex(request));
@@ -221,4 +264,5 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             return e;
         }
     }
+
 }

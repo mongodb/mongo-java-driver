@@ -41,7 +41,6 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     private final ServerDescription readServerDescription;
     private final ServerDescription writeServerDescription;
     private int count = 1;
-    private final OperationContext operationContext;
 
     /**
      * Create a new binding with the given cluster.
@@ -53,7 +52,6 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     public SingleConnectionBinding(final Cluster cluster, final ReadPreference readPreference, final OperationContext operationContext) {
         notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
-        this.operationContext = operationContext;
         ServerTuple writeServerTuple = cluster.selectServer(new WritableServerSelector(), operationContext);
         writeServerDescription = writeServerTuple.getServerDescription();
         writeConnection = writeServerTuple.getServer().getConnection(operationContext);
@@ -90,27 +88,23 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     }
 
     @Override
-    public ConnectionSource getReadConnectionSource() {
+    public ConnectionSource getReadConnectionSource(final OperationContext operationContext) {
         isTrue("open", getCount() > 0);
         if (readPreference == primary()) {
-            return getWriteConnectionSource();
+            return getWriteConnectionSource(operationContext);
         } else {
             return new SingleConnectionSource(readServerDescription, readConnection);
         }
     }
 
     @Override
-    public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference) {
+    public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference, final OperationContext operationContext) {
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public OperationContext getOperationContext() {
-        return operationContext;
-    }
 
     @Override
-    public ConnectionSource getWriteConnectionSource() {
+    public ConnectionSource getWriteConnectionSource(final OperationContext operationContext) {
         isTrue("open", getCount() > 0);
         return new SingleConnectionSource(writeServerDescription, writeConnection);
     }
@@ -120,7 +114,8 @@ public class SingleConnectionBinding implements ReadWriteBinding {
         private final Connection connection;
         private int count = 1;
 
-        SingleConnectionSource(final ServerDescription serverDescription, final Connection connection) {
+        SingleConnectionSource(final ServerDescription serverDescription,
+                               final Connection connection) {
             this.serverDescription = serverDescription;
             this.connection = connection;
             SingleConnectionBinding.this.retain();
@@ -132,17 +127,12 @@ public class SingleConnectionBinding implements ReadWriteBinding {
         }
 
         @Override
-        public OperationContext getOperationContext() {
-            return operationContext;
-        }
-
-        @Override
         public ReadPreference getReadPreference() {
             return readPreference;
         }
 
         @Override
-        public Connection getConnection() {
+        public Connection getConnection(final OperationContext operationContext) {
             isTrue("open", getCount() > 0);
             return connection.retain();
         }

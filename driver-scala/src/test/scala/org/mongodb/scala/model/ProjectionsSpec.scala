@@ -31,7 +31,7 @@ class ProjectionsSpec extends BaseSpec {
 
   "Projections" should "have the same methods as the wrapped Projections" in {
     val wrapped = classOf[com.mongodb.client.model.Projections].getDeclaredMethods
-      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers))
+      .filter(f => isPublic(f.getModifiers))
       .map(_.getName)
       .toSet
     val local = model.Projections.getClass.getDeclaredMethods.filter(f => isPublic(f.getModifiers)).map(_.getName).toSet
@@ -50,7 +50,7 @@ class ProjectionsSpec extends BaseSpec {
   }
 
   it should "excludeId" in {
-    toBson(model.Projections.excludeId) should equal(Document("""{_id : 0}"""))
+    toBson(model.Projections.excludeId()) should equal(Document("""{_id : 0}"""))
   }
 
   it should "firstElem" in {

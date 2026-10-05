@@ -16,11 +16,14 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoNamespace;
 import com.mongodb.MongoServerException;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.VisibleForTesting;
+
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
+
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
@@ -31,7 +34,6 @@ import org.bson.codecs.BsonDocumentCodec;
 
 import java.util.Locale;
 
-import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 
@@ -40,8 +42,10 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
  */
 public final class CommandHelper {
 
-    static final String HELLO = "hello";
-    static final String LEGACY_HELLO = "isMaster";
+    @VisibleForTesting(otherwise = PRIVATE)
+    public static final String HELLO = "hello";
+    @VisibleForTesting(otherwise = PRIVATE)
+    public static final String LEGACY_HELLO = "isMaster";
     static final String LEGACY_HELLO_LOWER = LEGACY_HELLO.toLowerCase(Locale.ROOT);
 
     static BsonDocument executeCommand(final String database, final BsonDocument command, final ClusterConnectionMode clusterConnectionMode,
@@ -107,7 +111,7 @@ public final class CommandHelper {
                                                     final InternalConnection internalConnection,
                                                     final ClusterConnectionMode clusterConnectionMode,
                                                     @Nullable final ServerApi serverApi) {
-        return new CommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME), command, NoOpFieldNameValidator.INSTANCE, primary(),
+        return new CommandMessage(database, command, NoOpFieldNameValidator.INSTANCE, primary(),
                 MessageSettings
                         .builder()
                          // Note: server version will be 0.0 at this point when called from InternalConnectionInitializer,
@@ -129,7 +133,6 @@ public final class CommandHelper {
     public static void applyMaxTimeMS(final TimeoutContext timeoutContext, final BsonDocument command) {
         if (!timeoutContext.hasTimeoutMS()) {
             command.append("maxTimeMS", new BsonInt64(timeoutContext.getTimeoutSettings().getMaxTimeMS()));
-            timeoutContext.disableMaxTimeOverride();
         }
     }
 

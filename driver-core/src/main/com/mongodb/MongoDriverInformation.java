@@ -17,12 +17,14 @@
 package com.mongodb;
 
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.annotations.Sealed;
+import com.mongodb.internal.client.DriverInformation;
+import com.mongodb.internal.connection.ConcreteMongoDriverInformation;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -45,10 +47,9 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.4
  * @mongodb.server.release 3.4
  */
-public final class MongoDriverInformation {
-    private final List<String> driverNames;
-    private final List<String> driverVersions;
-    private final List<String> driverPlatforms;
+@Sealed
+public abstract class MongoDriverInformation {
+
 
     /**
      * Convenience method to create a Builder.
@@ -66,7 +67,7 @@ public final class MongoDriverInformation {
      * @return a builder
      */
     public static Builder builder(final MongoDriverInformation mongoDriverInformation) {
-        return new Builder(mongoDriverInformation);
+        return new Builder((ConcreteMongoDriverInformation) mongoDriverInformation);
     }
 
     /**
@@ -74,34 +75,28 @@ public final class MongoDriverInformation {
      *
      * @return the driverNames
      */
-    public List<String> getDriverNames() {
-        return driverNames;
-    }
+    public abstract List<String> getDriverNames();
 
     /**
      * Returns the driverVersions
      *
      * @return the driverVersions
      */
-    public List<String> getDriverVersions() {
-        return driverVersions;
-    }
+    public abstract List<String> getDriverVersions();
 
     /**
      * Returns the driverPlatforms
      *
      * @return the driverPlatforms
      */
-    public List<String> getDriverPlatforms() {
-        return driverPlatforms;
-    }
+    public abstract List<String> getDriverPlatforms();
 
     /**
      *
      */
     @NotThreadSafe
     public static final class Builder {
-        private final MongoDriverInformation driverInformation;
+        private final ConcreteMongoDriverInformation mongoDriverInformation;
         private String driverName;
         private String driverVersion;
         private String driverPlatform;
@@ -147,38 +142,22 @@ public final class MongoDriverInformation {
          * @return the driver information
          */
         public MongoDriverInformation build() {
-            isTrue("You must also set the driver name when setting the driver version", !(driverName == null && driverVersion != null));
-
-            List<String> names = prependToList(driverInformation.getDriverNames(), driverName);
-            List<String> versions = prependToList(driverInformation.getDriverVersions(), driverVersion);
-            List<String> platforms = prependToList(driverInformation.getDriverPlatforms(), driverPlatform);
-            return new MongoDriverInformation(names, versions, platforms);
-        }
-
-        private List<String> prependToList(final List<String> stringList, final String value) {
-            if (value == null) {
-                return stringList;
-            } else {
-                ArrayList<String> newList = new ArrayList<>();
-                newList.add(value);
-                newList.addAll(stringList);
-                return Collections.unmodifiableList(newList);
+            DriverInformation driverInformation = new DriverInformation(driverName, driverVersion, driverPlatform);
+            if (mongoDriverInformation.getDriverInformationList().contains(driverInformation)) {
+                return mongoDriverInformation;
             }
+
+            List<DriverInformation> driverInformationList = new ArrayList<>(mongoDriverInformation.getDriverInformationList());
+            driverInformationList.add(driverInformation);
+            return new ConcreteMongoDriverInformation(Collections.unmodifiableList(driverInformationList));
         }
 
         private Builder() {
-            List<String> immutableEmptyList = Collections.emptyList();
-            driverInformation = new MongoDriverInformation(immutableEmptyList, immutableEmptyList, immutableEmptyList);
+            mongoDriverInformation = new ConcreteMongoDriverInformation(Collections.emptyList());
         }
 
-        private Builder(final MongoDriverInformation driverInformation) {
-            this.driverInformation = notNull("driverInformation", driverInformation);
+        private Builder(final ConcreteMongoDriverInformation driverInformation) {
+            this.mongoDriverInformation = notNull("driverInformation", driverInformation);
         }
-    }
-
-    private MongoDriverInformation(final List<String> driverNames, final List<String> driverVersions, final List<String> driverPlatforms) {
-        this.driverNames = driverNames;
-        this.driverVersions = driverVersions;
-        this.driverPlatforms = driverPlatforms;
     }
 }

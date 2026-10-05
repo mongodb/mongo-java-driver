@@ -261,13 +261,13 @@ public final class MongoCredential {
      * The list of allowed hosts that will be used if no
      * {@link MongoCredential#ALLOWED_HOSTS_KEY} value is supplied.
      * The default allowed hosts are:
-     * {@code "*.mongodb.net", "*.mongodb-qa.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1"}
+     * {@code "*.mongo.com", "*.mongodb.net", "*.mongodb-qa.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1"}
      *
      * @see #createOidcCredential(String)
      * @since 5.1
      */
     public static final List<String> DEFAULT_ALLOWED_HOSTS = Collections.unmodifiableList(Arrays.asList(
-            "*.mongodb.net", "*.mongodb-qa.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1"));
+            "*.mongo.com", "*.mongodb.net", "*.mongodb-qa.net", "*.mongodb-dev.net", "*.mongodbgov.net", "localhost", "127.0.0.1", "::1"));
 
     /**
      * Mechanism property key for specifying the URI of the target resource (sometimes called the audience),

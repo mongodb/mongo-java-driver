@@ -18,6 +18,7 @@ package com.mongodb.session;
 
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.ServerAddress;
+import com.mongodb.annotations.Internal;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.lang.Nullable;
@@ -41,10 +42,9 @@ public interface ClientSession extends Closeable {
      * For internal use only.
      *
      * @return the server address of the pinned mongos
-     * @mongodb.server.release 4.2
-     * @since 3.11
      */
     @Nullable
+    @Internal
     ServerAddress getPinnedServerAddress();
 
     /**
@@ -55,6 +55,7 @@ public interface ClientSession extends Closeable {
      * @return the transaction context
      */
     @Nullable
+    @Internal
     Object getTransactionContext();
 
     /**
@@ -66,6 +67,7 @@ public interface ClientSession extends Closeable {
      * @param address the server address
      * @param transactionContext the transaction context
      */
+    @Internal
     void setTransactionContext(ServerAddress address, Object transactionContext);
 
     /**
@@ -74,6 +76,7 @@ public interface ClientSession extends Closeable {
      * <p>For internal use only </p>
      *
      */
+    @Internal
     void clearTransactionContext();
 
     /**
@@ -81,10 +84,9 @@ public interface ClientSession extends Closeable {
      * For internal use only.
      *
      * @return the recovery token
-     * @mongodb.server.release 4.2
-     * @since 3.11
      */
     @Nullable
+    @Internal
     BsonDocument getRecoveryToken();
 
     /**
@@ -92,9 +94,8 @@ public interface ClientSession extends Closeable {
      * For internal use only.
      *
      * @param recoveryToken the recovery token
-     * @mongodb.server.release 4.2
-     * @since 3.11
      */
+    @Internal
     void setRecoveryToken(BsonDocument recoveryToken);
 
     /**
@@ -152,6 +153,7 @@ public interface ClientSession extends Closeable {
      *
      * @param snapshotTimestamp the snapshot timestamp
      */
+    @Internal
     void setSnapshotTimestamp(@Nullable BsonTimestamp snapshotTimestamp);
 
     /**
@@ -160,6 +162,7 @@ public interface ClientSession extends Closeable {
      * @return the snapshot timestamp
      */
     @Nullable
+    @Internal
     BsonTimestamp getSnapshotTimestamp();
 
     /**
@@ -179,8 +182,16 @@ public interface ClientSession extends Closeable {
      * </ul>
      * <p>For internal use only </p>
      * @return the timeout to use
-     * @since 5.2
      */
     @Nullable
+    @Internal
     TimeoutContext getTimeoutContext();
+
+    /**
+     * For internal use only.
+     *
+     * @return The {@link ClientSession}-scoped state of the overload retry policy.
+     */
+    @Internal
+    Object getOverloadRetryPolicyState();
 }

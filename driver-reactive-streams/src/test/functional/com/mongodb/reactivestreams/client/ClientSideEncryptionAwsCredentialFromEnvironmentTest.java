@@ -33,6 +33,6 @@ public class ClientSideEncryptionAwsCredentialFromEnvironmentTest extends Abstra
 
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(MongoClients.create(settings));
+        return new SyncMongoClient(settings);
     }
 }
