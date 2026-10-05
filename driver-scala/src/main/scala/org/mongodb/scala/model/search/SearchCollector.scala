@@ -42,7 +42,6 @@ object SearchCollector {
    * @return The requested `SearchCollector`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/facet/ facet collector]]
    */
-  @Beta(Array(Reason.CLIENT))
   def facet(operator: SearchOperator, facets: Iterable[_ <: SearchFacet]): FacetSearchCollector =
     JSearchCollector.facet(operator, facets.asJava)
 
@@ -54,7 +53,6 @@ object SearchCollector {
    * @return The requested `SearchCollector`.
    * @see [[https://www.mongodb.com/docs/atlas/atlas-search/facet/ facet collector]]
    */
-  @Beta(Array(Reason.CLIENT))
   def facet(facets: Iterable[_ <: SearchFacet]): FacetSearchCollector =
     JSearchCollector.facet(facets.asJava)
 
