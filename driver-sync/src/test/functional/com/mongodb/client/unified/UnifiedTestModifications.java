@@ -315,6 +315,8 @@ public final class UnifiedTestModifications {
         def.skipAccordingToSpec("Micrometer tests expect the network transport to be tcp")
                 .when(ClusterFixture::isUnixSocket)
                 .directory("open-telemetry/tests");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-6289 TODO-JAVA-6289")
+                .file("open-telemetry/tests", "error_type");
 
         // TODO-JAVA-5712
 
