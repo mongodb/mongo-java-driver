@@ -15,8 +15,11 @@
  */
 import ProjectExtensions.configureJarManifest
 import ProjectExtensions.configureMavenPublication
+import ProjectExtensions.scalaVersion
 
 plugins { id("project.scala") }
+
+val scalaVersion: String = project.scalaVersion()
 
 base.archivesName.set("mongo-scala-bson")
 
@@ -34,4 +37,14 @@ configureJarManifest {
     attributes["Automatic-Module-Name"] = "org.mongodb.bson.scala"
     attributes["Bundle-SymbolicName"] = "org.mongodb.scala.mongo-scala-bson"
     attributes["Import-Package"] = "!scala.*,*"
+}
+
+if (scalaVersion.equals("3")) {
+    spotless {
+        scala {
+            clearSteps()
+            target("**/scala-3/**")
+            scalafmt("3.10.7").configFile(rootProject.file("config/scala/scalafmt-3.conf"))
+        }
+    }
 }

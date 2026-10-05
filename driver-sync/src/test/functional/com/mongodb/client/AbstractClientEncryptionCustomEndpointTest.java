@@ -214,8 +214,8 @@ public abstract class AbstractClientEncryptionCustomEndpointTest {
         data.add(new Object[]{"7. [azure] valid and invalid kms providers test",
                 "azure",
                 BsonDocument.parse("{\n"
-                        + "  \"keyVaultEndpoint\": \"key-vault-csfle.vault.azure.net\",\n"
-                        + "  \"keyName\": \"key-name-csfle\"\n"
+                        + "  \"keyVaultEndpoint\": \"drivers-3392-key-vault.vault.azure.net\",\n"
+                        + "  \"keyName\": \"drivers-3392-keyname\"\n"
                         + "}"),
                 true, MongoClientException.class, UnknownHostException.class, null});
 

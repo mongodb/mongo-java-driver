@@ -21,7 +21,7 @@ class ExtendedJsonDoubleConverter implements Converter<Double> {
     public void convert(final Double value, final StrictJsonWriter writer) {
         writer.writeStartObject();
         writer.writeName("$numberDouble");
-        writer.writeString(Double.toString(value));
+        writer.writeString(JsonDoubleHelper.toString(value));
         writer.writeEndObject();
 
     }

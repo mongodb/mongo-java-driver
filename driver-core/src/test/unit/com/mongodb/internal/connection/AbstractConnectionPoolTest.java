@@ -541,7 +541,7 @@ public abstract class AbstractConnectionPoolTest {
 
     private static void executeAdminCommand(final BsonDocument command) {
         new CommandReadOperation<>("admin", command, new BsonDocumentCodec())
-                .execute(ClusterFixture.getBinding());
+                .execute(ClusterFixture.getBinding(), ClusterFixture.createOperationContext());
     }
 
     private void setFailPoint() {

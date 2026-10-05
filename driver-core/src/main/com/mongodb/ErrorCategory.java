@@ -40,6 +40,7 @@ public enum ErrorCategory {
     /**
      * An execution timeout error
      *
+     * @see MongoExecutionTimeoutException
      * @mongodb.driver.manual reference/operator/meta/maxTimeMS/ maxTimeMS
      */
     EXECUTION_TIMEOUT;

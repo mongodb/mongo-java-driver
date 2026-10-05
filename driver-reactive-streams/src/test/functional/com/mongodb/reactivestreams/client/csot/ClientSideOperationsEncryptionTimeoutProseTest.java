@@ -33,6 +33,6 @@ public class ClientSideOperationsEncryptionTimeoutProseTest extends AbstractClie
 
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings.Builder builder) {
-        return new SyncMongoClient(com.mongodb.reactivestreams.client.MongoClients.create(builder.build()));
+        return new SyncMongoClient(builder);
     }
 }

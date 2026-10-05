@@ -55,7 +55,8 @@ class DnsMultiServerClusterSpecification extends Specification {
         DnsSrvRecordInitializer initializer
         def dnsSrvRecordMonitorFactory = new DnsSrvRecordMonitorFactory() {
             @Override
-            DnsSrvRecordMonitor create(final String hostName, String srvServiceName, final DnsSrvRecordInitializer dnsSrvRecordListener) {
+            DnsSrvRecordMonitor create(final String hostName, String srvServiceName, final String srvAllowedHostsSuffix,
+                    final DnsSrvRecordInitializer dnsSrvRecordListener) {
                 initializer = dnsSrvRecordListener
                 dnsSrvRecordMonitor
             }

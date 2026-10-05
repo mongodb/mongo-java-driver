@@ -29,6 +29,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.FindOptions;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.MapReduceStatistics;
 import com.mongodb.internal.operation.Operations;
@@ -71,10 +72,11 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     MapReduceIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                           final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                           final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
-                          final String mapFunction, final String reduceFunction, final TimeoutSettings timeoutSettings) {
+                          final String mapFunction, final String reduceFunction,
+                          @Nullable final Integer maxAdaptiveRetriesSetting, final TimeoutSettings timeoutSettings) {
         super(clientSession, executor, readConcern, readPreference, false, timeoutSettings);
         this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
-                false, false, timeoutSettings);
+                false, false, maxAdaptiveRetriesSetting, timeoutSettings);
         this.namespace = notNull("namespace", namespace);
         this.resultClass = notNull("resultClass", resultClass);
         this.mapFunction = notNull("mapFunction", mapFunction);
@@ -241,12 +243,17 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         }
 
         @Override
-        public BatchCursor<TResult> execute(final ReadBinding binding) {
-            return operation.execute(binding);
+        public MongoNamespace getNamespace() {
+            return operation.getNamespace();
         }
 
         @Override
-        public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<TResult>> callback) {
+        public BatchCursor<TResult> execute(final ReadBinding binding, final OperationContext operationContext) {
+            return operation.execute(binding, operationContext);
+        }
+
+        @Override
+        public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<TResult>> callback) {
             throw new UnsupportedOperationException("This operation is sync only");
         }
     }

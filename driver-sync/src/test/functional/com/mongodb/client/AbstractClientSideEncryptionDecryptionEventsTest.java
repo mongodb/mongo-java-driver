@@ -24,6 +24,7 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoSocketReadException;
+import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.vault.ClientEncryption;
@@ -95,7 +96,7 @@ public abstract class AbstractClientSideEncryptionDecryptionEventsTest {
 
         // Copy ciphertext into a variable named malformedCiphertext. Change the last byte. This will produce an invalid HMAC tag.
         byte[] malformedBytes = ciphertext.getData().clone();
-        malformedBytes[malformedBytes.length - 1] = (byte) (malformedBytes[malformedBytes.length - 1] == 0 ? 0 : 1);
+        malformedBytes[malformedBytes.length - 1] = (byte) (malformedBytes[malformedBytes.length - 1] == 0 ? 1 : 0);
         malformedCiphertext = new BsonBinary(ciphertext.getType(), malformedBytes);
 
         commandListener = new TestCommandListener();
@@ -106,6 +107,7 @@ public abstract class AbstractClientSideEncryptionDecryptionEventsTest {
                                 .kmsProviders(kmsProviders)
                                 .build())
                 .retryReads(false)
+                .writeConcern(WriteConcern.MAJORITY)
                 .addCommandListener(commandListener)
                 .build());
     }

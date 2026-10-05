@@ -50,6 +50,8 @@ public final class ClientEncryptionSettings {
     private final Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers;
     private final Map<String, SSLContext> kmsProviderSslContextMap;
     @Nullable
+    private final KmsConnectCallback kmsConnectCallback;
+    @Nullable
     private final Long timeoutMS;
     @Nullable
     private final Long keyExpirationMS;
@@ -65,6 +67,8 @@ public final class ClientEncryptionSettings {
         private Map<String, Map<String, Object>> kmsProviders;
         private Map<String, Supplier<Map<String, Object>>> kmsProviderPropertySuppliers = new HashMap<>();
         private Map<String, SSLContext> kmsProviderSslContextMap = new HashMap<>();
+        @Nullable
+        private KmsConnectCallback kmsConnectCallback;
         @Nullable
         private Long timeoutMS;
         @Nullable
@@ -137,6 +141,22 @@ public final class ClientEncryptionSettings {
         }
 
         /**
+         * Sets the callback that establishes connections to Key Management Service (KMS) hosts, enabling KMS requests
+         * to be routed through an intermediary such as an HTTP proxy.
+         *
+         * <p>Defaults to {@code null}, in which case the driver connects to KMS hosts directly.</p>
+         *
+         * @param kmsConnectCallback the KMS connect callback, or null to connect to KMS hosts directly
+         * @return this
+         * @see #getKmsConnectCallback()
+         * @since 5.11
+         */
+        public Builder kmsConnectCallback(@Nullable final KmsConnectCallback kmsConnectCallback) {
+            this.kmsConnectCallback = kmsConnectCallback;
+            return this;
+        }
+
+        /**
          * The cache expiration time for data encryption keys.
          * <p>Defaults to {@code null} which defers to libmongocrypt's default which is currently 60000 ms. Set to 0 to disable key expiration.</p>
          *
@@ -172,10 +192,15 @@ public final class ClientEncryptionSettings {
          *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
          * </ul>
          *
-         * <p><strong>Note:</strong> The timeout set through this method overrides the timeout defined in the key vault client settings
-         * specified in {@link #keyVaultMongoClientSettings(MongoClientSettings)}.
-         * Essentially, for operations that require accessing the key vault, the remaining timeout from the initial operation
-         * determines the duration allowed for key vault access.</p>
+         * <p>Note:
+         * <ul>
+         *   <li>The timeout set through this method overrides the timeout defined in the key vault client settings
+         *       specified in {@link #keyVaultMongoClientSettings(MongoClientSettings)}.
+         *       Essentially, for operations that require accessing the key vault, the remaining timeout from the initial operation
+         *       determines the duration allowed for key vault access.</li>
+         *   <li>When using synchronous API, this timeout does not limit socket writes, therefore there is a possibility that the
+         *       operation might not be timed out when expected. This limitation does not apply to the reactive streams API.</li>
+         * </ul>
          *
          * @param timeout the timeout
          * @param timeUnit the time unit
@@ -331,6 +356,17 @@ public final class ClientEncryptionSettings {
     }
 
     /**
+     * Gets the callback that establishes connections to Key Management Service (KMS) hosts.
+     *
+     * @return the KMS connect callback, or null if the driver connects to KMS hosts directly
+     * @since 5.11
+     */
+    @Nullable
+    public KmsConnectCallback getKmsConnectCallback() {
+        return kmsConnectCallback;
+    }
+
+    /**
      * Returns the cache expiration time for data encryption keys.
      *
      * <p>Defaults to {@code null} which defers to libmongocrypt's default which is currently {@code 60000 ms}.
@@ -368,6 +404,16 @@ public final class ClientEncryptionSettings {
      *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
      * </ul>
      *
+     * <p>Note:
+     * <ul>
+     *   <li>The timeout set through this method overrides the timeout defined in the key vault client settings
+     *       specified in {@link Builder#keyVaultMongoClientSettings(MongoClientSettings)}.
+     *       Essentially, for operations that require accessing the key vault, the remaining timeout from the initial operation
+     *       determines the duration allowed for key vault access.</li>
+     *   <li>When using synchronous API, this timeout does not limit socket writes, therefore there is a possibility that the
+     *       operation might not be timed out when expected. This limitation does not apply to the reactive streams API.</li>
+     * </ul>
+     *
      * @param timeUnit the time unit
      * @return the timeout in the given time unit
      * @since 5.2
@@ -384,6 +430,7 @@ public final class ClientEncryptionSettings {
         this.kmsProviders = notNull("kmsProviders", builder.kmsProviders);
         this.kmsProviderPropertySuppliers = notNull("kmsProviderPropertySuppliers", builder.kmsProviderPropertySuppliers);
         this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", builder.kmsProviderSslContextMap);
+        this.kmsConnectCallback = builder.kmsConnectCallback;
         this.timeoutMS = builder.timeoutMS;
         this.keyExpirationMS = builder.keyExpirationMS;
     }

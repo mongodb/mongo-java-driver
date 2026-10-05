@@ -26,6 +26,6 @@ import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 final class CrudProseTest extends com.mongodb.client.CrudProseTest {
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings.Builder mongoClientSettingsBuilder) {
-        return new SyncMongoClient(MongoClients.create(mongoClientSettingsBuilder.build()));
+        return new SyncMongoClient(mongoClientSettingsBuilder);
     }
 }

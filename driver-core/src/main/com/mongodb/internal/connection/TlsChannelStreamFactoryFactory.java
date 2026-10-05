@@ -20,6 +20,7 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
+import com.mongodb.connection.AsyncTransportSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.internal.connection.tlschannel.BufferAllocator;
@@ -47,6 +48,7 @@ import java.nio.channels.SocketChannel;
 import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -93,10 +95,22 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory {
                 selectorMonitor);
     }
 
+    /**
+     * @return The {@link Executor} used by the {@link StreamFactory} created via {@link #create(SocketSettings, SslSettings)}.
+     * It may be backed by the {@link ExecutorService} provided by an application via {@link AsyncTransportSettings#getExecutorService()}.
+     */
+    @Override
+    public Executor getExecutor() {
+        return group;
+    }
+
     @Override
     public void close() {
-        selectorMonitor.close();
-        group.shutdown();
+        try {
+            selectorMonitor.close();
+        } finally {
+            group.shutdown();
+        }
     }
 
     /**

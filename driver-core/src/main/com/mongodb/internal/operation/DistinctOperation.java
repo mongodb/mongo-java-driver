@@ -22,6 +22,7 @@ import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -52,15 +53,19 @@ public class DistinctOperation<T> implements ReadOperationCursor<T> {
     private final String fieldName;
     private final Decoder<T> decoder;
     private boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private BsonDocument filter;
     private Collation collation;
     private BsonValue comment;
     private BsonValue hint;
 
-    public DistinctOperation(final MongoNamespace namespace, final String fieldName, final Decoder<T> decoder) {
+    public DistinctOperation(final MongoNamespace namespace, final String fieldName, final Decoder<T> decoder,
+            @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.namespace = notNull("namespace", namespace);
         this.fieldName = notNull("fieldName", fieldName);
         this.decoder = notNull("decoder", decoder);
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     public BsonDocument getFilter() {
@@ -114,15 +119,21 @@ public class DistinctOperation<T> implements ReadOperationCursor<T> {
     }
 
     @Override
-    public BatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, namespace.getDatabaseName(), getCommandCreator(), createCommandDecoder(),
-                singleBatchCursorTransformer(VALUES), retryReads);
+    public MongoNamespace getNamespace() {
+        return namespace;
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        executeRetryableReadAsync(binding, namespace.getDatabaseName(),
-                                  getCommandCreator(), createCommandDecoder(), asyncSingleBatchCursorTransformer(VALUES), retryReads,
+    public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
+        return executeRetryableRead(binding, operationContext, namespace.getDatabaseName(), getCommandCreator(), createCommandDecoder(),
+                singleBatchCursorTransformer(VALUES), retryReads, maxAdaptiveRetriesSetting);
+    }
+
+    @Override
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        executeRetryableReadAsync(binding, operationContext,  namespace.getDatabaseName(),
+                                  getCommandCreator(), createCommandDecoder(), asyncSingleBatchCursorTransformer(VALUES),
+                                  retryReads, maxAdaptiveRetriesSetting,
                                   errorHandlingCallback(callback, LOGGER));
     }
 

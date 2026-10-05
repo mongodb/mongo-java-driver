@@ -23,11 +23,10 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackFunction;
-import com.mongodb.internal.async.function.AsyncCallbackSupplier;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.mongodb.internal.bulk.UpdateRequest;
 import com.mongodb.internal.bulk.WriteRequest;
@@ -42,7 +41,6 @@ import org.bson.conversions.Bson;
 
 import java.util.List;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotFour;
@@ -139,18 +137,6 @@ public final class OperationHelper {
         validateWriteRequestHints(connectionDescription, requests, writeConcern);
     }
 
-    static <R> boolean validateWriteRequestsAndCompleteIfInvalid(final ConnectionDescription connectionDescription,
-            final Boolean bypassDocumentValidation, final List<? extends WriteRequest> requests, final WriteConcern writeConcern,
-            final SingleResultCallback<R> callback) {
-        try {
-            validateWriteRequests(connectionDescription, bypassDocumentValidation, requests, writeConcern);
-            return false;
-        } catch (Throwable validationT) {
-            callback.onResult(null, validationT);
-            return true;
-        }
-    }
-
     private static void checkBypassDocumentValidationIsSupported(@Nullable final Boolean bypassDocumentValidation,
             final WriteConcern writeConcern) {
         if (bypassDocumentValidation != null && !writeConcern.isAcknowledged()) {
@@ -158,9 +144,9 @@ public final class OperationHelper {
         }
     }
 
-    static boolean isRetryableWrite(final boolean retryWrites, final WriteConcern writeConcern,
+    static boolean isNonCommandWriteRetryRequirementsMet(final boolean retryWritesSetting, final WriteConcern writeConcern,
             final ConnectionDescription connectionDescription, final SessionContext sessionContext) {
-        if (!retryWrites) {
+        if (!retryWritesSetting) {
             return false;
         } else if (!writeConcern.isAcknowledged()) {
             LOGGER.debug("retryWrites set to true but the writeConcern is unacknowledged.");
@@ -169,11 +155,11 @@ public final class OperationHelper {
             LOGGER.debug("retryWrites set to true but in an active transaction.");
             return false;
         } else {
-            return canRetryWrite(connectionDescription, sessionContext);
+            return isServerWriteRetryRequirementsMet(connectionDescription);
         }
     }
 
-    static boolean canRetryWrite(final ConnectionDescription connectionDescription, final SessionContext sessionContext) {
+    static boolean isServerWriteRetryRequirementsMet(final ConnectionDescription connectionDescription) {
         if (connectionDescription.getLogicalSessionTimeoutMinutes() == null) {
             LOGGER.debug("retryWrites set to true but the server does not support sessions.");
             return false;
@@ -184,7 +170,10 @@ public final class OperationHelper {
         return true;
     }
 
-    static boolean canRetryRead(final ServerDescription serverDescription, final OperationContext operationContext) {
+    static boolean isReadRetryRequirementsMet(final boolean retryReadsSetting, final OperationContext operationContext) {
+        if (!retryReadsSetting) {
+            return false;
+        }
         if (operationContext.getSessionContext().hasActiveTransaction()) {
             LOGGER.debug("retryReads set to true but in an active transaction.");
             return false;
@@ -192,10 +181,12 @@ public final class OperationHelper {
         return true;
     }
 
-    static void setNonTailableCursorMaxTimeSupplier(final TimeoutMode timeoutMode, final OperationContext operationContext) {
+    static OperationContext applyTimeoutModeToOperationContext(final TimeoutMode timeoutMode,
+                                                               final OperationContext operationContext) {
         if (timeoutMode == TimeoutMode.ITERATION) {
-            operationContext.getTimeoutContext().disableMaxTimeOverride();
+            return operationContext.withOverride(TimeoutContext::withDisabledMaxTime);
         }
+        return operationContext;
     }
 
     /**
@@ -216,15 +207,16 @@ public final class OperationHelper {
     /**
      * This internal exception is used to
      * <ul>
-     *     <li>on one hand allow propagating exceptions from {@link SyncOperationHelper#withSuppliedResource(Supplier, boolean, Function)} /
-     *     {@link AsyncOperationHelper#withAsyncSuppliedResource(AsyncCallbackSupplier, boolean, SingleResultCallback, AsyncCallbackFunction)}
+     *     <li>on one hand allow propagating exceptions from
+     *     {@link SyncOperationHelper#withSuppliedResource(Function, boolean, OperationContext, Function)} /
+     *     {@link AsyncOperationHelper#withAsyncSuppliedResource(AsyncCallbackFunction, boolean, OperationContext, SingleResultCallback, AsyncCallbackFunction)}
      *     and similar methods so that they can be properly retried, which is useful, e.g.,
      *     for {@link com.mongodb.MongoConnectionPoolClearedException};</li>
      *     <li>on the other hand to prevent them from propagation once the retry decision is made.</li>
      * </ul>
      *
-     * @see SyncOperationHelper#withSuppliedResource(Supplier, boolean, Function)
-     * @see AsyncOperationHelper#withAsyncSuppliedResource(AsyncCallbackSupplier, boolean, SingleResultCallback, AsyncCallbackFunction)
+     * @see SyncOperationHelper#withSuppliedResource(Function, boolean, OperationContext, Function)
+     * @see AsyncOperationHelper#withAsyncSuppliedResource(AsyncCallbackFunction, boolean, OperationContext, SingleResultCallback, AsyncCallbackFunction)
      */
     public static final class ResourceSupplierInternalException extends RuntimeException {
         private static final long serialVersionUID = 0;

@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection
 
-
 import com.mongodb.MongoException
 import com.mongodb.MongoNodeIsRecoveringException
 import com.mongodb.MongoNotPrimaryException
@@ -52,10 +51,11 @@ import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Specification
 
+import java.security.cert.CertificateException
 import java.util.concurrent.CountDownLatch
 
 import static com.mongodb.ClusterFixture.CLIENT_METADATA
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
@@ -75,7 +75,7 @@ class DefaultServerSpecification extends Specification {
                 Mock(SdamServerDescriptionManager), Mock(ServerListener), Mock(CommandListener), new ClusterClock(), false)
 
         when:
-        def receivedConnection = server.getConnection(OPERATION_CONTEXT)
+        def receivedConnection = server.getConnection(createOperationContext())
 
         then:
         receivedConnection
@@ -101,7 +101,7 @@ class DefaultServerSpecification extends Specification {
 
         when:
         def callback = new SupplyingCallback<AsyncConnection>()
-        server.getConnectionAsync(OPERATION_CONTEXT, callback)
+        server.getConnectionAsync(createOperationContext(), callback)
 
         then:
         callback.get() == connection
@@ -118,7 +118,7 @@ class DefaultServerSpecification extends Specification {
         server.close()
 
         when:
-        server.getConnection(OPERATION_CONTEXT)
+        server.getConnection(createOperationContext())
 
         then:
         def ex = thrown(MongoServerUnavailableException)
@@ -128,7 +128,7 @@ class DefaultServerSpecification extends Specification {
         def latch = new CountDownLatch(1)
         def receivedConnection = null
         def receivedThrowable = null
-        server.getConnectionAsync(OPERATION_CONTEXT) {
+        server.getConnectionAsync(createOperationContext()) {
             result, throwable ->
                 receivedConnection = result; receivedThrowable = throwable; latch.countDown()
         }
@@ -211,7 +211,6 @@ class DefaultServerSpecification extends Specification {
         given:
         def connectionPool = Mock(ConnectionPool)
         def serverMonitor = Mock(ServerMonitor)
-        connectionPool.get(OPERATION_CONTEXT) >> { throw exceptionToThrow }
 
         def server = defaultServer(connectionPool, serverMonitor)
         server.close()
@@ -243,7 +242,7 @@ class DefaultServerSpecification extends Specification {
         def server = defaultServer(connectionPool, serverMonitor)
 
         when:
-        server.getConnection(OPERATION_CONTEXT)
+        server.getConnection(createOperationContext())
 
         then:
         def e = thrown(MongoException)
@@ -260,6 +259,55 @@ class DefaultServerSpecification extends Specification {
         ]
     }
 
+    def 'should invalidate the pool when the exception does not have the system overloaded label'() {
+        given:
+        def connectionPool = Mock(ConnectionPool)
+        connectionPool.get(_) >> { throw exceptionToThrow }
+        def serverMonitor = Mock(ServerMonitor)
+        def server = defaultServer(connectionPool, serverMonitor)
+
+        when:
+        server.getConnection(createOperationContext())
+
+        then:
+        def e = thrown(MongoException)
+        e.is(exceptionToThrow)
+        1 * connectionPool.invalidate(exceptionToThrow)
+        1 * serverMonitor.cancelCurrentCheck()
+
+        where:
+        exceptionToThrow << [
+                new MongoSocketException('establishment failed', new ServerAddress()),
+                new MongoSocketOpenException('open failed', new ServerAddress(), new IOException()),
+                new MongoSocketReadTimeoutException('Read timed out', new ServerAddress(), new IOException()),
+                new MongoSocketException('DNS lookup failed', new ServerAddress(),
+                        new UnknownHostException('no such host')),
+                new MongoSocketException('TLS config error', new ServerAddress(),
+                        new CertificateException('bad cert')),
+        ]
+    }
+
+    def 'should not invalidate the pool when the exception carries SystemOverloadedError'() {
+        given:
+        def exceptionToThrow = new MongoSocketException('rate-limited establishment', new ServerAddress())
+        exceptionToThrow.addLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL)
+
+        def connectionPool = Mock(ConnectionPool)
+        connectionPool.get(_) >> { throw exceptionToThrow }
+        def serverMonitor = Mock(ServerMonitor)
+        def server = defaultServer(connectionPool, serverMonitor)
+
+        when:
+        server.getConnection(createOperationContext())
+
+        then:
+        def e = thrown(MongoException)
+        e.is(exceptionToThrow)
+        e.hasErrorLabel(MongoException.SYSTEM_OVERLOADED_ERROR_LABEL)
+        0 * connectionPool.invalidate(_)
+        0 * serverMonitor.cancelCurrentCheck()
+    }
+
     def 'failed authentication should invalidate the connection pool'() {
         given:
         def connectionPool = Mock(ConnectionPool)
@@ -268,7 +316,7 @@ class DefaultServerSpecification extends Specification {
         def server = defaultServer(connectionPool, serverMonitor)
 
         when:
-        server.getConnection(OPERATION_CONTEXT)
+        server.getConnection(createOperationContext())
 
         then:
         def e = thrown(MongoSecurityException)
@@ -293,7 +341,7 @@ class DefaultServerSpecification extends Specification {
         def latch = new CountDownLatch(1)
         def receivedConnection = null
         def receivedThrowable = null
-        server.getConnectionAsync(OPERATION_CONTEXT) {
+        server.getConnectionAsync(createOperationContext()) {
             result, throwable ->
                 receivedConnection = result; receivedThrowable = throwable; latch.countDown()
         }
@@ -326,7 +374,7 @@ class DefaultServerSpecification extends Specification {
         def latch = new CountDownLatch(1)
         def receivedConnection = null
         def receivedThrowable = null
-        server.getConnectionAsync(OPERATION_CONTEXT) {
+        server.getConnectionAsync(createOperationContext()) {
             result, throwable ->
                 receivedConnection = result; receivedThrowable = throwable; latch.countDown()
         }
@@ -351,7 +399,7 @@ class DefaultServerSpecification extends Specification {
         clusterClock.advance(clusterClockClusterTime)
         def server = new DefaultServer(serverId, SINGLE, Mock(ConnectionPool), new TestConnectionFactory(), Mock(ServerMonitor),
                 Mock(SdamServerDescriptionManager), Mock(ServerListener), Mock(CommandListener), clusterClock, false)
-        def testConnection = (TestConnection) server.getConnection()
+        def testConnection = (TestConnection) server.getConnection(createOperationContext())
         def sessionContext = new TestSessionContext(initialClusterTime)
         def response = BsonDocument.parse(
                 '''{
@@ -362,7 +410,7 @@ class DefaultServerSpecification extends Specification {
                           ''')
         def protocol = new TestCommandProtocol(response)
         testConnection.enqueueProtocol(protocol)
-        def operationContext = OPERATION_CONTEXT.withSessionContext(sessionContext)
+        def operationContext = createOperationContext().withSessionContext(sessionContext)
 
         when:
         if (async) {

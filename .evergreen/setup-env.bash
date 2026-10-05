@@ -1,9 +1,26 @@
 # Java configurations for evergreen
 
-export JDK8="/opt/java/jdk8"
-export JDK11="/opt/java/jdk11"
-export JDK17="/opt/java/jdk17"
-export JDK21="/opt/java/jdk21"
+# On Windows Evergreen hosts `OS` is a native environment variable set to
+# "Windows_NT". It is not set on other platforms, so default it from `uname`
+# to avoid an unbound variable error under `set -u`.
+if [ -z "${OS:-}" ]; then
+  case "$(uname -s)" in
+    CYGWIN*|MINGW*|MSYS*|Windows_NT) OS="Windows_NT" ;;
+    *) OS="$(uname -s)" ;;
+  esac
+fi
+
+if [ "Windows_NT" == "$OS" ]; then
+  export JDK8="/cygdrive/c/java/jdk8"
+  export JDK11="/cygdrive/c/java/jdk11"
+  export JDK17="/cygdrive/c/java/jdk17"
+  export JDK21="/cygdrive/c/java/jdk21"
+else
+  export JDK8="/opt/java/jdk8"
+  export JDK11="/opt/java/jdk11"
+  export JDK17="/opt/java/jdk17"
+  export JDK21="/opt/java/jdk21"
+fi
 # note that `JDK21_GRAALVM` is used in `run-graalvm-native-image-app.sh`
 # by dynamically constructing the variable name
 export JDK21_GRAALVM="/opt/java/jdk21-graalce"

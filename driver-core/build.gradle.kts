@@ -55,12 +55,27 @@ dependencies {
     optionalImplementation(libs.snappy.java)
     optionalImplementation(libs.zstd.jni)
 
+    optionalImplementation(platform(libs.micrometer.observation.bom))
+    optionalImplementation(libs.micrometer.observation)
+
     testImplementation(project(path = ":bson", configuration = "testArtifacts"))
     testImplementation(libs.reflections)
     testImplementation(libs.netty.tcnative.boringssl.static)
     listOf("linux-x86_64", "linux-aarch_64", "osx-x86_64", "osx-aarch_64", "windows-x86_64").forEach { arch ->
         testImplementation("${libs.netty.tcnative.boringssl.static.get()}::$arch")
     }
+}
+
+tasks.processTestResources {
+    from("${rootProject.projectDir}/testing/resources")
+    // TODO JAVA-6283: remove this and the resources-ghsa-556f-q76p-2vxq
+    // directory once the specifications submodule includes the GridFS $eq
+    // tests. These files are vendored from the specifications security fork.
+    // Some of them replace files the submodule already provides, so this spec
+    // must come last and duplicates must resolve to the vendored copy.
+    from("${rootProject.projectDir}/testing/resources-ghsa-556f-q76p-2vxq")
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    into("${layout.buildDirectory.get()}/resources/test")
 }
 
 configureMavenPublication {
@@ -94,6 +109,7 @@ configureJarManifest {
                 "org.bson.codecs.record.*;resolution:=optional", // Depends on JDK version
                 "org.bson.codecs.kotlin.*;resolution:=optional",
                 "org.bson.codecs.kotlinx.*;resolution:=optional",
+                "io.micrometer.*;resolution:=optional",
                 "*" // import all that is not excluded or modified before
                 )
             .joinToString(",")

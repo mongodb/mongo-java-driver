@@ -129,16 +129,13 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         return readPreference;
     }
 
-    @Override
-    public OperationContext getOperationContext() {
-        return operationContext;
-    }
 
     @Override
-    public void getReadConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
+    public void getReadConnectionSource(final OperationContext operationContext,
+                                        final SingleResultCallback<AsyncConnectionSource> callback) {
         isTrue("open", getCount() > 0);
         if (readPreference == primary()) {
-            getWriteConnectionSource(callback);
+            getWriteConnectionSource(operationContext, callback);
         } else {
             callback.onResult(new SingleAsyncConnectionSource(readServerDescription, readConnection), null);
         }
@@ -146,12 +143,13 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
 
     @Override
     public void getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference,
+                                        final OperationContext operationContext,
             final SingleResultCallback<AsyncConnectionSource> callback) {
-        getReadConnectionSource(callback);
+        getReadConnectionSource(operationContext, callback);
     }
 
     @Override
-    public void getWriteConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
+    public void getWriteConnectionSource(final OperationContext operationContext, final SingleResultCallback<AsyncConnectionSource> callback) {
         isTrue("open", getCount() > 0);
         callback.onResult(new SingleAsyncConnectionSource(writeServerDescription, writeConnection), null);
     }
@@ -183,17 +181,12 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         }
 
         @Override
-        public OperationContext getOperationContext() {
-            return operationContext;
-        }
-
-        @Override
         public ReadPreference getReadPreference() {
             return readPreference;
         }
 
         @Override
-        public void getConnection(final SingleResultCallback<AsyncConnection> callback) {
+        public void getConnection(final OperationContext operationContext, final SingleResultCallback<AsyncConnection> callback) {
             isTrue("open", getCount() > 0);
             callback.onResult(connection.retain(), null);
         }

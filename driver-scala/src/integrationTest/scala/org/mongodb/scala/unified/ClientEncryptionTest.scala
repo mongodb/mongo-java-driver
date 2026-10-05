@@ -16,6 +16,6 @@
 
 package org.mongodb.scala.unified
 
-object ClientEncryptionTest extends UnifiedTest {
+class ClientEncryptionTest extends UnifiedTest {
   val directory = "client-side-encryption/tests/unified"
 }

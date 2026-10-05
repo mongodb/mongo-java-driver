@@ -21,6 +21,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -46,14 +47,17 @@ public class CountOperation implements  ReadOperationSimple<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
     private final MongoNamespace namespace;
     private boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private BsonDocument filter;
     private BsonValue hint;
     private long skip;
     private long limit;
     private Collation collation;
 
-    public CountOperation(final MongoNamespace namespace) {
+    public CountOperation(final MongoNamespace namespace, @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.namespace = notNull("namespace", namespace);
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     public BsonDocument getFilter() {
@@ -116,23 +120,28 @@ public class CountOperation implements  ReadOperationSimple<Long> {
     }
 
     @Override
-    public Long execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, namespace.getDatabaseName(),
-                                    getCommandCreator(), DECODER, transformer(), retryReads);
+    public MongoNamespace getNamespace() {
+        return namespace;
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        executeRetryableReadAsync(binding, namespace.getDatabaseName(),
-                                  getCommandCreator(), DECODER, asyncTransformer(), retryReads, callback);
+    public Long execute(final ReadBinding binding, final OperationContext operationContext) {
+        return executeRetryableRead(binding, operationContext, namespace.getDatabaseName(),
+                                    getCommandCreator(), DECODER, transformer(), retryReads, maxAdaptiveRetriesSetting);
+    }
+
+    @Override
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<Long> callback) {
+        executeRetryableReadAsync(binding, operationContext,  namespace.getDatabaseName(),
+                                  getCommandCreator(), DECODER, asyncTransformer(), retryReads, maxAdaptiveRetriesSetting, callback);
     }
 
     private CommandReadTransformer<BsonDocument, Long> transformer() {
-        return (result, source, connection) -> (result.getNumber("n")).longValue();
+        return (result, source, connection, operationContext) -> (result.getNumber("n")).longValue();
     }
 
     private CommandReadTransformerAsync<BsonDocument, Long> asyncTransformer() {
-        return (result, source, connection) -> (result.getNumber("n")).longValue();
+        return (result, source, connection, operationContext) -> (result.getNumber("n")).longValue();
     }
 
     private CommandCreator getCommandCreator() {

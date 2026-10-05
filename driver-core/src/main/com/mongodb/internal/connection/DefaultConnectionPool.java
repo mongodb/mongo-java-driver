@@ -894,7 +894,7 @@ final class DefaultConnectionPool implements ConnectionPool {
 
     /**
      * Package-access methods are thread-safe,
-     * and only they should be called outside of the {@link OpenConcurrencyLimiter}'s code.
+     * and only they should be called outside the {@link OpenConcurrencyLimiter}'s code.
      */
     @ThreadSafe
     private final class OpenConcurrencyLimiter {
@@ -1321,7 +1321,7 @@ final class DefaultConnectionPool implements ConnectionPool {
             boolean result = true;
             if (state == State.NEW) {
                 worker = Executors.newSingleThreadExecutor(new DaemonThreadFactory("AsyncGetter"));
-                worker.submit(() -> runAndLogUncaught(this::workerRun));
+                worker.execute(() -> runAndLogUncaught(this::workerRun));
                 state = State.INITIALIZED;
             } else if (state == State.CLOSED) {
                 result = false;
@@ -1334,7 +1334,6 @@ final class DefaultConnectionPool implements ConnectionPool {
          * {@linkplain Task#failAsClosed() fail} asynchronously.
          */
         @Override
-        @SuppressWarnings("try")
         public void close() {
             withLock(lock, () -> {
                 if (state != State.CLOSED) {

@@ -19,19 +19,20 @@ package com.mongodb.internal.binding;
 import com.mongodb.ReadPreference;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.Connection;
+import com.mongodb.internal.connection.OperationContext;
 
 /**
  * A source of connections to a single MongoDB server.
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public interface ConnectionSource extends BindingContext, ReferenceCounted {
+public interface ConnectionSource extends ReferenceCounted {
 
     ServerDescription getServerDescription();
 
     ReadPreference getReadPreference();
 
-    Connection getConnection();
+    Connection getConnection(OperationContext operationContext);
 
     @Override
     ConnectionSource retain();

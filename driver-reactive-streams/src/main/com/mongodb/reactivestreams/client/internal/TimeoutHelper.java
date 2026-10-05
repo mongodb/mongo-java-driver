@@ -24,14 +24,13 @@ import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
 import reactor.core.publisher.Mono;
 
+import static com.mongodb.internal.TimeoutContext.DEFAULT_TIMEOUT_MESSAGE;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public final class TimeoutHelper {
-    private static final String DEFAULT_TIMEOUT_MESSAGE = "Operation exceeded the timeout limit.";
-
     private TimeoutHelper() {
         //NOP
     }
@@ -55,8 +54,14 @@ public final class TimeoutHelper {
 
     public static <T> Mono<MongoCollection<T>> collectionWithTimeoutMono(final MongoCollection<T> collection,
                                                                          @Nullable final Timeout timeout) {
+       return collectionWithTimeoutMono(collection, timeout, DEFAULT_TIMEOUT_MESSAGE);
+    }
+
+    public static <T> Mono<MongoCollection<T>> collectionWithTimeoutMono(final MongoCollection<T> collection,
+                                                                         @Nullable final Timeout timeout,
+                                                                         final String message) {
         try {
-            return Mono.just(collectionWithTimeout(collection, timeout));
+            return Mono.just(collectionWithTimeout(collection, timeout, message));
         } catch (MongoOperationTimeoutException e) {
             return Mono.error(e);
         }
@@ -64,9 +69,14 @@ public final class TimeoutHelper {
 
     public static <T> Mono<MongoCollection<T>> collectionWithTimeoutDeferred(final MongoCollection<T> collection,
                                                                              @Nullable final Timeout timeout) {
-        return Mono.defer(() -> collectionWithTimeoutMono(collection, timeout));
+        return collectionWithTimeoutDeferred(collection, timeout, DEFAULT_TIMEOUT_MESSAGE);
     }
 
+    public static <T> Mono<MongoCollection<T>> collectionWithTimeoutDeferred(final MongoCollection<T> collection,
+                                                                             @Nullable final Timeout timeout,
+                                                                             final String message) {
+        return Mono.defer(() -> collectionWithTimeoutMono(collection, timeout, message));
+    }
 
     public static MongoDatabase databaseWithTimeout(final MongoDatabase database,
                                                     @Nullable final Timeout timeout) {

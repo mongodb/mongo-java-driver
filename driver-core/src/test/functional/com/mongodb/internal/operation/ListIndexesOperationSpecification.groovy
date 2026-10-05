@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.operation
 
-
+import com.mongodb.ClusterFixture
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
@@ -33,6 +33,7 @@ import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.internal.bulk.IndexRequest
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
+import com.mongodb.internal.connection.OperationContext
 import org.bson.BsonDocument
 import org.bson.BsonDouble
 import org.bson.BsonInt32
@@ -41,19 +42,22 @@ import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
+import org.junit.jupiter.api.Assertions
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
+import static com.mongodb.ClusterFixture.createOperationContext
 
 class ListIndexesOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should return empty list for nonexistent collection'() {
         given:
-        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec(), null)
 
+
+        def binding = getBinding()
         when:
-        def cursor = operation.execute(getBinding())
+        def cursor = operation.execute(binding, createOperationContext(binding.getReadPreference()))
 
         then:
         !cursor.hasNext()
@@ -62,7 +66,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should return empty list for nonexistent collection asynchronously'() {
         given:
-        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec(), null)
 
         when:
         AsyncBatchCursor cursor = executeAsync(operation)
@@ -76,11 +80,13 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should return default index on Collection that exists'() {
         given:
-        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec(), null)
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
 
+
+        def binding = getBinding()
         when:
-        BatchCursor<Document> indexes = operation.execute(getBinding())
+        BatchCursor<Document> indexes = operation.execute(binding, createOperationContext(binding.getReadPreference()))
 
         then:
         def firstBatch = indexes.next()
@@ -92,7 +98,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should return default index on Collection that exists asynchronously'() {
         given:
-        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec(), null)
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
 
         when:
@@ -108,14 +114,18 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should return created indexes on Collection'() {
         given:
-        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec(), null)
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('compound', new BsonInt32(1)).append('index', new BsonInt32(-1)))
+
+        def binding = getBinding()
         new CreateIndexesOperation(namespace,
-                [new IndexRequest(new BsonDocument('unique', new BsonInt32(1))).unique(true)], null).execute(getBinding())
+                [new IndexRequest(new BsonDocument('unique', new BsonInt32(1))).unique(true)], null).execute(binding,
+                createOperationContext(binding.getReadPreference()))
 
         when:
-        BatchCursor cursor = operation.execute(getBinding())
+        binding = getBinding()
+        BatchCursor cursor = operation.execute(binding, createOperationContext(binding.getReadPreference()))
 
         then:
         def indexes = cursor.next()
@@ -128,11 +138,14 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should return created indexes on Collection asynchronously'() {
         given:
-        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec())
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec(), null)
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('compound', new BsonInt32(1)).append('index', new BsonInt32(-1)))
+
+        def binding = getBinding()
         new CreateIndexesOperation(namespace,
-                [new IndexRequest(new BsonDocument('unique', new BsonInt32(1))).unique(true)], null).execute(getBinding())
+                [new IndexRequest(new BsonDocument('unique', new BsonInt32(1))).unique(true)], null).execute(binding,
+                createOperationContext(binding.getReadPreference()))
 
         when:
         def cursor = executeAsync(operation)
@@ -148,15 +161,17 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should use the set batchSize of collections'() {
         given:
-        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec()).batchSize(2)
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec(), null).batchSize(2)
         collectionHelper.createIndex(new BsonDocument('collection1', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('collection2', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('collection3', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('collection4', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('collection5', new BsonInt32(1)))
 
+
+        def binding = getBinding()
         when:
-        def cursor = operation.execute(getBinding())
+        def cursor = operation.execute(binding, createOperationContext(binding.getReadPreference()))
         def collections = cursor.next()
 
         then:
@@ -179,7 +194,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
     def 'should use the set batchSize of collections asynchronously'() {
         given:
-        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec()).batchSize(2)
+        def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec(), null).batchSize(2)
         collectionHelper.createIndex(new BsonDocument('collection1', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('collection2', new BsonInt32(1)))
         collectionHelper.createIndex(new BsonDocument('collection3', new BsonInt32(1)))
@@ -210,24 +225,26 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
     def 'should use the readPreference to set secondaryOk'() {
         given:
         def connection = Mock(Connection)
+        def operationContext = ClusterFixture.createOperationContext()
         def connectionSource = Stub(ConnectionSource) {
-            getConnection() >> connection
+            getConnection(_) >> connection
             getReadPreference() >> readPreference
-            getOperationContext() >> OPERATION_CONTEXT
         }
         def readBinding = Stub(ReadBinding) {
-            getReadConnectionSource() >> connectionSource
+            getReadConnectionSource(_) >> connectionSource
             getReadPreference() >> readPreference
-            getOperationContext() >> OPERATION_CONTEXT
         }
-        def operation = new ListIndexesOperation(helper.namespace, helper.decoder)
+        def operation = new ListIndexesOperation(helper.namespace, helper.decoder, null)
 
         when: '3.6.0'
-        operation.execute(readBinding)
+        operation.execute(readBinding, operationContext)
 
         then:
         _ * connection.getDescription() >> helper.threeSixConnectionDescription
-        1 * connection.command(_, _, _, readPreference, _, OPERATION_CONTEXT) >> helper.commandResult
+        1 * connection.command(_, _, _, readPreference, _, _) >> {
+            Assertions.assertEquals(((OperationContext) it[5]).getId(), operationContext.getId())
+            helper.commandResult
+        }
         1 * connection.release()
 
         where:
@@ -239,16 +256,16 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
             getReadPreference() >> readPreference
-            getConnection(_) >> { it[0].onResult(connection, null) }
+            getConnection(_, _) >> { it[1].onResult(connection, null) }
         }
         def readBinding = Stub(AsyncReadBinding) {
             getReadPreference() >> readPreference
-            getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+            getReadConnectionSource(_, _) >> { it[1].onResult(connectionSource, null) }
         }
-        def operation = new ListIndexesOperation(helper.namespace, helper.decoder)
+        def operation = new ListIndexesOperation(helper.namespace, helper.decoder, null)
 
         when: '3.6.0'
-        operation.executeAsync(readBinding, Stub(SingleResultCallback))
+        operation.executeAsync(readBinding, createOperationContext(), Stub(SingleResultCallback))
 
         then:
         _ * connection.getDescription() >> helper.threeSixConnectionDescription

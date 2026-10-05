@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
@@ -30,7 +31,12 @@ final class UpdateSearchIndexesOperation extends AbstractWriteSearchIndexOperati
     private final SearchIndexRequest request;
 
     UpdateSearchIndexesOperation(final MongoNamespace namespace, final SearchIndexRequest request) {
-        super(namespace);
+        this(namespace, request, false, null);
+    }
+
+    UpdateSearchIndexesOperation(final MongoNamespace namespace, final SearchIndexRequest request,
+            final boolean retryWrites, @Nullable final Integer maxAdaptiveRetriesSetting) {
+        super(namespace, retryWrites, maxAdaptiveRetriesSetting);
         this.request = request;
     }
 

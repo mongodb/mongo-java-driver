@@ -144,8 +144,6 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
             helloResult = executeCommand("admin", helloCommandDocument, clusterConnectionMode, serverApi, internalConnection, operationContext);
         } catch (MongoException e) {
             throw mapHelloException(e);
-        } finally {
-            operationContext.getTimeoutContext().resetMaintenanceTimeout();
         }
         setSpeculativeAuthenticateResponse(helloResult);
         return createInitializationDescription(helloResult, internalConnection, start);
@@ -174,7 +172,8 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
 
     private BsonDocument createHelloCommand(final Authenticator authenticator, final InternalConnection connection) {
         BsonDocument helloCommandDocument = new BsonDocument(getHandshakeCommandName(), new BsonInt32(1))
-                .append("helloOk", BsonBoolean.TRUE);
+                .append("helloOk", BsonBoolean.TRUE)
+                .append("backpressure", new BsonString("2"));
         if (clientMetadataDocument != null) {
             helloCommandDocument.append("client", clientMetadataDocument);
         }

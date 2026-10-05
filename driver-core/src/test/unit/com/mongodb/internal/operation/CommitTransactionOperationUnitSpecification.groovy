@@ -21,11 +21,13 @@ import com.mongodb.MongoTimeoutException
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.binding.AsyncWriteBinding
 import com.mongodb.internal.binding.WriteBinding
+import com.mongodb.internal.connection.OperationContext
 import com.mongodb.internal.session.SessionContext
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.createOperationContext
 
 class CommitTransactionOperationUnitSpecification extends OperationUnitSpecification {
     def 'should add UnknownTransactionCommitResult error label to MongoTimeoutException'() {
@@ -35,13 +37,12 @@ class CommitTransactionOperationUnitSpecification extends OperationUnitSpecifica
             hasActiveTransaction() >> true
         }
         def writeBinding = Stub(WriteBinding) {
-            getWriteConnectionSource() >> { throw new MongoTimeoutException('Time out!') }
-            getOperationContext() >> OPERATION_CONTEXT.withSessionContext(sessionContext)
+            getWriteConnectionSource(_) >> { throw new MongoTimeoutException('Time out!') }
         }
-        def operation = new CommitTransactionOperation(WriteConcern.ACKNOWLEDGED)
+        def operation = new CommitTransactionOperation(WriteConcern.ACKNOWLEDGED, null, false)
 
         when:
-        operation.execute(writeBinding)
+        operation.execute(writeBinding, createOperationContext().withSessionContext(sessionContext))
 
         then:
         def e = thrown(MongoTimeoutException)
@@ -55,16 +56,15 @@ class CommitTransactionOperationUnitSpecification extends OperationUnitSpecifica
             hasActiveTransaction() >> true
         }
         def writeBinding = Stub(AsyncWriteBinding) {
-            getWriteConnectionSource(_) >> {
-                it[0].onResult(null, new MongoTimeoutException('Time out!'))
+            getWriteConnectionSource(_ as OperationContext, _ as SingleResultCallback) >> {
+                it[1].onResult(null, new MongoTimeoutException('Time out!'))
             }
-            getOperationContext() >> OPERATION_CONTEXT.withSessionContext(sessionContext)
         }
-        def operation = new CommitTransactionOperation(WriteConcern.ACKNOWLEDGED)
+        def operation = new CommitTransactionOperation(WriteConcern.ACKNOWLEDGED, null, false)
         def callback = new FutureResultCallback()
 
         when:
-        operation.executeAsync(writeBinding, callback)
+        operation.executeAsync(writeBinding, createOperationContext().withSessionContext(sessionContext), callback)
         callback.get()
 
         then:

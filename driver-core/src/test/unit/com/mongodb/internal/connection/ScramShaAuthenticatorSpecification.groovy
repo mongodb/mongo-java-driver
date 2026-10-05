@@ -41,7 +41,7 @@ import static org.junit.Assert.assertEquals
 class ScramShaAuthenticatorSpecification extends Specification {
     def serverId = new ServerId(new ClusterId(), new ServerAddress('localhost', 27017))
     def connectionDescription = new ConnectionDescription(serverId)
-    def operationContext = simpleOperationContext(TimeoutSettings.DEFAULT, null)
+    def operationContext = simpleOperationContext(TimeoutSettings.DEFAULT)
     private final static MongoCredentialWithCache SHA1_CREDENTIAL =
             new MongoCredentialWithCache(createScramSha1Credential('user', 'database', 'pencil' as char[]))
     private final static MongoCredentialWithCache SHA256_CREDENTIAL =

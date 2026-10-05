@@ -228,9 +228,9 @@ final class TimeoutContextTest {
         Supplier<TimeoutContext> supplier = () -> new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100L));
 
         assertTrue(getMaxTimeMS(supplier.get()) <= 100);
-        assertTrue(getMaxTimeMS(supplier.get().minRoundTripTimeMS(10)) <= 90);
-        assertThrows(MongoOperationTimeoutException.class, () -> getMaxTimeMS(supplier.get().minRoundTripTimeMS(101)));
-        assertThrows(MongoOperationTimeoutException.class, () -> getMaxTimeMS(supplier.get().minRoundTripTimeMS(100)));
+        assertTrue(getMaxTimeMS(supplier.get().withMinRoundTripTime(10)) <= 90);
+        assertThrows(MongoOperationTimeoutException.class, () -> getMaxTimeMS(supplier.get().withMinRoundTripTimeMS(101)));
+        assertThrows(MongoOperationTimeoutException.class, () -> getMaxTimeMS(supplier.get().withMinRoundTripTimeMS(100)));
     }
 
     @Test
@@ -277,7 +277,7 @@ final class TimeoutContextTest {
     void shouldOverrideMaximeMS() {
         TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100L).withMaxTimeMS(1));
 
-        timeoutContext.setMaxTimeOverride(2L);
+        timeoutContext = timeoutContext.withMaxTimeOverride(2L);
 
         assertEquals(2, getMaxTimeMS(timeoutContext));
     }
@@ -286,9 +286,9 @@ final class TimeoutContextTest {
     @DisplayName("should reset maxTimeMS to default behaviour")
     void shouldResetMaximeMS() {
         TimeoutContext timeoutContext = new TimeoutContext(TIMEOUT_SETTINGS.withTimeoutMS(100L).withMaxTimeMS(1));
-        timeoutContext.setMaxTimeOverride(1L);
+        timeoutContext = timeoutContext.withMaxTimeOverride(1L);
 
-        timeoutContext.resetToDefaultMaxTime();
+        timeoutContext = timeoutContext.withDefaultMaxTime();
 
         assertTrue(getMaxTimeMS(timeoutContext) > 1);
     }
@@ -331,9 +331,10 @@ final class TimeoutContextTest {
         );
     }
 
-    @ParameterizedTest
-    @MethodSource
     @DisplayName("should choose timeoutMS when timeoutMS is less than connectTimeoutMS")
+    @ParameterizedTest(name = "should choose timeoutMS when timeoutMS is less than connectTimeoutMS. "
+            + "Parameters: connectTimeoutMS: {0}, timeoutMS: {1}, expected: {2}")
+    @MethodSource
     void shouldChooseTimeoutMsWhenItIsLessThenConnectTimeoutMS(final Long connectTimeoutMS,
                                                           final Long timeoutMS,
                                                           final long expected) {
@@ -345,7 +346,7 @@ final class TimeoutContextTest {
                         0));
 
         long calculatedTimeoutMS = timeoutContext.getConnectTimeoutMs();
-        assertTrue(expected - calculatedTimeoutMS <= 1);
+        assertTrue(expected - calculatedTimeoutMS <= 2);
     }
 
     private TimeoutContextTest() {

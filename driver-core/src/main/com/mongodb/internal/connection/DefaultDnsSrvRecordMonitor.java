@@ -24,6 +24,7 @@ import com.mongodb.connection.ClusterType;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.dns.DnsResolver;
+import com.mongodb.lang.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -38,6 +39,8 @@ class DefaultDnsSrvRecordMonitor implements DnsSrvRecordMonitor {
 
     private final String hostName;
     private final String srvServiceName;
+    @Nullable
+    private final String srvAllowedHostsSuffix;
     private final long rescanFrequencyMillis;
     private final long noRecordsRescanFrequencyMillis;
     private final DnsSrvRecordInitializer dnsSrvRecordInitializer;
@@ -45,11 +48,13 @@ class DefaultDnsSrvRecordMonitor implements DnsSrvRecordMonitor {
     private final Thread monitorThread;
     private volatile boolean isClosed;
 
-    DefaultDnsSrvRecordMonitor(final String hostName, final String srvServiceName, final long rescanFrequencyMillis, final long noRecordsRescanFrequencyMillis,
+    DefaultDnsSrvRecordMonitor(final String hostName, final String srvServiceName, @Nullable final String srvAllowedHostsSuffix,
+            final long rescanFrequencyMillis, final long noRecordsRescanFrequencyMillis,
             final DnsSrvRecordInitializer dnsSrvRecordInitializer, final ClusterId clusterId,
             final DnsResolver dnsResolver) {
         this.hostName = hostName;
         this.srvServiceName = srvServiceName;
+        this.srvAllowedHostsSuffix = srvAllowedHostsSuffix;
         this.rescanFrequencyMillis = rescanFrequencyMillis;
         this.noRecordsRescanFrequencyMillis = noRecordsRescanFrequencyMillis;
         this.dnsSrvRecordInitializer = dnsSrvRecordInitializer;
@@ -78,7 +83,8 @@ class DefaultDnsSrvRecordMonitor implements DnsSrvRecordMonitor {
             try {
                 while (!isClosed && shouldContinueMonitoring()) {
                     try {
-                        List<String> resolvedHostNames = dnsResolver.resolveHostFromSrvRecords(hostName, srvServiceName);
+                        List<String> resolvedHostNames = dnsResolver.resolveHostFromSrvRecords(hostName, srvServiceName,
+                                srvAllowedHostsSuffix);
                         Set<ServerAddress> hosts = createServerAddressSet(resolvedHostNames);
 
                         if (isClosed) {

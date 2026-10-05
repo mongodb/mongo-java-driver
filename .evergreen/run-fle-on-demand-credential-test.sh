@@ -20,6 +20,11 @@ if ! which java ; then
     sudo apt install openjdk-17-jdk -y
 fi
 
+if ! which gpg ; then
+    echo "Installing gpg..."
+    sudo apt install gnupg -y
+fi
+
 export PROVIDER=${PROVIDER}
 
 echo "Running gradle version"

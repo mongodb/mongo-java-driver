@@ -36,8 +36,8 @@ class CollectionInfoRetriever {
         this.client = notNull("client", client);
     }
 
-    public List<BsonDocument> filter(final String databaseName, final BsonDocument filter, @Nullable final Timeout operationTimeout) {
-        return databaseWithTimeout(client.getDatabase(databaseName), TIMEOUT_ERROR_MESSAGE, operationTimeout)
+    public List<BsonDocument> filter(final String databaseName, final BsonDocument filter, @Nullable final Timeout timeout) {
+        return databaseWithTimeout(client.getDatabase(databaseName), TIMEOUT_ERROR_MESSAGE, timeout)
                 .listCollections(BsonDocument.class)
                 .filter(filter)
                 .into(new ArrayList<>());

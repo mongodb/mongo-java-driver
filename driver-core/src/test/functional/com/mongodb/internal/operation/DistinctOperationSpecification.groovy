@@ -33,6 +33,7 @@ import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.internal.connection.AsyncConnection
 import com.mongodb.internal.connection.Connection
+import com.mongodb.internal.connection.OperationContext
 import com.mongodb.internal.session.SessionContext
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -50,12 +51,13 @@ import org.bson.codecs.StringCodec
 import org.bson.codecs.ValueCodecProvider
 import org.bson.types.ObjectId
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand
 import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
+import static org.junit.jupiter.api.Assertions.assertEquals
 
 class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
@@ -69,7 +71,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should have the correct defaults'() {
         when:
-        DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+        DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder, null)
 
         then:
         operation.getFilter() == null
@@ -81,7 +83,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         def filter = new BsonDocument('filter', new BsonInt32(1))
 
         when:
-        DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+        DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder, null)
                 .filter(filter)
                 .collation(defaultCollation)
 
@@ -96,7 +98,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         Document sam = new Document('name', 'Sam').append('age', 21)
         Document pete2 = new Document('name', 'Pete').append('age', 25)
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
-        DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+        DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder, null)
 
         when:
         def results = executeAndCollectBatchCursorResults(operation, async)
@@ -114,7 +116,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         Document sam = new Document('name', 'Sam').append('age', 21)
         Document pete2 = new Document('name', 'Pete').append('age', 25)
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
-        def operation = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+        def operation = new DistinctOperation(getNamespace(), 'name', stringDecoder, null)
                 .filter(new BsonDocument('age', new BsonInt32(25)))
 
         when:
@@ -145,7 +147,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
                 .append('numberOfJobs', sam.numberOfJobs)
 
         getCollectionHelper().insertDocuments(new Document('worker', peteDocument), new Document('worker', samDocument))
-        DistinctOperation operation = new DistinctOperation(getNamespace(), 'worker', new WorkerCodec())
+        DistinctOperation operation = new DistinctOperation(getNamespace(), 'worker', new WorkerCodec(), null)
 
         when:
         def results = executeAndCollectBatchCursorResults(operation, async)
@@ -164,7 +166,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         Document sam = new Document('name', 1)
         Document pete2 = new Document('name', new Document('earle', 'Jones'))
         getCollectionHelper().insertDocuments(new DocumentCodec(), pete, sam, pete2)
-        DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder)
+        DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder, null)
 
         when:
         execute(operation, async)
@@ -178,7 +180,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should use the ReadBindings readPreference to set secondaryOk'() {
         when:
-        def operation = new DistinctOperation(helper.namespace, 'name', helper.decoder)
+        def operation = new DistinctOperation(helper.namespace, 'name', helper.decoder, null)
 
         then:
         testOperationSecondaryOk(operation, [3, 4, 0], readPreference, async, helper.commandResult)
@@ -189,7 +191,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should create the expected command'() {
         when:
-        def operation = new DistinctOperation(helper.namespace, 'name', new BsonDocumentCodec())
+        def operation = new DistinctOperation(helper.namespace, 'name', new BsonDocumentCodec(), null)
                 .filter(new BsonDocument('a', BsonBoolean.TRUE))
                 .collation(defaultCollation)
 
@@ -209,7 +211,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         given:
         def document = Document.parse('{str: "foo"}')
         getCollectionHelper().insertDocuments(document)
-        def operation = new DistinctOperation(namespace, 'str', stringDecoder)
+        def operation = new DistinctOperation(namespace, 'str', stringDecoder, null)
                 .filter(BsonDocument.parse('{str: "FOO"}}'))
                 .collation(caseInsensitiveCollation)
 
@@ -225,30 +227,30 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should add read concern to command'() {
         given:
-        def operationContext = OPERATION_CONTEXT.withSessionContext(sessionContext)
+        def operationContext = createOperationContext().withSessionContext(sessionContext)
         def binding = Stub(ReadBinding)
         def source = Stub(ConnectionSource)
         def connection = Mock(Connection)
         binding.readPreference >> ReadPreference.primary()
-        binding.operationContext >> operationContext
-        binding.readConnectionSource >> source
-        source.connection >> connection
+        binding.getReadConnectionSource(_) >> source
+        source.getConnection(_) >> connection
         source.retain() >> source
-        source.operationContext >> operationContext
         def commandDocument = new BsonDocument('distinct', new BsonString(getCollectionName()))
                 .append('key', new BsonString('str'))
         appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
-        def operation = new DistinctOperation<String>(getNamespace(), 'str', new StringCodec())
+        def operation = new DistinctOperation<String>(getNamespace(), 'str', new StringCodec(), null)
 
         when:
-        operation.execute(binding)
+        operation.execute(binding, operationContext)
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                 6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.command(_, commandDocument, _, _, _, operationContext) >>
-                new BsonDocument('values', new BsonArrayWrapper([]))
+        1 * connection.command(_, commandDocument, _, _, _, _) >> {
+            assertEquals(((OperationContext) it[5]).getId(), operationContext.getId())
+            new BsonDocument('values', new BsonArrayWrapper([]))
+        }
         1 * connection.release()
 
         where:
@@ -264,29 +266,28 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should add read concern to command asynchronously'() {
         given:
-        def operationContext = OPERATION_CONTEXT.withSessionContext(sessionContext)
+        def operationContext = createOperationContext().withSessionContext(sessionContext)
         def binding = Stub(AsyncReadBinding)
         def source = Stub(AsyncConnectionSource)
         def connection = Mock(AsyncConnection)
         binding.readPreference >> ReadPreference.primary()
-        binding.getReadConnectionSource(_) >> { it[0].onResult(source, null) }
-        binding.operationContext >> operationContext
-        source.operationContext >> operationContext
-        source.getConnection(_) >> { it[0].onResult(connection, null) }
+        binding.getReadConnectionSource(_, _) >> { it[1].onResult(source, null) }
+        source.getConnection(_, _) >> { it[1].onResult(connection, null) }
         source.retain() >> source
         def commandDocument = new BsonDocument('distinct', new BsonString(getCollectionName()))
                 .append('key', new BsonString('str'))
         appendReadConcernToCommand(sessionContext, UNKNOWN_WIRE_VERSION, commandDocument)
 
-        def operation = new DistinctOperation<String>(getNamespace(), 'str', new StringCodec())
+        def operation = new DistinctOperation<String>(getNamespace(), 'str', new StringCodec(), null)
 
         when:
-        executeAsync(operation, binding)
+        executeAsync(operation, binding, operationContext)
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                  6, STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.commandAsync(_, commandDocument, _, _, _, operationContext, *_) >> {
+        1 * connection.commandAsync(_, commandDocument, _, _, _, _, *_) >> {
+            assertEquals(((OperationContext) it[5]).getId(), operationContext.getId())
             it.last().onResult(new BsonDocument('values', new BsonArrayWrapper([])), null)
         }
         1 * connection.release()

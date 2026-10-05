@@ -16,16 +16,19 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonValue;
 import org.bson.codecs.Decoder;
 
+import static com.mongodb.internal.MongoNamespaceHelper.COMMAND_COLLECTION_NAME;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.asyncSingleBatchCursorTransformer;
@@ -47,13 +50,16 @@ public class ListDatabasesOperation<T> implements ReadOperationCursor<T> {
     private static final String DATABASES = "databases";
     private final Decoder<T> decoder;
     private boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private BsonDocument filter;
     private Boolean nameOnly;
     private Boolean authorizedDatabasesOnly;
     private BsonValue comment;
 
-    public ListDatabasesOperation(final Decoder<T> decoder) {
+    public ListDatabasesOperation(final Decoder<T> decoder, @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.decoder = notNull("decoder", decoder);
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     public ListDatabasesOperation<T> filter(@Nullable final BsonDocument filter) {
@@ -108,15 +114,22 @@ public class ListDatabasesOperation<T> implements ReadOperationCursor<T> {
     }
 
     @Override
-    public BatchCursor<T> execute(final ReadBinding binding) {
-        return executeRetryableRead(binding, "admin", getCommandCreator(), CommandResultDocumentCodec.create(decoder, DATABASES),
-                singleBatchCursorTransformer(DATABASES), retryReads);
+    public MongoNamespace getNamespace() {
+        return new MongoNamespace("admin", COMMAND_COLLECTION_NAME);
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        executeRetryableReadAsync(binding, "admin", getCommandCreator(), CommandResultDocumentCodec.create(decoder, DATABASES),
-                asyncSingleBatchCursorTransformer(DATABASES), retryReads, errorHandlingCallback(callback, LOGGER));
+    public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
+        return executeRetryableRead(binding, operationContext, "admin", getCommandCreator(),
+                CommandResultDocumentCodec.create(decoder, DATABASES),
+                singleBatchCursorTransformer(DATABASES), retryReads, maxAdaptiveRetriesSetting);
+    }
+
+    @Override
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext,
+                             final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        executeRetryableReadAsync(binding, operationContext,  "admin", getCommandCreator(), CommandResultDocumentCodec.create(decoder, DATABASES),
+                asyncSingleBatchCursorTransformer(DATABASES), retryReads, maxAdaptiveRetriesSetting, errorHandlingCallback(callback, LOGGER));
     }
 
     private CommandCreator getCommandCreator() {

@@ -16,6 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal.crypt;
 
+import com.mongodb.MongoException;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketReadTimeoutException;
@@ -35,6 +36,7 @@ import com.mongodb.internal.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.internal.crypt.capi.MongoKeyDecryptor;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
@@ -131,6 +133,11 @@ class KeyManagementService implements Closeable {
 
                                               @Override
                                               public void completed(final Integer integer, final Void aVoid) {
+                                                  if (integer == -1) {
+                                                      sink.error(new MongoException(
+                                                              "Unexpected end of stream from KMS provider " + keyDecryptor.getKmsProvider()));
+                                                      return;
+                                                  }
                                                   buffer.flip();
                                                   try {
                                                       keyDecryptor.feed(buffer.asNIO());
@@ -176,7 +183,7 @@ class KeyManagementService implements Closeable {
                         throw new MongoOperationTimeoutException(TIMEOUT_ERROR_MESSAGE);
                     });
         }
-        return OperationContext.simpleOperationContext(new TimeoutContext(timeoutSettings));
+        return OperationContext.simpleOperationContext(timeoutSettings, null, AsyncClientExecutor.NO_OP);
     }
 
     @NonNull

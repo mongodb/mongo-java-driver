@@ -25,6 +25,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
 import com.mongodb.internal.client.model.AggregationLevel;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
@@ -44,13 +45,14 @@ import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VE
 public class AggregateOperation<T> implements ReadOperationExplainable<T> {
     private final AggregateOperationImpl<T> wrapped;
 
-    public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder) {
-        this(namespace, pipeline, decoder, AggregationLevel.COLLECTION);
+    public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder,
+            @Nullable final Integer maxAdaptiveRetriesSetting) {
+        this(namespace, pipeline, decoder, AggregationLevel.COLLECTION, maxAdaptiveRetriesSetting);
     }
 
     public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder,
-            final AggregationLevel aggregationLevel) {
-        this.wrapped = new AggregateOperationImpl<>(namespace, pipeline, decoder, aggregationLevel);
+            final AggregationLevel aggregationLevel, @Nullable final Integer maxAdaptiveRetriesSetting) {
+        this.wrapped = new AggregateOperationImpl<>(namespace, pipeline, decoder, aggregationLevel, maxAdaptiveRetriesSetting);
     }
 
     public List<BsonDocument> getPipeline() {
@@ -141,13 +143,13 @@ public class AggregateOperation<T> implements ReadOperationExplainable<T> {
     }
 
     @Override
-    public BatchCursor<T> execute(final ReadBinding binding) {
-        return wrapped.execute(binding);
+    public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
+        return wrapped.execute(binding, operationContext);
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        wrapped.executeAsync(binding, callback);
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        wrapped.executeAsync(binding, operationContext, callback);
     }
 
     @Override
@@ -155,8 +157,8 @@ public class AggregateOperation<T> implements ReadOperationExplainable<T> {
         return createExplainableOperation(verbosity, resultDecoder);
     }
 
-    <R> CommandReadOperation<R> createExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
-        return new CommandReadOperation<>(getNamespace().getDatabaseName(), wrapped.getCommandName(),
+    <R> ExplainCommandOperation<R> createExplainableOperation(@Nullable final ExplainVerbosity verbosity, final Decoder<R> resultDecoder) {
+        return new ExplainCommandOperation<>(getNamespace().getDatabaseName(), getCommandName(),
                 (operationContext, serverDescription, connectionDescription) -> {
                     BsonDocument command = wrapped.getCommand(operationContext, UNKNOWN_WIRE_VERSION);
                     applyMaxTimeMS(operationContext.getTimeoutContext(), command);
@@ -164,7 +166,8 @@ public class AggregateOperation<T> implements ReadOperationExplainable<T> {
                 }, resultDecoder);
     }
 
-    MongoNamespace getNamespace() {
+    @Override
+    public MongoNamespace getNamespace() {
         return wrapped.getNamespace();
     }
 }

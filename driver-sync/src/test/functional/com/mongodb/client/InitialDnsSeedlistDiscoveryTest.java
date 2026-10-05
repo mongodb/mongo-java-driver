@@ -268,6 +268,9 @@ public abstract class InitialDnsSeedlistDiscoveryTest {
                 case "srvServiceName":
                     assertEquals(entry.getValue().asString().getValue(), connectionString.getSrvServiceName());
                     break;
+                case "srvAllowedHostsSuffix":
+                    assertEquals(entry.getValue().asString().getValue(), connectionString.getSrvAllowedHostsSuffix());
+                    break;
                 default:
                     throw new UnsupportedOperationException("No support configured yet for " + entry.getKey());
             }

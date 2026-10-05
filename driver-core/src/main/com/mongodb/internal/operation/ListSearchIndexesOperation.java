@@ -24,6 +24,7 @@ import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
+import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -58,11 +59,15 @@ public final class ListSearchIndexesOperation<T> implements ReadOperationExplain
     @Nullable
     private final String indexName;
     private final boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
 
     public ListSearchIndexesOperation(final MongoNamespace namespace, final Decoder<T> decoder, @Nullable final String indexName,
                                       @Nullable final Integer batchSize, @Nullable final Collation collation,
                                       @Nullable final BsonValue comment,
-                                      @Nullable final Boolean allowDiskUse, final boolean retryReads) {
+                                      @Nullable final Boolean allowDiskUse,
+                                      final boolean retryReads,
+                                      @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.namespace = namespace;
         this.decoder = decoder;
         this.allowDiskUse = allowDiskUse;
@@ -71,6 +76,7 @@ public final class ListSearchIndexesOperation<T> implements ReadOperationExplain
         this.comment = comment;
         this.indexName = indexName;
         this.retryReads = retryReads;
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     @Override
@@ -79,9 +85,14 @@ public final class ListSearchIndexesOperation<T> implements ReadOperationExplain
     }
 
     @Override
-    public BatchCursor<T> execute(final ReadBinding binding) {
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    @Override
+    public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
         try {
-            return asAggregateOperation().execute(binding);
+            return asAggregateOperation().execute(binding, operationContext);
         } catch (MongoCommandException exception) {
             int cursorBatchSize = batchSize == null ? 0 : batchSize;
             if (!isNamespaceError(exception)) {
@@ -93,8 +104,8 @@ public final class ListSearchIndexesOperation<T> implements ReadOperationExplain
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        asAggregateOperation().executeAsync(binding, (cursor, exception) -> {
+    public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
+        asAggregateOperation().executeAsync(binding, operationContext, (cursor, exception) -> {
             if (exception != null && !isNamespaceError(exception)) {
                 callback.onResult(null, exception);
             } else if (exception != null) {
@@ -113,7 +124,7 @@ public final class ListSearchIndexesOperation<T> implements ReadOperationExplain
     private AggregateOperation<T> asAggregateOperation() {
         BsonDocument searchDefinition = getSearchDefinition();
         BsonDocument listSearchIndexesStage = new BsonDocument(STAGE_LIST_SEARCH_INDEXES, searchDefinition);
-        return new AggregateOperation<>(namespace, singletonList(listSearchIndexesStage), decoder)
+        return new AggregateOperation<>(namespace, singletonList(listSearchIndexesStage), decoder, maxAdaptiveRetriesSetting)
                 .retryReads(retryReads)
                 .collation(collation)
                 .comment(comment)

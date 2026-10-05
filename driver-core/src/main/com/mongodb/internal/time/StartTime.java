@@ -59,6 +59,6 @@ public interface StartTime {
      * @return a StartPoint, as of now
      */
     static StartTime now() {
-        return TimePoint.at(System.nanoTime());
+        return TimePoint.at(SystemNanoTime.get());
     }
 }

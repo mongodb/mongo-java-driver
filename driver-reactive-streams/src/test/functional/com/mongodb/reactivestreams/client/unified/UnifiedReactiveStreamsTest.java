@@ -26,7 +26,6 @@ import com.mongodb.client.unified.UnifiedTestModifications;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.connection.TransportSettings;
 import com.mongodb.lang.NonNull;
-import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBuckets;
 import com.mongodb.reactivestreams.client.internal.vault.ClientEncryptionImpl;
 import com.mongodb.reactivestreams.client.syncadapter.SyncClientEncryption;
@@ -55,7 +54,7 @@ public abstract class UnifiedReactiveStreamsTest extends UnifiedTest {
         TransportSettings overriddenTransportSettings = getOverriddenTransportSettings();
         MongoClientSettings clientSettings = overriddenTransportSettings == null ? settings
                 : MongoClientSettings.builder(settings).transportSettings(overriddenTransportSettings).build();
-        return new SyncMongoClient(MongoClients.create(clientSettings));
+        return new SyncMongoClient(clientSettings);
     }
 
     @Override

@@ -22,6 +22,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.internal.MongoNamespaceHelper;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
 import com.mongodb.internal.session.SessionContext;
@@ -283,7 +284,7 @@ public final class CommandMessage extends RequestMessage {
 
     private int writeOpQuery(final ByteBufferBsonOutput bsonOutput) {
         bsonOutput.writeInt32(0);
-        bsonOutput.writeCString(new MongoNamespace(getDatabase(), "$cmd").getFullName());
+        bsonOutput.writeCString(new MongoNamespace(getDatabase(), MongoNamespaceHelper.COMMAND_COLLECTION_NAME).getFullName());
         bsonOutput.writeInt32(0);
         bsonOutput.writeInt32(-1);
 
@@ -343,12 +344,12 @@ public final class CommandMessage extends RequestMessage {
                 extraElements.add(new BsonElement("lsid", sessionContext.getSessionId()));
             }
         }
-        boolean firstMessageInTransaction = sessionContext.notifyMessageSent();
+        boolean startTransaction = sessionContext.notifyMessageSent();
 
         assertFalse(sessionContext.hasActiveTransaction() && sessionContext.isSnapshot());
         if (sessionContext.hasActiveTransaction()) {
             extraElements.add(new BsonElement("txnNumber", new BsonInt64(sessionContext.getTransactionNumber())));
-            if (firstMessageInTransaction) {
+            if (startTransaction) {
                 extraElements.add(new BsonElement("startTransaction", BsonBoolean.TRUE));
                 addReadConcernDocument(extraElements, sessionContext);
             }

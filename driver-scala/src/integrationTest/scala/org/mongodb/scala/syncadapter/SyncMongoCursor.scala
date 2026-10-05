@@ -15,13 +15,12 @@
  */
 package org.mongodb.scala.syncadapter
 
-import java.util.NoSuchElementException
-import java.util.concurrent.{ CountDownLatch, LinkedBlockingDeque, TimeUnit }
-
-import com.mongodb.{ MongoInterruptedException, MongoTimeoutException }
 import com.mongodb.client.MongoCursor
+import com.mongodb.{ MongoInterruptedException, MongoTimeoutException }
 import org.mongodb.scala.Observable
 import org.reactivestreams.{ Subscriber, Subscription }
+
+import java.util.concurrent.{ CountDownLatch, LinkedBlockingDeque, TimeUnit }
 
 case class SyncMongoCursor[T](val observable: Observable[T]) extends MongoCursor[T] {
   val COMPLETED = new Object()
@@ -73,7 +72,7 @@ case class SyncMongoCursor[T](val observable: Observable[T]) extends MongoCursor
       case n if n == null                 => throw new MongoTimeoutException("Time out!!!")
       case t if t.isInstanceOf[Throwable] => throw translateError(t.asInstanceOf[Throwable])
       case c if c == COMPLETED            => false
-      case n => {
+      case n                              => {
         nextResult = Some(n.asInstanceOf[T])
         true
       }

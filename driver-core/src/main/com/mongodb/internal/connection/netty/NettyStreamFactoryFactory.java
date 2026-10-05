@@ -36,6 +36,7 @@ import io.netty.handler.ssl.SslProvider;
 
 import java.security.Security;
 import java.util.Objects;
+import java.util.concurrent.Executor;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -151,7 +152,7 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
         /**
          * Sets a {@linkplain SslContextBuilder#forClient() client-side} {@link SslContext io.netty.handler.ssl.SslContext},
          * which overrides the standard {@link SslSettings#getContext()}.
-         * By default it is {@code null} and {@link SslSettings#getContext()} is at play.
+         * By default, it is {@code null} and {@link SslSettings#getContext()} is at play.
          * <p>
          * This option may be used as a convenient way to utilize
          * <a href="https://www.openssl.org/">OpenSSL</a> as an alternative to the TLS/SSL protocol implementation in a JDK.
@@ -203,13 +204,22 @@ public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
                 sslContext);
     }
 
+    /**
+     * @return The {@link EventLoopGroup} used by the {@link StreamFactory} created via {@link #create(SocketSettings, SslSettings)}.
+     * It may be provided by an application via {@link NettyTransportSettings#getEventLoopGroup()}.
+     */
+    @Override
+    public Executor getExecutor() {
+        return eventLoopGroup;
+    }
+
     @Override
     public void close() {
-         if (ownsEventLoopGroup) {
-             // ignore the returned Future.  This is in line with MongoClient behavior to not block waiting for connections to be returned
-             // to the pool
-             eventLoopGroup.shutdownGracefully();
-         }
+        if (ownsEventLoopGroup) {
+            // ignore the returned Future.  This is in line with MongoClient behavior to not block waiting for connections to be returned
+            // to the pool
+            eventLoopGroup.shutdownGracefully();
+        }
     }
 
     @Override

@@ -24,6 +24,7 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.createOperationContext
 import static com.mongodb.ClusterFixture.configureFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
@@ -75,8 +76,10 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
                 'data : {failCommands : ["dropDatabase"], ' +
                 'writeConcernError : {code : 100, errmsg : "failed"}}}'))
 
+
+        def binding = getBinding()
         when:
-        async ? executeAsync(operation) : operation.execute(getBinding())
+        async ? executeAsync(operation) : operation.execute(binding, createOperationContext(binding.getReadPreference()))
 
         then:
         def ex = thrown(MongoWriteConcernException)
@@ -87,8 +90,9 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
         async << [true, false]
     }
 
-    def databaseNameExists(String databaseName) {
-        new ListDatabasesOperation(new DocumentCodec()).execute(getBinding()).next()*.name.contains(databaseName)
+    static databaseNameExists(String databaseName) {
+        new ListDatabasesOperation(new DocumentCodec(), null).execute(binding,
+                createOperationContext(binding.getReadPreference())).next()*.name.contains(databaseName)
     }
 
 }

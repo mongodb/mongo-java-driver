@@ -93,7 +93,7 @@ public enum BsonBinarySubType {
      * Returns true if the given value is a UUID subtype.
      *
      * @param value the subtype value as a byte.
-     * @return true if value is a UUID subtype.
+     * @return true if value has a {@link #UUID_STANDARD} or {@link #UUID_LEGACY} subtype.
      * @since 3.4
      */
     public static boolean isUuid(final byte value) {

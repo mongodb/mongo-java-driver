@@ -33,13 +33,13 @@ class AbortTransactionOperationSpecification extends OperationFunctionalSpecific
         def expectedCommand = BsonDocument.parse('{abortTransaction: 1}')
 
         when:
-        def operation = new AbortTransactionOperation(ACKNOWLEDGED)
+        def operation = new AbortTransactionOperation(ACKNOWLEDGED, null)
 
         then:
         testOperationInTransaction(operation, [4, 0, 0], expectedCommand, async, cannedResult)
 
         when:
-        operation = new AbortTransactionOperation(MAJORITY)
+        operation = new AbortTransactionOperation(MAJORITY, null)
         expectedCommand.put('writeConcern', MAJORITY.asDocument())
 
         then:
@@ -56,14 +56,14 @@ class AbortTransactionOperationSpecification extends OperationFunctionalSpecific
 
         when:
         def writeConcern = MAJORITY.withWTimeout(10, TimeUnit.MILLISECONDS)
-        def operation = new AbortTransactionOperation(writeConcern)
+        def operation = new AbortTransactionOperation(writeConcern, null)
 
         then:
         testOperationRetries(operation, [4, 0, 0], expectedCommand, async, cannedResult, true)
 
         when:
         writeConcern = MAJORITY
-        operation = new AbortTransactionOperation(writeConcern)
+        operation = new AbortTransactionOperation(writeConcern, null)
         expectedCommand.put('writeConcern', writeConcern.asDocument())
 
         then:
@@ -71,7 +71,7 @@ class AbortTransactionOperationSpecification extends OperationFunctionalSpecific
 
         when:
         writeConcern = ACKNOWLEDGED
-        operation = new AbortTransactionOperation(writeConcern)
+        operation = new AbortTransactionOperation(writeConcern, null)
         expectedCommand.remove('writeConcern')
 
         then:

@@ -17,12 +17,15 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.Function;
+import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
+import com.mongodb.internal.MongoNamespaceHelper;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
-import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 
 /**
@@ -34,8 +37,8 @@ public class AbortTransactionOperation extends TransactionOperation {
     private static final String COMMAND_NAME = "abortTransaction";
     private BsonDocument recoveryToken;
 
-    public AbortTransactionOperation(final WriteConcern writeConcern) {
-        super(writeConcern);
+    public AbortTransactionOperation(final WriteConcern writeConcern, @Nullable final Integer maxAdaptiveRetriesSetting) {
+        super(writeConcern, maxAdaptiveRetriesSetting);
     }
 
     public AbortTransactionOperation recoveryToken(@Nullable final BsonDocument recoveryToken) {
@@ -49,18 +52,24 @@ public class AbortTransactionOperation extends TransactionOperation {
     }
 
     @Override
+    public MongoNamespace getNamespace() {
+        return MongoNamespaceHelper.ADMIN_DB_COMMAND_NAMESPACE;
+    }
+
+    @Override
     CommandCreator getCommandCreator() {
         return (operationContext, serverDescription, connectionDescription) -> {
-            operationContext.getTimeoutContext().resetToDefaultMaxTime();
             BsonDocument command = AbortTransactionOperation.super.getCommandCreator()
-                    .create(operationContext, serverDescription, connectionDescription);
+                    .create(operationContext.withOverride(TimeoutContext::withDefaultMaxTime),
+                            serverDescription,
+                            connectionDescription);
             putIfNotNull(command, "recoveryToken", recoveryToken);
             return command;
         };
     }
 
     @Override
-    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier(final TimeoutContext timeoutContext) {
+    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier(final OperationContext operationContext) {
         return cmd -> cmd;
     }
 }

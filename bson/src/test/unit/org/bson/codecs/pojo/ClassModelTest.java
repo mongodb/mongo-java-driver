@@ -20,6 +20,12 @@ import java.util.SortedSet;
 
 import org.bson.codecs.pojo.entities.CollectionNestedPojoModel;
 import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
+import org.bson.codecs.pojo.entities.ForwardingInterfaceModel;
+import org.bson.codecs.pojo.entities.ForwardingDualInterfaceModel;
+import org.bson.codecs.pojo.entities.ForwardingMixedModel;
+import org.bson.codecs.pojo.entities.ForwardingModel;
+import org.bson.codecs.pojo.entities.ForwardingArrayModel;
+import org.bson.codecs.pojo.entities.ForwardingNestedModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.InterfaceBasedModel;
 import org.bson.codecs.pojo.entities.ListGenericExtendedModel;
@@ -266,7 +272,60 @@ public final class ClassModelTest {
 
     }
 
-    <T> TypeData.Builder<T> createBuilder(final Class<T> clazz, final Class<?>... types) {
+    @Test
+    public void testForwardingClassChain() {
+        ClassModel<?> classModel = ClassModel.builder(ForwardingModel.class).build();
+
+        assertEquals(1, classModel.getPropertyModels().size());
+        assertEquals(createTypeData(String.class), classModel.getPropertyModel("value").getTypeData());
+    }
+
+    @Test
+    public void testForwardingInterfaceChain() {
+        ClassModel<?> classModel = ClassModel.builder(ForwardingInterfaceModel.class).build();
+
+        assertEquals(1, classModel.getPropertyModels().size());
+        assertEquals(createTypeData(Integer.class), classModel.getPropertyModel("value").getTypeData());
+    }
+
+    @Test
+    public void testForwardingNested() {
+        ClassModel<?> classModel = ClassModel.builder(ForwardingNestedModel.class).build();
+
+        assertEquals(1, classModel.getPropertyModels().size());
+        assertEquals(createTypeData(List.class, String.class), classModel.getPropertyModel("value").getTypeData());
+    }
+
+    @Test
+    public void testForwardingArrayTypeVariableErasedToObject() {
+        // The type argument `T[]` in `extends ForwardingArrayLevel2<T[]>` is a GenericArrayType;
+        // getTypeParameterMap does not handle GenericArrayType, so the `value` property erases to
+        // Object regardless of the concrete binding at the leaf subclass.
+        ClassModel<?> classModel = ClassModel.builder(ForwardingArrayModel.class).build();
+
+        assertEquals(1, classModel.getPropertyModels().size());
+        assertEquals(createTypeData(Object.class), classModel.getPropertyModel("value").getTypeData());
+    }
+
+    @Test
+    public void testForwardingMixedClassAndInterface() {
+        ClassModel<?> classModel = ClassModel.builder(ForwardingMixedModel.class).build();
+
+        assertEquals(2, classModel.getPropertyModels().size());
+        assertEquals(createTypeData(String.class), classModel.getPropertyModel("field1").getTypeData());
+        assertEquals(createTypeData(Integer.class), classModel.getPropertyModel("field2").getTypeData());
+    }
+
+    @Test
+    public void testForwardingDualInterface() {
+        ClassModel<?> classModel = ClassModel.builder(ForwardingDualInterfaceModel.class).build();
+
+        assertEquals(2, classModel.getPropertyModels().size());
+        assertEquals(createTypeData(String.class), classModel.getPropertyModel("field2").getTypeData());
+        assertEquals(createTypeData(Integer.class), classModel.getPropertyModel("field1").getTypeData());
+    }
+
+<T> TypeData.Builder<T> createBuilder(final Class<T> clazz, final Class<?>... types) {
         TypeData.Builder<T> builder = TypeData.builder(clazz);
         List<TypeData<?>> subTypes = new ArrayList<>();
         for (final Class<?> type : types) {

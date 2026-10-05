@@ -18,10 +18,12 @@ package com.mongodb.reactivestreams.client.syncadapter;
 
 import com.mongodb.ClientBulkWriteException;
 import com.mongodb.ClientSessionOptions;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.assertions.Assertions;
 import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListDatabasesIterable;
@@ -33,6 +35,11 @@ import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
 import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel;
 import com.mongodb.connection.ClusterDescription;
+import com.mongodb.event.ConnectionCheckedInEvent;
+import com.mongodb.event.ConnectionCheckedOutEvent;
+import com.mongodb.event.ConnectionPoolListener;
+import com.mongodb.lang.Nullable;
+import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.internal.BatchCursor;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -40,6 +47,10 @@ import org.bson.conversions.Bson;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.mongodb.ClusterFixture.sleep;
+import static java.lang.String.format;
 
 public class SyncMongoClient implements MongoClient {
 
@@ -126,9 +137,24 @@ public class SyncMongoClient implements MongoClient {
 
     private final com.mongodb.reactivestreams.client.MongoClient wrapped;
     private final SyncMongoCluster delegate;
+    private final ConnectionPoolCounter connectionPoolCounter;
 
-    public SyncMongoClient(final com.mongodb.reactivestreams.client.MongoClient wrapped) {
-        this.wrapped = wrapped;
+    public SyncMongoClient(final MongoClientSettings settings) {
+        this(settings, null);
+    }
+
+    public SyncMongoClient(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
+        this(MongoClientSettings.builder(settings), mongoDriverInformation);
+    }
+
+    public SyncMongoClient(final MongoClientSettings.Builder builder) {
+        this(builder, null);
+    }
+
+    public SyncMongoClient(final MongoClientSettings.Builder builder, @Nullable final MongoDriverInformation mongoDriverInformation) {
+        this.connectionPoolCounter = new ConnectionPoolCounter();
+        builder.applyToConnectionPoolSettings(b -> b.addConnectionPoolListener(connectionPoolCounter));
+        this.wrapped = MongoClients.create(builder.build(), mongoDriverInformation);
         this.delegate = new SyncMongoCluster(wrapped);
     }
 
@@ -276,6 +302,7 @@ public class SyncMongoClient implements MongoClient {
     @Override
     public void close() {
         wrapped.close();
+        connectionPoolCounter.assertConnectionsClosed();
     }
 
 
@@ -315,5 +342,38 @@ public class SyncMongoClient implements MongoClient {
     @Override
     public void appendMetadata(final MongoDriverInformation mongoDriverInformation) {
         wrapped.appendMetadata(mongoDriverInformation);
+    }
+
+    static class ConnectionPoolCounter implements ConnectionPoolListener {
+        private final AtomicInteger activeConnections = new AtomicInteger(0);
+
+        @Override
+        public void connectionCheckedOut(final ConnectionCheckedOutEvent event) {
+            activeConnections.incrementAndGet();
+        }
+
+        @Override
+        public void connectionCheckedIn(final ConnectionCheckedInEvent event) {
+            activeConnections.decrementAndGet();
+        }
+
+        protected void assertConnectionsClosed() {
+            int activeConnectionsCount = activeConnections.get();
+            boolean connectionsClosed = activeConnectionsCount == 0;
+            int counter = 0;
+            while (counter < 10 && !connectionsClosed) {
+                activeConnectionsCount = activeConnections.get();
+                connectionsClosed = activeConnectionsCount == 0;
+                if (!connectionsClosed) {
+                    sleep(200);
+                    counter++;
+                }
+            }
+
+            Assertions.assertTrue(activeConnectionsCount == 0,
+                    format("Expected all connections to be closed after closing the client. %n"
+                            + "The connection pool listener reports '%d' open connections.", activeConnectionsCount));
+
+        }
     }
 }

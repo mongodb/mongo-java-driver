@@ -25,11 +25,9 @@ import static org.bson.assertions.Assertions.notNull;
 
 public class SessionBinding implements ReadWriteBinding {
     private final ReadWriteBinding wrapped;
-    private final OperationContext operationContext;
 
     public SessionBinding(final ReadWriteBinding wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
-        this.operationContext = wrapped.getOperationContext().withSessionContext(new SimpleSessionContext());
     }
 
     @Override
@@ -54,23 +52,19 @@ public class SessionBinding implements ReadWriteBinding {
     }
 
     @Override
-    public ConnectionSource getReadConnectionSource() {
-        return new SessionBindingConnectionSource(wrapped.getReadConnectionSource());
+    public ConnectionSource getReadConnectionSource(final OperationContext operationContext) {
+        return new SessionBindingConnectionSource(wrapped.getReadConnectionSource(operationContext));
     }
 
     @Override
-    public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference) {
-        return new SessionBindingConnectionSource(wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference));
+    public ConnectionSource getReadConnectionSource(final int minWireVersion, final ReadPreference fallbackReadPreference, final OperationContext operationContext) {
+        return new SessionBindingConnectionSource(wrapped.getReadConnectionSource(minWireVersion, fallbackReadPreference, operationContext));
     }
 
-    @Override
-    public OperationContext getOperationContext() {
-        return operationContext;
-    }
 
     @Override
-    public ConnectionSource getWriteConnectionSource() {
-        return new SessionBindingConnectionSource(wrapped.getWriteConnectionSource());
+    public ConnectionSource getWriteConnectionSource(final OperationContext operationContext) {
+        return new SessionBindingConnectionSource(wrapped.getWriteConnectionSource(operationContext));
     }
 
     private class SessionBindingConnectionSource implements ConnectionSource {
@@ -86,18 +80,13 @@ public class SessionBinding implements ReadWriteBinding {
         }
 
         @Override
-        public OperationContext getOperationContext() {
-            return operationContext;
-        }
-
-        @Override
         public ReadPreference getReadPreference() {
             return wrapped.getReadPreference();
         }
 
         @Override
-        public Connection getConnection() {
-            return wrapped.getConnection();
+        public Connection getConnection(final OperationContext operationContext) {
+            return wrapped.getConnection(operationContext);
         }
 
         @Override

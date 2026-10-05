@@ -25,14 +25,14 @@ import java.nio.channels.ClosedByInterruptException;
 import java.util.Optional;
 
 /**
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ * This class is not part of the public API and may be removed or changed at any time.
  */
 public final class InterruptionUtil {
     /**
      * {@linkplain Thread#interrupt() Interrupts} the {@linkplain Thread#currentThread() current thread}
      * before creating {@linkplain MongoInterruptedException}.
-     * We do this because the interrupt status is cleared before throwing {@link InterruptedException},
-     * we are not propagating {@link InterruptedException}, which means we must reinstate the interrupt status.
+     * We do this because the interrupted status is cleared before throwing {@link InterruptedException},
+     * we are not propagating {@link InterruptedException}, which means we must reinstate the interrupted status.
      * This matches the behavior documented by {@link MongoInterruptedException}.
      */
     public static MongoInterruptedException interruptAndCreateMongoInterruptedException(

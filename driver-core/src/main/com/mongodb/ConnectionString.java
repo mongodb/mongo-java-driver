@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Alpha;
+import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Reason;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
@@ -53,13 +54,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.mongodb.MongoCredential.ALLOWED_HOSTS_KEY;
+import static com.mongodb.internal.connection.DomainNameUtils.normalizeSrvAllowedHostsSuffix;
 import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateCreateOidcCredential;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
-
 
 /**
  * <p>Represents a <a href="https://www.mongodb.com/docs/manual/reference/connection-string/">Connection String</a>.
@@ -264,14 +265,28 @@ import static java.util.Collections.unmodifiableList;
  * <p>SRV configuration:</p>
  * <ul>
  * <li>{@code srvServiceName=string}: The SRV service name. See {@link ClusterSettings#getSrvServiceName()} for details.</li>
- * <li>{@code srvMaxHosts=number}: The maximum number of hosts from the SRV record to connect to.</li>
+ * <li>{@code srvMaxHosts=n}: The maximum number of hosts from the SRV record to connect to.</li>
+ * <li>{@code srvAllowedHostsSuffix=string}: The hostname suffix used to validate hosts returned via SRV lookup, replacing the domain
+ * inferred from the SRV host name. Only valid with the mongodb+srv protocol. <b>WARNING:</b> Modifying the default SRV domain name
+ * validation can create vulnerabilities. This option relaxes a built-in DNS spoofing safeguard. Use the most specific suffix possible for
+ * your deployment rather than a broad company-wide domain. For example, instead of
+ * {@code "mongodb+srv://cluster.test.internal.example.com/?srvAllowedHostsSuffix=.example.com"} which would accept any host across the
+ * entire domain, scope it further like so:
+ * {@code "mongodb+srv://cluster.test.internal.example.com/?srvAllowedHostsSuffix=.internal.example.com"}.
+ * </li>
  * </ul>
  * <p>General configuration:</p>
  * <ul>
- * <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
- *  Defaults to true.</li>
- * <li>{@code retryReads=true|false}. If true the driver will retry supported read operations if they fail due to a network error.
- *  Defaults to true.</li>
+ * <li>{@code retryWrites=true|false}: Whether attempts to execute write commands should be retried if they fail due to a retryable error.
+ *  Defaults to true. See also {@code maxAdaptiveRetries}.</li>
+ * <li>{@code retryReads=true|false}: Whether attempts to execute read commands should be retried if they fail due to a retryable error.
+ *  Defaults to true. See also {@code maxAdaptiveRetries}.</li>
+ * <li>{@code maxAdaptiveRetries=n}: This is {@linkplain Beta Beta API}.
+ * The maximum number of retry attempts when encountering a retryable overload error.
+ * See {@link MongoClientSettings.Builder#maxAdaptiveRetries(Integer)} for more information.</li>
+ * <li>{@code enableOverloadRetargeting=true|false}: This is {@linkplain Beta Beta API}.
+ *   Whether to enable overload retargeting. Defaults to false.
+ *  See {@link MongoClientSettings.Builder#enableOverloadRetargeting(boolean)} for more information.</li>
  * <li>{@code uuidRepresentation=unspecified|standard|javaLegacy|csharpLegacy|pythonLegacy}.  See
  * {@link MongoClientSettings#getUuidRepresentation()} for documentation of semantics of this parameter.  Defaults to "javaLegacy", but
  * will change to "unspecified" in the next major release.</li>
@@ -302,12 +317,15 @@ public class ConnectionString {
 
     private Integer srvMaxHosts;
     private String srvServiceName;
+    private String srvAllowedHostsSuffix;
     private Boolean directConnection;
     private Boolean loadBalanced;
     private ReadPreference readPreference;
     private WriteConcern writeConcern;
     private Boolean retryWrites;
     private Boolean retryReads;
+    private Integer maxAdaptiveRetries;
+    private Boolean enableOverloadRetargeting;
     private ReadConcern readConcern;
 
     private Integer minConnectionPoolSize;
@@ -479,6 +497,14 @@ public class ConnectionString {
             throw new IllegalArgumentException("srvServiceName can only be specified with mongodb+srv protocol");
         }
 
+        if (!isSrvProtocol && srvAllowedHostsSuffix != null) {
+            throw new IllegalArgumentException("srvAllowedHostsSuffix can only be specified with mongodb+srv protocol");
+        }
+
+        if (srvAllowedHostsSuffix != null) {
+            srvAllowedHostsSuffix = normalizeSrvAllowedHostsSuffix(srvAllowedHostsSuffix);
+        }
+
         if (directConnection != null && directConnection) {
             if (isSrvProtocol) {
                 throw new IllegalArgumentException("Direct connections are not supported when using mongodb+srv protocol");
@@ -558,6 +584,8 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("servermonitoringmode");
         GENERAL_OPTIONS_KEYS.add("retrywrites");
         GENERAL_OPTIONS_KEYS.add("retryreads");
+        GENERAL_OPTIONS_KEYS.add("maxadaptiveretries");
+        GENERAL_OPTIONS_KEYS.add("enableoverloadretargeting");
 
         GENERAL_OPTIONS_KEYS.add("appname");
 
@@ -568,6 +596,7 @@ public class ConnectionString {
 
         GENERAL_OPTIONS_KEYS.add("srvmaxhosts");
         GENERAL_OPTIONS_KEYS.add("srvservicename");
+        GENERAL_OPTIONS_KEYS.add("srvallowedhostssuffix");
 
         COMPRESSOR_KEYS.add("compressors");
         COMPRESSOR_KEYS.add("zlibcompressionlevel");
@@ -706,6 +735,15 @@ public class ConnectionString {
                 case "retryreads":
                     retryReads = parseBoolean(value, "retryreads");
                     break;
+                case "maxadaptiveretries":
+                    maxAdaptiveRetries = parseInteger(value, "maxadaptiveretries");
+                    if (maxAdaptiveRetries < 0) {
+                        throw new IllegalArgumentException("maxAdaptiveRetries must be >= 0");
+                    }
+                    break;
+                case "enableoverloadretargeting":
+                    enableOverloadRetargeting = parseBoolean(value, "enableoverloadretargeting");
+                    break;
                 case "uuidrepresentation":
                     uuidRepresentation = createUuidRepresentation(value);
                     break;
@@ -723,6 +761,9 @@ public class ConnectionString {
                     break;
                 case "srvservicename":
                     srvServiceName = value;
+                    break;
+                case "srvallowedhostssuffix":
+                    srvAllowedHostsSuffix = value;
                     break;
                 default:
                     break;
@@ -1356,6 +1397,22 @@ public class ConnectionString {
     }
 
     /**
+     * Gets the SRV allowed hosts suffix.
+     *
+     * <p>If present, its value is used as the domain for SRV host name validation, replacing the domain inferred from
+     * the SRV host name. The value is normalized: a leading {@code "."} is prepended if absent, so the returned value
+     * always begins with {@code "."}.</p>
+     *
+     * @return the normalized SRV allowed hosts suffix, always beginning with {@code "."}. Defaults to null.
+     * @since 5.13
+     * @see ClusterSettings#getSrvAllowedHostsSuffix()
+     */
+    @Nullable
+    public String getSrvAllowedHostsSuffix() {
+        return srvAllowedHostsSuffix;
+    }
+
+    /**
      * Gets the list of hosts
      *
      * @return the host list
@@ -1455,13 +1512,15 @@ public class ConnectionString {
     }
 
     /**
-     * <p>Gets whether writes should be retried if they fail due to a network error</p>
-     *
+     * Gets whether attempts to execute write commands should be retried if they fail due to a retryable error.
+     * See {@link MongoClientSettings.Builder#retryWrites(boolean)} for more information.
+     * <p>
      * The name of this method differs from others in this class so as not to conflict with the now removed
      * getRetryWrites() method, which returned a primitive {@code boolean} value, and didn't allow callers to differentiate
      * between a false value and an unset value.
      *
-     * @return the retryWrites value, or null if unset
+     * @return the {@code retryWrites} value, or {@code null} if unset
+     * @see #getMaxAdaptiveRetries()
      * @since 3.9
      * @mongodb.server.release 3.6
      */
@@ -1471,15 +1530,46 @@ public class ConnectionString {
     }
 
     /**
-     * <p>Gets whether reads should be retried if they fail due to a network error</p>
+     * Gets whether attempts to execute read commands should be retried if they fail due to a retryable error.
+     * See {@link MongoClientSettings.Builder#retryReads(boolean)} for more information.
      *
-     * @return the retryWrites value
+     * @return the {@code retryReads} value, or {@code null} if unset
+     * @see #getMaxAdaptiveRetries()
      * @since 3.11
      * @mongodb.server.release 3.6
      */
     @Nullable
     public Boolean getRetryReads() {
         return retryReads;
+    }
+
+    /**
+     * Gets the maximum number of retry attempts when encountering a retryable overload error.
+     * See {@link MongoClientSettings.Builder#maxAdaptiveRetries(Integer)} for more information.
+     *
+     * @return The {@code maxAdaptiveRetries} value, or {@code null} if unset.
+     * @since 5.12
+     * @mongodb.server.release 9.0
+     */
+    @Beta(Reason.CLIENT)
+    @Nullable
+    public Integer getMaxAdaptiveRetries() {
+        return maxAdaptiveRetries;
+    }
+
+    /**
+     * Gets whether overload retargeting is enabled.
+     * See {@link MongoClientSettings.Builder#enableOverloadRetargeting(boolean)} for more information.
+     *
+     * @return the enableOverloadRetargeting value, or null if not set
+     * @see MongoClientSettings.Builder#enableOverloadRetargeting(boolean)
+     * @since 5.12
+     * @mongodb.server.release 9.0
+     */
+    @Beta(Reason.CLIENT)
+    @Nullable
+    public Boolean getEnableOverloadRetargeting() {
+        return enableOverloadRetargeting;
     }
 
     /**
@@ -1795,6 +1885,8 @@ public class ConnectionString {
                 && Objects.equals(writeConcern, that.writeConcern)
                 && Objects.equals(retryWrites, that.retryWrites)
                 && Objects.equals(retryReads, that.retryReads)
+                && Objects.equals(maxAdaptiveRetries, that.maxAdaptiveRetries)
+                && Objects.equals(enableOverloadRetargeting, that.enableOverloadRetargeting)
                 && Objects.equals(readConcern, that.readConcern)
                 && Objects.equals(minConnectionPoolSize, that.minConnectionPoolSize)
                 && Objects.equals(maxConnectionPoolSize, that.maxConnectionPoolSize)
@@ -1820,16 +1912,17 @@ public class ConnectionString {
                 && Objects.equals(compressorList, that.compressorList)
                 && Objects.equals(uuidRepresentation, that.uuidRepresentation)
                 && Objects.equals(srvServiceName, that.srvServiceName)
-                && Objects.equals(srvMaxHosts, that.srvMaxHosts);
+                && Objects.equals(srvMaxHosts, that.srvMaxHosts)
+                && Objects.equals(srvAllowedHostsSuffix, that.srvAllowedHostsSuffix);
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(credential, isSrvProtocol, hosts, database, collection, directConnection, readPreference,
-                writeConcern, retryWrites, retryReads, readConcern, minConnectionPoolSize, maxConnectionPoolSize, maxWaitTime,
+                writeConcern, retryWrites, retryReads, maxAdaptiveRetries, enableOverloadRetargeting, readConcern, minConnectionPoolSize, maxConnectionPoolSize, maxWaitTime,
                 maxConnectionIdleTime, maxConnectionLifeTime, maxConnecting, connectTimeout, timeout, socketTimeout, sslEnabled,
                 sslInvalidHostnameAllowed, requiredReplicaSetName, serverSelectionTimeout, localThreshold, heartbeatFrequency,
-                serverMonitoringMode, applicationName, compressorList, uuidRepresentation, srvServiceName, srvMaxHosts, proxyHost,
-                proxyPort, proxyUsername, proxyPassword);
+                serverMonitoringMode, applicationName, compressorList, uuidRepresentation, srvServiceName, srvMaxHosts,
+                srvAllowedHostsSuffix, proxyHost, proxyPort, proxyUsername, proxyPassword);
     }
 }
