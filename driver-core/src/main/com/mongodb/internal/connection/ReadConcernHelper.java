@@ -34,9 +34,7 @@ public final class ReadConcernHelper {
     public static void appendReadConcernToWriteCommand(final SessionContext sessionContext, final BsonDocument commandDocument) {
     if (!sessionContext.hasActiveTransaction() && !sessionContext.isSnapshot() && sessionContext.isCausallyConsistent()
             && sessionContext.getOperationTime() != null) {
-            BsonDocument readConcern = new BsonDocument();
-            readConcern.put("afterClusterTime", sessionContext.getOperationTime());
-            commandDocument.put("readConcern", readConcern);
+            commandDocument.put("readConcern", new BsonDocument("afterClusterTime", sessionContext.getOperationTime()));
         }
     }
 
