@@ -28,7 +28,7 @@ import org.mongodb.scala.model.Projections
  * @see [[https://www.mongodb.com/docs/atlas/atlas-search/counting/ Counting]]
  * @since 4.7
  */
-@Beta(Array(Reason.CLIENT, Reason.SERVER))
+@Beta(Array(Reason.CLIENT))
 object SearchCount {
 
   /**
