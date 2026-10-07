@@ -32,7 +32,7 @@ import com.mongodb.lang.Nullable;
  */
 public final class MongoClients {
 
-    private static final InternalMongoClientSettings DEFAULT_INTERNAL_SETTINGS = InternalMongoClientSettings.getDefaults();
+    private static final InternalMongoClientSettings DEFAULT_INTERNAL_SETTINGS = InternalMongoClientSettings.DEFAULT;
 
     /**
      * Creates a new client with the default connection string "mongodb://localhost".

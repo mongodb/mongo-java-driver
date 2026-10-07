@@ -434,7 +434,7 @@ public final class ClusterFixture {
     private static Cluster createCluster(final MongoCredential credential, final StreamFactory streamFactory) {
         return new DefaultClusterFactory().createCluster(ClusterSettings.builder().hosts(asList(getPrimary())).build(),
                 ServerSettings.builder().build(),
-                ConnectionPoolSettings.builder().maxSize(1).build(), InternalMongoClientSettings.getDefaults(),
+                ConnectionPoolSettings.builder().maxSize(1).build(), InternalMongoClientSettings.DEFAULT,
                 TIMEOUT_SETTINGS.connectionOnly(), streamFactory, TIMEOUT_SETTINGS.connectionOnly(), streamFactory, AsyncClientExecutor.NO_OP, credential,
                 LoggerSettings.builder().build(), null, null, null, Collections.emptyList(), getServerApi(), null);
     }
@@ -444,7 +444,7 @@ public final class ClusterFixture {
 
         return new DefaultClusterFactory().createCluster(mongoClientSettings.getClusterSettings(),
                 mongoClientSettings.getServerSettings(), mongoClientSettings.getConnectionPoolSettings(),
-                InternalMongoClientSettings.getDefaults(), TimeoutSettings.create(mongoClientSettings).connectionOnly(),
+                InternalMongoClientSettings.DEFAULT, TimeoutSettings.create(mongoClientSettings).connectionOnly(),
                 streamFactory, TimeoutSettings.createHeartbeatSettings(mongoClientSettings).connectionOnly(),
                 new SocketStreamFactory(new DefaultInetAddressResolver(), SocketSettings.builder().readTimeout(5, SECONDS).build(),
                         getSslSettings(connectionString)), AsyncClientExecutor.NO_OP,

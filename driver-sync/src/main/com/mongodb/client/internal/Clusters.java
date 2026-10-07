@@ -50,7 +50,7 @@ public final class Clusters {
                                         final StreamFactoryFactory streamFactoryFactory,
                                         final AsyncClientExecutor clientExecutor) {
         return createCluster(settings, mongoDriverInformation, streamFactoryFactory, clientExecutor,
-                InternalMongoClientSettings.getDefaults());
+                InternalMongoClientSettings.DEFAULT);
     }
 
     /**

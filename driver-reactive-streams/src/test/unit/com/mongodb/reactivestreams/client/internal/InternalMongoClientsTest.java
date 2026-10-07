@@ -33,7 +33,7 @@ class InternalMongoClientsTest {
     void testCreateMethodsValidateNullSettings() {
         // Verify that null MongoClientSettings is rejected
         assertThrows(IllegalArgumentException.class, () ->
-                InternalMongoClients.create((MongoClientSettings) null, InternalMongoClientSettings.getDefaults()));
+                InternalMongoClients.create((MongoClientSettings) null, InternalMongoClientSettings.DEFAULT));
 
         // Verify that null InternalMongoClientSettings is rejected
         MongoClientSettings settings = MongoClientSettings.builder().build();

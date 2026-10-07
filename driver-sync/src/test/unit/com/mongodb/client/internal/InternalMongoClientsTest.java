@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -72,17 +71,10 @@ class InternalMongoClientsTest {
     }
 
     @Test
-    void testGetDefaultsReturnsSameInstance() {
-        InternalMongoClientSettings defaults1 = InternalMongoClientSettings.getDefaults();
-        InternalMongoClientSettings defaults2 = InternalMongoClientSettings.getDefaults();
-        assertSame(defaults1, defaults2, "getDefaults() should return the same instance");
-    }
-
-    @Test
     void testCreateMethodsValidateNullSettings() {
         // Verify that null MongoClientSettings is rejected
         assertThrows(IllegalArgumentException.class, () ->
-                InternalMongoClients.create((MongoClientSettings) null, InternalMongoClientSettings.getDefaults()));
+                InternalMongoClients.create((MongoClientSettings) null, InternalMongoClientSettings.DEFAULT));
 
         // Verify that null InternalMongoClientSettings is rejected
         MongoClientSettings settings = MongoClientSettings.builder().build();

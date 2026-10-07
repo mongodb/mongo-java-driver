@@ -29,7 +29,10 @@ import java.util.Objects;
 @Immutable
 public final class InternalMongoClientSettings {
 
-    private static final InternalMongoClientSettings DEFAULTS = builder().build();
+    /**
+     * The default internal settings.
+     */
+    public static final InternalMongoClientSettings DEFAULT = builder().build();
 
     private final InternalConnectionPoolSettings internalConnectionPoolSettings;
     private final boolean recordEverything;
@@ -39,15 +42,6 @@ public final class InternalMongoClientSettings {
                 ? builder.internalConnectionPoolSettings
                 : InternalConnectionPoolSettings.builder().build();
         this.recordEverything = builder.recordEverything;
-    }
-
-    /**
-     * Gets the default internal settings for production use.
-     *
-     * @return the default settings
-     */
-    public static InternalMongoClientSettings getDefaults() {
-        return DEFAULTS;
     }
 
     /**
