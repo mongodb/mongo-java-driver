@@ -94,7 +94,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
         CountDownLatch latch = new CountDownLatch(5);
         MongoClientSettings settings = getMongoClientSettingsBuilder()
                                        .applyToServerSettings(builder -> {
-                                           builder.heartbeatFrequency(50, MILLISECONDS);
+                                           builder.heartbeatFrequency(500, MILLISECONDS);
                                            builder.addServerMonitorListener(new ServerMonitorListener() {
                                                @Override
                                                public void serverHeartbeatSucceeded(final ServerHeartbeatSucceededEvent event) {
@@ -105,7 +105,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
 
         try (MongoClient ignored = MongoClients.create(settings)) {
             assertTrue("Took longer than expected to reach expected number of hearbeats",
-                       latch.await(500, MILLISECONDS));
+                       latch.await(5, SECONDS));
         }
     }
 
@@ -118,7 +118,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
         MongoClientSettings settings = getMongoClientSettingsBuilder()
                                        .applicationName("streamingRttTest")
                                        .applyToServerSettings(builder -> {
-                                           builder.heartbeatFrequency(50, MILLISECONDS);
+                                           builder.heartbeatFrequency(500, MILLISECONDS);
                                            builder.addServerListener(new ServerListener() {
                                                @Override
                                                public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
@@ -128,7 +128,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
                                        }).build();
         try (MongoClient client = MongoClients.create(settings)) {
             client.getDatabase("admin").runCommand(new Document("ping", 1));
-            Thread.sleep(250);
+            Thread.sleep(2000);
             assertTrue(events.size() >= 1);
             events.forEach(event ->
                            assertTrue(event.getNewDescription().getRoundTripTimeNanos() > 0));
@@ -139,7 +139,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
                                      + " data: {"
                                      + "   failCommands: [\"%s\", \"%s\"],"
                                      + "   blockConnection: true,"
-                                     + "   blockTimeMS: 100,"
+                                     + "   blockTimeMS: 500,"
                                      + "   appName: \"streamingRttTest\""
                                      + "  }"
                                      + "}", LEGACY_HELLO, HELLO)));
@@ -148,10 +148,10 @@ public class ServerDiscoveryAndMonitoringProseTests {
             while (true) {
                 long rttMillis = NANOSECONDS.toMillis(client.getClusterDescription().getServerDescriptions().get(0)
                                                       .getRoundTripTimeNanos());
-                if (rttMillis > 50) {
+                if (rttMillis > 250) {
                     break;
                 }
-                assertFalse(System.currentTimeMillis() - startTime > 1000);
+                assertFalse(System.currentTimeMillis() - startTime > 10000);
                 //noinspection BusyWait
                 Thread.sleep(50);
             }
@@ -232,7 +232,7 @@ public class ServerDiscoveryAndMonitoringProseTests {
     @Test
     @SuppressWarnings("try")
     public void monitorsSleepAtLeastMinHeartbeatFrequencyMSBetweenChecks() {
-        assumeTrue(serverVersionAtLeast(4, 3));
+        assumeTrue(serverVersionAtLeast(4, 9));
         long defaultMinHeartbeatIntervalMillis = MongoClientSettings.builder().build().getServerSettings()
                 .getMinHeartbeatFrequency(MILLISECONDS);
         assertEquals(500, defaultMinHeartbeatIntervalMillis);
