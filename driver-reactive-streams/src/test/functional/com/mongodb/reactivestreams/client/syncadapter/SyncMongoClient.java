@@ -38,8 +38,9 @@ import com.mongodb.connection.ClusterDescription;
 import com.mongodb.event.ConnectionCheckedInEvent;
 import com.mongodb.event.ConnectionCheckedOutEvent;
 import com.mongodb.event.ConnectionPoolListener;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.lang.Nullable;
-import com.mongodb.reactivestreams.client.MongoClients;
+import com.mongodb.reactivestreams.client.internal.InternalMongoClients;
 import com.mongodb.reactivestreams.client.internal.BatchCursor;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -152,20 +153,19 @@ public class SyncMongoClient implements MongoClient {
     }
 
     public SyncMongoClient(final MongoClientSettings.Builder builder, @Nullable final MongoDriverInformation mongoDriverInformation) {
-        this.connectionPoolCounter = new ConnectionPoolCounter();
-        builder.applyToConnectionPoolSettings(b -> b.addConnectionPoolListener(connectionPoolCounter));
-        this.wrapped = MongoClients.create(builder.build(), mongoDriverInformation);
-        this.delegate = new SyncMongoCluster(wrapped);
+        this(builder, mongoDriverInformation, InternalMongoClientSettings.DEFAULT);
     }
 
-    /**
-     * Wraps an existing reactive MongoClient as a sync client adapter.
-     *
-     * @param reactiveMongoClient the reactive MongoClient to wrap
-     */
-    public SyncMongoClient(final com.mongodb.reactivestreams.client.MongoClient reactiveMongoClient) {
+    public SyncMongoClient(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation,
+            final InternalMongoClientSettings internalSettings) {
+        this(MongoClientSettings.builder(settings), mongoDriverInformation, internalSettings);
+    }
+
+    public SyncMongoClient(final MongoClientSettings.Builder builder, @Nullable final MongoDriverInformation mongoDriverInformation,
+            final InternalMongoClientSettings internalSettings) {
         this.connectionPoolCounter = new ConnectionPoolCounter();
-        this.wrapped = reactiveMongoClient;
+        builder.applyToConnectionPoolSettings(b -> b.addConnectionPoolListener(connectionPoolCounter));
+        this.wrapped = InternalMongoClients.create(builder.build(), mongoDriverInformation, internalSettings);
         this.delegate = new SyncMongoCluster(wrapped);
     }
 
