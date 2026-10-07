@@ -1,0 +1,13 @@
+$dokka.format:html-v1
+$dokka.linkExtension:html
+$dokka.location:org.bson.codecs.kotlin////PointingToDeclaration/bson-kotlin/org.bson.codecs.kotlin/index.html
+$dokka.location:org.bson.codecs.kotlin/ArrayCodecProvider///PointingToDeclaration/bson-kotlin/org.bson.codecs.kotlin/-array-codec-provider/index.html
+$dokka.location:org.bson.codecs.kotlin/ArrayCodecProvider/ArrayCodecProvider/#/PointingToDeclaration/bson-kotlin/org.bson.codecs.kotlin/-array-codec-provider/-array-codec-provider.html
+$dokka.location:org.bson.codecs.kotlin/ArrayCodecProvider/get/#java.lang.Class[TypeParam(bounds=[kotlin.Any])]#kotlin.collections.List[java.lang.reflect.Type]#org.bson.codecs.configuration.CodecRegistry/PointingToDeclaration/bson-kotlin/org.bson.codecs.kotlin/-array-codec-provider/get.html
+$dokka.location:org.bson.codecs.kotlin/ArrayCodecProvider/get/#java.lang.Class[TypeParam(bounds=[kotlin.Any])]#org.bson.codecs.configuration.CodecRegistry/PointingToDeclaration/bson-kotlin/org.bson.codecs.kotlin/-array-codec-provider/get.html
+$dokka.location:org.bson.codecs.kotlin/DataClassCodecProvider///PointingToDeclaration/bson-kotlin/org.bson.codecs.kotlin/-data-class-codec-provider/index.html
+$dokka.location:org.bson.codecs.kotlin/DataClassCodecProvider/DataClassCodecProvider/#/PointingToDeclaration/bson-kotlin/org.bson.codecs.kotlin/-data-class-codec-provider/-data-class-codec-provider.html
+$dokka.location:org.bson.codecs.kotlin/DataClassCodecProvider/get/#java.lang.Class[TypeParam(bounds=[kotlin.Any])]#kotlin.collections.List[java.lang.reflect.Type]#org.bson.codecs.configuration.CodecRegistry/PointingToDeclaration/bson-kotlin/org.bson.codecs.kotlin/-data-class-codec-provider/get.html
+$dokka.location:org.bson.codecs.kotlin/DataClassCodecProvider/get/#java.lang.Class[TypeParam(bounds=[kotlin.Any])]#org.bson.codecs.configuration.CodecRegistry/PointingToDeclaration/bson-kotlin/org.bson.codecs.kotlin/-data-class-codec-provider/get.html
+org.bson.codecs.kotlin
+

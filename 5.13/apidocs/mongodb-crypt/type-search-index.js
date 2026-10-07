@@ -1,0 +1,1 @@
+typeSearchIndex = [{"l":"All Classes and Interfaces","u":"allclasses-index.html"},{"p":"com.mongodb.crypt.capi","l":"MongoCryptException"}];updateSearchResults();
