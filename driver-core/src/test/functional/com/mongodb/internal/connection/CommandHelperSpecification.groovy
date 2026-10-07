@@ -51,7 +51,6 @@ class CommandHelperSpecification extends Specification {
     }
 
     def cleanup() {
-        InternalStreamConnection.setRecordEverything(false)
         connection?.close()
     }
 
