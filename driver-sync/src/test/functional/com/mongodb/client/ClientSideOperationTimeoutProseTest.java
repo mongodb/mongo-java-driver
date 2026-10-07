@@ -39,7 +39,7 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     @Override
     protected MongoClient createMongoClientWithInternalSettings(final MongoClientSettings mongoClientSettings,
                                                                 final InternalMongoClientSettings internalSettings) {
-        return InternalMongoClients.create(mongoClientSettings, internalSettings);
+        return InternalMongoClients.create(mongoClientSettings, null, internalSettings);
     }
 
     @Override

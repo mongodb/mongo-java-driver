@@ -54,6 +54,16 @@ public final class InternalMongoClientSettings {
     }
 
     /**
+     * Creates a new builder initialized from the given settings.
+     *
+     * @param settings the settings to copy
+     * @return the builder
+     */
+    public static Builder builder(final InternalMongoClientSettings settings) {
+        return new Builder(settings);
+    }
+
+    /**
      * Gets the internal connection pool settings.
      *
      * @return the internal connection pool settings
@@ -111,6 +121,11 @@ public final class InternalMongoClientSettings {
         private boolean recordEverything = false;
 
         private Builder() {
+        }
+
+        private Builder(final InternalMongoClientSettings settings) {
+            this.internalConnectionPoolSettings = settings.internalConnectionPoolSettings;
+            this.recordEverything = settings.recordEverything;
         }
 
         /**

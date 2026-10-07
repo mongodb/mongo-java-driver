@@ -141,7 +141,7 @@ public class OidcAuthenticationProseTests {
     }
 
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return InternalMongoClients.create(settings,
+        return InternalMongoClients.create(settings, null,
                 InternalMongoClientSettings.builder().recordEverything(true).build());
     }
 

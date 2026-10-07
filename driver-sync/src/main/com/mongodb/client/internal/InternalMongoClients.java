@@ -16,7 +16,6 @@
 
 package com.mongodb.client.internal;
 
-import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.client.MongoClient;
@@ -41,64 +40,15 @@ public final class InternalMongoClients {
     }
 
     /**
-     * Creates a new client with the default connection string "mongodb://localhost" and the given internal settings.
+     * Creates a new client with the given client settings, driver information and the default internal settings.
      *
-     * @param internalSettings the internal settings
-     * @return the client
-     */
-    public static MongoClient create(final InternalMongoClientSettings internalSettings) {
-        return create(new ConnectionString("mongodb://localhost"), internalSettings);
-    }
-
-    /**
-     * Creates a new client with the given connection string and internal settings.
-     *
-     * @param connectionString the connection string
-     * @param internalSettings the internal settings
-     * @return the client
-     */
-    public static MongoClient create(final String connectionString,
-                                     final InternalMongoClientSettings internalSettings) {
-        return create(new ConnectionString(connectionString), internalSettings);
-    }
-
-    /**
-     * Creates a new client with the given connection string and internal settings.
-     *
-     * @param connectionString the connection string
-     * @param internalSettings the internal settings
-     * @return the client
-     */
-    public static MongoClient create(final ConnectionString connectionString,
-                                     final InternalMongoClientSettings internalSettings) {
-        return create(connectionString, null, internalSettings);
-    }
-
-    /**
-     * Creates a new client with the given connection string, driver information and internal settings.
-     *
-     * @param connectionString       the connection string
+     * @param settings               the public settings
      * @param mongoDriverInformation any driver information to associate with the MongoClient
-     * @param internalSettings       the internal settings
-     * @return the client
-     */
-    public static MongoClient create(final ConnectionString connectionString,
-                                     @Nullable final MongoDriverInformation mongoDriverInformation,
-                                     final InternalMongoClientSettings internalSettings) {
-        return create(MongoClientSettings.builder().applyConnectionString(connectionString).build(),
-                mongoDriverInformation, internalSettings);
-    }
-
-    /**
-     * Creates a new client with the given client settings and internal settings.
-     *
-     * @param settings         the public settings
-     * @param internalSettings the internal settings
      * @return the client
      */
     public static MongoClient create(final MongoClientSettings settings,
-                                     final InternalMongoClientSettings internalSettings) {
-        return create(settings, null, internalSettings);
+                                     @Nullable final MongoDriverInformation mongoDriverInformation) {
+        return create(settings, mongoDriverInformation, InternalMongoClientSettings.DEFAULT);
     }
 
     /**

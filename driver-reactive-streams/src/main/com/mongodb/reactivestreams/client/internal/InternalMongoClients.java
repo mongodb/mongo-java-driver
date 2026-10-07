@@ -16,7 +16,6 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
-import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
@@ -24,6 +23,7 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
+import com.mongodb.internal.connection.InternalConnectionPoolSettings;
 import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.internal.connection.StreamFactory;
 import com.mongodb.internal.connection.StreamFactoryFactory;
@@ -48,64 +48,15 @@ public final class InternalMongoClients {
     }
 
     /**
-     * Creates a new client with the default connection string "mongodb://localhost" and the given internal settings.
+     * Creates a new client with the given client settings, driver information and the default internal settings.
      *
-     * @param internalSettings the internal settings
-     * @return the client
-     */
-    public static MongoClient create(final InternalMongoClientSettings internalSettings) {
-        return create(new ConnectionString("mongodb://localhost"), internalSettings);
-    }
-
-    /**
-     * Creates a new client with the given connection string and internal settings.
-     *
-     * @param connectionString the connection string
-     * @param internalSettings the internal settings
-     * @return the client
-     */
-    public static MongoClient create(final String connectionString,
-                                     final InternalMongoClientSettings internalSettings) {
-        return create(new ConnectionString(connectionString), internalSettings);
-    }
-
-    /**
-     * Creates a new client with the given connection string and internal settings.
-     *
-     * @param connectionString the connection string
-     * @param internalSettings the internal settings
-     * @return the client
-     */
-    public static MongoClient create(final ConnectionString connectionString,
-                                     final InternalMongoClientSettings internalSettings) {
-        return create(connectionString, null, internalSettings);
-    }
-
-    /**
-     * Creates a new client with the given connection string, driver information and internal settings.
-     *
-     * @param connectionString       the connection string
+     * @param settings               the public settings
      * @param mongoDriverInformation any driver information to associate with the MongoClient
-     * @param internalSettings       the internal settings
-     * @return the client
-     */
-    public static MongoClient create(final ConnectionString connectionString,
-                                     @Nullable final MongoDriverInformation mongoDriverInformation,
-                                     final InternalMongoClientSettings internalSettings) {
-        return create(MongoClientSettings.builder().applyConnectionString(connectionString).build(),
-                mongoDriverInformation, internalSettings);
-    }
-
-    /**
-     * Creates a new client with the given client settings and internal settings.
-     *
-     * @param settings         the public settings
-     * @param internalSettings the internal settings
      * @return the client
      */
     public static MongoClient create(final MongoClientSettings settings,
-                                     final InternalMongoClientSettings internalSettings) {
-        return create(settings, null, internalSettings);
+                                     @Nullable final MongoDriverInformation mongoDriverInformation) {
+        return create(settings, mongoDriverInformation, InternalMongoClientSettings.DEFAULT);
     }
 
     /**
@@ -131,8 +82,12 @@ public final class InternalMongoClients {
         StreamFactory heartbeatStreamFactory = getStreamFactory(streamFactoryFactory, settings, true);
         MongoDriverInformation wrappedMongoDriverInformation = wrapMongoDriverInformation(mongoDriverInformation);
         AsyncClientExecutor clientExecutor = AsyncClientExecutor.backedBy(streamFactoryFactory.getExecutor());
+        // The reactive driver always pre-starts the pool's asynchronous work manager.
+        InternalMongoClientSettings reactiveInternalSettings = InternalMongoClientSettings.builder(internalSettings)
+                .internalConnectionPoolSettings(InternalConnectionPoolSettings.builder().prestartAsyncWorkManager(true).build())
+                .build();
         Cluster cluster = createCluster(settings, wrappedMongoDriverInformation, streamFactory, heartbeatStreamFactory, clientExecutor,
-                internalSettings);
+                reactiveInternalSettings);
         return new MongoClientImpl(cluster, wrappedMongoDriverInformation, settings, streamFactoryFactory, clientExecutor);
     }
 

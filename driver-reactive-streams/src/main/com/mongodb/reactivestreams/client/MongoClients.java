@@ -19,7 +19,6 @@ package com.mongodb.reactivestreams.client;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
-import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.internal.InternalMongoClients;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -31,15 +30,13 @@ import org.bson.codecs.configuration.CodecRegistry;
  */
 public final class MongoClients {
 
-    private static final InternalMongoClientSettings DEFAULT_INTERNAL_SETTINGS = InternalMongoClientSettings.DEFAULT;
-
     /**
      * Creates a new client with the default connection string "mongodb://localhost".
      *
      * @return the client
      */
     public static MongoClient create() {
-        return InternalMongoClients.create(DEFAULT_INTERNAL_SETTINGS);
+        return create(new ConnectionString("mongodb://localhost"));
     }
 
     /**
@@ -49,7 +46,7 @@ public final class MongoClients {
      * @return the client
      */
     public static MongoClient create(final String connectionString) {
-        return InternalMongoClients.create(connectionString, DEFAULT_INTERNAL_SETTINGS);
+        return create(new ConnectionString(connectionString));
     }
 
     /**
@@ -59,7 +56,7 @@ public final class MongoClients {
      * @return the client
      */
     public static MongoClient create(final ConnectionString connectionString) {
-        return InternalMongoClients.create(connectionString, DEFAULT_INTERNAL_SETTINGS);
+        return create(connectionString, null);
     }
 
     /**
@@ -74,7 +71,7 @@ public final class MongoClients {
      */
     public static MongoClient create(final ConnectionString connectionString,
             @Nullable final MongoDriverInformation mongoDriverInformation) {
-        return InternalMongoClients.create(connectionString, mongoDriverInformation, DEFAULT_INTERNAL_SETTINGS);
+        return create(MongoClientSettings.builder().applyConnectionString(connectionString).build(), mongoDriverInformation);
     }
 
     /**
@@ -85,7 +82,7 @@ public final class MongoClients {
      * @since 1.8
      */
     public static MongoClient create(final MongoClientSettings settings) {
-        return InternalMongoClients.create(settings, DEFAULT_INTERNAL_SETTINGS);
+        return create(settings, null);
     }
 
     /**
@@ -99,7 +96,7 @@ public final class MongoClients {
      * @since 1.8
      */
     public static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
-        return InternalMongoClients.create(settings, mongoDriverInformation, DEFAULT_INTERNAL_SETTINGS);
+        return InternalMongoClients.create(settings, mongoDriverInformation);
     }
 
     /**
