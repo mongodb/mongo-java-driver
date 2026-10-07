@@ -17,10 +17,13 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.ReadConcern;
+import com.mongodb.internal.session.BaseClientSessionImpl.OverloadRetryPolicyState;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
+
+import static com.mongodb.assertions.Assertions.fail;
 
 class TestSessionContext implements SessionContext {
 
@@ -128,5 +131,10 @@ class TestSessionContext implements SessionContext {
     @Override
     public boolean isSessionMarkedDirty() {
         return false;
+    }
+
+    @Override
+    public OverloadRetryPolicyState getOverloadRetryPolicyState() {
+        throw fail();
     }
 }

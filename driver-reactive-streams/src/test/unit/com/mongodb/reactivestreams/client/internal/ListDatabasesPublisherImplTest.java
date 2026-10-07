@@ -42,7 +42,8 @@ public class ListDatabasesPublisherImplTest extends TestHelper {
         ListDatabasesPublisher<Document> publisher = new ListDatabasesPublisherImpl<>(null, createMongoOperationPublisher(executor));
 
         ListDatabasesOperation<Document> expectedOperation = new ListDatabasesOperation<>(
-                getDefaultCodecRegistry().get(Document.class))
+                getDefaultCodecRegistry().get(Document.class),
+                null)
                 .retryReads(true);
 
         // default input should be as expected
@@ -59,7 +60,8 @@ public class ListDatabasesPublisherImplTest extends TestHelper {
                 .batchSize(100);
 
         expectedOperation = new ListDatabasesOperation<>(
-                getDefaultCodecRegistry().get(Document.class))
+                getDefaultCodecRegistry().get(Document.class),
+                null)
                 .retryReads(true)
                 .authorizedDatabasesOnly(true)
                 .filter(new BsonDocument("filter", new BsonInt32(1)));

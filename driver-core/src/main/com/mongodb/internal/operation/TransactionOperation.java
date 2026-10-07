@@ -24,6 +24,7 @@ import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.codecs.BsonDocumentCodec;
@@ -45,9 +46,12 @@ import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErr
  */
 public abstract class TransactionOperation implements WriteOperation<Void> {
     private final WriteConcern writeConcern;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
 
-    TransactionOperation(final WriteConcern writeConcern) {
+    TransactionOperation(final WriteConcern writeConcern, @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.writeConcern = notNull("writeConcern", writeConcern);
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     public WriteConcern getWriteConcern() {
@@ -60,7 +64,7 @@ public abstract class TransactionOperation implements WriteOperation<Void> {
         TimeoutContext timeoutContext = operationContext.getTimeoutContext();
         return executeRetryableWrite(binding, operationContext,  "admin", null, NoOpFieldNameValidator.INSTANCE,
                                      new BsonDocumentCodec(), getCommandCreator(),
-                writeConcernErrorTransformer(timeoutContext), getRetryCommandModifier(timeoutContext));
+                writeConcernErrorTransformer(timeoutContext), getRetryCommandModifier(operationContext), true, maxAdaptiveRetriesSetting);
     }
 
     @Override
@@ -69,7 +73,8 @@ public abstract class TransactionOperation implements WriteOperation<Void> {
         TimeoutContext timeoutContext = operationContext.getTimeoutContext();
         executeRetryableWriteAsync(binding, operationContext, "admin", null, NoOpFieldNameValidator.INSTANCE,
                                    new BsonDocumentCodec(), getCommandCreator(),
-                writeConcernErrorTransformerAsync(timeoutContext), getRetryCommandModifier(timeoutContext),
+                writeConcernErrorTransformerAsync(timeoutContext), getRetryCommandModifier(operationContext),
+                                   true, maxAdaptiveRetriesSetting,
                                    errorHandlingCallback(callback, LOGGER));
     }
 
@@ -83,5 +88,5 @@ public abstract class TransactionOperation implements WriteOperation<Void> {
         };
     }
 
-    protected abstract Function<BsonDocument, BsonDocument> getRetryCommandModifier(TimeoutContext timeoutContext);
+    protected abstract Function<BsonDocument, BsonDocument> getRetryCommandModifier(OperationContext operationContext);
 }

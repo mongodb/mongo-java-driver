@@ -154,8 +154,8 @@ functions:
           ${PREPARE_SHELL}
           REQUIRE_API_VERSION=${REQUIRE_API_VERSION} LOAD_BALANCER=${LOAD_BALANCER} MONGODB_VERSION=${VERSION} TOPOLOGY=${TOPOLOGY} \
           AUTH=${AUTH} SSL=${SSL} STORAGE_ENGINE=${STORAGE_ENGINE} ORCHESTRATION_FILE=${ORCHESTRATION_FILE} \
-          bash ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
-    # run-orchestration generates expansion file with the MONGODB_URI for the cluster
+          bash ${DRIVERS_TOOLS}/.evergreen/run-mongodb.sh start
+    # run-mongodb.sh generates expansion file with the MONGODB_URI for the cluster
     - command: expansions.update
       params:
         file: mo-expansion.yml
@@ -165,7 +165,7 @@ functions:
         shell: "bash"
         script: |
           ${PREPARE_SHELL}
-          bash ${DRIVERS_TOOLS}/.evergreen/stop-orchestration.sh || true
+          bash ${DRIVERS_TOOLS}/.evergreen/run-mongodb.sh stop || true
 
   "start-mongohoused":
     - command: shell.exec
@@ -1747,6 +1747,10 @@ axes:
         display_name: "8.0"
         variables:
           VERSION: "8.0"
+      - id: "9.0"
+        display_name: "9.0"
+        variables:
+          VERSION: "9.0"
       # 8.2 is used solely for Windows testing. MongoDB 8.0 binaries are affected by SERVER-116018 on Windows,
       # and the fix is only available starting from 8.2.
       - id: "8.2"

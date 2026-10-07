@@ -106,7 +106,7 @@ public class TestHelper {
     static MongoOperationPublisher<Document> createMongoOperationPublisher(final OperationExecutor executor) {
         return new MongoOperationPublisher<>(NAMESPACE, Document.class,
                                              getDefaultCodecRegistry(), ReadPreference.primary(), ReadConcern.DEFAULT,
-                                             WriteConcern.ACKNOWLEDGED, true, true,
+                                             WriteConcern.ACKNOWLEDGED, true, true, null,
                                              UuidRepresentation.STANDARD, null, TIMEOUT_SETTINGS, executor);
     }
 

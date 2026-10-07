@@ -50,13 +50,16 @@ public class ListDatabasesOperation<T> implements ReadOperationCursor<T> {
     private static final String DATABASES = "databases";
     private final Decoder<T> decoder;
     private boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private BsonDocument filter;
     private Boolean nameOnly;
     private Boolean authorizedDatabasesOnly;
     private BsonValue comment;
 
-    public ListDatabasesOperation(final Decoder<T> decoder) {
+    public ListDatabasesOperation(final Decoder<T> decoder, @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.decoder = notNull("decoder", decoder);
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     public ListDatabasesOperation<T> filter(@Nullable final BsonDocument filter) {
@@ -119,14 +122,14 @@ public class ListDatabasesOperation<T> implements ReadOperationCursor<T> {
     public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
         return executeRetryableRead(binding, operationContext, "admin", getCommandCreator(),
                 CommandResultDocumentCodec.create(decoder, DATABASES),
-                singleBatchCursorTransformer(DATABASES), retryReads);
+                singleBatchCursorTransformer(DATABASES), retryReads, maxAdaptiveRetriesSetting);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext,
                              final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         executeRetryableReadAsync(binding, operationContext,  "admin", getCommandCreator(), CommandResultDocumentCodec.create(decoder, DATABASES),
-                asyncSingleBatchCursorTransformer(DATABASES), retryReads, errorHandlingCallback(callback, LOGGER));
+                asyncSingleBatchCursorTransformer(DATABASES), retryReads, maxAdaptiveRetriesSetting, errorHandlingCallback(callback, LOGGER));
     }
 
     private CommandCreator getCommandCreator() {

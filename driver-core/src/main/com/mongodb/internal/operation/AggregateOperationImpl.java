@@ -65,6 +65,8 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
     private final PipelineCreator pipelineCreator;
 
     private boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private Boolean allowDiskUse;
     private Integer batchSize;
     private Collation collation;
@@ -75,21 +77,24 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
     private CursorType cursorType;
 
     AggregateOperationImpl(final MongoNamespace namespace,
-            final List<BsonDocument> pipeline, final Decoder<T> decoder, final AggregationLevel aggregationLevel) {
+            final List<BsonDocument> pipeline, final Decoder<T> decoder, final AggregationLevel aggregationLevel,
+            @Nullable final Integer maxAdaptiveRetriesSetting) {
         this(namespace, pipeline, decoder,
                 defaultAggregateTarget(notNull("aggregationLevel", aggregationLevel),
                         notNull("namespace", namespace).getCollectionName()),
-                defaultPipelineCreator(pipeline));
+                defaultPipelineCreator(pipeline), maxAdaptiveRetriesSetting);
     }
 
     AggregateOperationImpl(final MongoNamespace namespace,
             final List<BsonDocument> pipeline, final Decoder<T> decoder, final AggregateTarget aggregateTarget,
-            final PipelineCreator pipelineCreator) {
+            final PipelineCreator pipelineCreator,
+            @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.namespace = notNull("namespace", namespace);
         this.pipeline = notNull("pipeline", pipeline);
         this.decoder = notNull("decoder", decoder);
         this.aggregateTarget = notNull("aggregateTarget", aggregateTarget);
         this.pipelineCreator = notNull("pipelineCreator", pipelineCreator);
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     List<BsonDocument> getPipeline() {
@@ -196,7 +201,7 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
     public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
         return executeRetryableRead(binding, applyTimeoutModeToOperationContext(timeoutMode, operationContext), namespace.getDatabaseName(),
                 getCommandCreator(), CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT),
-                transformer(), retryReads);
+                transformer(), retryReads, maxAdaptiveRetriesSetting);
     }
 
     @Override
@@ -204,7 +209,7 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
         SingleResultCallback<AsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         executeRetryableReadAsync(binding, applyTimeoutModeToOperationContext(timeoutMode, operationContext),  namespace.getDatabaseName(),
                 getCommandCreator(), CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT),
-                asyncTransformer(), retryReads,
+                asyncTransformer(), retryReads, maxAdaptiveRetriesSetting,
                 errHandlingCallback);
     }
 
@@ -245,7 +250,8 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
         return (result, source, connection, operationContext) ->
                 new CommandBatchCursor<>(getTimeoutMode(), getMaxTimeForCursor(operationContext.getTimeoutContext()), operationContext, new CommandCursor<>(
                         result, batchSize != null ? batchSize : 0,
-                        decoder, comment, source, connection
+                        decoder, comment, source, connection,
+                        retryReads, maxAdaptiveRetriesSetting
                 ));
     }
 
@@ -253,7 +259,8 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
         return (result, source, connection, operationContext) ->
             new AsyncCommandBatchCursor<>(getTimeoutMode(), getMaxTimeForCursor(operationContext.getTimeoutContext()),
                     operationContext, new AsyncCommandCursor<>(
-                    result, batchSize != null ? batchSize : 0, decoder, comment, source, connection
+                    result, batchSize != null ? batchSize : 0, decoder, comment, source, connection,
+                    retryReads, maxAdaptiveRetriesSetting
             ));
     }
 

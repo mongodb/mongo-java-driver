@@ -50,6 +50,8 @@ public class ClientSession(public val wrapped: JClientSession) : Closeable {
     /**
      * Start a transaction in the context of this session with default transaction options. A transaction can not be
      * started if there is already an active transaction on this session.
+     *
+     * @see com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL
      */
     public fun startTransaction(): Unit = wrapped.startTransaction()
 
@@ -58,13 +60,16 @@ public class ClientSession(public val wrapped: JClientSession) : Closeable {
      * started if there is already an active transaction on this session.
      *
      * @param transactionOptions the options to apply to the transaction
+     * @see com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL
      */
     public fun startTransaction(transactionOptions: TransactionOptions): Unit =
         wrapped.startTransaction(transactionOptions)
 
     /**
-     * Commit a transaction in the context of this session. A transaction can only be commmited if one has first been
+     * Commit a transaction in the context of this session. A transaction can only be committed if one has first been
      * started.
+     *
+     * @see com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL
      */
     public fun commitTransaction(): Unit = wrapped.commitTransaction()
 
@@ -82,6 +87,8 @@ public class ClientSession(public val wrapped: JClientSession) : Closeable {
      * @param transactionBody the body of the transaction
      * @param options the transaction options
      * @return the return value of the transaction body
+     * @see com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL
+     * @see com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL
      */
     public fun <T : Any> withTransaction(
         transactionBody: () -> T,

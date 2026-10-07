@@ -27,6 +27,7 @@ import com.mongodb.internal.connection.DefaultClusterFactory;
 import com.mongodb.internal.connection.InternalConnectionPoolSettings;
 import com.mongodb.internal.connection.StreamFactory;
 import com.mongodb.internal.connection.StreamFactoryFactory;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.internal.MongoClientImpl;
 import com.mongodb.spi.dns.InetAddressResolver;
@@ -118,8 +119,9 @@ public final class MongoClients {
         StreamFactory streamFactory = getStreamFactory(streamFactoryFactory, settings, false);
         StreamFactory heartbeatStreamFactory = getStreamFactory(streamFactoryFactory, settings, true);
         MongoDriverInformation wrappedMongoDriverInformation = wrapMongoDriverInformation(mongoDriverInformation);
-        Cluster cluster = createCluster(settings, wrappedMongoDriverInformation, streamFactory, heartbeatStreamFactory);
-        return new MongoClientImpl(settings, wrappedMongoDriverInformation, cluster, streamFactoryFactory);
+        AsyncClientExecutor clientExecutor = AsyncClientExecutor.backedBy(streamFactoryFactory.getExecutor());
+        Cluster cluster = createCluster(settings, wrappedMongoDriverInformation, streamFactory, heartbeatStreamFactory, clientExecutor);
+        return new MongoClientImpl(cluster, wrappedMongoDriverInformation, settings, streamFactoryFactory, clientExecutor);
     }
 
     /**
@@ -135,12 +137,13 @@ public final class MongoClients {
 
     private static Cluster createCluster(final MongoClientSettings settings,
                                          @Nullable final MongoDriverInformation mongoDriverInformation,
-                                         final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory) {
+                                         final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory,
+                                         final AsyncClientExecutor clientExecutor) {
         notNull("settings", settings);
         return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
                 settings.getConnectionPoolSettings(), InternalConnectionPoolSettings.builder().prestartAsyncWorkManager(true).build(),
                 TimeoutSettings.create(settings), streamFactory, TimeoutSettings.createHeartbeatSettings(settings), heartbeatStreamFactory,
-                settings.getCredential(), settings.getLoggerSettings(), getCommandListener(settings.getCommandListeners()),
+                clientExecutor, settings.getCredential(), settings.getLoggerSettings(), getCommandListener(settings.getCommandListeners()),
                 settings.getApplicationName(), mongoDriverInformation, settings.getCompressorList(), settings.getServerApi(),
                 settings.getDnsClient());
     }

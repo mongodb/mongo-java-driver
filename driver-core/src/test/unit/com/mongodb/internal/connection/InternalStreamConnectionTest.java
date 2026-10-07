@@ -36,9 +36,9 @@ import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryWriter;
@@ -1422,7 +1422,7 @@ class InternalStreamConnectionTest {
     }
 
     private OperationContext createOperationContext() {
-        return OperationContext.simpleOperationContext(new TimeoutContext(TimeoutSettings.DEFAULT));
+        return OperationContext.simpleOperationContext(TimeoutSettings.DEFAULT);
     }
 
     /**
@@ -1432,7 +1432,7 @@ class InternalStreamConnectionTest {
      */
     private OperationContext createOperationContextWithTimeout() {
         return OperationContext.simpleOperationContext(
-                new TimeoutContext(new TimeoutSettings(0, 0, 0, 60_000L, 0)));
+                new TimeoutSettings(0, 0, 0, 60_000L, 0));
     }
 
     /**

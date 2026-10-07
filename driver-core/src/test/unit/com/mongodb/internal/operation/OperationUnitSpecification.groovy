@@ -41,7 +41,7 @@ import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.OPERATION_CONTEXT
+import static com.mongodb.ClusterFixture.createOperationContext
 
 class OperationUnitSpecification extends Specification {
 
@@ -65,7 +65,8 @@ class OperationUnitSpecification extends Specification {
             [6, 2]: 19,
             [6, 3]: 20,
             [7, 0]: 21,
-            [9, 0]: 25,
+            [8, 0]: 25,
+            [9, 0]: 29,
     ]
 
     static Integer getMaxWireVersionForServerVersion(List<Integer> serverVersion) {
@@ -97,7 +98,7 @@ class OperationUnitSpecification extends Specification {
     def testSyncOperation(operation, List<Integer> serverVersion, result, Boolean checkCommand=true,
                           BsonDocument expectedCommand=null,
                           Boolean checkSecondaryOk=false, ReadPreference readPreference=ReadPreference.primary()) {
-        def operationContext = OPERATION_CONTEXT
+        def operationContext = createOperationContext()
                 .withSessionContext(Stub(SessionContext) {
                     hasActiveTransaction() >> false
                     getReadConcern() >> ReadConcern.DEFAULT
@@ -151,7 +152,7 @@ class OperationUnitSpecification extends Specification {
                            Boolean checkCommand=true, BsonDocument expectedCommand=null,
                            Boolean checkSecondaryOk=false, ReadPreference readPreference=ReadPreference.primary()) {
 
-        def operationContext = OPERATION_CONTEXT
+        def operationContext = createOperationContext()
                 .withSessionContext(Stub(SessionContext) {
                     hasActiveTransaction() >> false
                     getReadConcern() >> ReadConcern.DEFAULT

@@ -16,26 +16,24 @@
 
 package com.mongodb.client;
 
-import com.mongodb.Function;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ServerAddress;
-import com.mongodb.assertions.Assertions;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
-import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.internal.connection.MongoWriteConcernWithResponseException;
+import com.mongodb.internal.event.ConfigureFailPointCommandListener;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.Document;
-import org.junit.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -43,25 +41,28 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static com.mongodb.internal.operation.CommandOperationHelper.NO_WRITES_PERFORMED_ERROR_LABEL;
+import static com.mongodb.internal.operation.CommandOperationHelper.RETRYABLE_WRITE_ERROR_LABEL;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assume.assumeTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Tests in this class check that the internal {@link MongoWriteConcernWithResponseException} does not leak from our API.
  */
-public final class MongoWriteConcernWithResponseExceptionTest {
+public class MongoWriteConcernWithResponseExceptionTest {
+    protected MongoClient createClient(final MongoClientSettings clientSettings) {
+        return MongoClients.create(clientSettings);
+    }
+
     /**
      * This test is similar to {@link RetryableWritesProseTest#originalErrorMustBePropagatedIfNoWritesPerformed()}.
      * The difference is in the assertions, it also verifies situations when `writeConcernError` happens on the first attempt
      * and on the last attempt.
      */
-    @Test
-    public void doesNotLeak() throws InterruptedException {
-        doesNotLeak(MongoClients::create);
-    }
-
-    public static void doesNotLeak(final Function<MongoClientSettings, MongoClient> clientCreator) throws InterruptedException {
+    @ParameterizedTest
+    @ValueSource(booleans = {true, false})
+    protected void doesNotLeak(final boolean writeConcernErrorOnFirstAttempt) throws Exception {
         BsonDocument writeConcernErrorFpDoc = new BsonDocument()
                 .append("configureFailPoint", new BsonString("failCommand"))
                 .append("mode", new BsonDocument()
@@ -69,7 +70,7 @@ public final class MongoWriteConcernWithResponseExceptionTest {
                 .append("data", new BsonDocument()
                         .append("writeConcernError", new BsonDocument()
                                 .append("code", new BsonInt32(91))
-                                .append("errorLabels", new BsonArray(Stream.of("RetryableWriteError")
+                                .append("errorLabels", new BsonArray(Stream.of(RETRYABLE_WRITE_ERROR_LABEL)
                                         .map(BsonString::new).collect(Collectors.toList())))
                                 .append("errmsg", new BsonString(""))
                         )
@@ -81,49 +82,37 @@ public final class MongoWriteConcernWithResponseExceptionTest {
                 .append("data", new BsonDocument()
                         .append("failCommands", new BsonArray(singletonList(new BsonString("insert"))))
                         .append("errorCode", new BsonInt32(10107))
-                        .append("errorLabels", new BsonArray(Stream.of("RetryableWriteError", "NoWritesPerformed")
+                        .append("errorLabels", new BsonArray(Stream.of(RETRYABLE_WRITE_ERROR_LABEL, NO_WRITES_PERFORMED_ERROR_LABEL)
                                 .map(BsonString::new).collect(Collectors.toList()))));
-        doesNotLeak(clientCreator, writeConcernErrorFpDoc, true, noWritesPerformedFpDoc);
-        doesNotLeak(clientCreator, noWritesPerformedFpDoc, false, writeConcernErrorFpDoc);
+        if (writeConcernErrorOnFirstAttempt) {
+            doesNotLeak(writeConcernErrorFpDoc, true, noWritesPerformedFpDoc);
+        } else {
+            doesNotLeak(noWritesPerformedFpDoc, false, writeConcernErrorFpDoc);
+        }
     }
 
     @SuppressWarnings("try")
-    private static void doesNotLeak(
-            final Function<MongoClientSettings, MongoClient> clientCreator,
+    private void doesNotLeak(
             final BsonDocument firstAttemptFpDoc,
-            final boolean firstAttemptCommandSucceededEvent,
-            final BsonDocument lastAttemptFpDoc) throws InterruptedException {
+            final boolean firstAttemptSucceeds,
+            final BsonDocument lastAttemptFpDoc) throws Exception {
         assumeTrue(serverVersionAtLeast(6, 0) && isDiscoverableReplicaSet());
         ServerAddress primaryServerAddress = Fixture.getPrimary();
-        CompletableFuture<FailPoint> futureFailPointFromListener = new CompletableFuture<>();
-        CommandListener commandListener = new CommandListener() {
-            private final AtomicBoolean configureFailPoint = new AtomicBoolean(true);
-
-            @Override
-            public void commandSucceeded(final CommandSucceededEvent event) {
-                if (firstAttemptCommandSucceededEvent) {
-                    enableLastAttemptFp(event);
-                }
+        Predicate<CommandEvent> configureFailPointEventMatcher = event -> {
+            if (event.getCommandName().equals("insert")) {
+                return firstAttemptSucceeds
+                        ? event instanceof CommandSucceededEvent
+                        : event instanceof CommandFailedEvent;
             }
-
-            @Override
-            public void commandFailed(final CommandFailedEvent event) {
-                if (!firstAttemptCommandSucceededEvent) {
-                    enableLastAttemptFp(event);
-                }
-            }
-
-            private void enableLastAttemptFp(final CommandEvent event) {
-                if (event.getCommandName().equals("insert") && configureFailPoint.compareAndSet(true, false)) {
-                    Assertions.assertTrue(futureFailPointFromListener.complete(FailPoint.enable(lastAttemptFpDoc, primaryServerAddress)));
-                }
-            }
+            return false;
         };
-        try (MongoClient client = clientCreator.apply(getMongoClientSettingsBuilder()
-                .retryWrites(true)
-                .addCommandListener(commandListener)
-                .applyToServerSettings(builder -> builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS))
-                .build());
+        try (ConfigureFailPointCommandListener commandListener = new ConfigureFailPointCommandListener(
+                lastAttemptFpDoc, primaryServerAddress, configureFailPointEventMatcher);
+             MongoClient client = createClient(getMongoClientSettingsBuilder()
+                     .retryWrites(true)
+                     .addCommandListener(commandListener)
+                     .applyToServerSettings(builder -> builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS))
+                     .build());
              FailPoint ignored = FailPoint.enable(firstAttemptFpDoc, primaryServerAddress)) {
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName())
                     .getCollection("originalErrorMustBePropagatedIfNoWritesPerformed");
@@ -137,8 +126,6 @@ public final class MongoWriteConcernWithResponseExceptionTest {
                     throw new AssertionError("The internal exception leaked.", e);
                 }
             });
-        } finally {
-            futureFailPointFromListener.thenAccept(FailPoint::close);
         }
     }
 }
