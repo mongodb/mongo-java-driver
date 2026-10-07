@@ -104,6 +104,8 @@ public class ServerDiscoveryAndMonitoringProseTests {
                                        }).build();
 
         try (MongoClient ignored = MongoClients.create(settings)) {
+            // The spec does not specify how long to wait. The .NET driver waits 10 seconds; 5 seconds is enough for
+            // 5 heartbeats at 500ms while still being far below what the default heartbeatFrequencyMS of 10 seconds would need.
             assertTrue("Took longer than expected to reach expected number of hearbeats",
                        latch.await(5, SECONDS));
         }
