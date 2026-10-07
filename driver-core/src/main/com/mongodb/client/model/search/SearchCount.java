@@ -34,7 +34,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 4.7
  */
 @Sealed
-@Beta({Reason.CLIENT, Reason.SERVER})
+@Beta(Reason.CLIENT)
 public interface SearchCount extends Bson {
     /**
      * Returns a {@link SearchCount} that instructs to count documents exactly.
