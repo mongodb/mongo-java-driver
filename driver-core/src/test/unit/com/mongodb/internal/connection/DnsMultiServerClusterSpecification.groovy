@@ -21,6 +21,7 @@ import com.mongodb.MongoConfigurationException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ClusterSettings
+import com.mongodb.connection.SrvHostValidator
 import com.mongodb.event.ClusterListener
 import spock.lang.Specification
 
@@ -55,8 +56,8 @@ class DnsMultiServerClusterSpecification extends Specification {
         DnsSrvRecordInitializer initializer
         def dnsSrvRecordMonitorFactory = new DnsSrvRecordMonitorFactory() {
             @Override
-            DnsSrvRecordMonitor create(final String hostName, String srvServiceName, final String srvAllowedHostsSuffix,
-                    final DnsSrvRecordInitializer dnsSrvRecordListener) {
+            DnsSrvRecordMonitor create(final String hostName, String srvServiceName, final SrvHostValidator srvHostValidator,
+                                       final DnsSrvRecordInitializer dnsSrvRecordListener) {
                 initializer = dnsSrvRecordListener
                 dnsSrvRecordMonitor
             }
