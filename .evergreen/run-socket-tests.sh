@@ -14,6 +14,8 @@ set -o errexit  # Exit the script with error if any of the commands fail
 
 AUTH=${AUTH:-noauth}
 MONGODB_URI=${MONGODB_URI:-}
+# run-mongodb.sh returns the URI with a trailing slash; strip it so the "/?..." appends below stay valid.
+MONGODB_URI="${MONGODB_URI%/}"
 TOPOLOGY=${TOPOLOGY:-server}
 COMPRESSOR=${COMPRESSOR:-}
 
