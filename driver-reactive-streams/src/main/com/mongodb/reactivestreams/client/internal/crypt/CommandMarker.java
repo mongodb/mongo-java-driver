@@ -87,13 +87,13 @@ class CommandMarker implements Closeable {
     Mono<RawBsonDocument> mark(final String databaseName, final RawBsonDocument command, @Nullable final Timeout operationTimeout) {
         if (client != null) {
             return runCommand(databaseName, command, operationTimeout)
-                    .onErrorResume(Throwable.class, e -> {
+                    .onErrorResume(Exception.class, e -> {
                         if (processBuilder == null || e instanceof MongoOperationTimeoutException) {
                             throw MongoException.fromThrowable(e);
                         }
                         return Mono.fromRunnable(() -> startProcess(processBuilder)).then(runCommand(databaseName, command, operationTimeout));
                     })
-                    .onErrorMap(t -> new MongoClientException("Exception in encryption library: " + t.getMessage(), t));
+                    .onErrorMap(Exception.class, e -> new MongoClientException("Exception in encryption library: " + e.getMessage(), e));
         } else {
             return Mono.fromCallable(() -> command);
         }
