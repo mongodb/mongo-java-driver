@@ -236,11 +236,12 @@ public abstract class AbstractSessionsProseTest {
                     .insertOne(new Document("advance", "$clusterTime"));
 
             // wait until the client1 processes the next pair of SDAM heartbeat started + succeeded events.
+            // The spec does not specify how long to wait. The .NET driver waits 5 seconds.
             serverMonitorListener.reset();
             serverMonitorListener.waitForEvents(ServerHeartbeatStartedEvent.class, serverHeartbeatStartedEvent -> true,
-                    1, Duration.ofMillis(20 + ClusterFixture.getPrimaryRTT()));
+                    1, Duration.ofSeconds(5));
             serverMonitorListener.waitForEvents(ServerHeartbeatSucceededEvent.class, serverHeartbeatSucceededEvent -> true,
-                    1, Duration.ofMillis(20 + ClusterFixture.getPrimaryRTT()));
+                    1, Duration.ofSeconds(5));
 
             commandListener.reset();
             executePing(client1);
