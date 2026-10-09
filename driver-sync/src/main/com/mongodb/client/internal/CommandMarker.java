@@ -99,7 +99,7 @@ class CommandMarker implements Closeable {
                     return executeCommand(databaseName, command, timeout);
                 }
             } catch (MongoException e) {
-                throw wrapInClientException(e);
+                throw new MongoClientException("Exception in encryption library: " + e.getMessage(), e);
             }
         } else {
             return command;
@@ -125,9 +125,5 @@ class CommandMarker implements Closeable {
 
         return databaseWithTimeout(mongoDatabase, TIMEOUT_ERROR_MESSAGE, timeout)
                 .runCommand(markableCommand, RawBsonDocument.class);
-    }
-
-    private MongoClientException wrapInClientException(final MongoException e) {
-        return new MongoClientException("Exception in encryption library: " + e.getMessage(), e);
     }
 }

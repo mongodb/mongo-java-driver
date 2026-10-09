@@ -67,8 +67,8 @@ public class MongoCryptBenchmarkRunner {
                 throw new RuntimeException("Could not find file " + fileName);
             }
             return new String(Files.readAllBytes(Paths.get(resource.toURI())));
-        } catch (Throwable t) {
-            throw new RuntimeException("Could not parse file " + fileName, t);
+        } catch (Exception e) {
+            throw new RuntimeException("Could not parse file " + fileName, e);
         }
     }
 
