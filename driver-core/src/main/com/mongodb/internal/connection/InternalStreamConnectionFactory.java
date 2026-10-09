@@ -40,6 +40,7 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     @Nullable
     private final ServerApi serverApi;
     private final MongoCredentialWithCache credential;
+    private final boolean recordEverything;
 
     InternalStreamConnectionFactory(final ClusterConnectionMode clusterConnectionMode,
                                     final StreamFactory streamFactory,
@@ -49,15 +50,16 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
                                     final LoggerSettings loggerSettings, @Nullable final CommandListener commandListener,
                                     @Nullable final ServerApi serverApi) {
         this(clusterConnectionMode, false, streamFactory, credential, clientMetadata, compressorList,
-                loggerSettings, commandListener, serverApi);
+                loggerSettings, commandListener, serverApi, false);
     }
 
     InternalStreamConnectionFactory(final ClusterConnectionMode clusterConnectionMode, final boolean isMonitoringConnection,
                                     final StreamFactory streamFactory,
                                     @Nullable final MongoCredentialWithCache credential,
                                     final ClientMetadata clientMetadata,
-            final List<MongoCompressor> compressorList,
-            final LoggerSettings loggerSettings, @Nullable final CommandListener commandListener, @Nullable final ServerApi serverApi) {
+                                    final List<MongoCompressor> compressorList,
+                                    final LoggerSettings loggerSettings, @Nullable final CommandListener commandListener,
+                                    @Nullable final ServerApi serverApi, final boolean recordEverything) {
         this.clusterConnectionMode = clusterConnectionMode;
         this.isMonitoringConnection = isMonitoringConnection;
         this.streamFactory = notNull("streamFactory", streamFactory);
@@ -67,6 +69,7 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
         this.serverApi = serverApi;
         this.clientMetadata = clientMetadata;
         this.credential = credential;
+        this.recordEverything = recordEverything;
     }
 
     @Override
@@ -78,7 +81,7 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
                 clusterConnectionMode, authenticator,
                 isMonitoringConnection, serverId, connectionGenerationSupplier,
                 streamFactory, compressorList, loggerSettings, commandListener,
-                connectionInitializer);
+                connectionInitializer, recordEverything);
     }
 
     private Authenticator createAuthenticator(final MongoCredentialWithCache credential) {

@@ -20,6 +20,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.client.AbstractClientMetadataProseTest;
 import com.mongodb.client.MongoClient;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 
@@ -29,6 +30,7 @@ import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 class ClientMetadataProseTest extends AbstractClientMetadataProseTest {
 
     protected MongoClient createMongoClient(@Nullable final MongoDriverInformation mongoDriverInformation, final MongoClientSettings mongoClientSettings) {
-        return new SyncMongoClient(mongoClientSettings, mongoDriverInformation);
+        return new SyncMongoClient(mongoClientSettings, mongoDriverInformation,
+                InternalMongoClientSettings.builder().recordEverything(true).build());
     }
 }

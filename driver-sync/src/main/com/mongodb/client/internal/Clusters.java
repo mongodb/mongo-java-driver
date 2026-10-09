@@ -21,7 +21,7 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.DefaultClusterFactory;
-import com.mongodb.internal.connection.InternalConnectionPoolSettings;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.internal.connection.StreamFactory;
 import com.mongodb.internal.connection.StreamFactoryFactory;
 import com.mongodb.internal.thread.AsyncClientExecutor;
@@ -36,18 +36,47 @@ public final class Clusters {
         //NOP
     }
 
+    /**
+     * Creates a cluster with the given settings and default internal settings.
+     *
+     * @param settings the client settings
+     * @param mongoDriverInformation driver information
+     * @param streamFactoryFactory the stream factory
+     * @param clientExecutor the client executor
+     * @return the cluster
+     */
     public static Cluster createCluster(final MongoClientSettings settings,
                                         @Nullable final MongoDriverInformation mongoDriverInformation,
                                         final StreamFactoryFactory streamFactoryFactory,
                                         final AsyncClientExecutor clientExecutor) {
+        return createCluster(settings, mongoDriverInformation, streamFactoryFactory, clientExecutor,
+                InternalMongoClientSettings.DEFAULT);
+    }
+
+    /**
+     * Creates a cluster with the given settings and internal settings.
+     *
+     * @param settings the client settings
+     * @param mongoDriverInformation driver information
+     * @param streamFactoryFactory the stream factory
+     * @param clientExecutor the client executor
+     * @param internalSettings the internal settings
+     * @return the cluster
+     */
+    public static Cluster createCluster(final MongoClientSettings settings,
+                                        @Nullable final MongoDriverInformation mongoDriverInformation,
+                                        final StreamFactoryFactory streamFactoryFactory,
+                                        final AsyncClientExecutor clientExecutor,
+                                        final InternalMongoClientSettings internalSettings) {
         assertNotNull(streamFactoryFactory);
         assertNotNull(settings);
+        assertNotNull(internalSettings);
 
         StreamFactory streamFactory = getStreamFactory(streamFactoryFactory, settings, false);
         StreamFactory heartbeatStreamFactory = getStreamFactory(streamFactoryFactory, settings, true);
 
         return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
-                settings.getConnectionPoolSettings(), InternalConnectionPoolSettings.builder().build(),
+                settings.getConnectionPoolSettings(), internalSettings,
                 TimeoutSettings.create(settings), streamFactory,
                 TimeoutSettings.createHeartbeatSettings(settings), heartbeatStreamFactory, clientExecutor,
                 settings.getCredential(), settings.getLoggerSettings(), getCommandListener(settings.getCommandListeners()),
