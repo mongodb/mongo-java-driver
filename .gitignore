@@ -52,6 +52,7 @@ local.properties
 *.sh
 !.evergreen/*.sh
 !scripts/*.sh
+!testing/java-6279-poc/*.sh
 
 # security-sensitive files
 *.gpg
