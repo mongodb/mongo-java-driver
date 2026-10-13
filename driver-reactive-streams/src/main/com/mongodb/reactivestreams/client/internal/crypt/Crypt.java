@@ -46,6 +46,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.ExceptionUtils.mapUnlessError;
 import static com.mongodb.internal.client.vault.EncryptOptionsHelper.asMongoExplicitEncryptOptions;
 import static com.mongodb.internal.crypt.capi.MongoCryptContext.State;
 
@@ -146,7 +147,7 @@ public class Crypt implements Closeable {
     public Mono<RawBsonDocument> decrypt(final RawBsonDocument commandResponse, @Nullable final Timeout timeout) {
         notNull("commandResponse", commandResponse);
         return executeStateMachine(() -> mongoCrypt.createDecryptionContext(commandResponse), timeout)
-                .onErrorMap(this::wrapInClientException);
+                .onErrorMap(Exception.class, Crypt::wrapInClientException);
     }
 
     /**
@@ -247,7 +248,7 @@ public class Crypt implements Closeable {
         try {
             MongoCryptContext cryptContext = cryptContextSupplier.get();
             return Mono.<RawBsonDocument>create(sink -> executeStateMachineWithSink(cryptContext, databaseName, sink, operationTimeout))
-                    .onErrorMap(this::wrapInClientException)
+                    .onErrorMap(Exception.class, Crypt::wrapInClientException)
                     .doFinally(s -> cryptContext.close());
         } catch (MongoCryptException e) {
             return Mono.error(wrapInClientException(e));
@@ -309,7 +310,7 @@ public class Crypt implements Closeable {
                         cryptContext.completeMongoOperation();
                         executeStateMachineWithSink(cryptContext, databaseName, sink, operationTimeout);
                     })
-                    .doOnError(t -> sink.error(MongoException.fromThrowableNonNull(t)))
+                    .doOnError(t -> sink.error(mapUnlessError(t, MongoException::fromThrowableNonNull)))
                     .subscribe();
         }
     }
@@ -330,7 +331,7 @@ public class Crypt implements Closeable {
                         cryptContext.completeMongoOperation();
                         executeStateMachineWithSink(cryptContext, databaseName, sink, operationTimeout);
                     })
-                    .doOnError(e -> sink.error(wrapInClientException(e)))
+                    .doOnError(t -> sink.error(mapUnlessError(t, Crypt::wrapInClientException)))
                     .subscribe();
         }
     }
@@ -348,7 +349,7 @@ public class Crypt implements Closeable {
                     cryptContext.completeMongoOperation();
                     executeStateMachineWithSink(cryptContext, databaseName, sink, operationTimeout);
                 })
-                .doOnError(t -> sink.error(MongoException.fromThrowableNonNull(t)))
+                .doOnError(t -> sink.error(mapUnlessError(t, MongoException::fromThrowableNonNull)))
                 .subscribe();
     }
 
@@ -361,22 +362,22 @@ public class Crypt implements Closeable {
             keyManagementService.decryptKey(keyDecryptor, operationTimeout)
                     .contextWrite(sink.contextView())
                     .doOnSuccess(r -> decryptKeys(cryptContext, databaseName, sink, operationTimeout))
-                    .doOnError(e -> sink.error(wrapInClientException(e)))
+                    .doOnError(t -> sink.error(mapUnlessError(t, Crypt::wrapInClientException)))
                     .subscribe();
         } else {
             Mono.fromRunnable(cryptContext::completeKeyDecryptors)
                     .contextWrite(sink.contextView())
                     .doOnSuccess(r -> executeStateMachineWithSink(cryptContext, databaseName, sink, operationTimeout))
-                    .doOnError(e -> sink.error(wrapInClientException(e)))
+                    .doOnError(t -> sink.error(mapUnlessError(t, Crypt::wrapInClientException)))
                     .subscribe();
         }
     }
 
-    private Throwable wrapInClientException(final Throwable t) {
+    private static MongoClientException wrapInClientException(final Throwable t) {
         if (t instanceof MongoClientException) {
-            return t;
+            return (MongoClientException) t;
+        } else {
+            return new MongoClientException("Exception in encryption library: " + t.getMessage(), t);
         }
-        return new MongoClientException("Exception in encryption library: " + t.getMessage(), t);
     }
-
 }
