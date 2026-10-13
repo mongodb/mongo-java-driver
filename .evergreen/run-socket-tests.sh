@@ -14,8 +14,6 @@ set -o errexit  # Exit the script with error if any of the commands fail
 
 AUTH=${AUTH:-noauth}
 MONGODB_URI=${MONGODB_URI:-}
-# run-mongodb.sh returns the URI with a trailing slash; strip it so the "/?..." appends below stay valid.
-MONGODB_URI="${MONGODB_URI%/}"
 TOPOLOGY=${TOPOLOGY:-server}
 COMPRESSOR=${COMPRESSOR:-}
 
@@ -39,6 +37,9 @@ if [ "$TOPOLOGY" == "sharded_cluster" ]; then
        export MONGODB_URI="mongodb://%2Ftmp%2Fmongodb-27017.sock/"
      fi
 fi
+
+# Strip a trailing slash (from run-mongodb.sh or the sharded URI above) so the "/?..." append below stays valid.
+MONGODB_URI="${MONGODB_URI%/}"
 
 if [ "$COMPRESSOR" != "" ]; then
      if [[ "$MONGODB_URI" == *"?"* ]]; then
