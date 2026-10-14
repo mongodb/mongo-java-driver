@@ -39,6 +39,7 @@ import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
+import com.mongodb.test.FlakyTest;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -91,7 +92,8 @@ public abstract class AbstractClientSideOperationsEncryptionTimeoutProseTest {
 
     protected abstract MongoClient createMongoClient(MongoClientSettings.Builder builder);
 
-    @Test
+    // TODO-JAVA-6341: this test intermittently timesout in CI
+    @FlakyTest(maxAttempts = 3)
     void shouldThrowOperationTimeoutExceptionWhenCreateDataKey() {
         assumeTrue(serverVersionAtLeast(4, 4));
 
