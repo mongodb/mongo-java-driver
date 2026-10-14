@@ -58,6 +58,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.function.LongConsumer;
 
+import static com.mongodb.internal.ExceptionUtils.rethrowIfError;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 import static java.lang.String.format;
 
@@ -233,6 +234,7 @@ public class AsynchronousTlsChannelGroup implements Executor {
                 r.run();
             } catch (Throwable t) {
                 LOGGER.error(null, t);
+                rethrowIfError(t);
             }
         });
     }
@@ -427,8 +429,9 @@ public class AsynchronousTlsChannelGroup implements Executor {
                 processPendingInterests();
                 checkClosings();
             }
-        } catch (Throwable e) {
-            LOGGER.error("error in selector loop", e);
+        } catch (Throwable t) {
+            LOGGER.error(this + " stopped working. You may want to recreate the MongoClient", t);
+            rethrowIfError(t);
         } finally {
             executor.shutdown();
             // use shutdownNow to stop delayed tasks
@@ -467,6 +470,7 @@ public class AsynchronousTlsChannelGroup implements Executor {
                                 doWrite(socket, op);
                             } catch (Throwable e) {
                                 LOGGER.error("error in operation", e);
+                                rethrowIfError(e);
                             }
                         });
             }
@@ -486,6 +490,7 @@ public class AsynchronousTlsChannelGroup implements Executor {
                                 doRead(socket, op);
                             } catch (Throwable e) {
                                 LOGGER.error("error in operation", e);
+                                rethrowIfError(e);
                             }
                         });
             }

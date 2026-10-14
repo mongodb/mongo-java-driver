@@ -24,7 +24,7 @@ import com.mongodb.annotations.Sealed;
  * @since 4.7
  */
 @Sealed
-@Beta({Reason.CLIENT, Reason.SERVER})
+@Beta(Reason.CLIENT)
 public interface DateSearchFacet extends SearchFacet {
     /**
      * Creates a new {@link DateSearchFacet} with the default bucket specified.

@@ -33,6 +33,8 @@ set -o pipefail # Exit if any command in a pipe fails
 AUTH=${AUTH:-noauth}
 SSL=${SSL:-nossl}
 MONGODB_URI=${MONGODB_URI:-}
+# run-mongodb.sh returns the URI with a trailing slash; strip it so the "/?..." appends below stay valid.
+MONGODB_URI="${MONGODB_URI%/}"
 TOPOLOGY=${TOPOLOGY:-server}
 COMPRESSOR=${COMPRESSOR:-}
 TESTS=${TESTS:-test}

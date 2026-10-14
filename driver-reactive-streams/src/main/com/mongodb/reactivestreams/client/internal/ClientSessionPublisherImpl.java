@@ -239,7 +239,9 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
                 return executor
                         .execute(new AbortTransactionOperation(writeConcern, maxAdaptiveRetriesSetting)
                                 .recoveryToken(getRecoveryToken()), readConcern, this)
-                        .onErrorResume(Throwable.class, (e) -> Mono.empty())
+                        .onErrorResume(Exception.class, e ->
+                                // ignore exceptions from abort
+                                Mono.empty())
                         .doOnTerminate(() -> {
                             clearTransactionContext();
                             cleanupTransaction(TransactionState.ABORTED);

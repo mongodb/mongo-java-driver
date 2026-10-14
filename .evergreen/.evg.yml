@@ -148,14 +148,20 @@ functions:
           echo "Created archive tar file at ${ARCHIVE_FILE_PATH}"
 
   "start-mongo-orchestration":
+    # Assuming the role and passing the AWS credentials is required for
+    # `run-mongodb.sh` to download the "latest" version from the private S3 bucket.
+    - command: ec2.assume_role
+      params:
+        role_arn: ${aws_test_secrets_role}
     - command: shell.exec
       params:
+        include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
         script: |
           ${PREPARE_SHELL}
           REQUIRE_API_VERSION=${REQUIRE_API_VERSION} LOAD_BALANCER=${LOAD_BALANCER} MONGODB_VERSION=${VERSION} TOPOLOGY=${TOPOLOGY} \
           AUTH=${AUTH} SSL=${SSL} STORAGE_ENGINE=${STORAGE_ENGINE} ORCHESTRATION_FILE=${ORCHESTRATION_FILE} \
-          bash ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
-    # run-orchestration generates expansion file with the MONGODB_URI for the cluster
+          bash ${DRIVERS_TOOLS}/.evergreen/run-mongodb.sh start
+    # run-mongodb.sh generates expansion file with the MONGODB_URI for the cluster
     - command: expansions.update
       params:
         file: mo-expansion.yml
@@ -165,7 +171,7 @@ functions:
         shell: "bash"
         script: |
           ${PREPARE_SHELL}
-          bash ${DRIVERS_TOOLS}/.evergreen/stop-orchestration.sh || true
+          bash ${DRIVERS_TOOLS}/.evergreen/run-mongodb.sh stop || true
 
   "start-mongohoused":
     - command: shell.exec

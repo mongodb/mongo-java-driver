@@ -44,7 +44,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 4.7
  */
 @Sealed
-@Beta({Reason.CLIENT, Reason.SERVER})
+@Beta(Reason.CLIENT)
 public interface SearchFacet extends Bson {
     /**
      * Returns a {@link SearchFacet} that allows narrowing down search results based on the most frequent
