@@ -199,8 +199,8 @@ public final class MongoCryptHelper {
             processBuilder.redirectErrorStream(true);
             processBuilder.redirectOutput(new File(System.getProperty("os.name").startsWith("Windows") ? "NUL" : "/dev/null"));
             processBuilder.start();
-        } catch (Throwable t) {
-            throw new MongoClientException("Exception starting mongocryptd process. Is `mongocryptd` on the system path?", t);
+        } catch (Exception e) {
+            throw new MongoClientException("Exception starting mongocryptd process. Is `mongocryptd` on the system path?", e);
         }
     }
 

@@ -38,6 +38,9 @@ if [ "$TOPOLOGY" == "sharded_cluster" ]; then
      fi
 fi
 
+# Strip a trailing slash (from run-mongodb.sh or the sharded URI above) so the "/?..." append below stays valid.
+MONGODB_URI="${MONGODB_URI%/}"
+
 if [ "$COMPRESSOR" != "" ]; then
      if [[ "$MONGODB_URI" == *"?"* ]]; then
        export MONGODB_URI="${MONGODB_URI}&compressors=${COMPRESSOR}"
