@@ -62,6 +62,7 @@ public class MongodbObservationContext extends SenderContext<Object> {
     @Nullable
     private String responseStatusCode;
     private boolean isUnixSocket;
+    private boolean recording = true;
 
     /**
      * Creates a new {@code MongodbObservationContext} with {@link Kind#CLIENT} kind.
@@ -247,5 +248,30 @@ public class MongodbObservationContext extends SenderContext<Object> {
      */
     public void setResponseStatusCode(@Nullable final String responseStatusCode) {
         this.responseStatusCode = responseStatusCode;
+    }
+
+    /**
+     * Whether the span backing this observation is being recorded by the tracing SDK.
+     * <p>
+     * Defaults to {@code true}. The driver sets it to {@code false} once it learns from the tracing SDK that the
+     * sampler dropped the span, which lets {@link DefaultMongodbObservationConvention} skip producing attributes
+     * that nobody will read.
+     *
+     * @return true if the span is recorded
+     * @since 5.10
+     */
+    public boolean isRecording() {
+        return recording;
+    }
+
+    /**
+     * Sets whether the span backing this observation is being recorded.
+     *
+     * @param recording true if the span is recorded
+     * @see #isRecording()
+     * @since 5.10
+     */
+    public void setRecording(final boolean recording) {
+        this.recording = recording;
     }
 }
