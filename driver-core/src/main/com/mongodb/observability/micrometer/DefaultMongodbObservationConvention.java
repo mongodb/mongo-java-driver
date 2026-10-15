@@ -18,12 +18,15 @@ package com.mongodb.observability.micrometer;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ConnectionId;
+import com.mongodb.lang.Nullable;
+import io.micrometer.common.KeyValue;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
 import io.micrometer.observation.ObservationConvention;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Arrays;
 
 /**
  * Default {@link ObservationConvention} for MongoDB observations.
@@ -58,7 +61,10 @@ public class DefaultMongodbObservationConvention implements ObservationConventio
 
     @Override
     public KeyValues getHighCardinalityKeyValues(final MongodbObservationContext context) {
-        if (context.getObservationType() == MongodbObservation.MONGODB_COMMAND) {
+        // High-cardinality values are only read by a recording span: skip the string formatting when the
+        // sampler dropped the span. Low-cardinality values are still produced because metrics handlers on the
+        // same registry consume them.
+        if (context.getObservationType() == MongodbObservation.MONGODB_COMMAND && context.isRecording()) {
             return getCommandHighCardinalityKeyValues(context);
         }
         return KeyValues.empty();
@@ -69,24 +75,22 @@ public class DefaultMongodbObservationConvention implements ObservationConventio
         String databaseName = context.getDatabaseName();
         String collectionName = context.getCollectionName();
 
-        KeyValues kv = KeyValues.of(
-                MongodbObservation.OperationLowCardinalityKeyNames.SYSTEM.withValue("mongodb"));
-
+        // Built as one array: each KeyValues.and() merges and re-sorts, which dominated the per-span cost.
+        KeyValue[] values = new KeyValue[5];
+        int n = 0;
+        values[n++] = MongodbObservation.OperationLowCardinalityKeyNames.SYSTEM.withValue("mongodb");
         if (databaseName != null) {
-            kv = kv.and(MongodbObservation.OperationLowCardinalityKeyNames.NAMESPACE.withValue(databaseName));
+            values[n++] = MongodbObservation.OperationLowCardinalityKeyNames.NAMESPACE.withValue(databaseName);
         }
         if (collectionName != null) {
-            kv = kv.and(MongodbObservation.OperationLowCardinalityKeyNames.COLLECTION.withValue(collectionName));
+            values[n++] = MongodbObservation.OperationLowCardinalityKeyNames.COLLECTION.withValue(collectionName);
         }
         if (commandName != null) {
-            String dbName = databaseName != null ? databaseName : "";
-            String summary = commandName + " " + dbName
-                    + (collectionName != null ? "." + collectionName : "");
-            kv = kv.and(
-                    MongodbObservation.OperationLowCardinalityKeyNames.OPERATION_NAME.withValue(commandName),
-                    MongodbObservation.OperationLowCardinalityKeyNames.OPERATION_SUMMARY.withValue(summary));
+            values[n++] = MongodbObservation.OperationLowCardinalityKeyNames.OPERATION_NAME.withValue(commandName);
+            values[n++] = MongodbObservation.OperationLowCardinalityKeyNames.OPERATION_SUMMARY.withValue(
+                    summary(commandName, databaseName, collectionName));
         }
-        return kv;
+        return KeyValues.of(Arrays.copyOf(values, n));
     }
 
     private KeyValues getCommandLowCardinalityKeyValues(final MongodbObservationContext context) {
@@ -95,73 +99,75 @@ public class DefaultMongodbObservationConvention implements ObservationConventio
         String collectionName = context.getCollectionName();
         String cmdName = commandName != null ? commandName : "";
         String dbName = databaseName != null ? databaseName : "";
-        String summary = cmdName + " " + dbName
-                + (collectionName != null ? "." + collectionName : "");
 
-        KeyValues kv = KeyValues.of(
-                MongodbObservation.CommandLowCardinalityKeyNames.SYSTEM.withValue("mongodb"),
-                MongodbObservation.CommandLowCardinalityKeyNames.NAMESPACE.withValue(dbName),
-                MongodbObservation.CommandLowCardinalityKeyNames.QUERY_SUMMARY.withValue(summary),
-                MongodbObservation.CommandLowCardinalityKeyNames.COMMAND_NAME.withValue(cmdName));
+        KeyValue[] values = new KeyValue[9];
+        int n = 0;
+        values[n++] = MongodbObservation.CommandLowCardinalityKeyNames.SYSTEM.withValue("mongodb");
+        values[n++] = MongodbObservation.CommandLowCardinalityKeyNames.NAMESPACE.withValue(dbName);
+        values[n++] = MongodbObservation.CommandLowCardinalityKeyNames.QUERY_SUMMARY.withValue(
+                summary(cmdName, dbName, collectionName));
+        values[n++] = MongodbObservation.CommandLowCardinalityKeyNames.COMMAND_NAME.withValue(cmdName);
         if (collectionName != null) {
-            kv = kv.and(MongodbObservation.CommandLowCardinalityKeyNames.COLLECTION.withValue(collectionName));
+            values[n++] = MongodbObservation.CommandLowCardinalityKeyNames.COLLECTION.withValue(collectionName);
         }
         ServerAddress serverAddress = context.getServerAddress();
         if (serverAddress != null) {
-            kv = kv.and(
-                    MongodbObservation.CommandLowCardinalityKeyNames.SERVER_ADDRESS.withValue(serverAddress.getHost()),
-                    MongodbObservation.CommandLowCardinalityKeyNames.SERVER_PORT.withValue(
-                            String.valueOf(serverAddress.getPort())),
-                    MongodbObservation.CommandLowCardinalityKeyNames.NETWORK_TRANSPORT.withValue(
-                            context.isUnixSocket() ? "unix" : "tcp"));
+            values[n++] = MongodbObservation.CommandLowCardinalityKeyNames.SERVER_ADDRESS.withValue(serverAddress.getHost());
+            values[n++] = MongodbObservation.CommandLowCardinalityKeyNames.SERVER_PORT.withValue(
+                    String.valueOf(serverAddress.getPort()));
+            values[n++] = MongodbObservation.CommandLowCardinalityKeyNames.NETWORK_TRANSPORT.withValue(
+                    context.isUnixSocket() ? "unix" : "tcp");
         }
         String responseStatusCode = context.getResponseStatusCode();
         if (responseStatusCode != null) {
-            kv = kv.and(MongodbObservation.CommandLowCardinalityKeyNames.RESPONSE_STATUS_CODE.withValue(responseStatusCode));
+            values[n++] = MongodbObservation.CommandLowCardinalityKeyNames.RESPONSE_STATUS_CODE.withValue(responseStatusCode);
         }
-        return kv;
+        return KeyValues.of(Arrays.copyOf(values, n));
+    }
+
+    private static String summary(final String commandName, @Nullable final String databaseName,
+            @Nullable final String collectionName) {
+        String dbName = databaseName != null ? databaseName : "";
+        return collectionName != null
+                ? commandName + " " + dbName + "." + collectionName
+                : commandName + " " + dbName;
     }
 
     private KeyValues getCommandHighCardinalityKeyValues(final MongodbObservationContext context) {
-        KeyValues kv = KeyValues.empty();
-
+        KeyValue[] values = new KeyValue[9];
+        int n = 0;
         String queryText = context.getQueryText();
         if (queryText != null) {
-            kv = kv.and(MongodbObservation.HighCardinalityKeyNames.QUERY_TEXT.withValue(queryText));
+            values[n++] = MongodbObservation.HighCardinalityKeyNames.QUERY_TEXT.withValue(queryText);
         }
         ConnectionId connectionId = context.getConnectionId();
         if (connectionId != null) {
-            kv = kv.and(
-                    MongodbObservation.HighCardinalityKeyNames.CLIENT_CONNECTION_ID.withValue(
-                            String.valueOf(connectionId.getLocalValue())),
-                    MongodbObservation.HighCardinalityKeyNames.SERVER_CONNECTION_ID.withValue(
-                            String.valueOf(connectionId.getServerValue())));
+            values[n++] = MongodbObservation.HighCardinalityKeyNames.CLIENT_CONNECTION_ID.withValue(
+                    String.valueOf(connectionId.getLocalValue()));
+            values[n++] = MongodbObservation.HighCardinalityKeyNames.SERVER_CONNECTION_ID.withValue(
+                    String.valueOf(connectionId.getServerValue()));
         }
         Long cursorId = context.getCursorId();
         if (cursorId != null) {
-            kv = kv.and(MongodbObservation.HighCardinalityKeyNames.CURSOR_ID.withValue(
-                    String.valueOf(cursorId)));
+            values[n++] = MongodbObservation.HighCardinalityKeyNames.CURSOR_ID.withValue(String.valueOf(cursorId));
         }
         Long transactionNumber = context.getTransactionNumber();
         if (transactionNumber != null) {
-            kv = kv.and(MongodbObservation.HighCardinalityKeyNames.TRANSACTION_NUMBER.withValue(
-                    String.valueOf(transactionNumber)));
+            values[n++] = MongodbObservation.HighCardinalityKeyNames.TRANSACTION_NUMBER.withValue(
+                    String.valueOf(transactionNumber));
         }
         String sessionId = context.getSessionId();
         if (sessionId != null) {
-            kv = kv.and(MongodbObservation.HighCardinalityKeyNames.SESSION_ID.withValue(sessionId));
+            values[n++] = MongodbObservation.HighCardinalityKeyNames.SESSION_ID.withValue(sessionId);
         }
-
         // Exception tags from observation error
         Throwable error = context.getError();
         if (error != null) {
-            kv = kv.and(
-                    MongodbObservation.HighCardinalityKeyNames.EXCEPTION_MESSAGE.withValue(String.valueOf(error.getMessage())),
-                    MongodbObservation.HighCardinalityKeyNames.EXCEPTION_TYPE.withValue(error.getClass().getName()),
-                    MongodbObservation.HighCardinalityKeyNames.EXCEPTION_STACKTRACE.withValue(getStackTraceAsString(error)));
+            values[n++] = MongodbObservation.HighCardinalityKeyNames.EXCEPTION_MESSAGE.withValue(String.valueOf(error.getMessage()));
+            values[n++] = MongodbObservation.HighCardinalityKeyNames.EXCEPTION_TYPE.withValue(error.getClass().getName());
+            values[n++] = MongodbObservation.HighCardinalityKeyNames.EXCEPTION_STACKTRACE.withValue(getStackTraceAsString(error));
         }
-
-        return kv;
+        return n == 0 ? KeyValues.empty() : KeyValues.of(Arrays.copyOf(values, n));
     }
 
     private static String getStackTraceAsString(final Throwable throwable) {
