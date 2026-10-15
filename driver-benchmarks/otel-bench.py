@@ -132,6 +132,38 @@ def report(args, configs):
     return text
 
 
+def write_dashboard(args, configs, out):
+    """Evergreen performance-dashboard shape (see EvergreenBenchmarkResultWriter and send-dashboard-data).
+
+    One entry per (configuration, api, task) with the absolute MB/s and CPU/op, plus, for every
+    non-baseline configuration, the overhead relative to `off` as metrics of their own, which is what
+    the OpenTelemetry spec asks drivers to record."""
+    samples = load(args, configs)
+    results = []
+    for (config, api, task), v in sorted(samples.items()):
+        name = f"OTel {config} {api} {task}"
+        metrics = [
+            {"name": "megabytes_per_sec", "type": "MEDIAN", "value": med(v["megabytes_per_sec"]),
+             "metadata": {"improvement_direction": "up", "measurement_unit": "megabytes_per_second"}},
+            {"name": "cpu_ex_gc_us_per_op", "type": "MEDIAN", "value": med(v["cpu_ex_gc_us_per_op"]),
+             "metadata": {"improvement_direction": "down", "measurement_unit": "microseconds_per_op"}},
+        ]
+        base = samples.get(("off", api, task))
+        if config != "off" and base:
+            loss = (1 - med(v["megabytes_per_sec"]) / med(base["megabytes_per_sec"])) * 100
+            cpu = med(v["cpu_ex_gc_us_per_op"]) - med(base["cpu_ex_gc_us_per_op"])
+            metrics += [
+                {"name": "throughput_loss_vs_off_pct", "type": "MEDIAN", "value": loss,
+                 "metadata": {"improvement_direction": "down", "measurement_unit": "percent"}},
+                {"name": "added_cpu_us_per_op_vs_off", "type": "MEDIAN", "value": cpu,
+                 "metadata": {"improvement_direction": "down", "measurement_unit": "microseconds_per_op"}},
+            ]
+        results.append({"info": {"test_name": name, "args": {"threads": 1, "configuration": config, "api": api}},
+                        "metrics": metrics})
+    Path(out).write_text(json.dumps(results, indent=2) + "\n")
+    print(f"dashboard results: {out} ({len(results)} entries)")
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--data", type=Path, required=True)
@@ -143,6 +175,8 @@ def main():
     ap.add_argument("--min-time", type=int, default=60)
     ap.add_argument("--resume", action="store_true", help="skip repetitions whose result file exists")
     ap.add_argument("--report-only", action="store_true")
+    ap.add_argument("--dashboard", type=Path,
+                    help="also write results in the Evergreen performance-dashboard shape to this file")
     args = ap.parse_args()
     args.data = args.data.resolve()
     args.out = args.out.resolve()
@@ -164,6 +198,8 @@ def main():
         print(f"total {time.monotonic() - started:.0f}s")
     else:
         print(report(args, configs))
+    if args.dashboard:
+        write_dashboard(args, configs, args.dashboard)
 
 
 if __name__ == "__main__":

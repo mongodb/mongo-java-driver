@@ -806,6 +806,17 @@ functions:
           ${PREPARE_SHELL}
           PROJECT_DIRECTORY=${PROJECT_DIRECTORY} .evergreen/run-perf-tests.sh
 
+  "run-otel-perf-tests":
+    - command: shell.exec
+      type: "test"
+      params:
+        working_dir: "src"
+        env:
+          OTEL_BENCH_REPS: ${OTEL_BENCH_REPS}
+        script: |
+          ${PREPARE_SHELL}
+          PROJECT_DIRECTORY=${PROJECT_DIRECTORY} .evergreen/run-otel-perf-tests.sh
+
   "run-graalvm-native-image-app":
     - command: shell.exec
       type: "test"
@@ -1590,6 +1601,24 @@ tasks:
           PROVIDER: "Netty"
       - func: "send-dashboard-data"
 
+  # OpenTelemetry overhead benchmark (DRIVERS-3620): off / api-only / sdk-ratio / sdk-always,
+  # interleaved. Do not rename this task – renaming resets the performance time series.
+  - name: "perf-otel-task"
+    tags: [ "perf" ]
+    # 4 configurations x 4 tasks x >=60s x REPS, plus setup: ~20 min per repetition.
+    exec_timeout_secs: 7200
+    commands:
+      - func: "start-mongo-orchestration"
+        vars:
+          VERSION: "v8.0-perf"
+          TOPOLOGY: "server"
+          SSL: "nossl"
+          AUTH: "noauth"
+      - func: "run-otel-perf-tests"
+        vars:
+          OTEL_BENCH_REPS: "3"
+      - func: "send-dashboard-data"
+
   - name: "aws-lambda-deployed-task"
     commands:
       - command: ec2.assume_role
@@ -2277,6 +2306,7 @@ buildvariants:
     tasks:
       - name: "perf-task"
       - name: "perf-netty-task"
+      - name: "perf-otel-task"
 
   - name: plain-auth-test
     display_name: "PLAIN (LDAP) Auth test"
