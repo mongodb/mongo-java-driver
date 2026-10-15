@@ -26,6 +26,7 @@ zstd = "1.5.5-3"
 jetbrains-annotations = "26.0.2"
 micrometer-tracing = "1.6.0-M3" # This version has a fix for https://github.com/micrometer-metrics/tracing/issues/1092
 micrometer-observation-bom = "1.15.4"
+opentelemetry-bom = "1.53.0" # benchmark-only: OpenTelemetry SDK for the driver-benchmarks OTel overhead suite
 
 kotlin = "1.8.10"
 kotlinx-coroutines-bom = "1.6.4"
@@ -188,6 +189,9 @@ reflections = { module = "org.reflections:reflections", version.ref = "reflectio
 
 micrometer-tracing-integration-test-bom = { module = " io.micrometer:micrometer-tracing-bom", version.ref = "micrometer-tracing" }
 micrometer-tracing-integration-test = { module = " io.micrometer:micrometer-tracing-integration-test" }
+micrometer-tracing-bridge-otel = { module = "io.micrometer:micrometer-tracing-bridge-otel" }
+opentelemetry-bom = { module = "io.opentelemetry:opentelemetry-bom", version.ref = "opentelemetry-bom" }
+opentelemetry-sdk-trace = { module = "io.opentelemetry:opentelemetry-sdk-trace" }
 
 [bundles]
 aws-java-sdk-v1 = ["aws-java-sdk-v1-core", "aws-java-sdk-v1-sts"]
