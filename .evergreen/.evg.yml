@@ -1605,8 +1605,9 @@ tasks:
   # interleaved. Do not rename this task – renaming resets the performance time series.
   - name: "perf-otel-task"
     tags: [ "perf" ]
-    # 4 configurations x 4 tasks x >=60s x REPS, plus setup: ~20 min per repetition.
-    exec_timeout_secs: 7200
+    # On rhel90-dbx-perf-large each configuration takes ~10 min (the per-task 300 s ceiling applies, not the
+    # 100-iteration cap), so one repetition of 4 configurations is ~40 min plus ~15 min of setup.
+    exec_timeout_secs: 14400
     commands:
       - func: "start-mongo-orchestration"
         vars:
