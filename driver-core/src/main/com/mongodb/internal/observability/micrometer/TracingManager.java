@@ -182,8 +182,9 @@ public class TracingManager {
        if (!isEnabled()) {
             return null;
         }
-        BsonDocument command = commandDocumentSupplier.get();
-        String commandName = command.getFirstKey();
+        // The command name is known from the message; decoding the encoded command is deferred until a field
+        // inside it is actually needed (the getMore cursor id).
+        String commandName = message.getCommandName();
         if (isSensitiveCommand.test(commandName)) {
             return null;
         }
@@ -224,8 +225,8 @@ public class TracingManager {
             ConnectionId connectionId = connectionIdSupplier.get();
             mongodbContext.setConnectionId(connectionId);
 
-            if (command.containsKey("getMore")) {
-                long cursorId = command.getInt64("getMore").longValue();
+            if ("getMore".equals(commandName)) {
+                long cursorId = commandDocumentSupplier.get().getInt64("getMore").longValue();
                 mongodbContext.setCursorId(cursorId);
             }
 

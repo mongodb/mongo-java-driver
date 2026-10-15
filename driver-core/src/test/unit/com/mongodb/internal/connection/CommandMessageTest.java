@@ -64,6 +64,14 @@ class CommandMessageTest {
     private static final BsonDocument COMMAND = new BsonDocument("find", new BsonString(NAMESPACE.getCollectionName()));
 
     @Test
+    void getCommandNameShouldReturnFirstKeyWithoutDecoding() {
+        CommandMessage commandMessage = new CommandMessage(NAMESPACE.getDatabaseName(), COMMAND, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
+                MessageSettings.builder().maxWireVersion(LATEST_WIRE_VERSION).build(),
+                true, EmptyMessageSequences.INSTANCE, ClusterConnectionMode.MULTIPLE, null);
+        assertEquals("find", commandMessage.getCommandName());
+    }
+
+    @Test
     void encodeShouldThrowTimeoutExceptionWhenTimeoutContextIsCalled() {
         //given
         CommandMessage commandMessage = new CommandMessage(NAMESPACE.getDatabaseName(), COMMAND, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),

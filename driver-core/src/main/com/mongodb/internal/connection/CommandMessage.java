@@ -419,6 +419,14 @@ public final class CommandMessage extends RequestMessage {
      *
      * @return the database name
      */
+    /**
+     * The name of the command, i.e. the first key of the command document. Available without decoding the
+     * encoded message.
+     */
+    public String getCommandName() {
+        return command.getFirstKey();
+    }
+
     public String getDatabase() {
         return database;
     }
