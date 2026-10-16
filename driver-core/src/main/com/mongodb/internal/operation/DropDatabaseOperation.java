@@ -33,6 +33,7 @@ import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.connection.ReadConcernHelper.appendReadConcernToWriteCommand;
 import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
@@ -94,7 +95,7 @@ public class DropDatabaseOperation implements WriteOperation<Void> {
         Supplier<Void> retryingCommandExecutor = decorateWithRetries(retryControl, operationContext, () -> {
             retryControl.getPolicy().onCommand(this::getCommandName);
             return withConnection(binding, operationContext, (connection, operationContextWithMinRtt) -> {
-                executeCommand(binding, operationContextWithMinRtt, databaseName, getCommand(), connection,
+                executeCommand(binding, operationContextWithMinRtt, databaseName, getCommand(operationContext), connection,
                         writeConcernErrorTransformer(operationContextWithMinRtt.getTimeoutContext()));
                 return null;
             });
@@ -113,7 +114,7 @@ public class DropDatabaseOperation implements WriteOperation<Void> {
                     if (t != null) {
                         errHandlingCallback.onResult(null, t);
                     } else {
-                        executeCommandAsync(binding, operationContextWithMinRtt, databaseName, getCommand(), connection,
+                        executeCommandAsync(binding, operationContextWithMinRtt, databaseName, getCommand(operationContext), connection,
                                 writeConcernErrorTransformerAsync(operationContextWithMinRtt.getTimeoutContext()),
                                 releasingCallback(errHandlingCallback, connection));
                     }
@@ -121,9 +122,10 @@ public class DropDatabaseOperation implements WriteOperation<Void> {
         retryingCommandExecutor.get(callback);
     }
 
-    private BsonDocument getCommand() {
+    private BsonDocument getCommand(final OperationContext operationContext) {
         BsonDocument commandDocument = new BsonDocument("dropDatabase", new BsonInt32(1));
         appendWriteConcernToCommand(writeConcern, commandDocument);
+        appendReadConcernToWriteCommand(operationContext.getSessionContext(), commandDocument);
         return commandDocument;
     }
 

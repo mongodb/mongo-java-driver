@@ -24,6 +24,7 @@ import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.connection.OperationContext;
+import com.mongodb.internal.connection.ReadConcernHelper;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -211,6 +212,7 @@ public abstract class BaseFindAndModifyOperation<T> implements WriteOperation<T>
                     && !sessionContext.hasActiveTransaction()) {
                 commandDocument.put("writeConcern", getWriteConcern().asDocument());
             }
+            ReadConcernHelper.appendReadConcernToWriteCommand(operationContext.getSessionContext(), commandDocument);
             if (getCollation() != null) {
                 commandDocument.put("collation", getCollation().asDocument());
             }
