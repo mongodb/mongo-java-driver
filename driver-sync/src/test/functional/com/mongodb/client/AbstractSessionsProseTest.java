@@ -34,6 +34,7 @@ import org.bson.BsonDocument;
 import org.bson.Document;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -84,6 +85,7 @@ public abstract class AbstractSessionsProseTest {
 
     // Test 13 from #13-existing-sessions-are-not-checked-into-a-cleared-pool-after-forking
     @Test
+    @Disabled("TODO-JAVA-6342 - server version mismatch issue")
     public void shouldCreateServerSessionOnlyAfterConnectionCheckout() throws InterruptedException {
         Set<BsonDocument> lsidSet = ConcurrentHashMap.newKeySet();
         MongoCollection<Document> collection;
