@@ -1102,7 +1102,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1119,7 +1118,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1136,7 +1134,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1153,7 +1150,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1170,7 +1166,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1187,7 +1182,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1204,7 +1198,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1221,7 +1214,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1236,7 +1228,6 @@ tasks:
         vars:
           OCSP_ALGORITHM: "rsa"
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1253,7 +1244,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1270,7 +1260,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1284,7 +1273,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1301,7 +1289,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1318,7 +1305,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1335,7 +1321,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1352,7 +1337,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1366,7 +1350,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1383,7 +1366,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1400,7 +1382,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1417,7 +1398,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1434,7 +1414,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1451,7 +1430,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1468,7 +1446,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1482,7 +1459,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
