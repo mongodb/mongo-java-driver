@@ -196,7 +196,7 @@ class LazyPropertyModelCodec<T> implements Codec<T> {
         @SuppressWarnings("unchecked")
         public T tryDecode(final BsonReader reader, final DecoderContext decoderContext) {
             Codec<T> codec = PojoCodecImpl.<T>getCodecFromDocument(reader, classModel.useDiscriminator(), classModel.getDiscriminatorKey(),
-                    codecRegistry, discriminatorLookup, null, classModel.getName());
+                    codecRegistry, discriminatorLookup, null, classModel.getType(), classModel.getName());
             if (codec != null) {
                 return codec.decode(reader, decoderContext);
             }

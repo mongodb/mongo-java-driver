@@ -16,13 +16,24 @@
 
 package org.bson.codecs.pojo;
 
+import org.bson.BsonDocument;
+import org.bson.BsonDocumentReader;
+import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.pojo.entities.DiscriminatorModel;
 import org.bson.codecs.pojo.entities.DiscriminatorWithGetterModel;
 import org.bson.codecs.pojo.entities.DiscriminatorWithProperty;
 import org.bson.codecs.pojo.entities.DiscriminatorWithPropertyAndIgnore;
+import org.bson.codecs.pojo.entities.ShapeHolderModel;
+import org.bson.codecs.pojo.entities.ShapeModelAbstract;
+import org.bson.codecs.pojo.entities.ShapeModelCircle;
+import org.bson.codecs.pojo.entities.StaticInitializerTrackingModel;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public final class PojoCodecDiscriminatorTest extends PojoTestCase {
 
@@ -78,5 +89,44 @@ public final class PojoCodecDiscriminatorTest extends PojoTestCase {
                 new DiscriminatorWithPropertyAndIgnore(),
                 "{discriminatorKey:'discriminatorValue'}"
         );
+    }
+
+    @Test
+    public void testDiscriminatorForUnrelatedClassIsRejectedWithoutInitializing() {
+        Codec<ShapeModelCircle> codec = getCodec(ShapeModelCircle.class);
+        String json = "{_t: '" + StaticInitializerTrackingModel.class.getName() + "', color: 'red'}";
+
+        assertThrows(CodecConfigurationException.class, () -> decode(codec, json));
+        assertFalse(StaticInitializerTrackingModel.InitializationTracker.initialized);
+    }
+
+    @Test
+    public void testDiscriminatorForUnrelatedClassIsRejectedForNestedProperty() {
+        Codec<ShapeHolderModel> codec = getCodec(getPojoCodecProviderBuilder(ShapeHolderModel.class, ShapeModelAbstract.class,
+                ShapeModelCircle.class), ShapeHolderModel.class);
+        String json = "{shape: {_t: '" + StaticInitializerTrackingModel.class.getName() + "', color: 'red'}}";
+
+        assertThrows(CodecConfigurationException.class, () -> decode(codec, json));
+        assertFalse(StaticInitializerTrackingModel.InitializationTracker.initialized);
+    }
+
+    @Test
+    public void testDiscriminatorOfRegisteredUnrelatedClassIsRejected() {
+        Codec<ShapeModelCircle> codec = getCodec(getPojoCodecProviderBuilder(ShapeModelCircle.class, DiscriminatorModel.class),
+                ShapeModelCircle.class);
+
+        assertThrows(CodecConfigurationException.class, () -> decode(codec, "{_t: 'discriminatorValue'}"));
+    }
+
+    @Test
+    public void testDiscriminatorForSubclassIsAccepted() {
+        Codec<ShapeModelAbstract> codec = getCodec(getPojoCodecProviderBuilder(ShapeModelAbstract.class, ShapeModelCircle.class),
+                ShapeModelAbstract.class);
+
+        decodesTo(codec, "{_t: '" + ShapeModelCircle.class.getName() + "', color: 'red', radius: 1.0}", new ShapeModelCircle("red", 1.0));
+    }
+
+    private static <T> T decode(final Codec<T> codec, final String json) {
+        return codec.decode(new BsonDocumentReader(BsonDocument.parse(json)), DecoderContext.builder().build());
     }
 }

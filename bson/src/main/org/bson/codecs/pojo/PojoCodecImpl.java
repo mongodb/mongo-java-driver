@@ -98,7 +98,7 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
             return instanceCreator.getInstance();
         } else {
             return getCodecFromDocument(reader, classModel.useDiscriminator(), classModel.getDiscriminatorKey(), registry,
-                    discriminatorLookup, this, classModel.getName())
+                    discriminatorLookup, this, classModel.getType(), classModel.getName())
                     .decode(reader, DecoderContext.builder().checkedDiscriminator(true).build());
         }
     }
@@ -286,7 +286,7 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
     @Nullable
     static <C> Codec<C> getCodecFromDocument(final BsonReader reader, final boolean useDiscriminator, final String discriminatorKey,
             final CodecRegistry registry, final DiscriminatorLookup discriminatorLookup, @Nullable final Codec<C> defaultCodec,
-            final String simpleClassName) {
+            final Class<C> expectedType, final String simpleClassName) {
         Codec<C> codec = defaultCodec;
         if (useDiscriminator) {
             BsonReaderMark mark = reader.getMark();
@@ -297,7 +297,7 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
                 if (discriminatorKey.equals(name)) {
                     discriminatorKeyFound = true;
                     try {
-                        Class<?> discriminatorClass = discriminatorLookup.lookup(reader.readString());
+                        Class<?> discriminatorClass = discriminatorLookup.lookup(expectedType, reader.readString());
                         if (codec == null || !codec.getEncoderClass().equals(discriminatorClass)) {
                             codec = (Codec<C>) registry.get(discriminatorClass);
                         }
