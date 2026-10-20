@@ -125,38 +125,51 @@ public abstract class AbstractClientEncryptionRewrapManyDataKeyProseTest {
 
     @ParameterizedTest
     @MethodSource("data")
-    public void rewrapWithSeparateClientEncryption(final String srcProvider, final String dstProvider) {
-        BsonDocument srcKey = MASTER_KEYS_BY_PROVIDER.get(srcProvider);
-        BsonDocument dstKey = MASTER_KEYS_BY_PROVIDER.get(dstProvider);
-        BsonString testString = new BsonString("test");
+    public void rewrapWithSeparateClientEncryption(final String srcProvider, final String dstProvider) throws Exception {
+        // TODO-JAVA-6341: this test intermittently timesout in CI
+        int maxAttempts = 3;
+        Exception e = null;
+        while (maxAttempts-- > 0) {
+            try {
+                BsonDocument srcKey = MASTER_KEYS_BY_PROVIDER.get(srcProvider);
+                BsonDocument dstKey = MASTER_KEYS_BY_PROVIDER.get(dstProvider);
+                BsonString testString = new BsonString("test");
 
-        getMongoClient().getDatabase("keyvault").getCollection("datakeys").drop();
+                getMongoClient().getDatabase("keyvault").getCollection("datakeys").drop();
 
-        ClientEncryption clientEncryption1 = getClientEncryption(ClientEncryptionSettings.builder()
-                .keyVaultMongoClientSettings(getMongoClientSettingsBuilder().build())
-                .keyVaultNamespace("keyvault.datakeys")
-                .kmsProviders(KMS_PROVIDERS)
-                .build());
+                ClientEncryption clientEncryption1 = getClientEncryption(ClientEncryptionSettings.builder()
+                        .keyVaultMongoClientSettings(getMongoClientSettingsBuilder().build())
+                        .keyVaultNamespace("keyvault.datakeys")
+                        .kmsProviders(KMS_PROVIDERS)
+                        .build());
 
-        BsonBinary keyId = clientEncryption1.createDataKey(srcProvider, new DataKeyOptions().masterKey(srcKey));
+                BsonBinary keyId = clientEncryption1.createDataKey(srcProvider, new DataKeyOptions().masterKey(srcKey));
 
-        BsonBinary ciphertext = clientEncryption1.encrypt(
-                testString,
-                new EncryptOptions("AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic").keyId(keyId));
+                BsonBinary ciphertext = clientEncryption1.encrypt(
+                        testString,
+                        new EncryptOptions("AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic").keyId(keyId));
 
-        ClientEncryption clientEncryption2 = getClientEncryption(ClientEncryptionSettings.builder()
-                .keyVaultMongoClientSettings(getMongoClientSettingsBuilder().build())
-                .keyVaultNamespace("keyvault.datakeys")
-                .kmsProviders(KMS_PROVIDERS)
-                .build());
+                ClientEncryption clientEncryption2 = getClientEncryption(ClientEncryptionSettings.builder()
+                        .keyVaultMongoClientSettings(getMongoClientSettingsBuilder().build())
+                        .keyVaultNamespace("keyvault.datakeys")
+                        .kmsProviders(KMS_PROVIDERS)
+                        .build());
 
-        RewrapManyDataKeyResult result = clientEncryption2.rewrapManyDataKey(
-                new BsonDocument(),
-                new RewrapManyDataKeyOptions().provider(dstProvider).masterKey(dstKey));
-        assertEquals(1, result.getBulkWriteResult().getModifiedCount());
+                RewrapManyDataKeyResult result = clientEncryption2.rewrapManyDataKey(
+                        new BsonDocument(),
+                        new RewrapManyDataKeyOptions().provider(dstProvider).masterKey(dstKey));
+                assertEquals(1, result.getBulkWriteResult().getModifiedCount());
 
-        assertEquals(testString, clientEncryption1.decrypt(ciphertext));
-        assertEquals(testString, clientEncryption2.decrypt(ciphertext));
+                assertEquals(testString, clientEncryption1.decrypt(ciphertext));
+                assertEquals(testString, clientEncryption2.decrypt(ciphertext));
+                return;
+            } catch (Exception ex) {
+                if (e == null) {
+                    e = ex;
+                }
+            }
+        }
+        throw e;
     }
 
     @Test

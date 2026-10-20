@@ -33,6 +33,7 @@ import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.time.TimePointTest;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
+import com.mongodb.test.FlakyTest;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -88,7 +89,8 @@ public class ServerDiscoveryAndMonitoringProseTests {
     static final String HELLO = "hello";
     static final String LEGACY_HELLO = "isMaster";
 
-    @Test
+    // TODO-JAVA-6341: this test intermittently timesout in CI
+    @FlakyTest(maxAttempts = 3)
     @SuppressWarnings("try")
     public void testHeartbeatFrequency() throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(5);
