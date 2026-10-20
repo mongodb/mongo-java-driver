@@ -39,6 +39,7 @@ import static com.mongodb.ClusterFixture.isWindows;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.FORCE_FLAKY;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.IGNORE_EXTRA_EVENTS;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.RETRY;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SKIP;
@@ -625,6 +626,26 @@ public final class UnifiedTestModifications {
 
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5672")
                 .file("unified-test-format/tests/valid-fail", "operator-matchAsDocument");
+
+        // TODO-JAVA-6341: this test intermittently timesout in CI
+        def.modify(FORCE_FLAKY)
+                .test("client-side-encryption", "rewrapManyDataKey", "rewrap with new local KMS provider")
+                .test("client-side-encryption", "rewrapManyDataKey", "rewrap with new Azure KMS provider")
+                .test("client-side-encryption", "types", "type=symbol")
+                .test("client-side-operations-timeout", "retryability-timeoutMS",
+                    "timeoutMS applies to whole operation, not individual attempts - deleteOne on collection")
+                .test("client-side-operations-timeout", "gridfs-find",
+                        "timeoutMS behaves correctly for GridFS find operations");
+
+        // Server problems
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-6342")
+                .test("server-discovery-and-monitoring", "auth-network-timeout-error",
+                "Reset server and pool after network timeout error during authentication")
+                .test("server-discovery-and-monitoring", "hello-timeout", "Driver extends timeout while streaming")
+                .test("load-balancers",
+                        "cursors are correctly pinned to connections for load-balanced clusters",
+                        "pinned connections are returned after a network error during a killCursors request");
+
     }
 
     /**

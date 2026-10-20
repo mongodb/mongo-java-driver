@@ -25,6 +25,7 @@ import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.lang.Nullable;
+import com.mongodb.test.FlakyTest;
 import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
@@ -60,7 +61,8 @@ public class ContextProviderTest {
             }
     }
 
-    @Test
+    // TODO-JAVA-6341: this test intermittently timesout in CI
+    @FlakyTest(maxAttempts = 3)
     public void contextShouldBeNullByDefaultInCommandEvents() {
 
         TestCommandListener commandListener = new TestCommandListener(null);
