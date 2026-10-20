@@ -128,6 +128,24 @@ public interface BsonInput extends Closeable {
     boolean hasRemaining();
 
     /**
+     * Gets an upper bound on the number of bytes remaining to be read, or {@link Integer#MAX_VALUE} if this input cannot
+     * determine one. Decoders use this to reject an impossible declared length before allocating an array of that size.
+     *
+     * <p>The default returns {@link Integer#MAX_VALUE}, the maximum size the BSON format permits (the int32 length field)
+     * and the same value {@link org.bson.BsonBinaryWriterSettings#BsonBinaryWriterSettings() BsonBinaryWriterSettings}
+     * uses as its default maximum document size. It means "no tighter bound is known" and disables the pre-allocation
+     * check. Implementations backed by untrusted or streamed input <strong>should</strong> override this to return their
+     * actual remaining length; otherwise a small malformed input that declares a huge length can trigger a large
+     * allocation (and potential {@link OutOfMemoryError}) before the read fails.</p>
+     *
+     * @return an upper bound on the number of readable bytes, or {@link Integer#MAX_VALUE} if unknown
+     * @since 5.10
+     */
+    default int getRemaining() {
+        return Integer.MAX_VALUE;
+    }
+
+    /**
      * Pipes the specified number of bytes from {@linkplain BsonInput this} input to the given {@linkplain BsonOutput output}.
      *
      * @param output the output to pipe to

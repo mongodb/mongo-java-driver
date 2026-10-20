@@ -31,6 +31,7 @@ import com.mongodb.reactivestreams.client.gridfs.GridFSBucket;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBuckets;
 import com.mongodb.reactivestreams.client.syncadapter.SyncGridFSBucket;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
+import com.mongodb.test.FlakyTest;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 import org.bson.Document;
@@ -459,7 +460,8 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
     @DisplayName("TimeoutMS is honored for next operation when several getMore executed internally")
-    @Test
+    // TODO-JAVA-6341: this test intermittently timesout in CI
+    @FlakyTest(maxAttempts = 3)
     public void testTimeoutMsISHonoredForNnextOperationWhenSeveralGetMoreExecutedInternally() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeTrue(isDiscoverableReplicaSet());
