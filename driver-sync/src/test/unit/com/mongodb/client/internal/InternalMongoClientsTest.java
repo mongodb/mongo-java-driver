@@ -50,7 +50,7 @@ class InternalMongoClientsTest {
     void testCreateWithCustomInternalConnectionPoolSettings() {
         // Demonstrates setting custom internal connection pool settings
         InternalConnectionPoolSettings poolSettings = InternalConnectionPoolSettings.builder()
-                .prestartAsyncWorkManager(false)
+                .prestartAsyncWorkManager(true)
                 .build();
 
         InternalMongoClientSettings internalSettings = InternalMongoClientSettings.builder()
