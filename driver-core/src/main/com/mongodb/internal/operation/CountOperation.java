@@ -47,14 +47,17 @@ public class CountOperation implements  ReadOperationSimple<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
     private final MongoNamespace namespace;
     private boolean retryReads;
+    @Nullable
+    private final Integer maxAdaptiveRetriesSetting;
     private BsonDocument filter;
     private BsonValue hint;
     private long skip;
     private long limit;
     private Collation collation;
 
-    public CountOperation(final MongoNamespace namespace) {
+    public CountOperation(final MongoNamespace namespace, @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.namespace = notNull("namespace", namespace);
+        this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
     }
 
     public BsonDocument getFilter() {
@@ -124,13 +127,13 @@ public class CountOperation implements  ReadOperationSimple<Long> {
     @Override
     public Long execute(final ReadBinding binding, final OperationContext operationContext) {
         return executeRetryableRead(binding, operationContext, namespace.getDatabaseName(),
-                                    getCommandCreator(), DECODER, transformer(), retryReads);
+                                    getCommandCreator(), DECODER, transformer(), retryReads, maxAdaptiveRetriesSetting);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<Long> callback) {
         executeRetryableReadAsync(binding, operationContext,  namespace.getDatabaseName(),
-                                  getCommandCreator(), DECODER, asyncTransformer(), retryReads, callback);
+                                  getCommandCreator(), DECODER, asyncTransformer(), retryReads, maxAdaptiveRetriesSetting, callback);
     }
 
     private CommandReadTransformer<BsonDocument, Long> transformer() {

@@ -66,6 +66,7 @@ import static com.mongodb.connection.ClusterType.UNKNOWN;
 import static com.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_SERVER_VERSION;
 import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
+import static com.mongodb.internal.ExceptionUtils.rethrowIfError;
 import static com.mongodb.internal.Locks.withInterruptibleLock;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.connection.EventHelper.wouldDescriptionsGenerateEquivalentEvents;
@@ -113,9 +114,9 @@ abstract class BaseCluster implements Cluster {
     private volatile ClusterDescription description;
 
     BaseCluster(final ClusterId clusterId,
-                final ClusterSettings settings,
-                final ClusterableServerFactory serverFactory,
-                final ClientMetadata clientMetadata) {
+                          final ClusterSettings settings,
+                          final ClusterableServerFactory serverFactory,
+                          final ClientMetadata clientMetadata) {
         this.clusterId = notNull("clusterId", clusterId);
         this.settings = notNull("settings", settings);
         this.serverFactory = notNull("serverFactory", serverFactory);
@@ -159,7 +160,7 @@ abstract class BaseCluster implements Cluster {
             if (serverTuple != null) {
                 ServerAddress serverAddress = serverTuple.getServerDescription().getAddress();
                 logServerSelectionSucceeded(operationContext, clusterId, serverAddress, serverSelector, currentDescription);
-                serverDeprioritization.updateCandidate(serverAddress);
+                serverDeprioritization.updateCandidate(serverAddress, currentDescription.getType());
                 return serverTuple;
             }
             computedServerSelectionTimeout.onExpired(() ->
@@ -185,6 +186,7 @@ abstract class BaseCluster implements Cluster {
             final SingleResultCallback<ServerTuple> callback) {
         if (isClosed()) {
             callback.onResult(null, new MongoClientException("Cluster was closed during server selection."));
+            return;
         }
 
         Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
@@ -280,7 +282,7 @@ abstract class BaseCluster implements Cluster {
     private boolean handleServerSelectionRequest(
             final ServerSelectionRequest request, final CountDownLatch currentPhase,
             final ClusterDescription description) {
-
+        boolean requestOnResultCalled = false;
         try {
             OperationContext operationContext = request.getOperationContext();
             if (currentPhase != request.phase) {
@@ -302,7 +304,8 @@ abstract class BaseCluster implements Cluster {
                 if (serverTuple != null) {
                     ServerAddress serverAddress = serverTuple.getServerDescription().getAddress();
                     logServerSelectionSucceeded(operationContext, clusterId, serverAddress, request.originalSelector, description);
-                    serverDeprioritization.updateCandidate(serverAddress);
+                    serverDeprioritization.updateCandidate(serverAddress, description.getType());
+                    requestOnResultCalled = true;
                     request.onResult(serverTuple, null);
                     return true;
                 }
@@ -315,7 +318,10 @@ abstract class BaseCluster implements Cluster {
                 logAndThrowTimeoutException(operationContext, request.originalSelector, description);
             });
             return false;
-        } catch (Exception e) {
+        } catch (Throwable e) {
+            if (requestOnResultCalled) {
+                throw e;
+            }
             request.onResult(null, e);
             return true;
         }
@@ -361,8 +367,7 @@ abstract class BaseCluster implements Cluster {
             final ClusterSettings settings) {
         List<ServerSelector> selectors = Stream.of(
                 getRaceConditionPreFilteringSelector(serversSnapshot),
-                serverSelector,
-                serverDeprioritization.getServerSelector(),
+                serverDeprioritization.apply(serverSelector),
                 settings.getServerSelector(), // may be null
                 new LatencyMinimizingServerSelector(settings.getLocalThreshold(MILLISECONDS), MILLISECONDS),
                 AtMostTwoRandomServerSelector.instance(),
@@ -455,8 +460,9 @@ abstract class BaseCluster implements Cluster {
         void onResult(@Nullable final ServerTuple serverTuple, @Nullable final Throwable t) {
             try {
                 callback.onResult(serverTuple, t);
-            } catch (Throwable tr) {
-                // ignore
+            } catch (Throwable e) {
+                LOGGER.error("Callback onResult call produced an error", e);
+                rethrowIfError(e);
             }
         }
 

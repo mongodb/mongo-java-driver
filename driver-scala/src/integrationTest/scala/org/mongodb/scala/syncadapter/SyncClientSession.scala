@@ -98,5 +98,7 @@ case class SyncClientSession(wrapped: ClientSession, originator: Object) extends
 
   override def getTimeoutContext: TimeoutContext = wrapped.getTimeoutContext
 
+  override def getOverloadRetryPolicyState: Object = wrapped.getOverloadRetryPolicyState
+
   override def getTransactionSpan: TransactionSpan = null
 }

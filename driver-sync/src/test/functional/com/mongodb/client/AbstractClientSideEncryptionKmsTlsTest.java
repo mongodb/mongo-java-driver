@@ -262,8 +262,8 @@ public abstract class AbstractClientSideEncryptionKmsTlsTest {
             case "azure":
             case "azure:named":
                 return "{"
-                        + "  \"keyVaultEndpoint\": \"key-vault-csfle.vault.azure.net\","
-                        + "  \"keyName\": \"key-name-csfle\""
+                        + "  \"keyVaultEndpoint\": \"drivers-3392-key-vault.vault.azure.net\","
+                        + "  \"keyName\": \"drivers-3392-keyname\""
                         + "}";
             case "gcp":
             case "gcp:named":

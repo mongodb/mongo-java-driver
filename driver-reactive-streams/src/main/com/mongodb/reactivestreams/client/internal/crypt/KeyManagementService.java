@@ -36,6 +36,7 @@ import com.mongodb.internal.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.internal.crypt.capi.MongoKeyDecryptor;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
@@ -100,7 +101,7 @@ class KeyManagementService implements Closeable {
                     handleError(t, operationContext, sink);
                 }
             });
-        }).onErrorMap(this::unWrapException);
+        }).onErrorMap(Exception.class, this::unWrapException);
     }
 
     private void streamWrite(final Stream stream, final MongoKeyDecryptor keyDecryptor,
@@ -182,7 +183,7 @@ class KeyManagementService implements Closeable {
                         throw new MongoOperationTimeoutException(TIMEOUT_ERROR_MESSAGE);
                     });
         }
-        return OperationContext.simpleOperationContext(new TimeoutContext(timeoutSettings));
+        return OperationContext.simpleOperationContext(timeoutSettings, null, AsyncClientExecutor.NO_OP);
     }
 
     @NonNull

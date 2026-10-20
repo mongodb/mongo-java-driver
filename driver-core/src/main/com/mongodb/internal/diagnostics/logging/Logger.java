@@ -17,8 +17,7 @@
 package com.mongodb.internal.diagnostics.logging;
 
 /**
- * This class is not part of the public API.  It may be removed or changed at any time.
- *
+ * This class is not part of the public API and may be removed or changed at any time.
  */
 public interface Logger {
     /**

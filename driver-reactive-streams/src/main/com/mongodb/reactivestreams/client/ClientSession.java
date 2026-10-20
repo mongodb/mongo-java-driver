@@ -17,7 +17,9 @@
 
 package com.mongodb.reactivestreams.client;
 
+import com.mongodb.MongoException;
 import com.mongodb.TransactionOptions;
+import com.mongodb.annotations.Internal;
 import com.mongodb.internal.observability.micrometer.TransactionSpan;
 import com.mongodb.lang.Nullable;
 import org.reactivestreams.Publisher;
@@ -37,14 +39,14 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
     boolean hasActiveTransaction();
 
     /**
-     *  Notify the client session that a message has been sent.
+     *  Notify that a message is about to be sent.
      *  <p>
      *      For internal use only
      *  </p>
      *
-     * @return true if this is the first message sent, false otherwise
-     * @since 4.0
+     * @return true Iff the message must bear {@code startTransaction: true}.
      */
+    @Internal
     boolean notifyMessageSent();
 
     /**
@@ -54,6 +56,7 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      * </p>
      * @param operation the operation
      */
+    @Internal
     void notifyOperationInitiated(Object operation);
 
     /**
@@ -67,6 +70,7 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      * Start a transaction in the context of this session with default transaction options. A transaction can not be started if there is
      * already an active transaction on this session.
      *
+     * @see MongoException#TRANSIENT_TRANSACTION_ERROR_LABEL
      * @mongodb.server.release 4.0
      */
     void startTransaction();
@@ -77,14 +81,16 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      *
      * @param transactionOptions the options to apply to the transaction
      *
+     * @see MongoException#TRANSIENT_TRANSACTION_ERROR_LABEL
      * @mongodb.server.release 4.0
      */
     void startTransaction(TransactionOptions transactionOptions);
 
     /**
-     * Commit a transaction in the context of this session.  A transaction can only be commmited if one has first been started.
+     * Commit a transaction in the context of this session.  A transaction can only be committed if one has first been started.
      *
      * @return an empty publisher that indicates when the operation has completed
+     * @see MongoException#UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL
      * @mongodb.server.release 4.0
      */
     Publisher<Void> commitTransaction();

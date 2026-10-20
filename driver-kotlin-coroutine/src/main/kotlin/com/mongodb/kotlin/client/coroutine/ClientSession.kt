@@ -18,6 +18,7 @@ package com.mongodb.kotlin.client.coroutine
 import com.mongodb.ClientSessionOptions
 import com.mongodb.ServerAddress
 import com.mongodb.TransactionOptions
+import com.mongodb.annotations.Internal
 import com.mongodb.internal.TimeoutContext
 import com.mongodb.internal.observability.micrometer.TransactionSpan
 import com.mongodb.reactivestreams.client.ClientSession as reactiveClientSession
@@ -41,13 +42,13 @@ public class ClientSession(public val wrapped: reactiveClientSession) : jClientS
     public fun hasActiveTransaction(): Boolean = wrapped.hasActiveTransaction()
 
     /**
-     * Notify the client session that a message has been sent.
+     * Notify that a message is about to be sent.
      *
      * For internal use only
      *
-     * @return true if this is the first message sent, false otherwise
+     * @return true Iff the message must bear {@code startTransaction: true}.
      */
-    public fun notifyMessageSent(): Boolean = wrapped.notifyMessageSent()
+    @Internal public fun notifyMessageSent(): Boolean = wrapped.notifyMessageSent()
 
     /**
      * Notify the client session that command execution is being initiated. This should be called before server
@@ -57,7 +58,7 @@ public class ClientSession(public val wrapped: reactiveClientSession) : jClientS
      *
      * @param operation the operation
      */
-    public fun notifyOperationInitiated(operation: Any): Unit = wrapped.notifyOperationInitiated(operation)
+    @Internal public fun notifyOperationInitiated(operation: Any): Unit = wrapped.notifyOperationInitiated(operation)
 
     /** Get the transaction span (if started). */
     public fun getTransactionSpan(): TransactionSpan? = wrapped.transactionSpan
@@ -67,7 +68,7 @@ public class ClientSession(public val wrapped: reactiveClientSession) : jClientS
      *
      * @return the server address of the pinned mongos
      */
-    public override fun getPinnedServerAddress(): ServerAddress? = wrapped.pinnedServerAddress
+    @Internal public override fun getPinnedServerAddress(): ServerAddress? = wrapped.pinnedServerAddress
 
     /**
      * Gets the transaction context.
@@ -76,7 +77,7 @@ public class ClientSession(public val wrapped: reactiveClientSession) : jClientS
      *
      * @return the transaction context
      */
-    public override fun getTransactionContext(): Any? = wrapped.transactionContext
+    @Internal public override fun getTransactionContext(): Any? = wrapped.transactionContext
 
     /**
      * Sets the transaction context.
@@ -88,6 +89,7 @@ public class ClientSession(public val wrapped: reactiveClientSession) : jClientS
      * @param address the server address
      * @param transactionContext the transaction context
      */
+    @Internal
     public override fun setTransactionContext(address: ServerAddress, transactionContext: Any): Unit =
         wrapped.setTransactionContext(address, transactionContext)
 
@@ -96,21 +98,21 @@ public class ClientSession(public val wrapped: reactiveClientSession) : jClientS
      *
      * For internal use only
      */
-    public override fun clearTransactionContext(): Unit = wrapped.clearTransactionContext()
+    @Internal public override fun clearTransactionContext(): Unit = wrapped.clearTransactionContext()
 
     /**
      * Get the recovery token from the latest outcome in a sharded transaction. For internal use only.
      *
-     * @return the recovery token @mongodb.server.release 4.2
-     * @since 3.11
+     * @return the recovery token
      */
-    public override fun getRecoveryToken(): BsonDocument? = wrapped.recoveryToken
+    @Internal public override fun getRecoveryToken(): BsonDocument? = wrapped.recoveryToken
 
     /**
      * Set the recovery token. For internal use only.
      *
      * @param recoveryToken the recovery token
      */
+    @Internal
     public override fun setRecoveryToken(recoveryToken: BsonDocument) {
         wrapped.recoveryToken = recoveryToken
     }
@@ -164,6 +166,7 @@ public class ClientSession(public val wrapped: reactiveClientSession) : jClientS
      *
      * @param snapshotTimestamp the snapshot timestamp
      */
+    @Internal
     public override fun setSnapshotTimestamp(snapshotTimestamp: BsonTimestamp?) {
         wrapped.snapshotTimestamp = snapshotTimestamp
     }
@@ -173,7 +176,7 @@ public class ClientSession(public val wrapped: reactiveClientSession) : jClientS
      *
      * @return the snapshot timestamp
      */
-    public override fun getSnapshotTimestamp(): BsonTimestamp? = wrapped.snapshotTimestamp
+    @Internal public override fun getSnapshotTimestamp(): BsonTimestamp? = wrapped.snapshotTimestamp
 
     /** @return the latest cluster time seen by this session */
     public override fun getClusterTime(): BsonDocument = wrapped.clusterTime
@@ -188,6 +191,8 @@ public class ClientSession(public val wrapped: reactiveClientSession) : jClientS
     /**
      * Start a transaction in the context of this session with default transaction options. A transaction can not be
      * started if there is already an active transaction on this session.
+     *
+     * @see com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL
      */
     public fun startTransaction(): Unit = wrapped.startTransaction()
 
@@ -196,15 +201,17 @@ public class ClientSession(public val wrapped: reactiveClientSession) : jClientS
      * started if there is already an active transaction on this session.
      *
      * @param transactionOptions the options to apply to the transaction
+     * @see com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL
      */
     public fun startTransaction(transactionOptions: TransactionOptions): Unit =
         wrapped.startTransaction(transactionOptions)
 
     /**
-     * Commit a transaction in the context of this session. A transaction can only be commmited if one has first been
+     * Commit a transaction in the context of this session. A transaction can only be committed if one has first been
      * started.
      *
      * @return an empty publisher that indicates when the operation has completed
+     * @see com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL
      */
     public suspend fun commitTransaction() {
         wrapped.commitTransaction().awaitFirstOrNull()
@@ -228,9 +235,11 @@ public class ClientSession(public val wrapped: reactiveClientSession) : jClientS
      * Note: For internal use only
      *
      * @return the timeout to use
-     * @since 5.2
      */
-    public override fun getTimeoutContext(): TimeoutContext? = wrapped.timeoutContext
+    @Internal public override fun getTimeoutContext(): TimeoutContext? = wrapped.timeoutContext
+
+    /** For internal use only. */
+    @Internal public override fun getOverloadRetryPolicyState(): Any = wrapped.overloadRetryPolicyState
 }
 
 /**

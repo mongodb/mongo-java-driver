@@ -81,8 +81,7 @@ public final class FailPoint implements AutoCloseable {
 
         /**
          * May be invoked at most once.
-         *
-         * @see #close()
+         * Must not be invoked if {@link #close()} was invoked.
          */
         FailPoint intoFailPoint() {
             assertFalse(consumed);
@@ -93,10 +92,13 @@ public final class FailPoint implements AutoCloseable {
 
         /**
          * Invokes {@link #disableAndClose(BsonDocument, MongoClient)} unless {@link #intoFailPoint()} was invoked.
+         * <p>
+         * Idempotent.
          */
         @Override
         public void close() {
             if (!consumed) {
+                consumed = true;
                 disableAndClose(failPointDocument, client);
             }
         }

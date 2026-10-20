@@ -131,6 +131,8 @@ class MongoClientURISpecification extends Specification {
                 + 'heartbeatFrequencyMS=20000&'
                 + 'retryWrites=true&'
                 + 'retryReads=true&'
+                + 'maxAdaptiveRetries=42&'
+                + 'enableOverloadRetargeting=true&'
                 + 'uuidRepresentation=csharpLegacy&'
                 + 'appName=app1&'
                 + 'timeoutMS=10000')
@@ -158,6 +160,8 @@ class MongoClientURISpecification extends Specification {
         options.getHeartbeatFrequency() == 20000
         options.getRetryWrites()
         options.getRetryReads()
+        options.getMaxAdaptiveRetries() == 42
+        options.getEnableOverloadRetargeting()
         options.getUuidRepresentation() == UuidRepresentation.C_SHARP_LEGACY
         options.getApplicationName() == 'app1'
     }
@@ -178,6 +182,8 @@ class MongoClientURISpecification extends Specification {
         !options.isSslEnabled()
         options.getRetryWrites()
         options.getRetryReads()
+        options.getMaxAdaptiveRetries() == null
+        !options.getEnableOverloadRetargeting()
         options.getUuidRepresentation() == UuidRepresentation.UNSPECIFIED
     }
 
@@ -188,6 +194,8 @@ class MongoClientURISpecification extends Specification {
                 .readPreference(ReadPreference.secondary())
                 .retryWrites(true)
                 .retryReads(true)
+                .maxAdaptiveRetries(42)
+                .enableOverloadRetargeting(true)
                 .writeConcern(WriteConcern.JOURNALED)
                 .minConnectionsPerHost(30)
                 .connectionsPerHost(500)
@@ -220,6 +228,8 @@ class MongoClientURISpecification extends Specification {
         options.getWriteConcern() == WriteConcern.JOURNALED
         options.getRetryWrites()
         options.getRetryReads()
+        options.getMaxAdaptiveRetries() == 42
+        options.getEnableOverloadRetargeting()
         options.getTimeout() == 10_000
         options.getServerSelectionTimeout() == 150
         options.getMaxWaitTime() == 200
@@ -298,7 +308,8 @@ class MongoClientURISpecification extends Specification {
 
     def 'should apply SRV parameters'() {
         when:
-        def uri = new MongoClientURI('mongodb+srv://test3.test.build.10gen.cc/?srvMaxHosts=4&srvServiceName=test')
+        def uri = new MongoClientURI(
+                'mongodb+srv://test3.test.build.10gen.cc/?srvMaxHosts=4&srvServiceName=test&srvAllowedHostsSuffix=.build.10gen.cc')
 
         then:
         uri.getSrvMaxHosts() == 4
@@ -310,28 +321,42 @@ class MongoClientURISpecification extends Specification {
         then:
         options.getSrvMaxHosts() == 4
         options.getSrvServiceName() == 'test'
+        options.getSrvAllowedHostsSuffix() == '.build.10gen.cc'
     }
 
     def 'should respect MongoClientOptions builder'() {
         given:
-        def uri = new MongoClientURI('mongodb://localhost/', MongoClientOptions.builder().connectionsPerHost(200))
+        def uri = new MongoClientURI('mongodb://localhost/', MongoClientOptions.builder()
+                .connectionsPerHost(200)
+                .maxAdaptiveRetries(42)
+                .enableOverloadRetargeting(true))
 
         when:
         def options = uri.getOptions()
 
         then:
         options.getConnectionsPerHost() == 200
+        options.getMaxAdaptiveRetries() == 42
+        options.getEnableOverloadRetargeting()
     }
 
     def 'should override MongoClientOptions builder'() {
         given:
-        def uri = new MongoClientURI('mongodb://localhost/?maxPoolSize=250', MongoClientOptions.builder().connectionsPerHost(200))
+        def uri = new MongoClientURI('mongodb://localhost/?'
+                + 'maxPoolSize=250'
+                + '&maxAdaptiveRetries=43'
+                + '&enableOverloadRetargeting=false',
+                MongoClientOptions.builder()
+                        .connectionsPerHost(200)
+                        .maxAdaptiveRetries(42))
 
         when:
         def options = uri.getOptions()
 
         then:
         options.getConnectionsPerHost() == 250
+        options.getMaxAdaptiveRetries() == 43
+        !options.getEnableOverloadRetargeting()
     }
 
     def 'should be equal to another MongoClientURI with the same string values'() {
@@ -371,7 +396,9 @@ class MongoClientURISpecification extends Specification {
                          + 'socketTimeoutMS=5500;'
                          + 'safe=false;w=1;wtimeout=2500;'
                          + 'fsync=true;readPreference=primary;'
-                         + 'ssl=true')                               |  new MongoClientURI('mongodb://localhost/db.coll?minPoolSize=5;'
+                         + 'ssl=true;'
+                         + 'maxAdaptiveRetries=42')                 |  new MongoClientURI('mongodb://localhost/db.coll?'
+                                                                                         + 'minPoolSize=5;'
                                                                                          + 'maxPoolSize=10;'
                                                                                          + 'waitQueueTimeoutMS=150;'
                                                                                          + 'maxIdleTimeMS=200&maxLifeTimeMS=300;'
@@ -379,7 +406,8 @@ class MongoClientURISpecification extends Specification {
                                                                                          + '&replicaSet=test;connectTimeoutMS=2500;'
                                                                                          + 'socketTimeoutMS=5500&safe=false&w=1;'
                                                                                          + 'wtimeout=2500;fsync=true'
-                                                                                         + '&readPreference=primary;ssl=true')
+                                                                                         + '&readPreference=primary;ssl=true;'
+                                                                                         + 'maxAdaptiveRetries=42')
     }
 
     def 'should be not equal to another MongoClientURI with the different string values'() {
@@ -401,12 +429,14 @@ class MongoClientURISpecification extends Specification {
                          + '&readPreferenceTags=dc:ny,rack:1'
                          + '&readPreferenceTags=dc:ny'
                          + '&readPreferenceTags='
-                         + '&maxConnecting=1')                  | new MongoClientURI('mongodb://localhost/'
+                         + '&maxConnecting=1'
+                         + '&maxAdaptiveRetries=42')                 | new MongoClientURI('mongodb://localhost/'
                                                                                        + '?readPreference=secondaryPreferred'
                                                                                        + '&readPreferenceTags=dc:ny'
                                                                                        + '&readPreferenceTags=dc:ny, rack:1'
                                                                                        + '&readPreferenceTags='
-                                                                                       + '&maxConnecting=2')
+                                                                                       + '&maxConnecting=2'
+                                                                                       + '&maxAdaptiveRetries=43')
         new MongoClientURI('mongodb://ross:123@localhost/?'
                          + 'authMechanism=SCRAM-SHA-1')            | new MongoClientURI('mongodb://ross:123@localhost/?'
                                                                                        + 'authMechanism=GSSAPI')
@@ -419,7 +449,8 @@ class MongoClientURISpecification extends Specification {
                                                         + 'minPoolSize=7;maxIdleTimeMS=1000;maxLifeTimeMS=2000;maxConnecting=1;'
                                                         + 'replicaSet=test;'
                                                         + 'connectTimeoutMS=2500;socketTimeoutMS=5500;autoConnectRetry=true;'
-                                                        + 'readPreference=secondaryPreferred;safe=false;w=1;wtimeout=2600')
+                                                        + 'readPreference=secondaryPreferred;safe=false;w=1;wtimeout=2600;'
+                                                        + 'maxAdaptiveRetries=42')
 
         MongoClientOptions.Builder builder = MongoClientOptions.builder()
                                                                .connectionsPerHost(10)
@@ -433,6 +464,7 @@ class MongoClientURISpecification extends Specification {
                                                                .socketTimeout(5500)
                                                                .readPreference(secondaryPreferred())
                                                                .writeConcern(new WriteConcern(1, 2600))
+                                                               .maxAdaptiveRetries(42)
 
         MongoClientOptions options = builder.build()
 

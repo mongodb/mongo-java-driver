@@ -91,5 +91,7 @@ class SyncClientSession(internal val wrapped: ClientSession, private val origina
 
     override fun getTimeoutContext(): TimeoutContext? = wrapped.getTimeoutContext()
 
+    override fun getOverloadRetryPolicyState(): Any = wrapped.getOverloadRetryPolicyState()
+
     override fun getTransactionSpan(): TransactionSpan? = null
 }

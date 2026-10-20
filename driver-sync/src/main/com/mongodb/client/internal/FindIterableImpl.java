@@ -40,7 +40,10 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements FindIterable<TResult> {
+/**
+ * This class is not part of the public API and may be removed or changed at any time.
+ */
+public class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements FindIterable<TResult> {
 
     private final Operations<TDocument> operations;
 
@@ -50,12 +53,13 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
 
     private Bson filter;
 
-    FindIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
+    public FindIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace,
+            final Class<TDocument> documentClass,
             final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-            final ReadConcern readConcern, final OperationExecutor executor, final Bson filter, final boolean retryReads,
-            final TimeoutSettings timeoutSettings) {
+            final ReadConcern readConcern, final OperationExecutor executor, final Bson filter,
+            final boolean retryReads, @Nullable final Integer maxAdaptiveRetriesSetting, final TimeoutSettings timeoutSettings) {
         super(clientSession, executor, readConcern, readPreference, retryReads, timeoutSettings);
-        this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, retryReads, timeoutSettings);
+        this.operations = new Operations<>(namespace, documentClass, readPreference, codecRegistry, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
         this.resultClass = notNull("resultClass", resultClass);
         this.filter = notNull("filter", filter);
         this.findOptions = new FindOptions();

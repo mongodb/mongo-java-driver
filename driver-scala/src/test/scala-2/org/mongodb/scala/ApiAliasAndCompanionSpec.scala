@@ -308,13 +308,14 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
 
   it should "mirror all com.mongodb.client.model.search in org.mongdb.scala.model.search" in {
     val packageName = "com.mongodb.client.model.search"
-    val wrapped = new Reflections(packageName, new SubTypesScanner(false))
-      .getSubTypesOf(classOf[Object])
-      .asScala
-      .filter(_.getPackage.getName == packageName)
-      .filter(classFilter)
-      .map(_.getSimpleName)
-      .toSet
+    val reflections = new Reflections(packageName, new SubTypesScanner(false))
+    val wrapped =
+      (reflections.getSubTypesOf(classOf[Object]).asScala ++
+        reflections.getSubTypesOf(classOf[Enum[_]]).asScala)
+        .filter(_.getPackage.getName == packageName)
+        .filter(classFilter)
+        .map(_.getSimpleName)
+        .toSet
     val scalaPackageName = "org.mongodb.scala.model.search"
     val localPackage = currentMirror.staticPackage(scalaPackageName).info.decls.map(_.name.toString).toSet
     val localObjects = new Reflections(scalaPackageName, new SubTypesScanner(false))

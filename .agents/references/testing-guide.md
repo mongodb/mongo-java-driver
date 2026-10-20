@@ -29,6 +29,15 @@ description: Testing frameworks, conventions, and commands for the MongoDB Java 
 - Descriptive method names: `shouldReturnEmptyListWhenNoDocumentsMatch()` not `test1()`
 - Use `@DisplayName` for human-readable names
 - Clean up test data in `@AfterEach` / `cleanup()` to prevent pollution
+- Import types at the top of the file — do not use inline fully-qualified names
+  (`com.mongodb.connection.AsyncCompletionHandler`, `java.util.List`) in signatures or bodies
+- Use `AtomicInteger` / `AtomicBoolean` for mutable state captured by lambdas or anonymous
+  classes — not single-element array wrappers (`int[]`, `boolean[]`)
+- Assert the most specific exception type the code guarantees
+  (`assertInstanceOf(MongoCommandException.class, e)`, not `Exception.class`)
+- When testing that a side effect happens on condition X (e.g. connection closed on stream
+  desync), also test that it does NOT happen on the neighbouring condition Y (e.g. connection
+  stays open on a command error) — one-sided tests let behavioral regressions through
 
 ## Running Tests
 

@@ -110,10 +110,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         this(collection, query, new DBCollectionFindOptions().projection(fields).readPreference(readPreference), retryReads);
     }
 
-    DBCursor(final DBCollection collection, @Nullable final DBObject filter, final DBCollectionFindOptions findOptions) {
-        this(collection, filter, findOptions, true);
-    }
-
     DBCursor(final DBCollection collection, @Nullable final DBObject filter, final DBCollectionFindOptions findOptions,
              final boolean retryReads) {
         this(collection, filter, findOptions, collection.getExecutor(), collection.getDBDecoderFactory(),
@@ -415,7 +411,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
     private FindOperation<DBObject> getQueryOperation(final Decoder<DBObject> decoder) {
         return new FindOperation<>(
-                collection.getNamespace(), decoder)
+                collection.getNamespace(), decoder,
+                collection.getMaxAdaptiveRetriesSetting())
                 .filter(collection.wrapAllowNull(filter))
                 .batchSize(findOptions.getBatchSize())
                 .skip(findOptions.getSkip())

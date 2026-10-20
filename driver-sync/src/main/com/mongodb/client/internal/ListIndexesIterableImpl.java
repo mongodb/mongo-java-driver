@@ -44,9 +44,9 @@ class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implem
 
     ListIndexesIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TResult> resultClass,
             final CodecRegistry codecRegistry, final ReadPreference readPreference, final OperationExecutor executor,
-            final boolean retryReads, final TimeoutSettings timeoutSettings) {
+            final boolean retryReads, @Nullable final Integer maxAdaptiveRetriesSetting, final TimeoutSettings timeoutSettings) {
         super(clientSession, executor, ReadConcern.DEFAULT, readPreference, retryReads, timeoutSettings);
-        this.operations = new Operations<>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads, timeoutSettings);
+        this.operations = new Operations<>(namespace, BsonDocument.class, readPreference, codecRegistry, retryReads, maxAdaptiveRetriesSetting, timeoutSettings);
         this.resultClass = notNull("resultClass", resultClass);
     }
 

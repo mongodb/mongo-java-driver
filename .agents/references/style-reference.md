@@ -1,8 +1,20 @@
 ---
 name: style-reference
-description: Detailed code style rules for Java, Kotlin, Scala, and Groovy in the MongoDB Java Driver. Use when you need specific formatting rules beyond the basics in root AGENTS.md — e.g., line length, import ordering, brace style.
+description: Detailed code style rules and language level constraints for Java, Kotlin, Scala, and Groovy in the MongoDB Java Driver. Use when you need specific formatting rules beyond the basics in root AGENTS.md — e.g., line length, import ordering, brace style — or when you need to know which language features are available.
 ---
 # Style Reference
+
+## Language Level
+
+**Java 8 language constraint:** Most modules target Java 8. Do not use features from Java 9+
+(`var`, records, text blocks, sealed classes, `Stream.toList()`, switch expressions, pattern
+matching, etc.) unless the module's `build.gradle.kts` explicitly sets a higher
+`sourceCompatibility`.
+
+**Kotlin language constraint:** Kotlin modules use Kotlin 1.8 with JVM target 1.8. All Kotlin
+modules enforce `explicitApi()` — all public declarations must have explicit visibility
+modifiers and types. Do not use Kotlin language features or standard library APIs introduced
+after 1.8.
 
 ## Java Style Rules
 
@@ -40,6 +52,7 @@ description: Detailed code style rules for Java, Kotlin, Scala, and Groovy in th
 - Use `@mongodb.server.release <version>` to indicate the minimum server version required
 - Scala modules use Scaladoc — follow Scaladoc conventions (`@param`, `@return`, `@since`, `@see`)
 - Internal packages (`com.mongodb.internal.*`, `org.bson.internal.*`) are excluded from doc generation
+- Every public package must have a `package-info.java`
 - Run `./gradlew docs` to validate Javadoc/KDoc/Scaladoc builds cleanly
 
 ## Prohibited Patterns

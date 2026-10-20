@@ -44,56 +44,70 @@ import static org.bson.assertions.Assertions.notNull;
 
 class MongoKeyDecryptorImpl implements MongoKeyDecryptor {
     private final mongocrypt_kms_ctx_t wrapped;
+    /**
+     * The lifetime of the context this decryptor came from. libmongocrypt owns {@link #wrapped} inside that
+     * context and frees it when the context is destroyed, so calls here must be guarded by the same lock —
+     * {@code feed} in particular runs from a KMS socket callback, long after the caller may have cancelled.
+     */
+    private final MongoCryptContextLifetime lifetime;
 
-    MongoKeyDecryptorImpl(final mongocrypt_kms_ctx_t wrapped) {
+    MongoKeyDecryptorImpl(final mongocrypt_kms_ctx_t wrapped, final MongoCryptContextLifetime lifetime) {
         notNull("wrapped", wrapped);
+        notNull("lifetime", lifetime);
         this.wrapped = wrapped;
+        this.lifetime = lifetime;
     }
 
     @Override
     public String getKmsProvider() {
-        return mongocrypt_kms_ctx_get_kms_provider(wrapped, null).toString();
+        return lifetime.guarded(() -> mongocrypt_kms_ctx_get_kms_provider(wrapped, null).toString());
     }
 
     @Override
     public String getHostName() {
-        PointerByReference hostNamePointerByReference = new PointerByReference();
-        boolean success = mongocrypt_kms_ctx_endpoint(wrapped, hostNamePointerByReference);
-        if (!success) {
-            throwExceptionFromStatus();
-        }
-        Pointer hostNamePointer = hostNamePointerByReference.getValue();
-        return hostNamePointer.getString(0);
+        return lifetime.guarded(() -> {
+            PointerByReference hostNamePointerByReference = new PointerByReference();
+            boolean success = mongocrypt_kms_ctx_endpoint(wrapped, hostNamePointerByReference);
+            if (!success) {
+                throwExceptionFromStatus();
+            }
+            Pointer hostNamePointer = hostNamePointerByReference.getValue();
+            return hostNamePointer.getString(0);
+        });
     }
 
     @Override
     public ByteBuffer getMessage() {
-        mongocrypt_binary_t binary = mongocrypt_binary_new();
+        return lifetime.guarded(() -> {
+            mongocrypt_binary_t binary = mongocrypt_binary_new();
 
-        try {
-            boolean success = mongocrypt_kms_ctx_message(wrapped, binary);
-            if (!success) {
-                throwExceptionFromStatus();
+            try {
+                boolean success = mongocrypt_kms_ctx_message(wrapped, binary);
+                if (!success) {
+                    throwExceptionFromStatus();
+                }
+                return toByteBuffer(binary);
+            } finally {
+                mongocrypt_binary_destroy(binary);
             }
-            return toByteBuffer(binary);
-        } finally {
-            mongocrypt_binary_destroy(binary);
-        }
+        });
     }
 
     @Override
     public int bytesNeeded() {
-        return mongocrypt_kms_ctx_bytes_needed(wrapped);
+        return lifetime.guarded(() -> mongocrypt_kms_ctx_bytes_needed(wrapped));
     }
 
     @Override
     public void feed(final ByteBuffer bytes) {
-        try (BinaryHolder binaryHolder = toBinary(bytes)) {
-            boolean success = mongocrypt_kms_ctx_feed(wrapped, binaryHolder.getBinary());
-            if (!success) {
-                throwExceptionFromStatus();
+        lifetime.guarded(() -> {
+            try (BinaryHolder binaryHolder = toBinary(bytes)) {
+                boolean success = mongocrypt_kms_ctx_feed(wrapped, binaryHolder.getBinary());
+                if (!success) {
+                    throwExceptionFromStatus();
+                }
             }
-        }
+        });
     }
 
     private void throwExceptionFromStatus() {

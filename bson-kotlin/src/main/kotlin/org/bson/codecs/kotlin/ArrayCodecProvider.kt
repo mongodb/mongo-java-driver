@@ -24,8 +24,12 @@ import org.bson.codecs.configuration.CodecRegistry
 public class ArrayCodecProvider : CodecProvider {
     override fun <T : Any> get(clazz: Class<T>, registry: CodecRegistry): Codec<T>? = get(clazz, emptyList(), registry)
 
+    @Suppress("UNCHECKED_CAST")
     override fun <T : Any> get(clazz: Class<T>, typeArguments: List<Type>, registry: CodecRegistry): Codec<T>? =
-        if (clazz.isArray) {
+        if (clazz == ByteArray::class.java) {
+            // ByteArrays are encoded as compact BSON Binary, not as a BSON Array of Int32.
+            LenientByteArrayCodec as Codec<T>
+        } else if (clazz.isArray) {
             ArrayCodec.create(clazz.kotlin, typeArguments, registry)
         } else null
 }

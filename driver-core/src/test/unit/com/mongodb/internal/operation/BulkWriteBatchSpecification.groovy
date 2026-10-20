@@ -309,7 +309,7 @@ class BulkWriteBatchSpecification extends Specification {
                 [new DeleteRequest(new BsonDocument()).multi(true), new InsertRequest(new BsonDocument())], operationContext, null, null)
 
         then:
-        !bulkWriteBatch.getRetryWrites()
+        !bulkWriteBatch.isWriteRetryRequirementsMet()
     }
 
     def 'should handle operation responses'() {

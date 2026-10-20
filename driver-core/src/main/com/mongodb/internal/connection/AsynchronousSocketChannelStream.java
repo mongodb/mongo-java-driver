@@ -19,8 +19,10 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.ServerAddress;
+import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
+import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
 
@@ -38,6 +40,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.connection.ServerAddressHelper.getSocketAddresses;
 
 /**
@@ -47,24 +50,24 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
     private final ServerAddress serverAddress;
     private final InetAddressResolver inetAddressResolver;
     private final SocketSettings settings;
-    @Nullable
-    private final AsynchronousChannelGroup group;
+    private final AsynchronousSocketChannelOpener channelOpener;
 
+    @VisibleForTesting(otherwise = PRIVATE)
     AsynchronousSocketChannelStream(
             final ServerAddress serverAddress, final InetAddressResolver inetAddressResolver,
             final SocketSettings settings, final PowerOfTwoBufferPool bufferProvider) {
-        this(serverAddress, inetAddressResolver, settings, bufferProvider, null);
+        this(serverAddress, inetAddressResolver, settings, bufferProvider, AsynchronousSocketChannel::open);
     }
 
-    public AsynchronousSocketChannelStream(
+    AsynchronousSocketChannelStream(
             final ServerAddress serverAddress, final InetAddressResolver inetAddressResolver,
             final SocketSettings settings, final PowerOfTwoBufferPool bufferProvider,
-            @Nullable final AsynchronousChannelGroup group) {
+            final AsynchronousSocketChannelOpener channelOpener) {
         super(serverAddress, settings, bufferProvider);
         this.serverAddress = serverAddress;
         this.inetAddressResolver = inetAddressResolver;
         this.settings = settings;
-        this.group = group;
+        this.channelOpener = channelOpener;
     }
 
     @Override
@@ -89,10 +92,7 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
             SocketAddress socketAddress = socketAddressQueue.poll();
 
             try {
-                AsynchronousSocketChannel attemptConnectionChannel;
-                attemptConnectionChannel = group == null
-                        ? AsynchronousSocketChannel.open()
-                        : AsynchronousSocketChannel.open(group);
+                AsynchronousSocketChannel attemptConnectionChannel = channelOpener.open();
                 attemptConnectionChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
                 attemptConnectionChannel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
                 if (settings.getReceiveBufferSize() > 0) {
@@ -206,5 +206,16 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
         public void close() throws IOException {
             channel.close();
         }
+    }
+
+    /**
+     * An implementation must be thread-safe.
+     */
+    @ThreadSafe
+    interface AsynchronousSocketChannelOpener {
+        /**
+         * See {@link AsynchronousSocketChannel#open(AsynchronousChannelGroup)}.
+         */
+        AsynchronousSocketChannel open() throws IOException;
     }
 }

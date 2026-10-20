@@ -33,14 +33,14 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
 
     def 'should find with correct command'() {
         when:
-        def operation = new FindOperation<BsonDocument>(namespace, new BsonDocumentCodec())
+        def operation = new FindOperation<BsonDocument>(namespace, new BsonDocumentCodec(), null)
         def expectedCommand = new BsonDocument('find', new BsonString(namespace.getCollectionName()))
 
         then:
         testOperation(operation, [3, 2, 0], expectedCommand, async, commandResult)
         // Overrides
         when:
-        operation = new FindOperation<BsonDocument>(namespace, new BsonDocumentCodec())
+        operation = new FindOperation<BsonDocument>(namespace, new BsonDocumentCodec(), null)
                 .filter(new BsonDocument('a', BsonBoolean.TRUE))
                 .projection(new BsonDocument('x', new BsonInt32(1)))
                 .skip(2)
@@ -104,7 +104,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
 
     def 'should find with correct command with effective batch size'() {
         when:
-        def operation = new FindOperation<BsonDocument>(namespace, new BsonDocumentCodec())
+        def operation = new FindOperation<BsonDocument>(namespace, new BsonDocumentCodec(), null)
                 .batchSize(batchSize)
                 .limit(limit)
 
@@ -125,7 +125,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
 
     def 'should use the readPreference to set secondaryOk for commands'() {
         when:
-        def operation = new FindOperation<Document>(namespace, new DocumentCodec())
+        def operation = new FindOperation<Document>(namespace, new DocumentCodec(), null)
 
         then:
         testOperationSecondaryOk(operation, [3, 2, 0], readPreference, async, commandResult)
@@ -135,7 +135,6 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
     }
 
     def namespace = new MongoNamespace('db', 'coll')
-    def decoder = new BsonDocumentCodec()
     def readPreference = ReadPreference.secondary()
     def commandResult = new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(0))
             .append('ns', new BsonString('db.coll'))

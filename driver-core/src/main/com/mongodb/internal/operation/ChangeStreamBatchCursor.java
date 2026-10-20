@@ -40,6 +40,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.internal.ExceptionUtils.rethrowIfError;
 import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isResumableError;
 import static com.mongodb.internal.operation.SyncOperationHelper.withReadConnectionSource;
 
@@ -85,7 +86,9 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
                             final int maxWireVersion) {
         this.changeStreamOperation = changeStreamOperation;
         this.binding = binding.retain();
-        this.initialOperationContext = operationContext.withOverride(TimeoutContext::withMaxTimeAsMaxAwaitTimeOverride);
+        this.initialOperationContext = operationContext
+                .withOverride(TimeoutContext::withMaxTimeAsMaxAwaitTimeOverride)
+                .withNewServerDeprioritization();
         this.wrapped = wrapped;
         this.resumeToken = resumeToken;
         this.maxWireVersion = maxWireVersion;
@@ -239,6 +242,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
             try {
                 return function.apply(wrapped, operationContext);
             } catch (Throwable t) {
+                rethrowIfError(t);
                 if (!isResumableError(t, maxWireVersion)) {
                     throw MongoException.fromThrowableNonNull(t);
                 }

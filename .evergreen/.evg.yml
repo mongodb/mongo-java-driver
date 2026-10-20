@@ -148,14 +148,20 @@ functions:
           echo "Created archive tar file at ${ARCHIVE_FILE_PATH}"
 
   "start-mongo-orchestration":
+    # Assuming the role and passing the AWS credentials is required for
+    # `run-mongodb.sh` to download the "latest" version from the private S3 bucket.
+    - command: ec2.assume_role
+      params:
+        role_arn: ${aws_test_secrets_role}
     - command: shell.exec
       params:
+        include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
         script: |
           ${PREPARE_SHELL}
           REQUIRE_API_VERSION=${REQUIRE_API_VERSION} LOAD_BALANCER=${LOAD_BALANCER} MONGODB_VERSION=${VERSION} TOPOLOGY=${TOPOLOGY} \
           AUTH=${AUTH} SSL=${SSL} STORAGE_ENGINE=${STORAGE_ENGINE} ORCHESTRATION_FILE=${ORCHESTRATION_FILE} \
-          bash ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
-    # run-orchestration generates expansion file with the MONGODB_URI for the cluster
+          bash ${DRIVERS_TOOLS}/.evergreen/run-mongodb.sh start
+    # run-mongodb.sh generates expansion file with the MONGODB_URI for the cluster
     - command: expansions.update
       params:
         file: mo-expansion.yml
@@ -165,7 +171,7 @@ functions:
         shell: "bash"
         script: |
           ${PREPARE_SHELL}
-          bash ${DRIVERS_TOOLS}/.evergreen/stop-orchestration.sh || true
+          bash ${DRIVERS_TOOLS}/.evergreen/run-mongodb.sh stop || true
 
   "start-mongohoused":
     - command: shell.exec
@@ -264,6 +270,9 @@ functions:
         working_dir: "src"
         binary: "bash"
         include_expansions_in_env: ["AWS_SECRET_ACCESS_KEY", "AWS_ACCESS_KEY_ID", "AWS_SESSION_TOKEN"]
+        env:
+          # Use the corporate Azure KMS credentials (DRIVERS-3392 key vault)
+          FLE_AZURE_USE_CORPORATE: "YES"
         args:
           - ${DRIVERS_TOOLS}/.evergreen/csfle/setup.sh
 
@@ -1093,7 +1102,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1110,7 +1118,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1127,7 +1134,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1144,7 +1150,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1161,7 +1166,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1178,7 +1182,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1195,7 +1198,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1212,7 +1214,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1227,7 +1228,6 @@ tasks:
         vars:
           OCSP_ALGORITHM: "rsa"
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1244,7 +1244,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1261,7 +1260,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1275,7 +1273,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1292,7 +1289,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1309,7 +1305,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1326,7 +1321,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1343,7 +1337,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1357,7 +1350,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1374,7 +1366,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1391,7 +1382,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1408,7 +1398,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1425,7 +1414,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1442,7 +1430,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1459,7 +1446,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1473,7 +1459,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1736,10 +1721,18 @@ axes:
         display_name: "latest"
         variables:
           VERSION: "latest"
+      - id: "9.0"
+        display_name: "9.0"
+        variables:
+          VERSION: "9.0"
       - id: "8.0"
         display_name: "8.0"
         variables:
           VERSION: "8.0"
+      - id: "9.0"
+        display_name: "9.0"
+        variables:
+          VERSION: "9.0"
       # 8.2 is used solely for Windows testing. MongoDB 8.0 binaries are affected by SERVER-116018 on Windows,
       # and the fix is only available starting from 8.2.
       - id: "8.2"
@@ -1773,9 +1766,15 @@ axes:
       - id: "linux"
         display_name: "Linux"
         run_on: "rhel80-small"
-      - id: "ubuntu"
-        display_name: "Ubuntu"
+      # No single Ubuntu release has server builds for every version we test: 4.4 and 5.0 stop at
+      # ubuntu2004, while 9.0 starts at ubuntu2204. mongodl infers the download target from the host
+      # distro and does not fall back to an older target, so the host must match the server release.
+      - id: "ubuntu2004"
+        display_name: "Ubuntu 20.04"
         run_on: "ubuntu2004-small"
+      - id: "ubuntu2204"
+        display_name: "Ubuntu 22.04"
+        run_on: "ubuntu2204-small"
       - id: "windows"
         display_name: "Windows"
         run_on: "windows-2022-latest-small"
@@ -2341,7 +2340,7 @@ buildvariants:
     #
 
   - matrix_name: "tests-zlib-compression"
-    matrix_spec: { compressor: "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: [ "4.2", "4.4", "5.0", "6.0", "7.0", "8.0", "latest" ], topology: "standalone", os: "linux" }
+    matrix_spec: { compressor: "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: [ "4.2", "4.4", "5.0", "6.0", "7.0", "8.0", "9.0", "latest" ], topology: "standalone", os: "linux" }
     display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
     tags: [ "tests-variant" ]
     tasks:
@@ -2351,7 +2350,7 @@ buildvariants:
       - name: "test-legacy-task"
 
   - matrix_name: "tests-snappy-compression"
-    matrix_spec: { compressor: "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: [ "4.2", "4.4", "5.0", "6.0", "7.0", "8.0", "latest" ], topology: "standalone", os: "linux" }
+    matrix_spec: { compressor: "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk8", version: [ "4.2", "4.4", "5.0", "6.0", "7.0", "8.0", "9.0", "latest" ], topology: "standalone", os: "linux" }
     display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
     tags: [ "tests-variant" ]
     tasks:
@@ -2362,7 +2361,7 @@ buildvariants:
 
   - matrix_name: "tests-zstd-compression"
     matrix_spec: { compressor: "zstd", auth: "noauth", ssl: "nossl", jdk: "jdk8",
-                   version: [ "4.2", "4.4", "5.0", "6.0", "7.0", "8.0", "latest" ],
+                   version: [ "4.2", "4.4", "5.0", "6.0", "7.0", "8.0", "9.0", "latest" ],
                    topology: "standalone", os: "linux" }
     display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
     tags: [ "tests-variant" ]
@@ -2380,7 +2379,7 @@ buildvariants:
       - name: "test-bson-and-crypt-task"
 
   - matrix_name: "tests-jdk8-unsecure"
-    matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk8", version: [ "4.2", "4.4", "5.0", "6.0", "7.0", "8.0", "latest" ],
+    matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk8", version: [ "4.2", "4.4", "5.0", "6.0", "7.0", "8.0", "9.0", "latest" ],
                    topology: "*", os: "linux" }
     display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
     tags: [ "tests-variant" ]
@@ -2392,7 +2391,7 @@ buildvariants:
 
   - matrix_name: "tests-jdk-secure"
     matrix_spec: { auth: "auth", ssl: "ssl", jdk: [ "jdk8", "jdk17", "jdk21" ],
-                   version: [ "4.2", "4.4", "5.0", "6.0", "7.0", "8.0", "latest" ],
+                   version: [ "4.2", "4.4", "5.0", "6.0", "7.0", "8.0", "9.0", "latest" ],
                    topology: "*", os: "linux" }
     display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
     tags: [ "tests-variant" ]
@@ -2429,7 +2428,7 @@ buildvariants:
         exec_timeout_secs: 7200
 
   - matrix_name: "tests-require-api-version"
-    matrix_spec: { api-version: "required", auth: "auth", ssl: "nossl", jdk: [ "jdk21" ], version: [ "5.0", "6.0", "7.0", "8.0", "latest" ],
+    matrix_spec: { api-version: "required", auth: "auth", ssl: "nossl", jdk: [ "jdk21" ], version: [ "5.0", "6.0", "7.0", "8.0", "9.0", "latest" ],
                    topology: "standalone", os: "linux" }
     display_name: "${version} ${topology} ${api-version} "
     tags: [ "tests-variant" ]
@@ -2440,8 +2439,16 @@ buildvariants:
       - name: "test-legacy-task"
 
   - matrix_name: "tests-load-balancer-secure"
-    matrix_spec: { auth: "auth", ssl: "ssl", jdk: [ "jdk21" ], version: [ "5.0", "6.0", "7.0", "8.0", "latest" ], topology: "sharded-cluster",
-                   os: "ubuntu" }
+    matrix_spec: { auth: "auth", ssl: "ssl", jdk: [ "jdk21" ], version: [ "6.0", "7.0", "8.0", "9.0", "latest" ], topology: "sharded-cluster",
+                   os: "ubuntu2204" }
+    display_name: "Load Balancer ${version} ${auth} ${ssl} ${jdk} ${os}"
+    tasks:
+      - name: "load-balancer-test-task"
+
+  # 5.0 has no ubuntu2204 server build, so it stays on ubuntu2004.
+  - matrix_name: "tests-load-balancer-secure-ubuntu2004"
+    matrix_spec: { auth: "auth", ssl: "ssl", jdk: [ "jdk21" ], version: [ "5.0" ], topology: "sharded-cluster",
+                   os: "ubuntu2004" }
     display_name: "Load Balancer ${version} ${auth} ${ssl} ${jdk} ${os}"
     tasks:
       - name: "load-balancer-test-task"
@@ -2500,17 +2507,23 @@ buildvariants:
       - name: "gssapi-auth-test-task"
 
   - matrix_name: "aws-auth-test"
-    matrix_spec: { ssl: "nossl", jdk: [ "jdk8", "jdk17", "jdk21" ], version: [ "4.4", "5.0", "6.0", "7.0", "8.0", "latest" ], os: "ubuntu",
+    matrix_spec: { ssl: "nossl", jdk: [ "jdk8", "jdk17", "jdk21" ], version: [ "6.0", "7.0", "8.0", "9.0", "latest" ], os: "ubuntu2204",
                    aws-credential-provider: "*" }
-    display_name: "MONGODB-AWS Basic Auth test ${version} ${jdk} ${aws-credential-provider}"
-    run_on: "ubuntu2204-small"
+    display_name: "MONGODB-AWS Basic Auth test ${version} ${jdk} ${aws-credential-provider} ${os}"
+    tasks:
+      - name: "aws-auth-test-with-regular-aws-credentials-task"
+
+  # 4.4 and 5.0 have no ubuntu2204 server build, so they stay on ubuntu2004.
+  - matrix_name: "aws-auth-test-ubuntu2004"
+    matrix_spec: { ssl: "nossl", jdk: [ "jdk8", "jdk17", "jdk21" ], version: [ "4.4", "5.0" ], os: "ubuntu2004",
+                   aws-credential-provider: "*" }
+    display_name: "MONGODB-AWS Basic Auth test ${version} ${jdk} ${aws-credential-provider} ${os}"
     tasks:
       - name: "aws-auth-test-with-regular-aws-credentials-task"
 
   - matrix_name: "aws-ec2-auth-test"
-    matrix_spec: { ssl: "nossl", jdk: [ "jdk21" ], version: [ "7.0" ], os: "ubuntu", aws-credential-provider: "*" }
-    display_name: "MONGODB-AWS Advanced Auth test ${version} ${jdk} ${aws-credential-provider}"
-    run_on: "ubuntu2204-small"
+    matrix_spec: { ssl: "nossl", jdk: [ "jdk21" ], version: [ "7.0" ], os: "ubuntu2204", aws-credential-provider: "*" }
+    display_name: "MONGODB-AWS Advanced Auth test ${version} ${jdk} ${aws-credential-provider} ${os}"
     tasks:
       - name: "aws-auth-test-with-aws-EC2-credentials-task"
       - name: "aws-auth-test-with-assume-role-credentials-task"
@@ -2519,7 +2532,7 @@ buildvariants:
       - name: "aws-auth-test-with-web-identity-credentials-task"
 
   - matrix_name: "accept-api-version-2-test"
-    matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk21", version: [ "5.0", "6.0", "7.0", "8.0", "latest" ], topology: "standalone",
+    matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk21", version: [ "5.0", "6.0", "7.0", "8.0", "9.0", "latest" ], topology: "standalone",
                    os: "linux" }
     display_name: "Accept API Version 2 ${version}"
     run_on: "ubuntu2204-small"
@@ -2527,21 +2540,28 @@ buildvariants:
       - name: "accept-api-version-2-test-task"
 
   - matrix_name: "ocsp-test"
-    matrix_spec: { auth: "noauth", ssl: "ssl", jdk: "jdk21", version: [ "4.4", "5.0", "6.0", "7.0", "8.0", "latest" ], os: "ubuntu" }
+    matrix_spec: { auth: "noauth", ssl: "ssl", jdk: "jdk21", version: [ "6.0", "7.0", "8.0", "9.0", "latest" ], os: "ubuntu2204" }
+    display_name: "OCSP test ${version} ${os}"
+    tasks:
+      - name: ".ocsp"
+
+  # 4.4 and 5.0 have no ubuntu2204 server build, so they stay on ubuntu2004.
+  - matrix_name: "ocsp-test-ubuntu2004"
+    matrix_spec: { auth: "noauth", ssl: "ssl", jdk: "jdk21", version: [ "4.4", "5.0" ], os: "ubuntu2004" }
     display_name: "OCSP test ${version} ${os}"
     tasks:
       - name: ".ocsp"
 
   - matrix_name: "scala-tests"
     matrix_spec: { auth: "noauth", ssl: "nossl", jdk: [ "jdk8", "jdk17", "jdk21" ], version: [ "7.0" ], topology: "replicaset",
-                   scala: "*" , os: "ubuntu" }
+                   scala: "*" , os: "ubuntu2204" }
     display_name: "${scala} ${jdk} ${version} ${topology} ${os}"
     tags: [ "test-scala-variant" ]
     tasks:
       - name: "scala-test-task"
 
   - matrix_name: "kotlin-tests"
-    matrix_spec: { auth: "noauth", ssl: "nossl", jdk: [ "jdk8", "jdk17", "jdk21" ], version: [ "7.0" ], topology: "replicaset", os: "ubuntu" }
+    matrix_spec: { auth: "noauth", ssl: "nossl", jdk: [ "jdk8", "jdk17", "jdk21" ], version: [ "7.0" ], topology: "replicaset", os: "ubuntu2204" }
     display_name: "Kotlin: ${jdk} ${version} ${topology} ${os}"
     tags: [ "test-kotlin-variant" ]
     tasks:
@@ -2560,14 +2580,14 @@ buildvariants:
       - name: ".csfle-aws-from-environment"
 
   - matrix_name: "csfle-tests-with-mongocryptd"
-    matrix_spec: { os: "linux", version: [ "4.2", "4.4", "5.0", "6.0", "7.0", "8.0", "latest" ], topology: [ "replicaset" ] }
+    matrix_spec: { os: "linux", version: [ "4.2", "4.4", "5.0", "6.0", "7.0", "8.0", "9.0", "latest" ], topology: [ "replicaset" ] }
     display_name: "CSFLE with mongocryptd: ${version}"
     tasks:
       - name: "csfle-tests-with-mongocryptd-task"
 
   - matrix_name: "csfle-tests-with-mongocryptd-windows"
     matrix_spec: { os: "windows",
-                   version: [ "8.0", "latest" ],
+                   version: [ "8.0", "9.0", "latest" ],
                    topology: [ "replicaset" ] }
     display_name: "${os} CSFLE with mongocryptd: ${version}"
     tasks:

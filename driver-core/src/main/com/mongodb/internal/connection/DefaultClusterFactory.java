@@ -35,6 +35,7 @@ import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
+import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.DnsClient;
 
@@ -65,6 +66,7 @@ public final class DefaultClusterFactory {
                                  final StreamFactory streamFactory,
                                  final TimeoutSettings heartbeatTimeoutSettings,
                                  final StreamFactory heartbeatStreamFactory,
+                                 final AsyncClientExecutor clientExecutor,
                                  @Nullable final MongoCredential credential,
                                  final LoggerSettings loggerSettings,
                                  @Nullable final CommandListener commandListener,
@@ -103,9 +105,9 @@ public final class DefaultClusterFactory {
 
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = new DefaultDnsSrvRecordMonitorFactory(clusterId, serverSettings, dnsClient);
         InternalOperationContextFactory clusterOperationContextFactory =
-                new InternalOperationContextFactory(clusterTimeoutSettings, serverApi);
+                new InternalOperationContextFactory(clusterTimeoutSettings, serverApi, clientExecutor);
         InternalOperationContextFactory heartBeatOperationContextFactory =
-                new InternalOperationContextFactory(heartbeatTimeoutSettings, serverApi);
+                new InternalOperationContextFactory(heartbeatTimeoutSettings, serverApi, clientExecutor);
 
         ClientMetadata clientMetadata = new ClientMetadata(
                 applicationName,

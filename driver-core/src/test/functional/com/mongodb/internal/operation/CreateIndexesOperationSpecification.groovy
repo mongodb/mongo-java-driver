@@ -493,8 +493,8 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         def indexes = []
 
         def binding = ClusterFixture.getBinding()
-        def cursor = new ListIndexesOperation(getNamespace(), new DocumentCodec())
-                .execute(binding, ClusterFixture.getOperationContext(binding.getReadPreference()))
+        def cursor = new ListIndexesOperation(getNamespace(), new DocumentCodec(), null)
+                .execute(binding, ClusterFixture.createOperationContext(binding.getReadPreference()))
         while (cursor.hasNext()) {
             indexes.addAll(cursor.next())
         }

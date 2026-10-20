@@ -16,14 +16,18 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoException;
+import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadException;
+import com.mongodb.MongoSocksProxyException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.ProxySettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
+import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.InetAddressResolver;
 import org.bson.ByteBuf;
 
@@ -38,6 +42,7 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -79,11 +84,24 @@ public class SocketStream implements Stream {
             socket = initializeSocket(operationContext);
             outputStream = socket.getOutputStream();
             inputStream = socket.getInputStream();
+        } catch (MongoSocksProxyException e) {
+            close();
+            throw translateOr(e.getCause(), e);
         } catch (IOException e) {
             close();
-            throw translateInterruptedException(e, "Interrupted while connecting")
-                    .orElseThrow(() -> new MongoSocketOpenException("Exception opening socket", getAddress(), e));
+            throw translateOr(e, new MongoSocketOpenException("Exception opening socket", getAddress(), e));
         }
+    }
+
+    /**
+     * If {@code interruptCandidate} represents a thread interruption, returns the corresponding
+     * {@link MongoInterruptedException}; otherwise returns {@code fallback}.
+     */
+    private static MongoException translateOr(@Nullable final Throwable interruptCandidate,
+                                              final MongoException fallback) {
+        Optional<MongoInterruptedException> translated =
+                translateInterruptedException(interruptCandidate, "Interrupted while connecting");
+        return translated.isPresent() ? translated.get() : fallback;
     }
 
     protected Socket initializeSocket(final OperationContext operationContext) throws IOException {
@@ -119,15 +137,28 @@ public class SocketStream implements Stream {
         final int serverPort = address.getPort();
 
         SocksSocket socksProxy = new SocksSocket(settings.getProxySettings());
-        configureSocket(socksProxy, operationContext, settings);
-        InetSocketAddress inetSocketAddress = toSocketAddress(serverHost, serverPort);
-        socksProxy.connect(inetSocketAddress, operationContext.getTimeoutContext().getConnectTimeoutMs());
-
-        SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(socksProxy, serverHost, serverPort, true);
-        //Even though Socks proxy connection is already established, TLS handshake has not been performed yet.
-        //So it is possible to set SSL parameters before handshake is done.
-        configureSslSocket(sslSocket, sslSettings, inetSocketAddress);
-        return sslSocket;
+        // Track the outermost socket layer to close on failure. Initially this is socksProxy;
+        // once we wrap it into an SSLSocket, that becomes the outermost layer and closing it
+        // tears down the underlying socksProxy as well.
+        Socket toClose = socksProxy;
+        try {
+            configureSocket(socksProxy, operationContext, settings);
+            InetSocketAddress inetSocketAddress = toSocketAddress(serverHost, serverPort);
+            socksProxy.connect(inetSocketAddress, operationContext.getTimeoutContext().getConnectTimeoutMs());
+            SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(socksProxy, serverHost, serverPort, true);
+            toClose = sslSocket;
+            //Even though Socks proxy connection is already established, TLS handshake has not been performed yet.
+            //So it is possible to set SSL parameters before handshake is done.
+            configureSslSocket(sslSocket, sslSettings, inetSocketAddress);
+            return sslSocket;
+        } catch (IOException | RuntimeException e) {
+            try {
+                toClose.close();
+            } catch (IOException closeException) {
+                e.addSuppressed(closeException);
+            }
+            throw e;
+        }
     }
 
 
@@ -141,17 +172,27 @@ public class SocketStream implements Stream {
 
     private Socket initializeSocketOverSocksProxy(final OperationContext operationContext) throws IOException {
         Socket createdSocket = socketFactory.createSocket();
-        configureSocket(createdSocket, operationContext, settings);
-        /*
-          Wrap the configured socket with SocksSocket to add extra functionality.
-          Reason for separate steps: We can't directly extend Java 11 methods within 'SocksSocket'
-          to configure itself.
-         */
-        SocksSocket socksProxy = new SocksSocket(createdSocket, settings.getProxySettings());
-
-        socksProxy.connect(toSocketAddress(address.getHost(), address.getPort()),
-                operationContext.getTimeoutContext().getConnectTimeoutMs());
-        return socksProxy;
+        try {
+            configureSocket(createdSocket, operationContext, settings);
+            /*
+              Wrap the configured socket with SocksSocket to add extra functionality.
+              Reason for separate steps: We can't directly extend Java 11 methods within 'SocksSocket'
+              to configure itself.
+             */
+            SocksSocket socksProxy = new SocksSocket(createdSocket, settings.getProxySettings());
+            socksProxy.connect(toSocketAddress(address.getHost(), address.getPort()),
+                    operationContext.getTimeoutContext().getConnectTimeoutMs());
+            return socksProxy;
+        } catch (IOException | RuntimeException e) {
+            // SocksSocket.connect() closes itself on failure, but createdSocket may not yet
+            // be owned by a SocksSocket (e.g. configureSocket threw). Close defensively;
+            try {
+                createdSocket.close();
+            } catch (IOException closeException) {
+                e.addSuppressed(closeException);
+            }
+            throw e;
+        }
     }
 
     @Override

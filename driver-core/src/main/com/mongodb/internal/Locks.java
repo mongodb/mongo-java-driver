@@ -26,7 +26,7 @@ import java.util.function.Supplier;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
 
 /**
- * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ * This class is not part of the public API and may be removed or changed at any time.
  */
 public final class Locks {
     public static void withLock(final Lock lock, final Runnable action) {
@@ -41,8 +41,7 @@ public final class Locks {
         try {
             stamp = lock.writeLockInterruptibly();
         } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new MongoInterruptedException("Interrupted waiting for lock", e);
+            throw interruptAndCreateMongoInterruptedException("Interrupted waiting for lock", e);
         }
         try {
             runnable.run();

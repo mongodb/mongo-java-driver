@@ -257,7 +257,8 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
 
     private MongoCursor<BsonDocument> getCursor(final int startChunkIndex) {
         FindIterable<BsonDocument> findIterable;
-        BsonDocument filter = new BsonDocument("files_id", fileId).append("n", new BsonDocument("$gte", new BsonInt32(startChunkIndex)));
+        BsonDocument filter = GridFSFilters.eq("files_id", fileId)
+                .append("n", new BsonDocument("$gte", new BsonInt32(startChunkIndex)));
         if (clientSession != null) {
             findIterable = withNullableTimeout(chunksCollection, timeout).find(clientSession, filter);
         } else {

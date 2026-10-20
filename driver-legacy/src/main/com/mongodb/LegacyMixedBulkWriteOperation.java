@@ -55,33 +55,48 @@ final class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcern
     private Boolean bypassDocumentValidation;
 
     static LegacyMixedBulkWriteOperation createBulkWriteOperationForInsert(final MongoNamespace namespace, final boolean ordered,
-            final WriteConcern writeConcern, final boolean retryWrites, final List<InsertRequest> insertRequests) {
-        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, insertRequests, INSERT);
+            final WriteConcern writeConcern,
+            final boolean retryWrites,
+            @Nullable final Integer maxAdaptiveRetriesSetting,
+            final List<InsertRequest> insertRequests) {
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, maxAdaptiveRetriesSetting, insertRequests, INSERT);
     }
 
     static LegacyMixedBulkWriteOperation createBulkWriteOperationForUpdate(final MongoNamespace namespace, final boolean ordered,
-            final WriteConcern writeConcern, final boolean retryWrites, final List<UpdateRequest> updateRequests) {
+            final WriteConcern writeConcern,
+            final boolean retryWrites,
+            @Nullable final Integer maxAdaptiveRetriesSetting,
+            final List<UpdateRequest> updateRequests) {
         assertTrue(updateRequests.stream().allMatch(updateRequest -> updateRequest.getType() == UPDATE));
-        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, updateRequests, UPDATE);
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, maxAdaptiveRetriesSetting, updateRequests, UPDATE);
     }
 
     static LegacyMixedBulkWriteOperation createBulkWriteOperationForReplace(final MongoNamespace namespace, final boolean ordered,
-            final WriteConcern writeConcern, final boolean retryWrites, final List<UpdateRequest> replaceRequests) {
+            final WriteConcern writeConcern,
+            final boolean retryWrites,
+            @Nullable final Integer maxAdaptiveRetriesSetting,
+            final List<UpdateRequest> replaceRequests) {
         assertTrue(replaceRequests.stream().allMatch(updateRequest -> updateRequest.getType() == REPLACE));
-        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, replaceRequests, REPLACE);
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, maxAdaptiveRetriesSetting, replaceRequests, REPLACE);
     }
 
     static LegacyMixedBulkWriteOperation createBulkWriteOperationForDelete(final MongoNamespace namespace, final boolean ordered,
-            final WriteConcern writeConcern, final boolean retryWrites, final List<DeleteRequest> deleteRequests) {
-        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, deleteRequests, DELETE);
+            final WriteConcern writeConcern,
+            final boolean retryWrites,
+            @Nullable final Integer maxAdaptiveRetriesSetting,
+            final List<DeleteRequest> deleteRequests) {
+        return new LegacyMixedBulkWriteOperation(namespace, ordered, writeConcern, retryWrites, maxAdaptiveRetriesSetting, deleteRequests, DELETE);
     }
 
     private LegacyMixedBulkWriteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-            final boolean retryWrites, final List<? extends WriteRequest> writeRequests, final WriteRequest.Type type) {
+            final boolean retryWrites,
+            @Nullable final Integer maxAdaptiveRetriesSetting,
+            final List<? extends WriteRequest> writeRequests,
+            final WriteRequest.Type type) {
         notNull("writeRequests", writeRequests);
         isTrueArgument("writeRequests is not an empty list", !writeRequests.isEmpty());
         this.type = type;
-        this.wrappedOperation = new MixedBulkWriteOperation(namespace, writeRequests, ordered, writeConcern, retryWrites);
+        this.wrappedOperation = new MixedBulkWriteOperation(namespace, writeRequests, ordered, writeConcern, retryWrites, maxAdaptiveRetriesSetting);
     }
 
     List<? extends WriteRequest> getWriteRequests() {
