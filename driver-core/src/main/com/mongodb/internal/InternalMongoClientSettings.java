@@ -25,6 +25,8 @@ import java.util.Objects;
  * Used for testing and internal configuration purposes.
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ *
+ * @since 5.14
  */
 @Immutable
 public final class InternalMongoClientSettings {

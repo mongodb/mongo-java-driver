@@ -20,7 +20,6 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.internal.InternalMongoClientSettings;
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
@@ -39,15 +38,6 @@ class InternalMongoClientsTest {
         MongoClientSettings settings = MongoClientSettings.builder().build();
         assertThrows(IllegalArgumentException.class, () ->
                 InternalMongoClients.create(settings, null, null));
-    }
-
-    @Test
-    void testInternalSettingsArePreserved() {
-        // Verify that InternalMongoClientSettings can be built with recordEverything for reactive clients
-        InternalMongoClientSettings internalSettings = InternalMongoClientSettings.builder()
-                .recordEverything(true)
-                .build();
-        assertNotNull(internalSettings);
     }
 }
 

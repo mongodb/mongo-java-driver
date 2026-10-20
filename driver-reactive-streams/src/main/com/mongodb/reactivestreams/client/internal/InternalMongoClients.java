@@ -41,6 +41,8 @@ import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
  * Internal factory for MongoClient instances.
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
+ *
+ * @since 5.14
  */
 public final class InternalMongoClients {
 
