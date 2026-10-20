@@ -101,10 +101,6 @@ public class BasicBSONDecoder implements BSONDecoder {
         byte[] sizeBytes = new byte[4];
         Bits.readFully(input, sizeBytes);
         int size = Bits.readInt(sizeBytes);
-
-        byte[] buffer = new byte[size];
-        System.arraycopy(sizeBytes, 0, buffer, 0, 4);
-        Bits.readFully(input, buffer, 4, size - 4);
-        return buffer;
+        return Bits.readFully(input, sizeBytes, size);
     }
 }

@@ -1365,18 +1365,53 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         MongoDatabase database = getMongoDatabase(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         String collectionName = arguments.remove("collection").asString().getValue();
+        ClientSession session = getSession(arguments);
 
         DropCollectionOptions dropCollectionOptions = new DropCollectionOptions();
         for (Map.Entry<String, BsonValue> entry : arguments.entrySet()) {
             if (entry.getKey().equals("encryptedFields")) {
                 dropCollectionOptions.encryptedFields(entry.getValue().asDocument());
+            } else if (entry.getKey().equals("session")) {
+                // Already handled.
             } else {
                 throw new UnsupportedOperationException("Unsupported drop collections option: " + entry.getKey());
             }
         }
 
         return resultOf(() -> {
-            database.getCollection(collectionName).drop(dropCollectionOptions);
+            if (session != null) {
+                database.getCollection(collectionName).drop(session, dropCollectionOptions);
+            } else {
+                database.getCollection(collectionName).drop(dropCollectionOptions);
+            }
+            return null;
+        });
+    }
+
+    public OperationResult executeDropDatabase(final BsonDocument operation) {
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+        MongoClient client = entities.getClient(operation.getString("object").getValue());
+        String database = arguments.getString("database").getValue();
+        ClientSession session = getSession(arguments);
+
+        for (Map.Entry<String, BsonValue> entry : arguments.entrySet()) {
+            switch (entry.getKey()) {
+                case "session":
+                case "database":
+                    // Already handled.
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported drop database option: " + entry.getKey());
+            }
+        }
+
+        return resultOf(() -> {
+            MongoDatabase db = client.getDatabase(database);
+            if (session != null) {
+                db.drop(session);
+            } else {
+                db.drop();
+            }
             return null;
         });
     }
