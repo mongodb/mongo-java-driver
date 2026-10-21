@@ -24,6 +24,7 @@ import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
@@ -92,7 +93,7 @@ public class TestCommandListener implements CommandListener {
      * type will be lowercase and will omit the terms "command" and "event".
      * For example: {@code "saslContinue succeeded"}.
      *
-     * @see InternalStreamConnection#setRecordEverything(boolean)
+     * @see InternalMongoClientSettings.Builder#recordEverything(boolean)
      * @param listener the test listener
      */
     public TestCommandListener(final TestListener listener) {

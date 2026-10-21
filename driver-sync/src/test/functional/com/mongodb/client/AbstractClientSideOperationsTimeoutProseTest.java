@@ -47,7 +47,7 @@ import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.event.ConnectionClosedEvent;
 import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionReadyEvent;
-import com.mongodb.internal.connection.InternalStreamConnection;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.internal.connection.ServerHelper;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
@@ -138,6 +138,17 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
     protected TestCommandListener commandListener;
 
     protected abstract MongoClient createMongoClient(MongoClientSettings mongoClientSettings);
+
+    /**
+     * Creates a MongoClient with the given settings and internal settings.
+     * Used for tests that need to configure internal settings like recordEverything.
+     *
+     * @param mongoClientSettings the client settings
+     * @param internalSettings the internal settings
+     * @return the MongoClient
+     */
+    protected abstract MongoClient createMongoClientWithInternalSettings(MongoClientSettings mongoClientSettings,
+                                                                        InternalMongoClientSettings internalSettings);
 
     protected abstract GridFSBucket createGridFsBucket(MongoDatabase mongoDatabase, String bucketName);
 
@@ -1160,17 +1171,16 @@ public abstract class AbstractClientSideOperationsTimeoutProseTest {
                 + "  }"
                 + "}");
 
-        try (MongoClient ignored = createMongoClient(getMongoClientSettingsBuilder()
+        try (MongoClient ignored = createMongoClientWithInternalSettings(getMongoClientSettingsBuilder()
                 .applicationName("connectTimeoutBackgroundTest")
                 .applyToConnectionPoolSettings(builder -> builder.minSize(1))
                 // Use a very short timeout to ensure that the connection establishment will fail on the first handshake command.
-                .timeout(timeoutMS, TimeUnit.MILLISECONDS))) {
-            InternalStreamConnection.setRecordEverything(true);
+                .timeout(timeoutMS, TimeUnit.MILLISECONDS)
+                .build(),
+                InternalMongoClientSettings.builder().recordEverything(true).build())) {
 
             // Wait for the connection to start establishment in the background.
             sleep(sleepMS);
-        } finally {
-            InternalStreamConnection.setRecordEverything(false);
         }
         List<CommandFailedEvent> commandFailedEvents = commandListener.getCommandFailedEvents(getHandshakeCommandName());
         assertFalse(commandFailedEvents.isEmpty());
