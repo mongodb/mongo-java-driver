@@ -45,11 +45,11 @@ echo "Running Atlas SFP tests with Java ${JAVA_VERSION}"
 
 provision_keystore
 
+# The SFP_ATLAS_* connection strings and credentials are passed to the tests via the environment, not as system
+# properties, so that they are never printed as part of the test JVM command line by `--info`.
+export SFP_ATLAS_URI SFP_ATLAS_USER SFP_ATLAS_PASSWORD SFP_ATLAS_X509_URI
+
 ./gradlew -PjavaVersion=${JAVA_VERSION} --info --continue \
- -Dorg.mongodb.test.sfp.uri="${SFP_ATLAS_URI}" \
- -Dorg.mongodb.test.sfp.user="${SFP_ATLAS_USER}" \
- -Dorg.mongodb.test.sfp.password="${SFP_ATLAS_PASSWORD}" \
- -Dorg.mongodb.test.sfp.x509.uri="${SFP_ATLAS_X509_URI}" \
  -Dorg.mongodb.test.sfp.x509.keystore.location="$(pwd)" \
  driver-sync:test --tests AtlasSfpProseTest \
  driver-reactive-streams:test --tests AtlasSfpProseTest

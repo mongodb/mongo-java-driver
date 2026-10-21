@@ -40,6 +40,7 @@ import javax.net.ssl.SSLContext;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
+import static com.mongodb.ClusterFixture.getEnv;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -52,15 +53,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * See <a href="https://github.com/mongodb/specifications/blob/master/source/atlas-sfp-testing/atlas-sfp-testing.md">
  * Atlas Secure Frontend Processor (SFP) Testing</a>.
  *
- * <p>The tests are enabled only when the {@value #SFP_URI_PROPERTY} system property is set,
- * see {@code .evergreen/run-atlas-sfp-tests.sh}.</p>
+ * <p>The tests are enabled only when the {@value #SFP_URI_ENV} environment variable is set,
+ * see {@code .evergreen/run-atlas-sfp-tests.sh}. Connection strings and credentials are read from environment variables
+ * rather than system properties so that they never appear on the test JVM command line.</p>
  */
 @ExtendWith(AbstractAtlasSfpProseTest.AtlasSfpPropertyCondition.class)
 public abstract class AbstractAtlasSfpProseTest {
-    private static final String SFP_URI_PROPERTY = "org.mongodb.test.sfp.uri";
-    private static final String SFP_USER_PROPERTY = "org.mongodb.test.sfp.user";
-    private static final String SFP_PASSWORD_PROPERTY = "org.mongodb.test.sfp.password";
-    private static final String SFP_X509_URI_PROPERTY = "org.mongodb.test.sfp.x509.uri";
+    private static final String SFP_URI_ENV = "SFP_ATLAS_URI";
+    private static final String SFP_USER_ENV = "SFP_ATLAS_USER";
+    private static final String SFP_PASSWORD_ENV = "SFP_ATLAS_PASSWORD";
+    private static final String SFP_X509_URI_ENV = "SFP_ATLAS_X509_URI";
     private static final String SFP_X509_KEYSTORE_LOCATION_PROPERTY = "org.mongodb.test.sfp.x509.keystore.location";
     private static final String SFP_X509_KEYSTORE_FILE_NAME = "sfp_x509.p12";
     private static final String TEST_DATABASE_NAME = "db";
@@ -70,7 +72,7 @@ public abstract class AbstractAtlasSfpProseTest {
     @Test
     public void shouldConnectUnauthenticated() {
         MongoClientSettings settings = MongoClientSettings.builder()
-                .applyConnectionString(new ConnectionString(getRequiredProperty(SFP_URI_PROPERTY)))
+                .applyConnectionString(new ConnectionString(getRequiredEnv(SFP_URI_ENV)))
                 .build();
         assertNull(settings.getCredential(), "SFP_ATLAS_URI must not contain credentials");
 
@@ -85,11 +87,11 @@ public abstract class AbstractAtlasSfpProseTest {
     public void shouldAuthenticateWithScramSha256(@SuppressWarnings("unused") final String variationName,
             final UnaryOperator<MongoClientSettings.Builder> variation) {
         MongoClientSettings settings = variation.apply(MongoClientSettings.builder()
-                .applyConnectionString(new ConnectionString(getRequiredProperty(SFP_URI_PROPERTY)))
+                .applyConnectionString(new ConnectionString(getRequiredEnv(SFP_URI_ENV)))
                 .credential(MongoCredential.createScramSha256Credential(
-                        getRequiredProperty(SFP_USER_PROPERTY),
+                        getRequiredEnv(SFP_USER_ENV),
                         "admin",
-                        getRequiredProperty(SFP_PASSWORD_PROPERTY).toCharArray())))
+                        getRequiredEnv(SFP_PASSWORD_ENV).toCharArray())))
                 .build();
 
         assertAuthenticated(settings);
@@ -102,7 +104,7 @@ public abstract class AbstractAtlasSfpProseTest {
         SSLContext sslContext = EncryptionFixture.buildSslContextFromKeyStore(
                 getRequiredProperty(SFP_X509_KEYSTORE_LOCATION_PROPERTY), SFP_X509_KEYSTORE_FILE_NAME);
         MongoClientSettings settings = variation.apply(MongoClientSettings.builder()
-                .applyConnectionString(new ConnectionString(getRequiredProperty(SFP_X509_URI_PROPERTY)))
+                .applyConnectionString(new ConnectionString(getRequiredEnv(SFP_X509_URI_ENV)))
                 .credential(MongoCredential.createMongoX509Credential())
                 .applyToSslSettings(builder -> builder.enabled(true).context(sslContext)))
                 .build();
@@ -159,6 +161,14 @@ public abstract class AbstractAtlasSfpProseTest {
         }
     }
 
+    private static String getRequiredEnv(final String name) {
+        String value = getEnv(name);
+        if (value == null || value.isEmpty()) {
+            throw new IllegalStateException("Environment variable " + name + " is required to run the Atlas SFP tests");
+        }
+        return value;
+    }
+
     private static String getRequiredProperty(final String name) {
         String value = System.getProperty(name);
         if (value == null || value.isEmpty()) {
@@ -173,7 +183,7 @@ public abstract class AbstractAtlasSfpProseTest {
     public static class AtlasSfpPropertyCondition implements ExecutionCondition {
         @Override
         public ConditionEvaluationResult evaluateExecutionCondition(final ExtensionContext context) {
-            if (System.getProperty(SFP_URI_PROPERTY) != null) {
+            if (getEnv(SFP_URI_ENV) != null) {
                 return ConditionEvaluationResult.enabled("Test is enabled because the Atlas SFP configuration exists");
             } else {
                 return ConditionEvaluationResult.disabled("Test is disabled because the Atlas SFP configuration is missing");
