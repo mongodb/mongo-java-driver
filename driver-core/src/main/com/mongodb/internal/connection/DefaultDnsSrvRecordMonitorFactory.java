@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ServerSettings;
+import com.mongodb.connection.SrvHostValidator;
 import com.mongodb.internal.dns.DefaultDnsResolver;
 import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.DnsClient;
@@ -44,8 +45,8 @@ public class DefaultDnsSrvRecordMonitorFactory implements DnsSrvRecordMonitorFac
 
     @Override
     public DnsSrvRecordMonitor create(final String hostName, final String srvServiceName,
-            @Nullable final String srvAllowedHostsSuffix, final DnsSrvRecordInitializer dnsSrvRecordInitializer) {
-        return new DefaultDnsSrvRecordMonitor(hostName, srvServiceName, srvAllowedHostsSuffix, DEFAULT_RESCAN_FREQUENCY_MILLIS,
+                                      final SrvHostValidator srvHostValidator, final DnsSrvRecordInitializer dnsSrvRecordInitializer) {
+        return new DefaultDnsSrvRecordMonitor(hostName, srvServiceName, srvHostValidator, DEFAULT_RESCAN_FREQUENCY_MILLIS,
                 noRecordsRescanFrequency, dnsSrvRecordInitializer, clusterId, new DefaultDnsResolver(dnsClient));
     }
 }
