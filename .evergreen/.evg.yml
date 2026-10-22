@@ -148,8 +148,14 @@ functions:
           echo "Created archive tar file at ${ARCHIVE_FILE_PATH}"
 
   "start-mongo-orchestration":
+    # Assuming the role and passing the AWS credentials is required for
+    # `run-mongodb.sh` to download the "latest" version from the private S3 bucket.
+    - command: ec2.assume_role
+      params:
+        role_arn: ${aws_test_secrets_role}
     - command: shell.exec
       params:
+        include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
         script: |
           ${PREPARE_SHELL}
           REQUIRE_API_VERSION=${REQUIRE_API_VERSION} LOAD_BALANCER=${LOAD_BALANCER} MONGODB_VERSION=${VERSION} TOPOLOGY=${TOPOLOGY} \
@@ -243,6 +249,17 @@ functions:
         script: |
           ${PREPARE_SHELL}
           ${DRIVERS_TOOLS}/.evergreen/secrets_handling/setup-secrets.sh drivers/atlas_connect
+
+  "add-atlas-sfp-variables-to-file":
+    - command: shell.exec
+      type: "test"
+      params:
+        include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
+        shell: "bash"
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          ${DRIVERS_TOOLS}/.evergreen/secrets_handling/setup-secrets.sh drivers/sfp
 
   "add-atlas-qa-variables-to-file":
     - command: shell.exec
@@ -1096,7 +1113,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1113,7 +1129,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1130,7 +1145,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1147,7 +1161,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1164,7 +1177,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1181,7 +1193,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1198,7 +1209,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1215,7 +1225,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1230,7 +1239,6 @@ tasks:
         vars:
           OCSP_ALGORITHM: "rsa"
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1247,7 +1255,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1264,7 +1271,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1278,7 +1284,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1295,7 +1300,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1312,7 +1316,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1329,7 +1332,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1346,7 +1348,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1360,7 +1361,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1377,7 +1377,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1394,7 +1393,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1411,7 +1409,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1428,7 +1425,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1445,7 +1441,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1462,7 +1457,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1476,7 +1470,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1508,6 +1501,19 @@ tasks:
           script: |
             ${PREPARE_SHELL}
             .evergreen/run-atlas-connectivity-tests.sh
+
+  - name: "atlas-sfp-test-task"
+    commands:
+      - func: "assume-aws-test-secrets-role"
+      - func: "add-atlas-sfp-variables-to-file"
+      - command: shell.exec
+        type: "test"
+        params:
+          silent: true
+          working_dir: "src"
+          script: |
+            ${PREPARE_SHELL}
+            JAVA_VERSION="8" .evergreen/run-atlas-sfp-tests.sh
 
   - name: "atlas-search-index-management-task"
     commands:
@@ -2318,6 +2324,7 @@ buildvariants:
       - name: "atlas-search-task"
       - name: "atlas-connectivity-task"
       - name:  "atlas-x509-auth-test-task"
+      - name: "atlas-sfp-test-task"
 
   - name: "reactive-streams-tck-test"
     display_name: "Reactive Streams TCK tests"

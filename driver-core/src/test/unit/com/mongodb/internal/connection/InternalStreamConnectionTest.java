@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.LoggerSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoCompressor;
 import com.mongodb.MongoExecutionTimeoutException;
@@ -36,6 +37,7 @@ import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.session.SessionContext;
@@ -1300,6 +1302,94 @@ class InternalStreamConnectionTest {
         }
     }
 
+    /**
+     * Verifies that {@code recordEverything} is a per-connection setting: commands sent during the handshake (before the
+     * connection is authenticated) reach the command listener of a connection created with {@code recordEverything = true}
+     * only, and a connection created with {@code recordEverything = false} is unaffected by it.
+     */
+    @ParameterizedTest(name = "async={0}")
+    @ValueSource(booleans = {false, true})
+    @DisplayName("recordEverything only applies to the connection it was set on")
+    void recordEverythingIsIsolatedPerConnection(final boolean async) {
+        List<String> recordingEvents = Collections.synchronizedList(new ArrayList<>());
+        List<String> nonRecordingEvents = Collections.synchronizedList(new ArrayList<>());
+
+        openConnectionSendingCommandDuringHandshake(true, recordingEvents, async);
+        openConnectionSendingCommandDuringHandshake(false, nonRecordingEvents, async);
+
+        assertEquals(asList("ping started", "ping succeeded"), recordingEvents,
+                "Handshake commands must be recorded when recordEverything is enabled");
+        assertEquals(Collections.emptyList(), nonRecordingEvents,
+                "Handshake commands must not be recorded when recordEverything is disabled on this connection");
+    }
+
+    private void openConnectionSendingCommandDuringHandshake(final boolean recordEverything, final List<String> events,
+            final boolean async) {
+        TestStream stream = okResponseStream(MATCHING_RESPONSE_TO, new BsonDocument("ok", new BsonInt32(1)));
+        CommandListener commandListener = new CommandListener() {
+            @Override
+            public void commandStarted(final CommandStartedEvent event) {
+                events.add(event.getCommandName() + " started");
+            }
+
+            @Override
+            public void commandSucceeded(final CommandSucceededEvent event) {
+                events.add(event.getCommandName() + " succeeded");
+            }
+
+            @Override
+            public void commandFailed(final CommandFailedEvent event) {
+                events.add(event.getCommandName() + " failed");
+            }
+        };
+        InternalConnectionInitializationDescription initDesc = createInitializationDescription();
+        InternalConnectionInitializer initializer = new InternalConnectionInitializer() {
+            @Override
+            public InternalConnectionInitializationDescription startHandshake(final InternalConnection connection,
+                    final OperationContext operationContext) {
+                CommandMessage commandMessage = createPingCommand();
+                stream.setCommandMessageId(commandMessage.getId());
+                connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), operationContext);
+                return initDesc;
+            }
+
+            @Override
+            public InternalConnectionInitializationDescription finishHandshake(final InternalConnection connection,
+                    final InternalConnectionInitializationDescription description, final OperationContext operationContext) {
+                return initDesc;
+            }
+
+            @Override
+            public void startHandshakeAsync(final InternalConnection connection, final OperationContext operationContext,
+                    final SingleResultCallback<InternalConnectionInitializationDescription> callback) {
+                CommandMessage commandMessage = createPingCommand();
+                stream.setCommandMessageId(commandMessage.getId());
+                connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), operationContext,
+                        (result, t) -> callback.onResult(t == null ? initDesc : null, t));
+            }
+
+            @Override
+            public void finishHandshakeAsync(final InternalConnection connection,
+                    final InternalConnectionInitializationDescription description, final OperationContext operationContext,
+                    final SingleResultCallback<InternalConnectionInitializationDescription> callback) {
+                callback.onResult(initDesc, null);
+            }
+        };
+
+        InternalStreamConnection connection = new InternalStreamConnection(SINGLE, null, false, SERVER_ID,
+                new TestConnectionGenerationSupplier(), serverAddress -> stream, Collections.emptyList(),
+                LoggerSettings.builder().build(), commandListener, initializer, recordEverything);
+        if (async) {
+            FutureResultCallback<Void> callback = new FutureResultCallback<>();
+            connection.openAsync(createOperationContext(), callback);
+            callback.get(5, TimeUnit.SECONDS);
+        } else {
+            connection.open(createOperationContext());
+        }
+        assertTrue(connection.opened());
+        assertFalse(stream.hadUnexpectedCall());
+    }
+
     private static final int MATCHING_RESPONSE_TO = 0;
     private static final int MISMATCHED_RESPONSE_TO = 1;
     private static final BsonTimestamp SESSION_STATE_TIMESTAMP = new BsonTimestamp(42, 1);
@@ -1363,18 +1453,7 @@ class InternalStreamConnectionTest {
     private InternalStreamConnection createOpenConnection(final TestStream stream, @Nullable final CommandListener commandListener,
             final List<MongoCompressor> compressorList) {
         StreamFactory streamFactory = serverAddress -> stream;
-        ConnectionDescription connectionDescription = new ConnectionDescription(
-                new ConnectionId(SERVER_ID, 1, 1L), LATEST_WIRE_VERSION,
-                ServerType.STANDALONE, getDefaultMaxWriteBatchSize(),
-                getDefaultMaxDocumentSize(), getDefaultMaxMessageSize(), Collections.emptyList());
-        ServerDescription serverDescription = ServerDescription.builder()
-                .ok(true)
-                .state(ServerConnectionState.CONNECTED)
-                .type(ServerType.STANDALONE)
-                .address(new ServerAddress())
-                .build();
-        InternalConnectionInitializationDescription initDesc =
-                new InternalConnectionInitializationDescription(connectionDescription, serverDescription);
+        InternalConnectionInitializationDescription initDesc = createInitializationDescription();
 
         InternalConnectionInitializer initializer = new InternalConnectionInitializer() {
             @Override
@@ -1408,6 +1487,20 @@ class InternalStreamConnectionTest {
                 streamFactory, compressorList, commandListener, initializer);
         connection.open(createOperationContext());
         return connection;
+    }
+
+    private static InternalConnectionInitializationDescription createInitializationDescription() {
+        ConnectionDescription connectionDescription = new ConnectionDescription(
+                new ConnectionId(SERVER_ID, 1, 1L), LATEST_WIRE_VERSION,
+                ServerType.STANDALONE, getDefaultMaxWriteBatchSize(),
+                getDefaultMaxDocumentSize(), getDefaultMaxMessageSize(), Collections.emptyList());
+        ServerDescription serverDescription = ServerDescription.builder()
+                .ok(true)
+                .state(ServerConnectionState.CONNECTED)
+                .type(ServerType.STANDALONE)
+                .address(new ServerAddress())
+                .build();
+        return new InternalConnectionInitializationDescription(connectionDescription, serverDescription);
     }
 
     private CommandMessage createPingCommand() {

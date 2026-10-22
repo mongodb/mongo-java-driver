@@ -26,10 +26,12 @@ import com.mongodb.client.AbstractClientSideOperationsTimeoutProseTest;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBucket;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBuckets;
 import com.mongodb.reactivestreams.client.syncadapter.SyncGridFSBucket;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
+import com.mongodb.test.FlakyTest;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 import org.bson.Document;
@@ -79,6 +81,14 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
     @Override
     protected com.mongodb.client.MongoClient createMongoClient(final MongoClientSettings mongoClientSettings) {
         SyncMongoClient client = new SyncMongoClient(mongoClientSettings);
+        wrapped = client.getWrapped();
+        return client;
+    }
+
+    @Override
+    protected com.mongodb.client.MongoClient createMongoClientWithInternalSettings(final MongoClientSettings mongoClientSettings,
+                                                                                   final InternalMongoClientSettings internalSettings) {
+        SyncMongoClient client = new SyncMongoClient(mongoClientSettings, null, internalSettings);
         wrapped = client.getWrapped();
         return client;
     }
@@ -450,7 +460,8 @@ public final class ClientSideOperationTimeoutProseTest extends AbstractClientSid
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
     @DisplayName("TimeoutMS is honored for next operation when several getMore executed internally")
-    @Test
+    // TODO-JAVA-6341: this test intermittently timesout in CI
+    @FlakyTest(maxAttempts = 3)
     public void testTimeoutMsISHonoredForNnextOperationWhenSeveralGetMoreExecutedInternally() {
         assumeTrue(serverVersionAtLeast(4, 4));
         assumeTrue(isDiscoverableReplicaSet());

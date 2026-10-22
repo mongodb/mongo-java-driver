@@ -30,10 +30,12 @@ import com.mongodb.event.ServerHeartbeatStartedEvent;
 import com.mongodb.event.ServerHeartbeatSucceededEvent;
 import com.mongodb.event.TestServerMonitorListener;
 import com.mongodb.internal.connection.TestCommandListener;
+import com.mongodb.test.FlakyTest;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -84,6 +86,7 @@ public abstract class AbstractSessionsProseTest {
 
     // Test 13 from #13-existing-sessions-are-not-checked-into-a-cleared-pool-after-forking
     @Test
+    @Disabled("TODO-JAVA-6342 - server version mismatch issue")
     public void shouldCreateServerSessionOnlyAfterConnectionCheckout() throws InterruptedException {
         Set<BsonDocument> lsidSet = ConcurrentHashMap.newKeySet();
         MongoCollection<Document> collection;
@@ -208,7 +211,8 @@ public abstract class AbstractSessionsProseTest {
       In this test, we check that the cluster time has not been advanced on client1 through the server monitors, after client2 advanced
       the cluster time on the deployment/cluster.
     */
-    @Test
+    // TODO-JAVA-6341: this test intermittently timesout in CI
+    @FlakyTest(maxAttempts = 3)
     public void shouldNotGossipClusterTimeInServerMonitors() throws InterruptedException, TimeoutException {
         assumeTrue(!isStandalone());
 

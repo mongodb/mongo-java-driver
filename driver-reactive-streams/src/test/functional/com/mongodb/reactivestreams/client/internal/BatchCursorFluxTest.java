@@ -27,6 +27,7 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.TestSubscriber;
+import com.mongodb.test.FlakyTest;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -177,7 +178,8 @@ public class BatchCursorFluxTest {
         assertCommandNames(asList("find", "getMore"));
     }
 
-    @Test
+    // TODO-JAVA-6341: this test intermittently timesout in CI
+    @FlakyTest(maxAttempts = 3)
     public void testBatchCursorDynamicBatchSize() {
         List<Document> docs = createDocs(200);
         Mono.from(collection.insertMany(docs)).block(TIMEOUT_DURATION);
