@@ -93,9 +93,6 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
             createEncryptedCollection("prefix-suffix-ci-di", "encryptedFields-prefix-suffix-ci-di.json");
             createEncryptedCollection("substring", "encryptedFields-substring.json");
             createEncryptedCollection("substring-ci-di", "encryptedFields-substring-ci-di.json");
-        } else {
-            createEncryptedCollection("prefix-suffix-preview", "encryptedFields-prefix-suffix-preview.json");
-            createEncryptedCollection("substring-preview", "encryptedFields-substring-preview.json");
         }
 
         MongoCollection<BsonDocument> dataKeysCollection = getMongoClient()
@@ -144,12 +141,9 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
         if (gaSupported) {
             explicitEncryptedDatabase.getCollection("prefix-suffix")
                     .insertOne(new Document("_id", 0).append("encryptedText", prefixSuffixSeed));
-        } else {
-            explicitEncryptedDatabase.getCollection("prefix-suffix-preview")
-                    .insertOne(new Document("_id", 0).append("encryptedText", prefixSuffixSeed));
         }
 
-        // Seed the substring collection: GA "substring" on 9.0+, preview on pre-9.0.
+        // Seed the substring collection: GA "substring" on 9.0+.
         BsonBinary substringSeed = clientEncryption.encrypt(new BsonString("foobarbaz"),
                 new EncryptOptions("String")
                         .keyId(key1Id)
@@ -159,15 +153,18 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
                                 .diacriticSensitive(true)
                                 .substringOptions(BsonDocument.parse(
                                         "{strMaxLength: 10, strMaxQueryLength: 6, strMinQueryLength: 2}"))));
-        explicitEncryptedDatabase.getCollection(gaSupported ? "substring" : "substring-preview")
-                .insertOne(new Document("_id", 0).append("encryptedText", substringSeed));
+        if (gaSupported) {
+            explicitEncryptedDatabase.getCollection("substring")
+                    .insertOne(new Document("_id", 0).append("encryptedText", substringSeed));
+        }
     }
 
     @Test
     @DisplayName("Case 1: can find a document by prefix")
     public void test1CanFindADocumentByPrefix() {
-        String queryType = gaSupported ? "prefix" : "prefixPreview";
-        String collection = gaSupported ? "prefix-suffix" : "prefix-suffix-preview";
+        assumeTrue(gaSupported);
+        String queryType = "prefix";
+        String collection = "prefix-suffix";
         BsonBinary encrypted = encryptForPrefix("foo", queryType, true, true);
         Document result = explicitEncryptedDatabase.getCollection(collection)
                 .find(encStrStartsWith(encrypted)).first();
@@ -177,8 +174,9 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
     @Test
     @DisplayName("Case 2: can find a document by suffix")
     public void test2CanFindADocumentBySuffix() {
-        String queryType = gaSupported ? "suffix" : "suffixPreview";
-        String collection = gaSupported ? "prefix-suffix" : "prefix-suffix-preview";
+        assumeTrue(gaSupported);
+        String queryType = "suffix";
+        String collection = "prefix-suffix";
         BsonBinary encrypted = encryptForSuffix("baz", queryType, true, true);
         Document result = explicitEncryptedDatabase.getCollection(collection)
                 .find(encStrEndsWith(encrypted)).first();
@@ -188,8 +186,9 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
     @Test
     @DisplayName("Case 3: assert no document found by prefix")
     public void test3AssertNoDocumentFoundByPrefix() {
-        String queryType = gaSupported ? "prefix" : "prefixPreview";
-        String collection = gaSupported ? "prefix-suffix" : "prefix-suffix-preview";
+        assumeTrue(gaSupported);
+        String queryType = "prefix";
+        String collection = "prefix-suffix";
         BsonBinary encrypted = encryptForPrefix("baz", queryType, true, true);
         Document result = explicitEncryptedDatabase.getCollection(collection)
                 .find(encStrStartsWith(encrypted)).first();
@@ -199,8 +198,9 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
     @Test
     @DisplayName("Case 4: assert no document found by suffix")
     public void test4AssertNoDocumentFoundBySuffix() {
-        String queryType = gaSupported ? "suffix" : "suffixPreview";
-        String collection = gaSupported ? "prefix-suffix" : "prefix-suffix-preview";
+        assumeTrue(gaSupported);
+        String queryType = "suffix";
+        String collection = "prefix-suffix";
         BsonBinary encrypted = encryptForSuffix("foo", queryType, true, true);
         Document result = explicitEncryptedDatabase.getCollection(collection)
                 .find(encStrEndsWith(encrypted)).first();
@@ -210,8 +210,9 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
     @Test
     @DisplayName("Case 5: can find a document by substring")
     public void test5CanFindADocumentBySubstring() {
-        String queryType = gaSupported ? "substring" : "substringPreview";
-        String collection = gaSupported ? "substring" : "substring-preview";
+        assumeTrue(gaSupported);
+        String queryType = "substring";
+        String collection = "substring";
         BsonBinary encrypted = encryptForSubstring("bar", queryType, true, true);
         Document result = explicitEncryptedDatabase.getCollection(collection)
                 .find(encStrContains(encrypted)).first();
@@ -221,8 +222,9 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
     @Test
     @DisplayName("Case 6: assert no document found by substring")
     public void test6AssertNoDocumentFoundBySubstring() {
-        String queryType = gaSupported ? "substring" : "substringPreview";
-        String collection = gaSupported ? "substring" : "substring-preview";
+        assumeTrue(gaSupported);
+        String queryType = "substring";
+        String collection = "substring";
         BsonBinary encrypted = encryptForSubstring("qux", queryType, true, true);
         Document result = explicitEncryptedDatabase.getCollection(collection)
                 .find(encStrContains(encrypted)).first();
