@@ -139,7 +139,7 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
 
             @Override
             public MongoChangeStreamCursor<TDocument> cursor() {
-                return new MongoChangeStreamCursorImpl<>(execute(), codecRegistry.get(clazz), initialResumeToken());
+                return new MongoChangeStreamCursorImpl<>(executeChangeStream(), codecRegistry.get(clazz), initialResumeToken());
             }
 
             @Override
@@ -193,7 +193,7 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
 
     @Override
     public MongoChangeStreamCursor<ChangeStreamDocument<TResult>> cursor() {
-        return new MongoChangeStreamCursorImpl<>(execute(), codec, initialResumeToken());
+        return new MongoChangeStreamCursorImpl<>(executeChangeStream(), codec, initialResumeToken());
     }
 
     @Nullable
@@ -222,7 +222,7 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
                 getBatchSize(), collation, comment, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);
     }
 
-    private BatchCursor<RawBsonDocument> execute() {
+    private BatchCursor<RawBsonDocument> executeChangeStream() {
         return getExecutor().execute(createChangeStreamOperation(), getReadPreference(), getReadConcern(), getClientSession());
     }
 
