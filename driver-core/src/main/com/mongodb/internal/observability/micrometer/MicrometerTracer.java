@@ -82,7 +82,14 @@ public class MicrometerTracer implements Tracer {
             }
         }
 
-        return new MicrometerSpan(observation.start(), namespace, textMaxLength);
+        Observation started = observation.start();
+        if (!TracingSpanRecordingProbe.isRecording(started)) {
+            Observation.Context context = started.getContext();
+            if (context instanceof MongodbObservationContext) {
+                ((MongodbObservationContext) context).setRecording(false);
+            }
+        }
+        return new MicrometerSpan(started, namespace, textMaxLength);
     }
 
     @Override
