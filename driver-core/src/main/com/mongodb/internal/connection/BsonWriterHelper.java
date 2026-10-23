@@ -202,7 +202,7 @@ public final class BsonWriterHelper {
                     .build();
     }
 
-    private static MessageSettings.Builder createMessageSettingsBuilder(final MessageSettings settings) {
+    static MessageSettings.Builder createMessageSettingsBuilder(final MessageSettings settings) {
         return MessageSettings.builder()
                 .maxBatchCount(settings.getMaxBatchCount())
                 .maxMessageSize(settings.getMaxMessageSize())
