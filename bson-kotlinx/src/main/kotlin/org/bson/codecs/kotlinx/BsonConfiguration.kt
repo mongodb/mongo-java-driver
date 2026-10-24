@@ -15,6 +15,9 @@
  */
 package org.bson.codecs.kotlinx
 
+import kotlinx.serialization.ExperimentalSerializationApi
+import org.bson.codecs.kotlinx.utils.BsonCodecUtils.convertCamelCase
+
 /**
  * Bson Configuration for serialization
  *
@@ -37,13 +40,32 @@ public data class BsonConfiguration(
 /**
  * Optional BSON naming strategy for a field.
  *
- * @since 5.4
+ * @since 5.6
  */
-public enum class BsonNamingStrategy {
+@OptIn(ExperimentalSerializationApi::class)
+public fun interface BsonNamingStrategy {
 
-    /**
-     * A strategy that transforms serial names from camel case to snake case — lowercase characters with words separated
-     * by underscores.
-     */
-    SNAKE_CASE,
+    public fun transformName(serialName: String): String
+
+    public companion object {
+        /**
+         * A strategy that transforms serial names from camel case to snake case — lowercase characters with words
+         * separated by underscores.
+         */
+        public val SNAKE_CASE: BsonNamingStrategy =
+            object : BsonNamingStrategy {
+                override fun transformName(serialName: String): String = convertCamelCase(serialName, '_')
+                override fun toString() = "BsonNamingStrategySnakeCase"
+            }
+
+        /**
+         * A strategy that transforms serial names from camel case to kebab case — lowercase characters with words
+         * separated by hyphens.
+         */
+        public val KEBAB_CASE: BsonNamingStrategy =
+            object : BsonNamingStrategy {
+                override fun transformName(serialName: String): String = convertCamelCase(serialName, '-')
+                override fun toString() = "BsonNamingStrategyKebabCase"
+            }
+    }
 }
