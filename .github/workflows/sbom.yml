@@ -1,0 +1,113 @@
+name: Generate SBOM
+
+# This workflow uses CycloneDX Gradle plugin and publishes an sbom.json artifact.
+# It runs on manual trigger or when Gradle build files change on main branch,
+# and creates a PR with the updated SBOM.
+# Internal documentation: go/sbom-scope
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches: ['main']
+    paths:
+      - '**/build.gradle.kts'
+      - '**/build.gradle'
+      - 'gradle/libs.versions.toml'
+      - 'gradle.properties'
+      - 'settings.gradle.kts'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sbom:
+    name: Generate SBOM and Create PR
+    runs-on: ubuntu-latest
+    concurrency:
+      group: sbom-${{ github.ref }}
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Generate SBOM
+        run: ./gradlew cyclonedxBom
+
+      - name: Add licenses to MongoDB components
+        run: |
+          jq '
+            .components |= map(
+              if (.group == "org.mongodb" or .group == "org.mongodb.scala") and (.licenses == null or .licenses == [])
+              then . + {
+                "licenses": [
+                  {
+                    "license": {
+                      "name": "Apache-2.0"
+                    }
+                  }
+                ]
+              }
+              else .
+              end
+            )
+          ' sbom.json > sbom-with-licenses.json
+          mv sbom-with-licenses.json sbom.json
+
+      - name: Download CycloneDX CLI
+        run: |
+          curl -L -s -o /tmp/cyclonedx "https://github.com/CycloneDX/cyclonedx-cli/releases/download/v0.29.1/cyclonedx-linux-x64"
+          chmod +x /tmp/cyclonedx
+
+      - name: Validate SBOM
+        run: /tmp/cyclonedx validate --input-file sbom.json --fail-on-errors
+
+      - name: Upload SBOM artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: sbom
+          path: sbom.json
+          if-no-files-found: error
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@b4733b9419fd47bbfa1807b15627e17cd70b5b22
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: 'chore: Update SBOM after dependency changes'
+          branch: auto-update-sbom-${{ github.run_id }}
+          delete-branch: true
+          title: 'chore: Update SBOM'
+          body: |
+            ## Automated SBOM Update
+
+            This PR was automatically generated because dependency manifest files changed.
+
+            ### Changes
+            - Updated `sbom.json` to reflect current dependencies
+
+            ### Verification
+            The SBOM was generated using CycloneDX Gradle plugin v2.3.1 with CycloneDX specification v1.5.
+
+            ### Triggered by
+            - Commit: ${{ github.sha }}
+            - Workflow run: ${{ github.run_id }}
+
+            ---
+            _This PR was created automatically by the [SBOM workflow](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})_
+          labels: |
+            sbom
+            automated
+            dependencies
+
