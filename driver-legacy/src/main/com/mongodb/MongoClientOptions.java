@@ -23,6 +23,7 @@ import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.annotations.Reason;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionPoolSettings;
+import com.mongodb.connection.SrvHostValidator;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ConnectionCreatedEvent;
@@ -594,6 +595,19 @@ public class MongoClientOptions {
     @Nullable
     public String getSrvAllowedHostsSuffix() {
         return wrapped.getClusterSettings().getSrvAllowedHostsSuffix();
+    }
+
+    /**
+     * Get the user-supplied SRV host validator
+     *
+     * <p><b>WARNING:</b> Modifying the default SRV domain name validation can create vulnerabilities.</p>
+     *
+     * @return the SRV host validator
+     * @since 5.14
+     */
+    @Nullable
+    public SrvHostValidator getSrvHostValidator() {
+        return wrapped.getClusterSettings().getSrvHostValidator();
     }
 
     /**
@@ -1465,6 +1479,23 @@ public class MongoClientOptions {
             return this;
         }
 
+        /**
+         * Sets the hostname validator to use to validate hosts returned via SRV lookup.
+         *
+         * <p><b>WARNING:</b> Modifying the default SRV domain name validation can create vulnerabilities.</p>
+         * <p>The validator provided will be called for each SRV record discovered and can choose to accept or reject a discovered
+         * host names. Rejected hosts will be ignored as if the record does not exist.</p>
+         *
+         * <p>It is used synchronously during DNS lookup, so the validator should not block. Tt should also be thread-safe.</p>
+         * <p>This option is mutually exclusive with {@link #srvAllowedHostsSuffix(String)}.</p>
+         * @param srvHostValidator the validator to use
+         * @return this
+         * @since 5.14
+         */
+        public Builder srvHostValidator(final SrvHostValidator srvHostValidator) {
+            wrapped.applyToClusterSettings(builder -> builder.srvHostValidator(srvHostValidator));
+            return this;
+        }
         /**
          * Sets the time limit, in milliseconds for the full execution of an operation.
          *

@@ -22,6 +22,7 @@ import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.internal.connection.ServerAddressHelper;
+import com.mongodb.internal.connection.DnsSuffixValidator;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
 
@@ -35,7 +36,6 @@ import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.connection.DomainNameUtils.normalizeSrvAllowedHostsSuffix;
 import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
@@ -51,7 +51,11 @@ public final class ClusterSettings {
     private final String srvHost;
     private final Integer srvMaxHosts;
     private final String srvServiceName;
-    private final String srvAllowedHostsSuffix;
+    @Nullable
+    private final DnsSuffixValidator srvAllowedHostsSuffix;
+    @Nullable
+    private final SrvHostValidator srvHostValidator;
+    private final SrvHostValidator effectiveSrvHostValidator;
     private final List<ServerAddress> hosts;
     private final ClusterConnectionMode mode;
     private final ClusterType requiredClusterType;
@@ -90,7 +94,8 @@ public final class ClusterSettings {
         private String srvHost;
         private Integer srvMaxHosts;
         private String srvServiceName = "mongodb";
-        private String srvAllowedHostsSuffix;
+        private DnsSuffixValidator srvAllowedHostsSuffix;
+        private SrvHostValidator srvHostValidator;
         private List<ServerAddress> hosts = DEFAULT_HOSTS;
         private ClusterConnectionMode mode;
         private ClusterType requiredClusterType = ClusterType.UNKNOWN;
@@ -118,6 +123,7 @@ public final class ClusterSettings {
             srvServiceName = clusterSettings.srvServiceName;
             srvMaxHosts = clusterSettings.srvMaxHosts;
             srvAllowedHostsSuffix = clusterSettings.srvAllowedHostsSuffix;
+            srvHostValidator = clusterSettings.srvHostValidator;
             hosts = clusterSettings.hosts;
             mode = clusterSettings.mode;
             requiredReplicaSetName = clusterSettings.requiredReplicaSetName;
@@ -149,6 +155,27 @@ public final class ClusterSettings {
                 throw new IllegalArgumentException("Can not set both hosts and srvHost");
             }
             this.srvHost = srvHost;
+            return this;
+        }
+
+        /**
+         * Sets the hostname validator to use to validate hosts returned via SRV lookup.
+         *
+         * <p><b>WARNING:</b> Modifying the default SRV domain name validation can create vulnerabilities.</p>
+         * <p>The validator provided will be called for each SRV record discovered and can choose to accept or reject a discovered
+         * host names. Rejected hosts will be ignored as if the record does not exist.</p>
+         *
+         * <p>It is used synchronously during DNS lookup, so the validator should not block. Tt should also be thread-safe.</p>
+         * <p>This option is mutually exclusive with {@link #srvAllowedHostsSuffix(String)}.</p>
+         * @param srvHostValidator the validator to use
+         * @return this
+         * @since 5.14
+         */
+        public Builder srvHostValidator(final SrvHostValidator srvHostValidator) {
+            if (this.srvAllowedHostsSuffix != null) {
+                throw new IllegalArgumentException("Cannot set both srvHostValidator and srvAllowedHostsSuffix");
+            }
+            this.srvHostValidator = srvHostValidator;
             return this;
         }
 
@@ -198,14 +225,17 @@ public final class ClusterSettings {
          * used with SRV. Specifying an overly broad suffix (for example a bare TLD) weakens SRV host name validation and
          * is the responsibility of the caller.</p>
          *
+         * <p>This option is mutually exclusive with {@link #srvHostValidator(SrvHostValidator)}.</p>
          * @param srvAllowedHostsSuffix the SRV allowed hosts suffix; may not be null or empty
          * @return this
          * @since 5.13
          * @see #getSrvAllowedHostsSuffix()
          */
         public Builder srvAllowedHostsSuffix(final String srvAllowedHostsSuffix) {
-            notNull("srvAllowedHostsSuffix", srvAllowedHostsSuffix);
-            this.srvAllowedHostsSuffix = normalizeSrvAllowedHostsSuffix(srvAllowedHostsSuffix);
+            if (this.srvHostValidator != null) {
+                throw new IllegalArgumentException("Cannot set both srvHostValidator and srvAllowedHostsSuffix");
+            }
+            this.srvAllowedHostsSuffix = new DnsSuffixValidator(srvAllowedHostsSuffix);
             return this;
         }
 
@@ -470,7 +500,32 @@ public final class ClusterSettings {
      */
     @Nullable
     public String getSrvAllowedHostsSuffix() {
-        return srvAllowedHostsSuffix;
+        return srvAllowedHostsSuffix != null ? srvAllowedHostsSuffix.getSuffix() : null;
+    }
+
+    /**
+     * Get the user-supplied SRV host validator
+     *
+     * <p><b>WARNING:</b> Modifying the default SRV domain name validation can create vulnerabilities.</p>
+     *
+     * @return the SRV host validator
+     * @since 5.14
+     */
+    @Nullable
+    public SrvHostValidator getSrvHostValidator() {
+        return srvHostValidator;
+    }
+
+    /**
+     * Get the effective SRV host validator
+     *
+     * <p>The validator returned may be the user-supplied validator, the validator equivalent to {@link #getSrvAllowedHostsSuffix()}, or
+     * the default validator based on {@link #getSrvHost()}.</p>
+     * @return the SRV host validator
+     * @since 5.14
+     */
+    public SrvHostValidator getEffectiveSrvHostValidator() {
+        return effectiveSrvHostValidator;
     }
 
     /**
@@ -679,6 +734,34 @@ public final class ClusterSettings {
         srvMaxHosts = builder.srvMaxHosts;
         srvServiceName = builder.srvServiceName;
         srvAllowedHostsSuffix = builder.srvAllowedHostsSuffix;
+        srvHostValidator = builder.srvHostValidator;
+        if (builder.srvHostValidator != null) {
+            effectiveSrvHostValidator = builder.srvHostValidator;
+        } else if (builder.srvAllowedHostsSuffix != null) {
+            effectiveSrvHostValidator = builder.srvAllowedHostsSuffix;
+        } else if (srvHost != null) {
+            int firstDot = srvHost.indexOf('.');
+            boolean hasThreeParts = firstDot >= 0 && srvHost.indexOf('.', firstDot + 1) >= 0;
+            DnsSuffixValidator suffixValidator = new DnsSuffixValidator(hasThreeParts ? srvHost.substring(firstDot) : srvHost);
+            effectiveSrvHostValidator = suffixValidator.isAllowedSingleLabel() ? suffixValidator : new SrvHostValidator() {
+                @Override
+                public boolean isValidHost(final String discoveredHostName) {
+                    return suffixValidator.isValidHost(discoveredHostName)
+                            && discoveredHostName.chars().filter(c -> c == '.').count() >= 2;
+                }
+
+                @Override
+                public String toString() {
+                    return String.format("ends with %s and has at least 3 labels", suffixValidator.getSuffix());
+                }
+            };
+        } else {
+            // This should be unreachable
+            effectiveSrvHostValidator = h -> false;
+        }
+        if (srvHost == null && srvHostValidator != null) {
+            throw new IllegalArgumentException("An srvHostValidator was supplied for a non-SRV URI");
+        }
         hosts = builder.hosts;
         requiredReplicaSetName = builder.requiredReplicaSetName;
         if (builder.mode != null) {
