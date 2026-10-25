@@ -17,19 +17,28 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoCompressor;
+import org.bson.ByteBuf;
+import org.bson.io.BsonOutput;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.zip.DataFormatException;
 import java.util.zip.Deflater;
-import java.util.zip.DeflaterOutputStream;
-import java.util.zip.InflaterInputStream;
+import java.util.zip.Inflater;
 
 class ZlibCompressor extends Compressor {
-    private final int level;
+    private static final int CHUNK_SIZE = 16 * 1024;
+    private static final byte[] EMPTY = new byte[0];
+    private static final ConcurrentHashMap<Integer, CompressionContextPool<CompressionContext>> COMPRESSION_CONTEXTS =
+            new ConcurrentHashMap<>();
+    private static final CompressionContextPool<Inflater> INFLATERS = new CompressionContextPool<>(Inflater::new, Inflater::end);
+
+    private final CompressionContextPool<CompressionContext> compressionContexts;
 
     ZlibCompressor(final MongoCompressor mongoCompressor) {
-        this.level = mongoCompressor.getPropertyNonNull(MongoCompressor.LEVEL, Deflater.DEFAULT_COMPRESSION);
+        int level = mongoCompressor.getPropertyNonNull(MongoCompressor.LEVEL, Deflater.DEFAULT_COMPRESSION);
+        this.compressionContexts = COMPRESSION_CONTEXTS.computeIfAbsent(level, l ->
+                new CompressionContextPool<>(() -> new CompressionContext(l), CompressionContext::end));
     }
 
     @Override
@@ -43,21 +52,82 @@ class ZlibCompressor extends Compressor {
     }
 
     @Override
-    InputStream getInputStream(final InputStream source) {
-        return new InflaterInputStream(source);
+    void compress(final List<ByteBuf> source, final BsonOutput target) {
+        CompressionContext context = compressionContexts.get();
+        boolean reusable = false;
+        try {
+            Deflater deflater = context.deflater;
+            deflater.reset();
+            for (ByteBuf cur : source) {
+                while (cur.hasRemaining()) {
+                    if (cur.isBackedByArray()) {
+                        int length = cur.remaining();
+                        deflater.setInput(cur.array(), cur.arrayOffset() + cur.position(), length);
+                        cur.position(cur.limit());
+                    } else {
+                        int length = Math.min(cur.remaining(), context.input.length);
+                        cur.get(context.input, 0, length);
+                        deflater.setInput(context.input, 0, length);
+                    }
+                    while (!deflater.needsInput()) {
+                        target.writeBytes(context.output, 0, deflater.deflate(context.output));
+                    }
+                }
+            }
+            deflater.finish();
+            while (!deflater.finished()) {
+                target.writeBytes(context.output, 0, deflater.deflate(context.output));
+            }
+            deflater.setInput(EMPTY);
+            reusable = true;
+        } finally {
+            compressionContexts.release(context, reusable);
+        }
     }
 
     @Override
-    OutputStream getOutputStream(final OutputStream source) {
-        return new DeflaterOutputStream(source, new Deflater(level)) {
-            @Override
-            public void close() throws IOException {
-                try {
-                    super.close();
-                } finally {
-                    def.end();
-                }
+    void uncompress(final ByteBuf source, final ByteBuf target) {
+        Inflater inflater = INFLATERS.get();
+        boolean reusable = false;
+        try {
+            uncompressFully(source, target, (in, inOffset, inLength, out, outOffset, outLength) ->
+                    inflate(inflater, in, inOffset, inLength, out, outOffset, outLength));
+            reusable = true;
+        } finally {
+            INFLATERS.release(inflater, reusable);
+        }
+    }
+
+    private static int inflate(final Inflater inflater, final byte[] in, final int inOffset, final int inLength,
+            final byte[] out, final int outOffset, final int outLength) throws DataFormatException {
+        inflater.reset();
+        inflater.setInput(in, inOffset, inLength);
+        int inflated = 0;
+        while (inflated < outLength) {
+            int length = inflater.inflate(out, outOffset + inflated, outLength - inflated);
+            if (length == 0 && (inflater.finished() || inflater.needsInput() || inflater.needsDictionary())) {
+                break;
             }
-        };
+            inflated += length;
+        }
+        if (inflated == outLength && !inflater.finished() && inflater.inflate(new byte[1]) > 0) {
+            inflated++;
+        }
+        inflater.setInput(EMPTY);
+        return inflated;
+    }
+
+    private static final class CompressionContext {
+        private final Deflater deflater;
+        private final byte[] input = new byte[CHUNK_SIZE];
+        private final byte[] output = new byte[CHUNK_SIZE];
+
+        CompressionContext(final int level) {
+            deflater = new Deflater(level);
+        }
+
+        void end() {
+            deflater.end();
+        }
     }
 }

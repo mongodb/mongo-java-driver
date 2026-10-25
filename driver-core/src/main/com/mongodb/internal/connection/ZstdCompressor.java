@@ -17,16 +17,21 @@
 package com.mongodb.internal.connection;
 
 import com.github.luben.zstd.Zstd;
-import com.github.luben.zstd.ZstdInputStreamNoFinalizer;
+import com.github.luben.zstd.ZstdCompressCtx;
+import com.github.luben.zstd.ZstdDecompressCtx;
 import com.mongodb.MongoInternalException;
 import org.bson.ByteBuf;
 import org.bson.io.BsonOutput;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 
 class ZstdCompressor extends Compressor {
+    private static final int MAX_RETAINED_BUFFER_SIZE = 1024 * 1024;
+    private static final CompressionContextPool<CompressionContext> COMPRESSION_CONTEXTS =
+            new CompressionContextPool<>(CompressionContext::new, CompressionContext::close);
+    private static final CompressionContextPool<ZstdDecompressCtx> DECOMPRESSION_CONTEXTS =
+            new CompressionContextPool<>(ZstdDecompressCtx::new, ZstdDecompressCtx::close);
+
     @Override
     public String getName() {
         return "zstd";
@@ -40,16 +45,32 @@ class ZstdCompressor extends Compressor {
     @Override
     public void compress(final List<ByteBuf> source, final BsonOutput target) {
         int uncompressedSize = getUncompressedSize(source);
-
-        byte[] singleByteArraySource = new byte[uncompressedSize];
-        copy(source, singleByteArraySource);
-
+        CompressionContext context = COMPRESSION_CONTEXTS.get();
+        boolean reusable = false;
         try {
-            byte[] out = new byte[(int) Zstd.compressBound(uncompressedSize)];
-            int compressedSize = (int) Zstd.compress(out, singleByteArraySource, Zstd.defaultCompressionLevel());
+            byte[] in = context.uncompressedBuffer(uncompressedSize);
+            copy(source, in);
+            byte[] out = context.compressedBuffer((int) Zstd.compressBound(uncompressedSize));
+            int compressedSize = context.ctx.compressByteArray(out, 0, out.length, in, 0, uncompressedSize);
+            reusable = true;
             target.writeBytes(out, 0, compressedSize);
         } catch (Exception e) {
             throw new MongoInternalException("Unexpected exception", e);
+        } finally {
+            COMPRESSION_CONTEXTS.release(context, reusable);
+        }
+    }
+
+    @Override
+    void uncompress(final ByteBuf source, final ByteBuf target) {
+        ZstdDecompressCtx ctx = DECOMPRESSION_CONTEXTS.get();
+        boolean reusable = false;
+        try {
+            uncompressFully(source, target, (in, inOffset, inLength, out, outOffset, outLength) ->
+                    ctx.decompressByteArray(out, outOffset, outLength, in, inOffset, inLength));
+            reusable = true;
+        } finally {
+            DECOMPRESSION_CONTEXTS.release(ctx, reusable);
         }
     }
 
@@ -70,8 +91,33 @@ class ZstdCompressor extends Compressor {
         }
     }
 
-    @Override
-    InputStream getInputStream(final InputStream source) throws IOException {
-        return new ZstdInputStreamNoFinalizer(source);
+    private static final class CompressionContext {
+        private final ZstdCompressCtx ctx = new ZstdCompressCtx().setLevel(Zstd.defaultCompressionLevel());
+        private byte[] uncompressed = new byte[0];
+        private byte[] compressed = new byte[0];
+
+        byte[] uncompressedBuffer(final int size) {
+            if (size > MAX_RETAINED_BUFFER_SIZE) {
+                return new byte[size];
+            }
+            if (uncompressed.length < size) {
+                uncompressed = new byte[size];
+            }
+            return uncompressed;
+        }
+
+        byte[] compressedBuffer(final int size) {
+            if (size > MAX_RETAINED_BUFFER_SIZE) {
+                return new byte[size];
+            }
+            if (compressed.length < size) {
+                compressed = new byte[size];
+            }
+            return compressed;
+        }
+
+        void close() {
+            ctx.close();
+        }
     }
 }
