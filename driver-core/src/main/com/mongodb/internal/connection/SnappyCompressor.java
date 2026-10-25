@@ -20,13 +20,14 @@ import com.mongodb.MongoInternalException;
 import org.bson.ByteBuf;
 import org.bson.io.BsonOutput;
 import org.xerial.snappy.Snappy;
-import org.xerial.snappy.SnappyInputStream;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 
 class SnappyCompressor extends Compressor {
+    private static final int MAX_RETAINED_BUFFER_SIZE = 1024 * 1024;
+    private static final CompressionContextPool<Buffers> BUFFERS = new CompressionContextPool<>(Buffers::new, buffers -> { });
+
     @Override
     public String getName() {
         return "snappy";
@@ -42,17 +43,29 @@ class SnappyCompressor extends Compressor {
     @Override
     public void compress(final List<ByteBuf> source, final BsonOutput target) {
         int uncompressedSize = getUncompressedSize(source);
-
-        byte[] singleByteArraySource = new byte[uncompressedSize];
-        copy(source, singleByteArraySource);
-
+        Buffers buffers = BUFFERS.get();
         try {
-            byte[] out = new byte[Snappy.maxCompressedLength(uncompressedSize)];
-            int compressedSize = Snappy.compress(singleByteArraySource, 0, singleByteArraySource.length, out, 0);
+            byte[] singleByteArraySource = buffers.uncompressed(uncompressedSize);
+            copy(source, singleByteArraySource);
+            byte[] out = buffers.compressed(Snappy.maxCompressedLength(uncompressedSize));
+            int compressedSize = Snappy.compress(singleByteArraySource, 0, uncompressedSize, out, 0);
             target.writeBytes(out, 0, compressedSize);
         } catch (IOException e) {
             throw new MongoInternalException("Unexpected IOException", e);
+        } finally {
+            BUFFERS.release(buffers, true);
         }
+    }
+
+    @Override
+    void uncompress(final ByteBuf source, final ByteBuf target) {
+        uncompressFully(source, target, (in, inOffset, inLength, out, outOffset, outLength) -> {
+            int uncompressedLength = Snappy.uncompressedLength(in, inOffset, inLength);
+            if (uncompressedLength != outLength) {
+                return uncompressedLength;
+            }
+            return Snappy.uncompress(in, inOffset, inLength, out, outOffset);
+        });
     }
 
     private int getUncompressedSize(final List<ByteBuf> source) {
@@ -72,8 +85,28 @@ class SnappyCompressor extends Compressor {
         }
     }
 
-    @Override
-    InputStream getInputStream(final InputStream source) throws IOException {
-        return new SnappyInputStream(source);
+    private static final class Buffers {
+        private byte[] uncompressed = new byte[0];
+        private byte[] compressed = new byte[0];
+
+        byte[] uncompressed(final int size) {
+            if (size > MAX_RETAINED_BUFFER_SIZE) {
+                return new byte[size];
+            }
+            if (uncompressed.length < size) {
+                uncompressed = new byte[size];
+            }
+            return uncompressed;
+        }
+
+        byte[] compressed(final int size) {
+            if (size > MAX_RETAINED_BUFFER_SIZE) {
+                return new byte[size];
+            }
+            if (compressed.length < size) {
+                compressed = new byte[size];
+            }
+            return compressed;
+        }
     }
 }

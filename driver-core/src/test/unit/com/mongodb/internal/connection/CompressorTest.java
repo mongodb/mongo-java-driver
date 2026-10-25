@@ -26,6 +26,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.xerial.snappy.Snappy;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -136,12 +137,26 @@ final class CompressorTest {
         assertArrayEquals(message, contents(target));
     }
 
-    static Stream<Arguments> pooledCompressors() {
+    @Test
+    @DisplayName("snappy output should be readable by Snappy.uncompress and vice versa")
+    void snappyShouldBeCompatibleWithRawFormat() throws IOException {
+        Compressor compressor = new SnappyCompressor();
+        byte[] message = message(100_000, 5);
+
+        byte[] compressed = compress(compressor, split(message, 3, false));
+        assertArrayEquals(message, Snappy.uncompress(compressed));
+
+        ByteBuf target = buffer(message.length, false);
+        compressor.uncompress(wrap(Snappy.compress(message), false), target);
+        assertArrayEquals(message, contents(target));
+    }
+
+    static Stream<Arguments> checksummedCompressors() {
         return compressors().filter(arguments -> !"snappy".equals(arguments.get()[0]));
     }
 
     @ParameterizedTest(name = "{0}")
-    @MethodSource("pooledCompressors")
+    @MethodSource("compressors")
     @DisplayName("should reject a message whose uncompressed size differs from its header")
     void shouldRejectSizeMismatch(final String name, final Supplier<Compressor> factory) {
         Compressor compressor = factory.get();
@@ -157,7 +172,7 @@ final class CompressorTest {
     }
 
     @ParameterizedTest(name = "{0}")
-    @MethodSource("pooledCompressors")
+    @MethodSource("checksummedCompressors")
     @DisplayName("should reject corrupted input and keep working afterwards")
     void shouldRejectCorruptedInput(final String name, final Supplier<Compressor> factory) {
         Compressor compressor = factory.get();
