@@ -18,12 +18,9 @@ package com.mongodb.client.internal;
 
 import com.mongodb.KmsConnectCallback;
 import com.mongodb.ServerAddress;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
-import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
-import com.mongodb.lang.NonNull;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
@@ -31,14 +28,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.net.SocketException;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
-import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
-import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 class KeyManagementService {
     private static final Logger LOGGER = Loggers.getLogger("client");
@@ -54,21 +47,15 @@ class KeyManagementService {
         this.timeoutMillis = timeoutMillis;
     }
 
-    public InputStream stream(final String kmsProvider, final String host, final ByteBuffer message, @Nullable final Timeout operationTimeout) throws IOException {
+    public InputStream stream(final String kmsProvider, final String host, final ByteBuffer message) throws IOException {
         ServerAddress serverAddress = new ServerAddress(host);
 
         LOGGER.info("Connecting to KMS server at " + serverAddress);
         SSLContext sslContext = kmsProviderSslContextMap.get(kmsProvider);
 
         SSLSocket socket = KmsSocketConnector.connect(sslContext, kmsConnectCallback, serverAddress,
-                timeoutMillis, remainingMillis(operationTimeout));
+                timeoutMillis, remainingMillis());
 
-        // A KmsConnectCallback performs blocking I/O and may overrun the deadline it was given, which cannot be
-        // preempted. Re-check before issuing a request whose time budget is already spent.
-        Timeout.nullAsInfinite(operationTimeout).onExpired(() -> {
-            closeSocket(socket);
-            TimeoutContext.throwMongoTimeoutException("Connecting to KMS server exceeded the timeout limit.");
-        });
 
         try {
             OutputStream outputStream = socket.getOutputStream();
@@ -83,7 +70,7 @@ class KeyManagementService {
         }
 
         try {
-            return OperationTimeoutAwareInputStream.wrapIfNeeded(operationTimeout, socket);
+            return socket.getInputStream();
         } catch (IOException e) {
             closeSocket(socket);
             throw e;
@@ -99,11 +86,8 @@ class KeyManagementService {
      * @return the remaining time available for connecting to the KMS server, in milliseconds, never larger than the
      * configured connect timeout.
      */
-    long remainingMillis(@Nullable final Timeout operationTimeout) {
-        return Timeout.nullAsInfinite(operationTimeout).call(MILLISECONDS,
-                () -> (long) timeoutMillis,
-                (ms) -> Math.min(ms, timeoutMillis),
-                () -> TimeoutContext.throwMongoTimeoutException("Connecting to KMS server exceeded the timeout limit."));
+    long remainingMillis() {
+        return timeoutMillis;
     }
 
     private void closeSocket(final Socket socket) {
@@ -111,87 +95,6 @@ class KeyManagementService {
             socket.close();
         } catch (IOException | RuntimeException e) {
             // ignore
-        }
-    }
-
-    private static final class OperationTimeoutAwareInputStream extends InputStream {
-        private final Socket socket;
-        private final Timeout operationTimeout;
-        private final InputStream wrapped;
-
-        /**
-         * @param socket - socket to set timeout on.
-         * @param operationTimeout - non-infinite timeout.
-         */
-        private OperationTimeoutAwareInputStream(final Socket socket, final Timeout operationTimeout) throws IOException {
-            this.socket = socket;
-            this.operationTimeout = operationTimeout;
-            this.wrapped = socket.getInputStream();
-        }
-
-        public static InputStream wrapIfNeeded(@Nullable final Timeout operationTimeout, final SSLSocket socket) throws IOException {
-            return Timeout.nullAsInfinite(operationTimeout).checkedCall(NANOSECONDS,
-                    () -> socket.getInputStream(),
-                    (ns) -> new OperationTimeoutAwareInputStream(socket, assertNotNull(operationTimeout)),
-                    () -> new OperationTimeoutAwareInputStream(socket, assertNotNull(operationTimeout)));
-        }
-
-        private void setSocketSoTimeoutToOperationTimeout() throws SocketException {
-            operationTimeout.checkedRun(MILLISECONDS,
-                    () -> {
-                        throw new AssertionError("operationTimeout cannot be infinite");
-                    },
-                    (ms) -> socket.setSoTimeout(Math.toIntExact(ms)),
-                    () -> TimeoutContext.throwMongoTimeoutException("Reading from KMS server exceeded the timeout limit."));
-        }
-
-        @Override
-        public int read() throws IOException {
-            setSocketSoTimeoutToOperationTimeout();
-            return wrapped.read();
-        }
-
-        @Override
-        public int read(@NonNull final byte[] b) throws IOException {
-            setSocketSoTimeoutToOperationTimeout();
-            return wrapped.read(b);
-        }
-
-        @Override
-        public int read(@NonNull final byte[] b, final int off, final int len) throws IOException {
-            setSocketSoTimeoutToOperationTimeout();
-            return wrapped.read(b, off, len);
-        }
-
-        @Override
-        public void close() throws IOException {
-            wrapped.close();
-        }
-
-        @Override
-        public long skip(final long n) throws IOException {
-            setSocketSoTimeoutToOperationTimeout();
-            return wrapped.skip(n);
-        }
-
-        @Override
-        public int available() throws IOException {
-            return wrapped.available();
-        }
-
-        @Override
-        public synchronized void mark(final int readlimit) {
-            wrapped.mark(readlimit);
-        }
-
-        @Override
-        public synchronized void reset() throws IOException {
-            wrapped.reset();
-        }
-
-        @Override
-        public boolean markSupported() {
-            return wrapped.markSupported();
         }
     }
 }

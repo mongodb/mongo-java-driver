@@ -16,7 +16,6 @@
 package com.mongodb.kotlin.client
 
 import com.mongodb.client.ListDatabasesIterable as JListDatabasesIterable
-import com.mongodb.client.cursor.TimeoutMode
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.full.declaredFunctions
 import kotlin.test.assertEquals
@@ -56,7 +55,6 @@ class ListDatabasesIterableTest {
         iterable.maxTime(1)
         iterable.maxTime(1, TimeUnit.SECONDS)
         iterable.nameOnly(true)
-        iterable.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).authorizedDatabasesOnly(true)
         verify(wrapped).batchSize(batchSize)
@@ -66,7 +64,6 @@ class ListDatabasesIterableTest {
         verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
         verify(wrapped).maxTime(1, TimeUnit.SECONDS)
         verify(wrapped).nameOnly(true)
-        verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
         verifyNoMoreInteractions(wrapped)
     }

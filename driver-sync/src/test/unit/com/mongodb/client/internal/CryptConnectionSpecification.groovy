@@ -29,7 +29,6 @@ import com.mongodb.internal.bulk.WriteRequestWithIndex
 import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.connection.MessageSequences
 import com.mongodb.internal.connection.SplittablePayload
-import com.mongodb.internal.time.Timeout
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonArray
 import org.bson.BsonBinary
@@ -62,8 +61,6 @@ class CryptConnectionSpecification extends Specification {
         def codec = new DocumentCodec()
         def timeoutContext = Mock(TimeoutContext)
         def operationContext = ClusterFixture.createOperationContext().withTimeoutContext(timeoutContext)
-        def operationTimeout = Mock(Timeout)
-        timeoutContext.getTimeout() >> operationTimeout
 
         def encryptedCommand = toRaw(new BsonDocument('find', new BsonString('test'))
                 .append('ssid', new BsonBinary(6 as byte, new byte[10])))
@@ -93,14 +90,14 @@ class CryptConnectionSpecification extends Specification {
                     1000, 1024 * 16_000, 1024 * 48_000, [])
         }
         1 * crypt.encrypt('db', toRaw(new BsonDocument('find', new BsonString('test'))
-                .append('filter', new BsonDocument('ssid', new BsonString('555-55-5555')))), operationTimeout) >> {
+                .append('filter', new BsonDocument('ssid', new BsonString('555-55-5555'))))) >> {
             encryptedCommand
         }
         1 * wrappedConnection.command('db', encryptedCommand, _ as NoOpFieldNameValidator, ReadPreference.primary(),
                 _ as RawBsonDocumentCodec, operationContext, true, MessageSequences.EmptyMessageSequences.INSTANCE) >> {
             encryptedResponse
         }
-        1 * crypt.decrypt(encryptedResponse, operationTimeout) >> {
+        1 * crypt.decrypt(encryptedResponse) >> {
             decryptedResponse
         }
         response == rawToDocument(decryptedResponse)
@@ -128,8 +125,6 @@ class CryptConnectionSpecification extends Specification {
         def decryptedResponse = encryptedResponse
         def timeoutContext = Mock(TimeoutContext)
         def operationContext = ClusterFixture.createOperationContext().withTimeoutContext(timeoutContext)
-        def operationTimeout = Mock(Timeout)
-        timeoutContext.getTimeout() >> operationTimeout
 
         when:
         def response = cryptConnection.command('db',
@@ -147,14 +142,14 @@ class CryptConnectionSpecification extends Specification {
                                 new BsonDocument('_id', new BsonInt32(1))
                                         .append('ssid', new BsonString('555-55-5555'))
                                         .append('b', new BsonBinary(bytes))
-                        ]))), operationTimeout) >> {
+                        ])))) >> {
             encryptedCommand
         }
         1 * wrappedConnection.command('db', encryptedCommand, _ as NoOpFieldNameValidator, ReadPreference.primary(),
                 _ as RawBsonDocumentCodec, operationContext, true, MessageSequences.EmptyMessageSequences.INSTANCE) >> {
             encryptedResponse
         }
-        1 * crypt.decrypt(encryptedResponse, operationTimeout) >> {
+        1 * crypt.decrypt(encryptedResponse) >> {
             decryptedResponse
         }
         response == rawToBsonDocument(decryptedResponse)
@@ -184,8 +179,6 @@ class CryptConnectionSpecification extends Specification {
         def decryptedResponse = encryptedResponse
         def timeoutContext = Mock(TimeoutContext)
         def operationContext = ClusterFixture.createOperationContext().withTimeoutContext(timeoutContext)
-        def operationTimeout = Mock(Timeout)
-        timeoutContext.getTimeout() >> operationTimeout
 
         when:
         def response = cryptConnection.command('db',
@@ -202,14 +195,14 @@ class CryptConnectionSpecification extends Specification {
                         new BsonArray([
                                 new BsonDocument('_id', new BsonInt32(1)),
                                 new BsonDocument('_id', new BsonInt32(2))
-                        ]))), operationTimeout) >> {
+                        ])))) >> {
             encryptedCommand
         }
         1 * wrappedConnection.command('db', encryptedCommand, _ as NoOpFieldNameValidator, ReadPreference.primary(),
                 _ as RawBsonDocumentCodec, operationContext, true, MessageSequences.EmptyMessageSequences.INSTANCE) >> {
             encryptedResponse
         }
-        1 * crypt.decrypt(encryptedResponse, operationTimeout) >> {
+        1 * crypt.decrypt(encryptedResponse) >> {
             decryptedResponse
         }
         response == rawToBsonDocument(decryptedResponse)

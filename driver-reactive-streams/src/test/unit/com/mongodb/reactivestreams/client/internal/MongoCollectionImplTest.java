@@ -113,11 +113,6 @@ public class MongoCollectionImplTest extends TestHelper {
     }
 
     @Test
-    public void withTimeout() {
-        assertEquals(1000, collection.withTimeout(1000, TimeUnit.MILLISECONDS).getTimeout(TimeUnit.MILLISECONDS));
-    }
-
-    @Test
     public void withWriteConcern() {
         assertEquals(WriteConcern.MAJORITY, collection.withWriteConcern(WriteConcern.MAJORITY).getWriteConcern());
     }

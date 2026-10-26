@@ -22,7 +22,6 @@ import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.bulk.WriteConcernError;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.connection.ProtocolHelper;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -61,9 +60,9 @@ public final class WriteConcernHelper {
     }
 
     public static void throwOnWriteConcernError(final BsonDocument result, final ServerAddress serverAddress,
-                                                final int maxWireVersion, final TimeoutContext timeoutContext) {
+                                                final int maxWireVersion) {
         if (hasWriteConcernError(result)) {
-            MongoException exception = ProtocolHelper.createSpecialException(result, serverAddress, "errmsg", timeoutContext);
+            MongoException exception = ProtocolHelper.createSpecialException(result, serverAddress, "errmsg");
             if (exception == null) {
                 exception = createWriteConcernException(result, serverAddress);
             }

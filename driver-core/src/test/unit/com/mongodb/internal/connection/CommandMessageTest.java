@@ -17,7 +17,6 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
@@ -52,9 +51,6 @@ import static com.mongodb.internal.operation.ServerVersionHelper.LATEST_WIRE_VER
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
@@ -62,33 +58,6 @@ class CommandMessageTest {
 
     private static final MongoNamespace NAMESPACE = new MongoNamespace("db.test");
     private static final BsonDocument COMMAND = new BsonDocument("find", new BsonString(NAMESPACE.getCollectionName()));
-
-    @Test
-    void encodeShouldThrowTimeoutExceptionWhenTimeoutContextIsCalled() {
-        //given
-        CommandMessage commandMessage = new CommandMessage(NAMESPACE.getDatabaseName(), COMMAND, NoOpFieldNameValidator.INSTANCE, ReadPreference.primary(),
-                MessageSettings.builder()
-                        .maxWireVersion(LATEST_WIRE_VERSION)
-                        .serverType(ServerType.REPLICA_SET_SECONDARY)
-                        .sessionSupported(true)
-                        .build(),
-                true, EmptyMessageSequences.INSTANCE, ClusterConnectionMode.MULTIPLE, null);
-
-        try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())) {
-            SessionContext sessionContext = mock(SessionContext.class);
-            TimeoutContext timeoutContext = mock(TimeoutContext.class, mock -> {
-                doThrow(new MongoOperationTimeoutException("test")).when(mock).runMaxTimeMS(any());
-            });
-            OperationContext operationContext = mock(OperationContext.class, mock -> {
-                when(mock.getSessionContext()).thenReturn(sessionContext);
-                when(mock.getTimeoutContext()).thenReturn(timeoutContext);
-            });
-
-            //when & then
-            assertThrows(MongoOperationTimeoutException.class, () ->
-                    commandMessage.encode(bsonOutput, operationContext));
-        }
-    }
 
     @Test
     void encodeShouldNotAddExtraElementsFromTimeoutContextWhenConnectedToMongoCrypt() {

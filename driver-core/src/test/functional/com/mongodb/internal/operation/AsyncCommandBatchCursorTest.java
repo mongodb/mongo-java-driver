@@ -17,7 +17,6 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoClientSettings;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
@@ -31,7 +30,6 @@ import org.mockito.ArgumentCaptor;
 
 import java.time.Duration;
 
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -46,8 +44,9 @@ class AsyncCommandBatchCursorTest {
     @BeforeEach
     void setUp() {
         coreCursor = mock(AsyncCursor.class);
+        MongoClientSettings.Builder builder = MongoClientSettings.builder();
         timeoutContext = spy(new TimeoutContext(TimeoutSettings.create(
-                MongoClientSettings.builder().timeout(TIMEOUT.toMillis(), MILLISECONDS).build())));
+                builder.build())));
         operationContext = spy(new OperationContext(
                 IgnorableRequestContext.INSTANCE,
                 NoOpSessionContext.INSTANCE,
@@ -80,7 +79,6 @@ class AsyncCommandBatchCursorTest {
 
     private AsyncCommandBatchCursor<Document> createBatchCursor(final long maxTimeMS) {
         return new AsyncCommandBatchCursor<>(
-                TimeoutMode.CURSOR_LIFETIME,
                 maxTimeMS,
                 operationContext,
                 coreCursor);

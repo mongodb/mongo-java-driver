@@ -123,7 +123,7 @@ public class DropCollectionOperation implements WriteOperation<Void> {
                 return withConnection(binding, operationContext, (connection, connectionScopedOperationContext) -> {
                     try {
                         executeCommand(binding, connectionScopedOperationContext, namespace.getDatabaseName(), commandCreator.get(),
-                                connection, writeConcernErrorTransformer(connectionScopedOperationContext.getTimeoutContext()));
+                                connection, writeConcernErrorTransformer());
                     } catch (MongoCommandException e) {
                         rethrowIfNotNamespaceError(e);
                     }
@@ -288,7 +288,7 @@ public class DropCollectionOperation implements WriteOperation<Void> {
                                     SingleResultCallback<Void> connectionReleasingCallback = releasingCallback(supplierCallback, connection);
                                     executeCommandAsync(binding, connectionScopedOperationContext, namespace.getDatabaseName(),
                                             nextCommandFunction.get(), connection,
-                                            writeConcernErrorTransformerAsync(connectionScopedOperationContext.getTimeoutContext()),
+                                            writeConcernErrorTransformerAsync(),
                                             connectionReleasingCallback);
                                 }
                             });

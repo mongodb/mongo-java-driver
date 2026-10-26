@@ -96,7 +96,7 @@ public class DropDatabaseOperation implements WriteOperation<Void> {
             retryControl.getPolicy().onCommand(this::getCommandName);
             return withConnection(binding, operationContext, (connection, operationContextWithMinRtt) -> {
                 executeCommand(binding, operationContextWithMinRtt, databaseName, getCommand(operationContext), connection,
-                        writeConcernErrorTransformer(operationContextWithMinRtt.getTimeoutContext()));
+                        writeConcernErrorTransformer());
                 return null;
             });
         });
@@ -115,7 +115,7 @@ public class DropDatabaseOperation implements WriteOperation<Void> {
                         errHandlingCallback.onResult(null, t);
                     } else {
                         executeCommandAsync(binding, operationContextWithMinRtt, databaseName, getCommand(operationContext), connection,
-                                writeConcernErrorTransformerAsync(operationContextWithMinRtt.getTimeoutContext()),
+                                writeConcernErrorTransformerAsync(),
                                 releasingCallback(errHandlingCallback, connection));
                     }
                 }));

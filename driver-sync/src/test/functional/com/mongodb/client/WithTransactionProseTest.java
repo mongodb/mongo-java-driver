@@ -16,14 +16,10 @@
 
 package com.mongodb.client;
 
-import com.mongodb.ClientSessionOptions;
-import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNodeIsRecoveringException;
-import com.mongodb.TransactionOptions;
 import com.mongodb.WithTransactionTimeoutException;
-import com.mongodb.client.model.Sorts;
 import com.mongodb.internal.time.ExponentialBackoff;
 import com.mongodb.internal.time.StartTime;
 import com.mongodb.internal.time.SystemNanoTime;
@@ -36,17 +32,14 @@ import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
 import java.time.Duration;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-import static com.mongodb.ClusterFixture.TIMEOUT;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.client.Fixture.getPrimary;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
@@ -185,43 +178,6 @@ public class WithTransactionProseTest extends DatabaseTestCase {
             assertTrue(cause.hasErrorLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL));
         } finally {
             failPointAdminDb.runCommand(Document.parse("{'configureFailPoint': 'failCommand', 'mode': 'off'}"));
-        }
-    }
-
-    /**
-     * This test is not from the specification. Ensures cannot override timeout in transaction.
-     */
-    @Test
-    public void testTimeoutMS() {
-        try (ClientSession session = client.startSession(ClientSessionOptions.builder()
-                .defaultTransactionOptions(TransactionOptions.builder().timeout(TIMEOUT, TimeUnit.SECONDS).build())
-                .build())) {
-            assertThrows(MongoClientException.class, () -> session.withTransaction(() -> {
-                collection.insertOne(session, Document.parse("{ _id : 1 }"));
-                collection.withTimeout(2, TimeUnit.MINUTES).find(session).first();
-                return -1;
-            }));
-        }
-    }
-
-    /**
-     * This test is not from the specification. Ensures legacy settings don't cause issues in sessions.
-     */
-    @Test
-    public void testTimeoutMSAndLegacySettings() {
-        try (ClientSession session = client.startSession(ClientSessionOptions.builder()
-                .defaultTransactionOptions(TransactionOptions.builder().timeout(TIMEOUT, TimeUnit.SECONDS).build())
-                .build())) {
-            Document document = Document.parse("{ _id : 1 }");
-            Document returnValueFromCallback = session.withTransaction(() -> {
-                collection.insertOne(session, document);
-                Document found = collection.find(session)
-                        .maxAwaitTime(1, TimeUnit.MINUTES)
-                        .sort(Sorts.descending("_id"))
-                        .first();
-                return found != null ? found : new Document();
-            });
-            assertEquals(document, returnValueFromCallback);
         }
     }
 

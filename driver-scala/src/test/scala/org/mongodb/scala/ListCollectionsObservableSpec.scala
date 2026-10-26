@@ -16,7 +16,6 @@
 
 package org.mongodb.scala
 
-import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.reactivestreams.client.ListCollectionsPublisher
 import org.mockito.Mockito.{ verify, verifyNoMoreInteractions }
 import org.reactivestreams.Publisher
@@ -49,12 +48,10 @@ class ListCollectionsObservableSpec extends BaseSpec with MockitoSugar {
     observable.filter(filter)
     observable.maxTime(duration)
     observable.batchSize(batchSize)
-    observable.timeoutMode(TimeoutMode.ITERATION)
 
     verify(wrapper).filter(filter)
     verify(wrapper).maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
     verify(wrapper).batchSize(batchSize)
-    verify(wrapper).timeoutMode(TimeoutMode.ITERATION)
 
     verifyNoMoreInteractions(wrapper)
   }

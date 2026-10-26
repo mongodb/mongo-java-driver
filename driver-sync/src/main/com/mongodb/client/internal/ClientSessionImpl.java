@@ -35,7 +35,6 @@ import com.mongodb.internal.operation.AbortTransactionOperation;
 import com.mongodb.internal.operation.CommitTransactionOperation;
 import com.mongodb.internal.operation.OperationHelper;
 import com.mongodb.internal.operation.ReadOperation;
-import com.mongodb.internal.operation.WriteConcernHelper;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
@@ -54,8 +53,8 @@ import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.TimeoutContext.DEFAULT_TIMEOUT_MESSAGE;
-import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
 import static com.mongodb.internal.thread.InterruptionUtil.interruptAndCreateMongoInterruptedException;
+import static com.mongodb.internal.time.Timeout.ZeroSemantics.ZERO_DURATION_MEANS_INFINITE;
 
 final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
 
@@ -152,8 +151,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
                 resetTimeout();
-                TimeoutContext timeoutContext = getTimeoutContext();
-                WriteConcern writeConcern = assertNotNull(getWriteConcern(timeoutContext));
+                WriteConcern writeConcern = assertNotNull(getWriteConcern());
                 operationExecutor
                         .execute(new AbortTransactionOperation(writeConcern, maxAdaptiveRetriesSetting)
                                 .recoveryToken(getRecoveryToken()), readConcern, this);
@@ -191,7 +189,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         }
         getServerSession().advanceTransactionNumber();
         this.transactionOptions = TransactionOptions.merge(transactionOptions, getOptions().getDefaultTransactionOptions());
-        WriteConcern writeConcern = getWriteConcern(timeoutContext);
+        WriteConcern writeConcern = getWriteConcern();
         if (writeConcern == null) {
             throw new MongoInternalException("Invariant violated.  Transaction options write concern can not be null");
         }
@@ -208,12 +206,8 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
     }
 
     @Nullable
-    private WriteConcern getWriteConcern(@Nullable final TimeoutContext timeoutContext) {
-        WriteConcern writeConcern = transactionOptions.getWriteConcern();
-        if (hasTimeoutMS(timeoutContext) && hasWTimeoutMS(writeConcern)) {
-            return WriteConcernHelper.cloneWithoutTimeout(writeConcern);
-        }
-        return writeConcern;
+    private WriteConcern getWriteConcern() {
+        return transactionOptions.getWriteConcern();
     }
 
     private void commitTransaction(final boolean resetTimeout) {
@@ -238,8 +232,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 if (resetTimeout) {
                     resetTimeout();
                 }
-                TimeoutContext timeoutContext = getTimeoutContext();
-                WriteConcern writeConcern = assertNotNull(getWriteConcern(timeoutContext));
+                WriteConcern writeConcern = assertNotNull(getWriteConcern());
                 operationExecutor
                         .execute(new CommitTransactionOperation(writeConcern, maxAdaptiveRetriesSetting, alreadyCommitted)
                                 .recoveryToken(getRecoveryToken()), readConcern, this);
@@ -277,10 +270,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
     public <T> T withTransaction(final TransactionBody<T> transactionBody, final TransactionOptions options) {
         notNull("transactionBody", transactionBody);
         TimeoutContext withTransactionTimeoutContext = createTimeoutContext(options);
-        boolean timeoutMsConfigured = withTransactionTimeoutContext.hasTimeoutMS();
-        Timeout withTransactionTimeout = assertNotNull(timeoutMsConfigured
-                ? withTransactionTimeoutContext.getTimeout()
-                : TimeoutContext.startTimeout(MAX_RETRY_TIME_LIMIT_MS));
+        Timeout withTransactionTimeout = Timeout.expiresIn(MAX_RETRY_TIME_LIMIT_MS, TimeUnit.MILLISECONDS, ZERO_DURATION_MEANS_INFINITE);
         BooleanSupplier withTransactionTimeoutExpired = () -> withTransactionTimeout.call(TimeUnit.MILLISECONDS,
                 () -> false, ms -> false, () -> true);
         int transactionAttempt = 0;
@@ -290,7 +280,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
             transactionAttempts:
             while (true) {
                 if (transactionAttempt > 0) {
-                    backoff(transactionAttempt, withTransactionTimeout, assertNotNull(lastError), timeoutMsConfigured);
+                    backoff(transactionAttempt, withTransactionTimeout, assertNotNull(lastError));
                 }
                 try {
                     startTransaction(options, withTransactionTimeoutContext);
@@ -329,7 +319,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                             if (mongoException.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)
                                     && !(mongoException instanceof MongoExecutionTimeoutException)) {
                                 if (withTransactionTimeoutExpired.getAsBoolean()) {
-                                    throw wrapInMongoTimeoutException(mongoException, timeoutMsConfigured);
+                                    throw wrapInMongoTimeoutException(mongoException);
                                 }
                                 continue;
                             } else if (mongoException.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
@@ -384,10 +374,10 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
     }
 
     private static void backoff(final int transactionAttempt,
-            final Timeout withTransactionTimeout, final MongoException lastError, final boolean timeoutMsConfigured) {
+            final Timeout withTransactionTimeout, final MongoException lastError) {
         long backoffMs = ExponentialBackoff.calculateTransactionBackoffMs(transactionAttempt);
         withTransactionTimeout.shortenBy(backoffMs, TimeUnit.MILLISECONDS).onExpired(() -> {
-            throw wrapInMongoTimeoutException(lastError, timeoutMsConfigured);
+            throw wrapInMongoTimeoutException(lastError);
         });
         try {
             if (backoffMs > 0) {
@@ -398,10 +388,8 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         }
     }
 
-    private static MongoClientException wrapInMongoTimeoutException(final MongoException cause, final boolean timeoutMsConfigured) {
-        MongoClientException timeoutException = timeoutMsConfigured
-                ? createMongoTimeoutException(cause)
-                : wrapInNonTimeoutMsMongoTimeoutException(cause);
+    private static MongoClientException wrapInMongoTimeoutException(final MongoException cause) {
+        MongoClientException timeoutException = wrapInNonTimeoutMsMongoTimeoutException(cause);
         //TODO-JAVA-6154 constructor should be used.
         if (timeoutException != cause) {
             cause.getErrorLabels().forEach(timeoutException::addLabel);
