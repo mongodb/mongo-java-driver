@@ -106,7 +106,6 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
             }
             if (isWaitForBatchCursorCreationEnabled()) {
                 batchCursorCompletableFuture.get(TIMEOUT, TimeUnit.SECONDS);
-                Hooks.resetOnEachOperator();
             }
             sleep(getSleepAfterCursorOpen());
         } catch (InterruptedException e) {
@@ -117,6 +116,10 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
                 throw (RuntimeException) cause;
             }
             throw new RuntimeException(e);
+        } finally {
+            if (isWaitForBatchCursorCreationEnabled()) {
+                Hooks.resetOnEachOperator();
+            }
         }
     }
 
