@@ -16,14 +16,13 @@
 
 package com.mongodb.reactivestreams.client.internal.crypt;
 
-import com.mongodb.internal.time.Timeout;
-import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.MongoClient;
+import com.mongodb.reactivestreams.client.MongoDatabase;
 import org.bson.BsonDocument;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.databaseWithTimeoutDeferred;
 
 class CollectionInfoRetriever {
 
@@ -35,8 +34,10 @@ class CollectionInfoRetriever {
         this.client = notNull("client", client);
     }
 
-    public Flux<BsonDocument> filter(final String databaseName, final BsonDocument filter, @Nullable final Timeout operationTimeout) {
-        return databaseWithTimeoutDeferred(client.getDatabase(databaseName), TIMEOUT_ERROR_MESSAGE, operationTimeout)
+    public Flux<BsonDocument> filter(final String databaseName, final BsonDocument filter) {
+        final MongoDatabase database1 = client.getDatabase(databaseName);
+
+        return Mono.defer(() -> Mono.just(database1))
                 .flatMapMany(database -> Flux.from(database.listCollections(BsonDocument.class).filter(filter)));
     }
 }

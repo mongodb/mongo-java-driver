@@ -16,8 +16,6 @@
 
 package org.mongodb.scala
 
-import com.mongodb.annotations.{ Alpha, Reason }
-
 import java.util.concurrent.TimeUnit
 import com.mongodb.client.model.MapReduceAction
 import com.mongodb.reactivestreams.client.MapReducePublisher
@@ -230,22 +228,6 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
    * @see [[collectionName]]
    */
   def toCollection(): SingleObservable[Unit] = wrapped.toCollection()
-
-  /**
-   * Sets the timeoutMode for the cursor.
-   *
-   * Requires the `timeout` to be set, either in the [[MongoClientSettings]],
-   * via [[MongoDatabase]] or via [[MongoCollection]]
-   *
-   * @param timeoutMode the timeout mode
-   * @return this
-   * @since 5.2
-   */
-  @Alpha(Array(Reason.CLIENT))
-  def timeoutMode(timeoutMode: TimeoutMode): MapReduceObservable[TResult] = {
-    wrapped.timeoutMode(timeoutMode)
-    this
-  }
 
   /**
    * Helper to return a single observable limited to the first result.

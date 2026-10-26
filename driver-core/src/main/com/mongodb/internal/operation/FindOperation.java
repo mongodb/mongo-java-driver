@@ -21,7 +21,6 @@ import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoQueryException;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.AsyncBatchCursor;
@@ -93,7 +92,6 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
     private boolean returnKey;
     private boolean showRecordId;
     private Boolean allowDiskUse;
-    private TimeoutMode timeoutMode;
 
     public FindOperation(
             final MongoNamespace namespace,
@@ -173,13 +171,6 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
 
     public FindOperation<T> cursorType(final CursorType cursorType) {
         this.cursorType = notNull("cursorType", cursorType);
-        return this;
-    }
-
-    public FindOperation<T> timeoutMode(@Nullable final TimeoutMode timeoutMode) {
-        if (timeoutMode != null) {
-            this.timeoutMode = timeoutMode;
-        }
         return this;
     }
 
@@ -298,11 +289,6 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
-        IllegalStateException invalidTimeoutModeException = invalidTimeoutModeException();
-        if (invalidTimeoutModeException != null) {
-            throw invalidTimeoutModeException;
-        }
-
         OperationContext findOperationContext = getFindOperationContext(operationContext);
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
                 new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(findOperationContext).includeOverload(maxAdaptiveRetriesSetting),
@@ -325,12 +311,6 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        IllegalStateException invalidTimeoutModeException = invalidTimeoutModeException();
-        if (invalidTimeoutModeException != null) {
-            callback.onResult(null, invalidTimeoutModeException);
-            return;
-        }
-
         OperationContext findOperationContext = getFindOperationContext(operationContext);
         RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
                 new SpecRetryPolicy.IndividualPolicies(retryReads).includeRead(findOperationContext).includeOverload(maxAdaptiveRetriesSetting),
@@ -465,16 +445,9 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
         return cursorType == CursorType.TailableAwait;
     }
 
-    private TimeoutMode getTimeoutMode() {
-        if (timeoutMode == null) {
-            return isTailableCursor() ? TimeoutMode.ITERATION : TimeoutMode.CURSOR_LIFETIME;
-        }
-        return timeoutMode;
-    }
-
     private CommandReadTransformer<BsonDocument, CommandBatchCursor<T>> transformer() {
         return (result, source, connection, operationContext) ->
-                new CommandBatchCursor<>(getTimeoutMode(), getMaxTimeForCursor(operationContext), operationContext,
+                new CommandBatchCursor<>(getMaxTimeForCursor(operationContext), operationContext,
                         new CommandCursor<>(
                                 result, batchSize, decoder, comment, source, connection,
                                 retryReads, maxAdaptiveRetriesSetting
@@ -483,7 +456,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
         return (result, source, connection, operationContext) ->
-                new AsyncCommandBatchCursor<>(getTimeoutMode(), getMaxTimeForCursor(operationContext), operationContext,
+                new AsyncCommandBatchCursor<>(getMaxTimeForCursor(operationContext), operationContext,
                         new AsyncCommandCursor<>(
                                 result, batchSize, decoder,
                                 comment, source, connection,
@@ -495,18 +468,8 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
         return cursorType == CursorType.TailableAwait ? operationContext.getTimeoutContext().getMaxAwaitTimeMS() : 0;
     }
 
-    @Nullable
-    private IllegalStateException invalidTimeoutModeException() {
-        if (isTailableCursor()) {
-            if (timeoutMode == TimeoutMode.CURSOR_LIFETIME) {
-                return new IllegalStateException("Tailable cursors only support the ITERATION value for the timeoutMode option.");
-            }
-        }
-        return null;
-    }
-
     private boolean shouldDisableMaxTimeMS() {
-        return isTailableCursor() && !isAwaitData() || timeoutMode == TimeoutMode.ITERATION;
+        return isTailableCursor() && !isAwaitData();
     }
 
     private OperationContext getFindOperationContext(final OperationContext operationContext) {

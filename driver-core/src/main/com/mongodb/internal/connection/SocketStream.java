@@ -46,7 +46,6 @@ import java.util.Optional;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.TimeoutContext.throwMongoTimeoutException;
 import static com.mongodb.internal.connection.ServerAddressHelper.getSocketAddresses;
 import static com.mongodb.internal.connection.SocketStreamHelper.configureSocket;
 import static com.mongodb.internal.connection.SslHelper.configureSslSocket;
@@ -204,9 +203,6 @@ public class SocketStream implements Stream {
     public void write(final List<ByteBuf> buffers, final OperationContext operationContext) throws IOException {
         for (final ByteBuf cur : buffers) {
             outputStream.write(cur.array(), 0, cur.limit());
-            operationContext.getTimeoutContext().onExpired(() -> {
-                throwMongoTimeoutException("Socket write exceeded the timeout limit.");
-            });
         }
     }
 

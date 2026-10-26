@@ -21,7 +21,6 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoCompressor;
 import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoInternalException;
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.FutureResultCallback;
@@ -713,84 +712,6 @@ class InternalStreamConnectionTest {
                 "Connection should NOT be closed on a write concern error (the response was fully read)");
         assertFalse(stream.wasClosed(),
                 "Underlying stream should NOT be closed on a write concern error");
-
-        connection.close();
-    }
-
-    /**
-     * Verifies that a CSOT-derived write concern timeout carried by a fully-read ok: 1 response does NOT
-     * close the connection in the synchronous path. With CSOT enabled, a MaxTimeMSExpired (errorCode 50)
-     * write concern error is wrapped as {@link MongoOperationTimeoutException}, which {@code connectionIsReusable}
-     * whitelists because the response was fully read and the stream remains synchronized.
-     */
-    @Test
-    @DisplayName("Sync: connection NOT closed on CSOT write concern timeout carried by an ok response")
-    void syncDoesNotCloseConnectionOnWriteConcernTimeout() {
-        AtomicInteger readCallCount = new AtomicInteger();
-        BsonDocument response = createWriteConcernTimeoutResponse();
-
-        TestStream stream = new TestStream() {
-            @Override
-            public ByteBuf read(final int numBytes, final OperationContext operationContext) {
-                if (readCallCount.incrementAndGet() == 1) {
-                    return createValidResponseHeader(getCommandMessageId(), response);
-                } else {
-                    return createResponseBody(response);
-                }
-            }
-        };
-
-        InternalStreamConnection connection = createOpenConnection(stream);
-        CommandMessage commandMessage = createPingCommand();
-        stream.setCommandMessageId(commandMessage.getId());
-
-        assertThrows(MongoOperationTimeoutException.class,
-                () -> connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), createOperationContextWithTimeout()));
-        assertFalse(connection.isClosed(),
-                "Connection should NOT be closed on a write concern timeout (the response was fully read)");
-        assertFalse(stream.wasClosed(),
-                "Underlying stream should NOT be closed on a write concern timeout");
-        assertFalse(stream.hadUnexpectedCall());
-
-        connection.close();
-    }
-
-    /**
-     * Verifies that a CSOT-derived write concern timeout carried by a fully-read ok: 1 response does NOT
-     * close the connection in the asynchronous path. See {@link #syncDoesNotCloseConnectionOnWriteConcernTimeout}.
-     */
-    @Test
-    @DisplayName("Async: connection NOT closed on CSOT write concern timeout carried by an ok response")
-    void asyncDoesNotCloseConnectionOnWriteConcernTimeout() {
-        AtomicInteger readAsyncCallCount = new AtomicInteger();
-        BsonDocument response = createWriteConcernTimeoutResponse();
-
-        TestStream stream = new TestStream() {
-            @Override
-            public void readAsync(final int numBytes, final OperationContext operationContext,
-                    final AsyncCompletionHandler<ByteBuf> handler) {
-                if (readAsyncCallCount.incrementAndGet() == 1) {
-                    handler.completed(createValidResponseHeader(getCommandMessageId(), response));
-                } else {
-                    handler.completed(createResponseBody(response));
-                }
-            }
-        };
-
-        InternalStreamConnection connection = createOpenConnection(stream);
-        CommandMessage commandMessage = createPingCommand();
-        stream.setCommandMessageId(commandMessage.getId());
-
-        FutureResultCallback<BsonDocument> callback = new FutureResultCallback<>();
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), createOperationContextWithTimeout(), callback);
-
-        assertThrows(MongoOperationTimeoutException.class, () -> callback.get(5, TimeUnit.SECONDS));
-        assertFalse(callback.wasInvokedMultipleTimes());
-
-        assertFalse(connection.isClosed(),
-                "Connection should NOT be closed on a write concern timeout (the response was fully read)");
-        assertFalse(stream.wasClosed(),
-                "Underlying stream should NOT be closed on a write concern timeout");
 
         connection.close();
     }
@@ -1519,16 +1440,6 @@ class InternalStreamConnectionTest {
     }
 
     /**
-     * Creates an operation context with CSOT enabled (timeoutMS set), so that server-side timeouts are
-     * wrapped as {@link MongoOperationTimeoutException}. The timeout is large enough not to expire during
-     * the test.
-     */
-    private OperationContext createOperationContextWithTimeout() {
-        return OperationContext.simpleOperationContext(
-                new TimeoutSettings(0, 0, 0, 60_000L, 0));
-    }
-
-    /**
      * Creates a successful (ok: 1) response whose writeConcernError maps to a special exception (a
      * not-primary error), so the driver raises {@link MongoWriteConcernWithResponseException} while the
      * response is fully read and the stream remains synchronized.
@@ -1538,17 +1449,6 @@ class InternalStreamConnectionTest {
                 .append("writeConcernError", new BsonDocument("code", new BsonInt32(10107))
                         .append("codeName", new BsonString("NotWritablePrimary"))
                         .append("errmsg", new BsonString("not master")));
-    }
-
-    /**
-     * Creates a successful (ok: 1) response whose writeConcernError is a MaxTimeMSExpired (errorCode 50)
-     * timeout. With CSOT enabled it is wrapped as {@link MongoOperationTimeoutException} from the fully-read body.
-     */
-    private static BsonDocument createWriteConcernTimeoutResponse() {
-        return new BsonDocument("ok", new BsonInt32(1))
-                .append("writeConcernError", new BsonDocument("code", new BsonInt32(50))
-                        .append("codeName", new BsonString("MaxTimeMSExpired"))
-                        .append("errmsg", new BsonString("operation exceeded time limit")));
     }
 
     /**

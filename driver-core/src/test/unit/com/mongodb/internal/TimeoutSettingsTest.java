@@ -40,7 +40,6 @@ final class TimeoutSettingsTest {
                             () -> assertEquals(30_000, timeoutSettings.getServerSelectionTimeoutMS()),
                             () -> assertEquals(10_000, timeoutSettings.getConnectTimeoutMS()),
                             () -> assertEquals(0, timeoutSettings.getReadTimeoutMS()),
-                            () -> assertNull(timeoutSettings.getTimeoutMS()),
                             () -> assertEquals(0, timeoutSettings.getMaxTimeMS()),
                             () -> assertEquals(0, timeoutSettings.getMaxAwaitTimeMS()),
                             () -> assertNull(timeoutSettings.getWTimeoutMS())
@@ -48,7 +47,6 @@ final class TimeoutSettingsTest {
                 }),
                 dynamicTest("test overrides", () -> {
                     TimeoutSettings timeoutSettings = TIMEOUT_SETTINGS
-                            .withTimeoutMS(100L)
                             .withMaxTimeMS(111)
                             .withMaxAwaitTimeMS(11)
                             .withMaxCommitMS(999L)
@@ -59,7 +57,6 @@ final class TimeoutSettingsTest {
                             () -> assertEquals(30_000, timeoutSettings.getServerSelectionTimeoutMS()),
                             () -> assertEquals(500, timeoutSettings.getConnectTimeoutMS()),
                             () -> assertEquals(11_000, timeoutSettings.getReadTimeoutMS()),
-                            () -> assertEquals(100, timeoutSettings.getTimeoutMS()),
                             () -> assertEquals(111, timeoutSettings.getMaxTimeMS()),
                             () -> assertEquals(11, timeoutSettings.getMaxAwaitTimeMS()),
                             () -> assertEquals(999, timeoutSettings.getMaxCommitTimeMS()),
@@ -71,10 +68,8 @@ final class TimeoutSettingsTest {
 
     @Test
     public void testTimeoutSettingsValidation() {
-        assertThrows(IllegalArgumentException.class, () -> TIMEOUT_SETTINGS.withTimeoutMS(-1L));
         assertThrows(IllegalArgumentException.class, () -> TIMEOUT_SETTINGS.withMaxAwaitTimeMS(-1));
         assertThrows(IllegalArgumentException.class, () -> TIMEOUT_SETTINGS.withMaxTimeMS(-1));
-        assertThrows(IllegalArgumentException.class, () -> TIMEOUT_SETTINGS.withTimeoutMS(10L).withMaxAwaitTimeMS(11));
     }
 
     private TimeoutSettingsTest() {

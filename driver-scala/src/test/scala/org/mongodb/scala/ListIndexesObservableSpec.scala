@@ -15,7 +15,6 @@
  */
 
 package org.mongodb.scala
-import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.reactivestreams.client.ListIndexesPublisher
 import org.mockito.Mockito.{ verify, verifyNoMoreInteractions }
 import org.reactivestreams.Publisher
@@ -45,11 +44,9 @@ class ListIndexesObservableSpec extends BaseSpec with MockitoSugar {
 
     observable.maxTime(duration)
     observable.batchSize(batchSize)
-    observable.timeoutMode(TimeoutMode.ITERATION)
 
     verify(wrapper).maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
     verify(wrapper).batchSize(batchSize)
-    verify(wrapper).timeoutMode(TimeoutMode.ITERATION)
 
     verifyNoMoreInteractions(wrapper)
   }

@@ -17,7 +17,6 @@
 package com.mongodb.reactivestreams.client.syncadapter;
 
 import com.mongodb.client.DistinctIterable;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.DistinctPublisher;
@@ -80,12 +79,6 @@ class SyncDistinctIterable<T> extends SyncMongoIterable<T> implements DistinctIt
     @Override
     public DistinctIterable<T> hintString(@Nullable final String hint) {
         wrapped.hintString(hint);
-        return this;
-    }
-
-    @Override
-    public DistinctIterable<T> timeoutMode(final TimeoutMode timeoutMode) {
-        wrapped.timeoutMode(timeoutMode);
         return this;
     }
 }

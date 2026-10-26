@@ -109,8 +109,7 @@ public class DropIndexOperation implements WriteOperation<Void> {
                 operationContext);
         Supplier<Void> retryingCommandExecutor = decorateWithRetries(retryControl, operationContext, () -> {
             retryControl.getPolicy().onCommand(this::getCommandName);
-            executeCommand(binding, operationContext, namespace.getDatabaseName(), getCommandCreator(), writeConcernErrorTransformer(
-                    operationContext.getTimeoutContext()));
+            executeCommand(binding, operationContext, namespace.getDatabaseName(), getCommandCreator(), writeConcernErrorTransformer());
             return null;
         });
         try {
@@ -130,7 +129,7 @@ public class DropIndexOperation implements WriteOperation<Void> {
         AsyncCallbackSupplier<Void> retryingCommandExecutor = decorateWithRetriesAsync(retryControl, operationContext, supplierCallback -> {
             retryControl.getPolicy().onCommand(this::getCommandName);
             executeCommandAsync(binding, operationContext, namespace.getDatabaseName(), getCommandCreator(),
-                    writeConcernErrorTransformerAsync(operationContext.getTimeoutContext()), supplierCallback);
+                    writeConcernErrorTransformerAsync(), supplierCallback);
         });
         retryingCommandExecutor.get((result, t) -> {
             if (t != null && !isNamespaceError(t)) {

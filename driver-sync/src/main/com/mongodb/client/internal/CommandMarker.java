@@ -19,7 +19,6 @@ package com.mongodb.client.internal;
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -27,7 +26,6 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.internal.crypt.capi.MongoCrypt;
-import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.RawBsonDocument;
 
@@ -35,7 +33,6 @@ import java.io.Closeable;
 import java.util.Map;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
-import static com.mongodb.client.internal.TimeoutHelper.databaseWithTimeout;
 import static com.mongodb.internal.capi.MongoCryptHelper.createMongocryptdClientSettings;
 import static com.mongodb.internal.capi.MongoCryptHelper.createProcessBuilder;
 import static com.mongodb.internal.capi.MongoCryptHelper.isMongocryptdSpawningDisabled;
@@ -84,19 +81,17 @@ class CommandMarker implements Closeable {
         }
     }
 
-    RawBsonDocument mark(final String databaseName, final RawBsonDocument command, @Nullable final Timeout timeout) {
+    RawBsonDocument mark(final String databaseName, final RawBsonDocument command) {
         if (client != null) {
             try {
                 try {
-                    return executeCommand(databaseName, command, timeout);
-                } catch (MongoOperationTimeoutException e){
-                    throw e;
+                    return executeCommand(databaseName, command);
                 } catch (MongoTimeoutException e) {
                     if (processBuilder == null) {  // mongocryptdBypassSpawn=true
                         throw e;
                     }
                     startProcess(processBuilder);
-                    return executeCommand(databaseName, command, timeout);
+                    return executeCommand(databaseName, command);
                 }
             } catch (MongoException e) {
                 throw new MongoClientException("Exception in encryption library: " + e.getMessage(), e);
@@ -115,15 +110,14 @@ class CommandMarker implements Closeable {
 
     private RawBsonDocument executeCommand(
             final String databaseName,
-            final RawBsonDocument markableCommand,
-            @Nullable final Timeout timeout) {
+            final RawBsonDocument markableCommand) {
         assertNotNull(client);
 
         MongoDatabase mongoDatabase = client.getDatabase(databaseName)
                 .withReadConcern(ReadConcern.DEFAULT)
                 .withReadPreference(ReadPreference.primary());
 
-        return databaseWithTimeout(mongoDatabase, TIMEOUT_ERROR_MESSAGE, timeout)
+        return mongoDatabase
                 .runCommand(markableCommand, RawBsonDocument.class);
     }
 }

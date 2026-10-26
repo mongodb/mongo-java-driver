@@ -17,7 +17,6 @@
 package com.mongodb.reactivestreams.client.syncadapter;
 
 import com.mongodb.client.ListIndexesIterable;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.reactivestreams.client.ListIndexesPublisher;
 import org.bson.BsonValue;
 
@@ -53,12 +52,6 @@ class SyncListIndexesIterable<T> extends SyncMongoIterable<T> implements ListInd
     @Override
     public ListIndexesIterable<T> comment(final BsonValue comment) {
         wrapped.comment(comment);
-        return this;
-    }
-
-    @Override
-    public ListIndexesIterable<T> timeoutMode(final TimeoutMode timeoutMode) {
-        wrapped.timeoutMode(timeoutMode);
         return this;
     }
 }

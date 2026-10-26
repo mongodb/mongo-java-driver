@@ -21,7 +21,6 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
@@ -163,12 +162,6 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     @Override
     public com.mongodb.client.MapReduceIterable<TResult> batchSize(final int batchSize) {
         super.batchSize(batchSize);
-        return this;
-    }
-
-    @Override
-    public com.mongodb.client.MapReduceIterable<TResult> timeoutMode(final TimeoutMode timeoutMode) {
-        super.timeoutMode(timeoutMode);
         return this;
     }
 

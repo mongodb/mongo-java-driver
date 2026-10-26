@@ -17,15 +17,12 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.client.MongoClient;
-import com.mongodb.internal.time.Timeout;
-import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.client.internal.TimeoutHelper.databaseWithTimeout;
 
 class CollectionInfoRetriever {
 
@@ -36,8 +33,8 @@ class CollectionInfoRetriever {
         this.client = notNull("client", client);
     }
 
-    public List<BsonDocument> filter(final String databaseName, final BsonDocument filter, @Nullable final Timeout timeout) {
-        return databaseWithTimeout(client.getDatabase(databaseName), TIMEOUT_ERROR_MESSAGE, timeout)
+    public List<BsonDocument> filter(final String databaseName, final BsonDocument filter) {
+        return client.getDatabase(databaseName)
                 .listCollections(BsonDocument.class)
                 .filter(filter)
                 .into(new ArrayList<>());

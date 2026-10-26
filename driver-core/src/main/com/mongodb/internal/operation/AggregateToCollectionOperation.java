@@ -20,7 +20,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -162,11 +161,6 @@ public class AggregateToCollectionOperation implements ReadOperationSimple<Void>
         return this;
     }
 
-    public AggregateToCollectionOperation timeoutMode(@Nullable final TimeoutMode timeoutMode) {
-        isTrueArgument("timeoutMode cannot be ITERATION.", timeoutMode == null || timeoutMode.equals(TimeoutMode.CURSOR_LIFETIME));
-        return this;
-    }
-
     @Override
     public String getCommandName() {
         return COMMAND_NAME;
@@ -249,7 +243,7 @@ public class AggregateToCollectionOperation implements ReadOperationSimple<Void>
     private static CommandReadTransformer<BsonDocument, Void> transformer() {
         return (result, source, connection, operationContext) -> {
             throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
-                    connection.getDescription().getMaxWireVersion(), operationContext.getTimeoutContext());
+                    connection.getDescription().getMaxWireVersion());
             return null;
         };
     }
@@ -257,7 +251,7 @@ public class AggregateToCollectionOperation implements ReadOperationSimple<Void>
     private static CommandReadTransformerAsync<BsonDocument, Void> asyncTransformer() {
         return (result, source, connection, operationContext) -> {
             throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
-                    connection.getDescription().getMaxWireVersion(), operationContext.getTimeoutContext());
+                    connection.getDescription().getMaxWireVersion());
             return null;
         };
     }

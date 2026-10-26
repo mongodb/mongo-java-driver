@@ -17,7 +17,6 @@
 package org.mongodb.scala
 
 import com.mongodb.ExplainVerbosity
-import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.reactivestreams.client.AggregatePublisher
 import org.mockito.Mockito.{ verify, verifyNoMoreInteractions }
 import org.mongodb.scala.model.Collation
@@ -59,7 +58,6 @@ class AggregateObservableSpec extends BaseSpec with MockitoSugar {
     observable.batchSize(batchSize)
     observable.explain[Document]()
     observable.explain[Document](verbosity)
-    observable.timeoutMode(TimeoutMode.ITERATION)
 
     verify(wrapper).allowDiskUse(true)
     verify(wrapper).maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
@@ -71,7 +69,6 @@ class AggregateObservableSpec extends BaseSpec with MockitoSugar {
     verify(wrapper).batchSize(batchSize)
     verify(wrapper).explain(ct)
     verify(wrapper).explain(ct, verbosity)
-    verify(wrapper).timeoutMode(TimeoutMode.ITERATION)
 
     observable.toCollection()
     verify(wrapper).toCollection

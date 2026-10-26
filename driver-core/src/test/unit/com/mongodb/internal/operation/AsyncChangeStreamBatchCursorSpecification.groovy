@@ -31,8 +31,6 @@ import org.bson.Document
 import org.bson.RawBsonDocument
 import spock.lang.Specification
 
-import java.util.concurrent.TimeUnit
-
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class AsyncChangeStreamBatchCursorSpecification extends Specification {
@@ -43,7 +41,6 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         def binding = Mock(AsyncReadBinding)
         def operationContext = getOperationContext()
         operationContext.getTracingManager() >> TracingManager.NO_OP
-        operationContext.getTimeoutContext().hasTimeoutMS() >> hasTimeoutMS
 
         def callback = Stub(SingleResultCallback)
         AsyncCursor<RawBsonDocument> wrapped = Mock(AsyncCursor)
@@ -76,9 +73,6 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         then:
         0 * wrapped.close()
         0 * binding.release()
-
-        where:
-        hasTimeoutMS << [true, false]
     }
 
     def 'should not close the cursor in next if the cursor was closed before next completed'() {
@@ -86,7 +80,6 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         def binding = Mock(AsyncReadBinding)
         def operationContext = getOperationContext()
         operationContext.getTracingManager() >> TracingManager.NO_OP
-        operationContext.getTimeoutContext().hasTimeoutMS() >> hasTimeoutMS
 
         def callback = Stub(SingleResultCallback)
         AsyncCursor<RawBsonDocument> wrapped = Mock(AsyncCursor)
@@ -109,9 +102,6 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
 
         then:
         cursor.isClosed()
-
-        where:
-        hasTimeoutMS << [true, false]
     }
 
     def 'should throw a MongoException when next/tryNext is called after the cursor is closed'() {
@@ -119,7 +109,6 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         def binding = Mock(AsyncReadBinding)
         def operationContext = getOperationContext()
         operationContext.getTracingManager() >> TracingManager.NO_OP
-        operationContext.getTimeoutContext().hasTimeoutMS() >> hasTimeoutMS
 
         AsyncCursor<RawBsonDocument> wrapped = Mock(AsyncCursor)
         def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation,
@@ -135,9 +124,6 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         then:
         def exception = thrown(MongoException)
         exception.getMessage() == 'next() called after the cursor was closed.'
-
-        where:
-        hasTimeoutMS << [true, false]
     }
 
     List<Document> nextBatch(AsyncChangeStreamBatchCursor cursor) {
@@ -148,7 +134,7 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
 
     OperationContext getOperationContext() {
         def timeoutContext = Spy(new TimeoutContext(TimeoutSettings.create(
-                MongoClientSettings.builder().timeout(3, TimeUnit.SECONDS).build())))
+                MongoClientSettings.builder().build())))
         Spy(new OperationContext(
                 IgnorableRequestContext.INSTANCE,
                 NoOpSessionContext.INSTANCE,

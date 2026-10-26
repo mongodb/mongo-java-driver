@@ -72,7 +72,6 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -133,33 +132,6 @@ public class DefaultConnectionPoolTest {
 
         // then
         assertTrue(connectionGetter.isGotTimeout());
-    }
-
-    @Test
-    public void shouldNotUseMaxAwaitTimeMSWhenTimeoutMsIsSet() throws InterruptedException {
-        // given
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                ConnectionPoolSettings.builder()
-                        .maxSize(1)
-                        .build(),
-                mockSdamProvider(), OPERATION_CONTEXT_FACTORY);
-        provider.ready();
-        TimeoutSettings timeoutSettings = TIMEOUT_SETTINGS
-                .withTimeout(100L, MILLISECONDS)
-                .withMaxWaitTimeMS(50);
-
-        InternalConnection internalConnection = provider.get(createOperationContext(timeoutSettings));
-
-        // when
-        TimeoutTrackingConnectionGetter connectionGetter = new TimeoutTrackingConnectionGetter(provider, timeoutSettings);
-        cachedExecutor.execute(connectionGetter);
-
-        sleep(70); // wait for more than maxWaitTimeMS but less than timeoutMs.
-        internalConnection.close();
-        connectionGetter.getLatch().await();
-
-        // then
-        assertFalse(connectionGetter.isGotTimeout());
     }
 
     @Test

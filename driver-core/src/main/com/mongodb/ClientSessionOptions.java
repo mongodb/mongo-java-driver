@@ -16,19 +16,14 @@
 
 package com.mongodb;
 
-import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
-import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.TimeoutSettings.convertAndValidateTimeout;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * The options to apply to a {@code ClientSession}.
@@ -43,7 +38,6 @@ public final class ClientSessionOptions {
 
     private final Boolean causallyConsistent;
     private final Boolean snapshot;
-    private final Long defaultTimeoutMS;
     private final TransactionOptions defaultTransactionOptions;
 
     /**
@@ -83,30 +77,6 @@ public final class ClientSessionOptions {
         return defaultTransactionOptions;
     }
 
-    /**
-     * Gets the default time limit for the following operations executed on the session:
-     *
-     * <ul>
-     *   <li>{@code commitTransaction}</li>
-     *   <li>{@code abortTransaction}</li>
-     *   <li>{@code withTransaction}</li>
-     *   <li>{@code close}</li>
-     * </ul>
-     *
-     *  <p>Note: When using synchronous API, this timeout does not limit socket writes, therefore
-     *  there is a possibility that the operation might not be timed out when expected. This limitation does not
-     *  apply to the reactive streams API.
-     *
-     * @param timeUnit the time unit
-     * @return the default timeout
-     * @since 5.2
-     */
-    @Alpha(Reason.CLIENT)
-    @Nullable
-    public Long getDefaultTimeout(final TimeUnit timeUnit) {
-        return defaultTimeoutMS == null ? null : timeUnit.convert(defaultTimeoutMS, MILLISECONDS);
-    }
-
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -118,13 +88,12 @@ public final class ClientSessionOptions {
         final ClientSessionOptions that = (ClientSessionOptions) o;
         return Objects.equals(causallyConsistent, that.causallyConsistent)
                 && Objects.equals(snapshot, that.snapshot)
-                && Objects.equals(defaultTimeoutMS, that.defaultTimeoutMS)
                 && Objects.equals(defaultTransactionOptions, that.defaultTransactionOptions);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(causallyConsistent, snapshot, defaultTimeoutMS, defaultTransactionOptions);
+        return Objects.hash(causallyConsistent, snapshot, defaultTransactionOptions);
     }
 
     @Override
@@ -132,7 +101,6 @@ public final class ClientSessionOptions {
         return "ClientSessionOptions{"
                 + "causallyConsistent=" + causallyConsistent
                 + ", snapshot=" + snapshot
-                + ", defaultTimeoutMS=" + defaultTimeoutMS
                 + ", defaultTransactionOptions=" + defaultTransactionOptions
                 + '}';
     }
@@ -159,7 +127,6 @@ public final class ClientSessionOptions {
         builder.causallyConsistent = options.isCausallyConsistent();
         builder.snapshot = options.isSnapshot();
         builder.defaultTransactionOptions = options.getDefaultTransactionOptions();
-        builder.defaultTimeoutMS = options.defaultTimeoutMS;
         return builder;
     }
 
@@ -170,7 +137,6 @@ public final class ClientSessionOptions {
     public static final class Builder {
         private Boolean causallyConsistent;
         private Boolean snapshot;
-        private Long defaultTimeoutMS;
         private TransactionOptions defaultTransactionOptions = TransactionOptions.builder().build();
 
         /**
@@ -220,32 +186,6 @@ public final class ClientSessionOptions {
         }
 
         /**
-         * Sets the default time limit for the following operations executed on the session:
-         *
-         * <ul>
-         *   <li>{@code commitTransaction}</li>
-         *   <li>{@code abortTransaction}</li>
-         *   <li>{@code withTransaction}</li>
-         *   <li>{@code close}</li>
-         * </ul>
-         *
-         *  <p>Note: When using synchronous API, this timeout does not limit socket writes, therefore
-         *  there is a possibility that the operation might not be timed out when expected. This limitation does not
-         *  apply to the reactive streams API.
-         *
-         * @param defaultTimeout the timeout
-         * @param timeUnit the time unit
-         * @return this
-         * @since 5.2
-         * @see #getDefaultTimeout
-         */
-        @Alpha(Reason.CLIENT)
-        public Builder defaultTimeout(final long defaultTimeout, final TimeUnit timeUnit) {
-            this.defaultTimeoutMS = convertAndValidateTimeout(defaultTimeout, timeUnit, "defaultTimeout");
-            return this;
-        }
-
-        /**
          * Build the session options instance.
          *
          * @return The {@code ClientSessionOptions}
@@ -267,6 +207,5 @@ public final class ClientSessionOptions {
                 : Boolean.valueOf(!builder.snapshot);
         this.snapshot = builder.snapshot;
         this.defaultTransactionOptions = builder.defaultTransactionOptions;
-        this.defaultTimeoutMS = builder.defaultTimeoutMS;
     }
 }

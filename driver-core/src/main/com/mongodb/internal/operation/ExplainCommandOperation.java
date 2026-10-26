@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.binding.ReadBinding;
@@ -40,24 +41,12 @@ public class ExplainCommandOperation<T> extends AbstractCommandReadOperation<T> 
 
     @Override
     public T execute(final ReadBinding binding, final OperationContext operationContext) {
-        return super.execute(binding, operationContext.withOverride(timeoutContext -> {
-            if (!timeoutContext.hasTimeoutMS()) {
-                return timeoutContext.withDisabledMaxTime();
-            }
-
-            return timeoutContext;
-        }));
+        return super.execute(binding, operationContext.withOverride(TimeoutContext::withDisabledMaxTime));
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext,
                              final SingleResultCallback<T> callback) {
-        super.executeAsync(binding, operationContext.withOverride(timeoutContext -> {
-            if (!timeoutContext.hasTimeoutMS()) {
-                return timeoutContext.withDisabledMaxTime();
-            }
-
-            return timeoutContext;
-        }), callback);
+        super.executeAsync(binding, operationContext.withOverride(TimeoutContext::withDisabledMaxTime), callback);
     }
 }

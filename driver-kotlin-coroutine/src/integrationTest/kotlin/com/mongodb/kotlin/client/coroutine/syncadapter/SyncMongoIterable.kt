@@ -18,7 +18,6 @@ package com.mongodb.kotlin.client.coroutine.syncadapter
 import com.mongodb.Function
 import com.mongodb.client.MongoCursor
 import com.mongodb.client.MongoIterable as JMongoIterable
-import com.mongodb.client.cursor.TimeoutMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
@@ -27,7 +26,6 @@ import kotlinx.coroutines.runBlocking
 
 open class SyncMongoIterable<T>(private val delegate: Flow<T>) : JMongoIterable<T> {
     private var batchSize: Int? = null
-    private var timeoutMode: TimeoutMode? = null
 
     override fun iterator(): MongoCursor<T> = cursor()
 

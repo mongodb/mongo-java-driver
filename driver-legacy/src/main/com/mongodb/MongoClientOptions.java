@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
@@ -605,41 +604,6 @@ public class MongoClientOptions {
     @Nullable
     public ServerApi getServerApi() {
         return wrapped.getServerApi();
-    }
-
-    /**
-     * The time limit for the full execution of an operation in Milliseconds.
-     *
-     * <p>If set the following deprecated options will be ignored:
-     * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
-     *
-     * <ul>
-     *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
-     *    <ul>
-     *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
-     *        available</li>
-     *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
-     *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
-     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
-     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
-     *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
-     *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
-     *   </ul>
-     *   </li>
-     *   <li>{@code 0} means infinite timeout.</li>
-     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
-     * </ul>
-     *
-     *  <p>Note that this timeout does not limit socket writes, therefore there is a possibility that the
-     *  operation might not be timed out when expected.
-     *
-     * @return the timeout in milliseconds
-     * @since 5.2
-     */
-    @Alpha(Reason.CLIENT)
-    @Nullable
-    public Long getTimeout() {
-        return wrapped.getTimeout(MILLISECONDS);
     }
 
     /**
@@ -1462,40 +1426,6 @@ public class MongoClientOptions {
          */
         public Builder srvAllowedHostsSuffix(final String srvAllowedHostsSuffix) {
             wrapped.applyToClusterSettings(builder -> builder.srvAllowedHostsSuffix(srvAllowedHostsSuffix));
-            return this;
-        }
-
-        /**
-         * Sets the time limit, in milliseconds for the full execution of an operation.
-         *
-         * <ul>
-         *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
-         *    <ul>
-         *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
-         *        available</li>
-         *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
-         *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
-         *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
-         *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
-         *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
-         *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
-         *   </ul>
-         *   </li>
-         *   <li>{@code 0} means infinite timeout.</li>
-         *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
-         * </ul>
-         *
-         *  <p>Note that this timeout does not limit socket writes, therefore there is a possibility that the
-         *  operation might not be timed out when expected.
-         *
-         * @param timeoutMS the timeout in milliseconds
-         * @return this
-         * @since 5.2
-         * @see #getTimeout
-         */
-        @Alpha(Reason.CLIENT)
-        public Builder timeout(final long timeoutMS) {
-            wrapped.timeout(timeoutMS, MILLISECONDS);
             return this;
         }
 

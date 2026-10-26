@@ -18,7 +18,6 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -28,30 +27,25 @@ import java.util.List;
 
 class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
 
-    private final TimeoutMode timeoutMode;
     private OperationContext operationContext;
     private Cursor<T> wrapped;
 
     CommandBatchCursor(
-            final TimeoutMode timeoutMode,
             final long maxTimeMs,
             final OperationContext operationContext,
             final Cursor<T> wrapped) {
         this.operationContext = operationContext.withOverride(timeoutContext ->
                 timeoutContext.withMaxTimeOverride(maxTimeMs));
-        this.timeoutMode = timeoutMode;
         this.wrapped = wrapped;
     }
 
     @Override
     public boolean hasNext() {
-        resetTimeout();
         return wrapped.hasNext(operationContext);
     }
 
     @Override
     public List<T> next() {
-        resetTimeout();
         return wrapped.next(operationContext);
     }
 
@@ -86,7 +80,6 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     @Nullable
     @Override
     public List<T> tryNext() {
-        resetTimeout();
         return wrapped.tryNext(operationContext);
     }
 
@@ -121,12 +114,6 @@ class CommandBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     @Override
     public int getMaxWireVersion() {
         return wrapped.getMaxWireVersion();
-    }
-
-    private void resetTimeout() {
-        if (timeoutMode == TimeoutMode.ITERATION) {
-            operationContext = operationContext.withNewlyStartedTimeout();
-        }
     }
 
     Cursor<T> getWrapped() {

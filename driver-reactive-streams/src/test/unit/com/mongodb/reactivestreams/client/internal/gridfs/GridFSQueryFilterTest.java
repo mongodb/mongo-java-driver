@@ -39,7 +39,6 @@ import org.reactivestreams.Subscriber;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -69,9 +68,6 @@ final class GridFSQueryFilterTest {
     void deleteUsesEqualityFilters(final BsonValue id) {
         MongoCollection<GridFSFile> filesCollection = mock(MongoCollection.class);
         MongoCollection<Document> chunksCollection = mock(MongoCollection.class);
-        // Mockito answers 0L rather than null for the Long-returning getTimeout, which would make the publisher apply a 0ms timeout.
-        when(filesCollection.getTimeout(any(TimeUnit.class))).thenReturn(null);
-        when(chunksCollection.getTimeout(any(TimeUnit.class))).thenReturn(null);
         when(filesCollection.deleteOne(any(Bson.class))).thenReturn(Mono.just(DeleteResult.acknowledged(1)));
         when(chunksCollection.deleteMany(any(Bson.class))).thenReturn(Mono.just(DeleteResult.acknowledged(1)));
 
@@ -91,7 +87,6 @@ final class GridFSQueryFilterTest {
     @SuppressWarnings("unchecked")
     void renameUsesEqualityFilter(final BsonValue id) {
         MongoCollection<GridFSFile> filesCollection = mock(MongoCollection.class);
-        when(filesCollection.getTimeout(any(TimeUnit.class))).thenReturn(null);
         when(filesCollection.updateOne(any(Bson.class), any(Bson.class)))
                 .thenReturn(Mono.just(UpdateResult.acknowledged(1, 1L, null)));
 
@@ -120,8 +115,6 @@ final class GridFSQueryFilterTest {
         when(rawFilesCollection.withCodecRegistry(any())).thenReturn(filesCollection);
         when(database.getCollection("fs.chunks")).thenReturn(rawChunksCollection);
         when(rawChunksCollection.withCodecRegistry(any())).thenReturn(chunksCollection);
-        when(filesCollection.getTimeout(any(TimeUnit.class))).thenReturn(null);
-        when(chunksCollection.getTimeout(any(TimeUnit.class))).thenReturn(null);
         when(filesCollection.find()).thenReturn(findPublisher);
         when(findPublisher.filter(any(Bson.class))).thenReturn(findPublisher);
 
@@ -152,15 +145,12 @@ final class GridFSQueryFilterTest {
         MongoCollection<Document> chunksCollection = mock(MongoCollection.class);
         FindPublisher<Document> findPublisher = mock(FindPublisher.class);
 
-        when(filesCollection.getTimeout(any(TimeUnit.class))).thenReturn(null);
         when(filesCollection.withDocumentClass(Document.class)).thenReturn(filesAsDocuments);
         when(filesAsDocuments.withReadPreference(any())).thenReturn(filesAsDocuments);
-        when(filesAsDocuments.getTimeout(any(TimeUnit.class))).thenReturn(null);
         when(filesAsDocuments.find()).thenReturn(findPublisher);
         when(findPublisher.projection(any())).thenReturn(findPublisher);
         // A non-empty files collection, so the index checks are skipped.
         when(findPublisher.first()).thenReturn(Mono.just(new Document()));
-        when(chunksCollection.getTimeout(any(TimeUnit.class))).thenReturn(null);
         when(chunksCollection.deleteMany(any(Bson.class))).thenReturn(Mono.just(DeleteResult.acknowledged(0)));
 
         GridFSUploadPublisherImpl uploadPublisher = new GridFSUploadPublisherImpl(null, filesCollection, chunksCollection, id,
