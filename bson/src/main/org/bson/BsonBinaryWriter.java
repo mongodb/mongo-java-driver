@@ -21,6 +21,8 @@ import org.bson.io.BsonOutput;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
@@ -345,6 +347,11 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     public void pipe(final byte[] bytes, final int offset, final int length) {
         notNull("bytes", bytes);
         checkMinDocumentSize(length);
+        int declaredSize = ByteBuffer.wrap(bytes, offset, 4).order(ByteOrder.LITTLE_ENDIAN).getInt();
+        if (declaredSize != length) {
+            throw new BsonSerializationException(format("Document size prefix %d does not match the length of the document bytes %d",
+                    declaredSize, length));
+        }
         if (getState() == State.VALUE) {
             bsonOutput.writeByte(BsonType.DOCUMENT.getValue());
             writeCurrentName();
