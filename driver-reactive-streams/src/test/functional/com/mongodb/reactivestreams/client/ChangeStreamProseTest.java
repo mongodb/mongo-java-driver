@@ -17,6 +17,7 @@ package com.mongodb.reactivestreams.client;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
+import com.mongodb.reactivestreams.client.internal.BatchCursorPublisher;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -92,5 +93,17 @@ final class ChangeStreamProseTest extends com.mongodb.client.ChangeStreamProseTe
     @Disabled
     @Override
     protected void testNameSpaceTypeAbsentChangeStreamEvents() {
+    }
+
+    /**
+     * Not a prose spec test.
+     * <p>
+     * {@link ChangeStreamPublisher#withDocumentClass(Class)} returns a new {@link BatchCursorPublisher},
+     * which must handle batch size correctly.
+     */
+    @Test
+    @Override
+    protected void batchSizeWorksForWithDocumentClass() {
+        super.batchSizeWorksForWithDocumentClass();
     }
 }

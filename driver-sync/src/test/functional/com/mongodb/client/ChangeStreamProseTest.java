@@ -29,7 +29,10 @@ import com.mongodb.client.model.ChangeStreamPreAndPostImagesOptions;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
+import com.mongodb.client.model.changestream.OperationType;
 import com.mongodb.client.model.changestream.SplitEvent;
+import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.operation.AggregateResponseBatchCursor;
 import com.mongodb.internal.operation.ChangeStreamOperationProseTestSpecification;
 import org.bson.BsonArray;
@@ -44,7 +47,9 @@ import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
 import java.time.Instant;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
@@ -55,7 +60,10 @@ import static com.mongodb.client.Fixture.getPrimary;
 import static com.mongodb.client.model.Updates.set;
 import static java.lang.Math.toIntExact;
 import static java.lang.String.format;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -459,6 +467,59 @@ public class ChangeStreamProseTest {
                 assertEquals(2, actualCountOfServerSelections,
                         format("Expected 2 server selections (initial aggregate command  + resume attempt aggregate command), but there were %s",
                                 actualCountOfServerSelections));
+            }
+        }
+    }
+
+    /**
+     * Not a prose spec test.
+     * <p>
+     * {@link ChangeStreamIterable#withDocumentClass(Class)} returns a new {@link MongoIterable},
+     * which must handle batch size correctly.
+     */
+    @Test
+    protected void batchSizeWorksForWithDocumentClass() {
+        assertAll(
+                () -> assertBatchSizeWorksForWithDocumentClass(true, true),
+                () -> assertBatchSizeWorksForWithDocumentClass(true, false),
+                () -> assertBatchSizeWorksForWithDocumentClass(false, true),
+                () -> assertBatchSizeWorksForWithDocumentClass(false, false));
+    }
+
+    private void assertBatchSizeWorksForWithDocumentClass(final boolean chaining, final boolean batchSizeBeforeWithDocumentClass) {
+        TestCommandListener commandListener = new TestCommandListener(singletonList("commandStartedEvent"), emptyList());
+        try (MongoClient client = createClient(getMongoClientSettingsBuilder().addCommandListener(commandListener).build())) {
+            MongoCollection<Document> collection = client
+                    .getDatabase(NAMESPACE.getDatabaseName())
+                    .getCollection(NAMESPACE.getCollectionName());
+            int batchSize = 3;
+            int batchCount = 2;
+            ChangeStreamIterable<Document> changeStreamIterable = collection.watch();
+            MongoIterable<Document> configuredChangeStreamIterable;
+            if (chaining) {
+                if (batchSizeBeforeWithDocumentClass) {
+                    configuredChangeStreamIterable = changeStreamIterable.batchSize(batchSize).withDocumentClass(Document.class);
+                } else {
+                    configuredChangeStreamIterable = changeStreamIterable.withDocumentClass(Document.class).batchSize(batchSize);
+                }
+            } else {
+                if (batchSizeBeforeWithDocumentClass) {
+                    changeStreamIterable.batchSize(batchSize);
+                    configuredChangeStreamIterable = changeStreamIterable.withDocumentClass(Document.class);
+                } else {
+                    configuredChangeStreamIterable = changeStreamIterable.withDocumentClass(Document.class);
+                    changeStreamIterable.batchSize(batchSize);
+                }
+            }
+            try (MongoCursor<Document> changeStreamCursor = configuredChangeStreamIterable.cursor()) {
+                List<Document> insertedDocuments = Stream.generate(Document::new).limit(batchSize * batchCount).collect(toList());
+                collection.insertMany(insertedDocuments);
+                for (int i = 0; i < insertedDocuments.size(); i++) {
+                    assertEquals(OperationType.INSERT.getValue(), changeStreamCursor.next().get("operationType"));
+                }
+                commandListener.getCommandStartedEvents("getMore").stream()
+                        .map(CommandStartedEvent::getCommand)
+                        .forEach(command -> assertEquals(batchSize, command.getInt32("batchSize").intValue()));
             }
         }
     }
