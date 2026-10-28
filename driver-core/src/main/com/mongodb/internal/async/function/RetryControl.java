@@ -17,6 +17,8 @@ package com.mongodb.internal.async.function;
 
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.assertions.Assertions;
+import com.mongodb.internal.annotations.AsyncLeaf;
+import com.mongodb.internal.annotations.SyncLeaf;
 import com.mongodb.internal.async.AsyncSupplier;
 import com.mongodb.internal.async.MutableValue;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -224,6 +226,7 @@ public final class RetryControl<P extends RetryPolicy> implements RetryContext {
      *
      * @see #doWhileDisabledAsync(AsyncSupplier, SingleResultCallback)
      */
+    @SyncLeaf(asyncMethod = "doWhileDisabledAsync")
     public <R> R doWhileDisabled(final Supplier<R> action) {
         boolean originalDisabled = disabled;
         disabled = true;
@@ -238,6 +241,7 @@ public final class RetryControl<P extends RetryPolicy> implements RetryContext {
      * but instead of throwing an exception, it completes the {@code callback} with it.
      * This method is intended to be used in callback-based code.
      */
+    @AsyncLeaf(syncMethod = "doWhileDisabled")
     public <R> void doWhileDisabledAsync(final AsyncSupplier<R> action, final SingleResultCallback<R> callback) {
         boolean originalDisabled = disabled;
         disabled = true;

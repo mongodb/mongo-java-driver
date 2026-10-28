@@ -44,6 +44,8 @@ import com.mongodb.event.ConnectionPoolReadyEvent;
 import com.mongodb.event.ConnectionReadyEvent;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.annotations.AsyncLeaf;
+import com.mongodb.internal.annotations.SyncLeaf;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
 import com.mongodb.internal.diagnostics.logging.Logger;
@@ -101,7 +103,6 @@ import static com.mongodb.internal.Locks.lockInterruptibly;
 import static com.mongodb.internal.Locks.withLock;
 import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.ConcurrentPool.INFINITE_SIZE;
 import static com.mongodb.internal.connection.ConcurrentPool.sizeToString;
 import static com.mongodb.internal.event.EventListenerHelper.getConnectionPoolListener;
@@ -190,6 +191,7 @@ final class DefaultConnectionPool implements ConnectionPool {
     }
 
     @Override
+    @SyncLeaf(asyncMethod = "getAsync")
     public InternalConnection get(final OperationContext operationContext) {
         StartTime checkoutStart = connectionCheckoutStarted(operationContext);
         Timeout maxWaitTimeout = operationContext.getTimeoutContext().startMaxWaitTimeout(checkoutStart);
@@ -208,17 +210,17 @@ final class DefaultConnectionPool implements ConnectionPool {
     }
 
     @Override
+    @AsyncLeaf(syncMethod = "get")
     public void getAsync(final OperationContext operationContext, final SingleResultCallback<InternalConnection> callback) {
         StartTime checkoutStart = connectionCheckoutStarted(operationContext);
         Timeout maxWaitTimeout = operationContext.getTimeoutContext().startMaxWaitTimeout(checkoutStart);
         SingleResultCallback<PooledConnection> eventSendingCallback = (connection, failure) -> {
-            SingleResultCallback<InternalConnection> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
             if (failure == null) {
                 assertNotNull(connection).checkedOutForOperation(operationContext);
                 connectionCheckedOut(operationContext, connection, checkoutStart);
-                errHandlingCallback.onResult(connection, null);
+                callback.onResult(connection, null);
             } else {
-                errHandlingCallback.onResult(null, checkOutFailed(failure, operationContext, checkoutStart));
+                callback.onResult(null, checkOutFailed(failure, operationContext, checkoutStart));
             }
         };
         try {
@@ -968,6 +970,7 @@ final class DefaultConnectionPool implements ConnectionPool {
          * @throws MongoTimeoutException If the first phase timed out.
          */
         @Nullable
+        @SyncLeaf(asyncMethod = "openWithConcurrencyLimitAsync")
         private PooledConnection openWithConcurrencyLimit(final OperationContext operationContext,
                                                           final PooledConnection connection, final OpenWithConcurrencyLimitMode mode,
                                                           final Timeout maxWaitTimeout, final StartTime startTime)
@@ -1012,6 +1015,7 @@ final class DefaultConnectionPool implements ConnectionPool {
          *     and passes either a {@link PooledConnection} or an {@link Exception}.</li>
          * </ul>
          */
+        @AsyncLeaf(syncMethod = "openWithConcurrencyLimit")
         void openWithConcurrencyLimitAsync(
                 final OperationContext operationContext, final PooledConnection connection,
                 final Timeout maxWaitTimeout, final StartTime startTime,

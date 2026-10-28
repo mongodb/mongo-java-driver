@@ -47,8 +47,6 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.AsyncSupplier;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.session.SessionContext;
@@ -83,7 +81,6 @@ import static com.mongodb.internal.ExceptionUtils.mapUnlessError;
 import static com.mongodb.internal.ExceptionUtils.rethrowIfError;
 import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.Authenticator.shouldAuthenticate;
 import static com.mongodb.internal.connection.CommandHelper.HELLO;
 import static com.mongodb.internal.connection.CommandHelper.LEGACY_HELLO;
@@ -123,8 +120,6 @@ public class InternalStreamConnection implements InternalConnection {
             HELLO,
             LEGACY_HELLO,
             LEGACY_HELLO_LOWER));
-
-    private static final Logger LOGGER = Loggers.getLogger("connection");
 
     private final ClusterConnectionMode clusterConnectionMode;
     @Nullable
@@ -921,7 +916,7 @@ public class InternalStreamConnection implements InternalConnection {
             } catch (Throwable translatedException) {
                 c.completeExceptionally(translatedException);
             }
-        }).finish(errorHandlingCallback(callback, LOGGER));
+        }).finish(callback);
     }
 
     @Override
