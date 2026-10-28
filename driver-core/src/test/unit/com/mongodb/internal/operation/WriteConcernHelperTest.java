@@ -91,6 +91,9 @@ class WriteConcernHelperTest {
 
         assertEquals(79, exception.getCode());
         assertEquals(79, exception.getWriteConcernError().getCode());
+        assertEquals("UnknownReplWriteConcern", exception.getWriteConcernError().getCodeName());
         assertEquals("", exception.getWriteConcernError().getMessage());
+        assertTrue(exception.getWriteConcernError().getDetails().isEmpty());
+        assertTrue(exception.getErrorLabels().isEmpty());
     }
 }
