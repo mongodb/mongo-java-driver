@@ -116,6 +116,21 @@ abstract class Compressor {
                 throws Exception;
     }
 
+    static final class ReusableArray {
+        private static final int MAX_RETAINED_SIZE = 1024 * 1024;
+        private byte[] array = new byte[0];
+
+        byte[] atLeast(final int size) {
+            if (size > MAX_RETAINED_SIZE) {
+                return new byte[size];
+            }
+            if (array.length < size) {
+                array = new byte[size];
+            }
+            return array;
+        }
+    }
+
     // override this if not overriding the compress method
     OutputStream getOutputStream(final OutputStream source) throws IOException {
         throw new UnsupportedEncodingException();

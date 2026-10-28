@@ -25,7 +25,6 @@ import java.io.IOException;
 import java.util.List;
 
 class SnappyCompressor extends Compressor {
-    private static final int MAX_RETAINED_BUFFER_SIZE = 1024 * 1024;
     private static final CompressionContextPool<Buffers> BUFFERS = new CompressionContextPool<>(Buffers::new, buffers -> { });
 
     @Override
@@ -45,9 +44,9 @@ class SnappyCompressor extends Compressor {
         int uncompressedSize = getUncompressedSize(source);
         BUFFERS.use(buffers -> {
             try {
-                byte[] singleByteArraySource = buffers.uncompressed(uncompressedSize);
+                byte[] singleByteArraySource = buffers.uncompressed.atLeast(uncompressedSize);
                 copy(source, singleByteArraySource);
-                byte[] out = buffers.compressed(Snappy.maxCompressedLength(uncompressedSize));
+                byte[] out = buffers.compressed.atLeast(Snappy.maxCompressedLength(uncompressedSize));
                 int compressedSize = Snappy.compress(singleByteArraySource, 0, uncompressedSize, out, 0);
                 target.writeBytes(out, 0, compressedSize);
             } catch (IOException e) {
@@ -85,27 +84,7 @@ class SnappyCompressor extends Compressor {
     }
 
     private static final class Buffers {
-        private byte[] uncompressed = new byte[0];
-        private byte[] compressed = new byte[0];
-
-        byte[] uncompressed(final int size) {
-            if (size > MAX_RETAINED_BUFFER_SIZE) {
-                return new byte[size];
-            }
-            if (uncompressed.length < size) {
-                uncompressed = new byte[size];
-            }
-            return uncompressed;
-        }
-
-        byte[] compressed(final int size) {
-            if (size > MAX_RETAINED_BUFFER_SIZE) {
-                return new byte[size];
-            }
-            if (compressed.length < size) {
-                compressed = new byte[size];
-            }
-            return compressed;
-        }
+        private final ReusableArray uncompressed = new ReusableArray();
+        private final ReusableArray compressed = new ReusableArray();
     }
 }

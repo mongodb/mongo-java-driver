@@ -26,7 +26,6 @@ import org.bson.io.BsonOutput;
 import java.util.List;
 
 class ZstdCompressor extends Compressor {
-    private static final int MAX_RETAINED_BUFFER_SIZE = 1024 * 1024;
     private static final CompressionContextPool<CompressionContext> COMPRESSION_CONTEXTS =
             new CompressionContextPool<>(CompressionContext::new, CompressionContext::close);
     private static final CompressionContextPool<ZstdDecompressCtx> DECOMPRESSION_CONTEXTS =
@@ -47,9 +46,9 @@ class ZstdCompressor extends Compressor {
         int uncompressedSize = getUncompressedSize(source);
         COMPRESSION_CONTEXTS.use(context -> {
             try {
-                byte[] in = context.uncompressedBuffer(uncompressedSize);
+                byte[] in = context.uncompressed.atLeast(uncompressedSize);
                 copy(source, in);
-                byte[] out = context.compressedBuffer((int) Zstd.compressBound(uncompressedSize));
+                byte[] out = context.compressed.atLeast((int) Zstd.compressBound(uncompressedSize));
                 int compressedSize = context.ctx.compressByteArray(out, 0, out.length, in, 0, uncompressedSize);
                 target.writeBytes(out, 0, compressedSize);
             } catch (Exception e) {
@@ -83,28 +82,8 @@ class ZstdCompressor extends Compressor {
 
     private static final class CompressionContext {
         private final ZstdCompressCtx ctx = new ZstdCompressCtx().setLevel(Zstd.defaultCompressionLevel());
-        private byte[] uncompressed = new byte[0];
-        private byte[] compressed = new byte[0];
-
-        byte[] uncompressedBuffer(final int size) {
-            if (size > MAX_RETAINED_BUFFER_SIZE) {
-                return new byte[size];
-            }
-            if (uncompressed.length < size) {
-                uncompressed = new byte[size];
-            }
-            return uncompressed;
-        }
-
-        byte[] compressedBuffer(final int size) {
-            if (size > MAX_RETAINED_BUFFER_SIZE) {
-                return new byte[size];
-            }
-            if (compressed.length < size) {
-                compressed = new byte[size];
-            }
-            return compressed;
-        }
+        private final ReusableArray uncompressed = new ReusableArray();
+        private final ReusableArray compressed = new ReusableArray();
 
         void close() {
             ctx.close();
