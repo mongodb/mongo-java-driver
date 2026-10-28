@@ -562,6 +562,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         com.mongodb.client.MapReduceIterable<BsonDocument> iterable = session == null
                 ? collection.mapReduce(mapFunction, reduceFunction)
                 : collection.mapReduce(session, mapFunction, reduceFunction);
+        boolean outputToCollection = false;
 
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
@@ -570,15 +571,27 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 case "session":
                     break;
                 case "out":
-                    if (!cur.getValue().asDocument().equals(new BsonDocument("inline", new BsonInt32(1)))) {
-                        throw new UnsupportedOperationException("Unsupported value for out argument: " + cur.getValue());
+                    BsonDocument out = cur.getValue().asDocument();
+                    if (out.equals(new BsonDocument("inline", new BsonInt32(1)))) {
+                        break;
                     }
-                    break;
+                    if (out.size() == 1 && out.isString("replace")) {
+                        iterable.collectionName(out.getString("replace").getValue());
+                        outputToCollection = true;
+                        break;
+                    }
+                    throw new UnsupportedOperationException("Unsupported value for out argument: " + cur.getValue());
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
 
+        if (outputToCollection) {
+            return resultOf(() -> {
+                iterable.toCollection();
+                return null;
+            });
+        }
         return resultOf(() ->
                 new BsonArray(iterable.into(new ArrayList<>())));
     }
