@@ -114,7 +114,7 @@ public class RenameCollectionOperation implements WriteOperation<Void> {
             return withConnection(binding, operationContext, (connection, operationContextWithMinRtt) ->
                     executeCommand(binding,
                             operationContextWithMinRtt, "admin", getCommand(), connection,
-                            writeConcernErrorTransformer(operationContextWithMinRtt.getTimeoutContext())));
+                            writeConcernErrorTransformer()));
         });
         return retryingCommandExecutor.get();
     }
@@ -131,7 +131,7 @@ public class RenameCollectionOperation implements WriteOperation<Void> {
                         errHandlingCallback.onResult(null, t);
                     } else {
                         executeCommandAsync(binding, operationContextWithMinRtt, "admin", getCommand(), assertNotNull(connection),
-                                writeConcernErrorTransformerAsync(operationContextWithMinRtt.getTimeoutContext()),
+                                writeConcernErrorTransformerAsync(),
                                 releasingCallback(errHandlingCallback, connection));
                     }
                 }));

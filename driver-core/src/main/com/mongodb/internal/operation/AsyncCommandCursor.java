@@ -20,7 +20,6 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
@@ -323,9 +322,7 @@ class AsyncCommandCursor<T> implements AsyncCursor<T> {
         }
 
         private void handleException(final AsyncConnection connection, final Throwable exception) {
-            if (exception instanceof MongoOperationTimeoutException && exception.getCause() instanceof MongoSocketException) {
-                onCorruptedConnection(connection, (MongoSocketException) exception.getCause());
-            } else if (exception instanceof MongoSocketException) {
+            if (exception instanceof MongoSocketException) {
                 onCorruptedConnection(connection, (MongoSocketException) exception);
             }
         }

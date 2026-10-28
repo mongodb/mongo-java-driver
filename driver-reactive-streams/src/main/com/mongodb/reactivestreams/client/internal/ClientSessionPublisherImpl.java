@@ -29,7 +29,6 @@ import com.mongodb.internal.observability.micrometer.TransactionSpan;
 import com.mongodb.internal.operation.AbortTransactionOperation;
 import com.mongodb.internal.operation.CommitTransactionOperation;
 import com.mongodb.internal.operation.ReadOperation;
-import com.mongodb.internal.operation.WriteConcernHelper;
 import com.mongodb.internal.operation.WriteOperation;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
@@ -132,7 +131,7 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
         this.transactionOptions = TransactionOptions.merge(transactionOptions, getOptions().getDefaultTransactionOptions());
 
         TimeoutContext timeoutContext = createTimeoutContext();
-        WriteConcern writeConcern = getWriteConcern(timeoutContext);
+        WriteConcern writeConcern = getWriteConcern();
         if (writeConcern == null) {
             throw new MongoInternalException("Invariant violated. Transaction options write concern can not be null");
         }
@@ -148,12 +147,8 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
     }
 
     @Nullable
-    private WriteConcern getWriteConcern(@Nullable final TimeoutContext timeoutContext) {
-        WriteConcern writeConcern = transactionOptions.getWriteConcern();
-        if (hasTimeoutMS(timeoutContext) && hasWTimeoutMS(writeConcern)) {
-            return WriteConcernHelper.cloneWithoutTimeout(writeConcern);
-        }
-        return writeConcern;
+    private WriteConcern getWriteConcern() {
+        return transactionOptions.getWriteConcern();
     }
 
     @Override
@@ -184,7 +179,7 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
                 commitInProgress = true;
                 resetTimeout();
                 TimeoutContext timeoutContext = getTimeoutContext();
-                WriteConcern writeConcern = assertNotNull(getWriteConcern(timeoutContext));
+                WriteConcern writeConcern = assertNotNull(getWriteConcern());
                 return executor
                         .execute(
                                 new CommitTransactionOperation(writeConcern, maxAdaptiveRetriesSetting, alreadyCommitted)
@@ -235,7 +230,7 @@ final class ClientSessionPublisherImpl extends BaseClientSessionImpl implements 
 
                 resetTimeout();
                 TimeoutContext timeoutContext = getTimeoutContext();
-                WriteConcern writeConcern = assertNotNull(getWriteConcern(timeoutContext));
+                WriteConcern writeConcern = assertNotNull(getWriteConcern());
                 return executor
                         .execute(new AbortTransactionOperation(writeConcern, maxAdaptiveRetriesSetting)
                                 .recoveryToken(getRecoveryToken()), readConcern, this)

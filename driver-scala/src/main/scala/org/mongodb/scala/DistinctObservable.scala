@@ -16,8 +16,6 @@
 
 package org.mongodb.scala
 
-import com.mongodb.annotations.{ Alpha, Reason }
-
 import java.util.concurrent.TimeUnit
 import com.mongodb.reactivestreams.client.DistinctPublisher
 import org.mongodb.scala.bson.BsonValue
@@ -133,22 +131,6 @@ case class DistinctObservable[TResult](private val wrapped: DistinctPublisher[TR
    */
   def hintString(hint: String): DistinctObservable[TResult] = {
     wrapped.hintString(hint)
-    this
-  }
-
-  /**
-   * Sets the timeoutMode for the cursor.
-   *
-   * Requires the `timeout` to be set, either in the [[MongoClientSettings]],
-   * via [[MongoDatabase]] or via [[MongoCollection]]
-   *
-   * @param timeoutMode the timeout mode
-   * @return this
-   * @since 5.2
-   */
-  @Alpha(Array(Reason.CLIENT))
-  def timeoutMode(timeoutMode: TimeoutMode): DistinctObservable[TResult] = {
-    wrapped.timeoutMode(timeoutMode)
     this
   }
 

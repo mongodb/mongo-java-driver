@@ -78,8 +78,6 @@ import reactor.core.publisher.MonoSink;
 
 import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -158,11 +156,6 @@ public final class MongoOperationPublisher<T> {
         return operations.isRetryReads();
     }
 
-    @Nullable
-    public Long getTimeoutMS() {
-        return getTimeoutSettings().getTimeoutMS();
-    }
-
     public TimeoutSettings getTimeoutSettings() {
         return operations.getTimeoutSettings();
     }
@@ -235,17 +228,6 @@ public final class MongoOperationPublisher<T> {
                 getCodecRegistry(), getReadPreference(), notNull("readConcern", readConcern),
                 getWriteConcern(), getRetryWrites(), getRetryReads(), maxAdaptiveRetriesSetting, uuidRepresentation,
                 autoEncryptionSettings, getTimeoutSettings(), executor);
-    }
-
-    MongoOperationPublisher<T> withTimeout(final long timeout, final TimeUnit timeUnit) {
-        TimeoutSettings timeoutSettings = getTimeoutSettings().withTimeout(timeout, timeUnit);
-        if (Objects.equals(getTimeoutSettings(), timeoutSettings)) {
-            return this;
-        }
-        return new MongoOperationPublisher<>(getNamespace(), getDocumentClass(),
-                getCodecRegistry(), getReadPreference(), getReadConcern(),
-                getWriteConcern(), getRetryWrites(), getRetryReads(), maxAdaptiveRetriesSetting, uuidRepresentation,
-                autoEncryptionSettings, timeoutSettings, executor);
     }
 
     Publisher<Void> dropDatabase(@Nullable final ClientSession clientSession) {

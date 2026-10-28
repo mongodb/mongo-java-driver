@@ -18,7 +18,6 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.AsyncBatchCursor;
@@ -37,7 +36,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PROTECTED)
@@ -45,7 +43,6 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
     private final ClientSession clientSession;
     private final MongoOperationPublisher<T> mongoOperationPublisher;
     private Integer batchSize;
-    private TimeoutMode timeoutMode;
 
     BatchCursorPublisher(@Nullable final ClientSession clientSession, final MongoOperationPublisher<T> mongoOperationPublisher) {
         this(clientSession, mongoOperationPublisher, null);
@@ -109,19 +106,6 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
         return this;
     }
 
-    public Publisher<T> timeoutMode(final TimeoutMode timeoutMode) {
-        if (mongoOperationPublisher.getTimeoutSettings().getTimeoutMS() == null) {
-            throw new IllegalArgumentException("TimeoutMode requires timeoutMS to be set.");
-        }
-        this.timeoutMode = timeoutMode;
-        return this;
-    }
-
-    @Nullable
-    public TimeoutMode getTimeoutMode() {
-        return timeoutMode;
-    }
-
     public Publisher<T> first() {
         return batchCursor(this::asReadOperationFirst)
                 .flatMap(batchCursor -> {
@@ -152,12 +136,6 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
 
     protected long validateMaxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
-        Long timeoutMS = mongoOperationPublisher.getTimeoutSettings().getTimeoutMS();
-        long maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
-
-        isTrueArgument("maxAwaitTimeMS must be less than timeoutMS", timeoutMS == null || timeoutMS == 0
-                || timeoutMS > maxAwaitTimeMS);
-
-        return maxAwaitTimeMS;
+        return TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
     }
 }

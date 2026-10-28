@@ -37,8 +37,6 @@ import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.CodecRegistry
 import spock.lang.Specification
 
-import java.util.concurrent.TimeUnit
-
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
 import static com.mongodb.ReadPreference.primary
@@ -133,23 +131,6 @@ class MongoClusterSpecification extends Specification {
         expect mongoCluster, isTheSameAs(createMongoCluster(
                 MongoClientSettings.builder(CLIENT_SETTINGS).readConcern(newReadConcern).build()))
     }
-
-    def 'should behave correctly when using withTimeout'() {
-        when:
-        def mongoCluster =  createMongoCluster().withTimeout(10_000, TimeUnit.MILLISECONDS)
-
-        then:
-        mongoCluster.getTimeout(TimeUnit.MILLISECONDS) == 10_000
-        expect mongoCluster, isTheSameAs(createMongoCluster(MongoClientSettings.builder(CLIENT_SETTINGS)
-                .timeout(10_000, TimeUnit.MILLISECONDS).build()))
-
-        when:
-        createMongoCluster().withTimeout(500, TimeUnit.NANOSECONDS)
-
-        then:
-        thrown(IllegalArgumentException)
-    }
-
 
     def 'should use ListDatabasesIterableImpl correctly'() {
         given:

@@ -643,7 +643,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
     def 'should pass tailable and await data flags through'() {
         given:
         def (cursorType, long maxAwaitTimeMS, long maxTimeMSForCursor) = cursorDetails
-        def timeoutSettings = ClusterFixture.TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT.withMaxAwaitTimeMS(maxAwaitTimeMS)
+        def timeoutSettings = ClusterFixture.TIMEOUT_SETTINGS.withMaxAwaitTimeMS(maxAwaitTimeMS)
         def timeoutContext = new TimeoutContext(timeoutSettings)
         def operationContext = createOperationContext().withTimeoutContext(timeoutContext)
 

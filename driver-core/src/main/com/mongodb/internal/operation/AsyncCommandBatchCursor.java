@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.OperationContext;
@@ -28,25 +27,21 @@ import java.util.List;
 
 public class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
 
-    private final TimeoutMode timeoutMode;
     private OperationContext operationContext;
 
     private AsyncCursor<T> wrapped;
 
     AsyncCommandBatchCursor(
-            final TimeoutMode timeoutMode,
             final long maxTimeMs,
             final OperationContext operationContext,
             final AsyncCursor<T> wrapped) {
         this.operationContext = operationContext.withOverride(timeoutContext ->
                 timeoutContext.withMaxTimeOverride(maxTimeMs));
-        this.timeoutMode = timeoutMode;
         this.wrapped = wrapped;
     }
 
     @Override
     public void next(final SingleResultCallback<List<T>> callback) {
-        resetTimeout();
         wrapped.next(operationContext, callback);
     }
 
@@ -94,12 +89,6 @@ public class AsyncCommandBatchCursor<T> implements AsyncAggregateResponseBatchCu
     @Override
     public int getMaxWireVersion() {
         return wrapped.getMaxWireVersion();
-    }
-
-    private void resetTimeout() {
-        if (timeoutMode == TimeoutMode.ITERATION) {
-            operationContext = operationContext.withNewlyStartedTimeout();
-        }
     }
 
     AsyncCursor<T> getWrapped() {

@@ -85,11 +85,6 @@ case class SyncFindIterable[T](wrapped: FindObservable[T]) extends SyncMongoIter
     this
   }
 
-  override def timeoutMode(timeoutMode: TimeoutMode): FindIterable[T] = {
-    wrapped.timeoutMode(timeoutMode)
-    this
-  }
-
   override def collation(collation: Collation): FindIterable[T] = {
     wrapped.collation(collation)
     this

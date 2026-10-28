@@ -17,7 +17,6 @@
 package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.ReadConcern;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.Operations;
 import com.mongodb.internal.operation.ReadOperationCursor;
@@ -79,14 +78,6 @@ final class ListCollectionsPublisherImpl<T> extends BatchCursorPublisher<T> impl
         return this;
     }
 
-
-    @SuppressWarnings("ReactiveStreamsUnusedPublisher")
-    @Override
-    public ListCollectionsPublisher<T> timeoutMode(final TimeoutMode timeoutMode) {
-        super.timeoutMode(timeoutMode);
-        return this;
-    }
-
     /**
      * @see ListCollectionNamesPublisher#authorizedCollections(boolean)
      */
@@ -97,7 +88,7 @@ final class ListCollectionsPublisherImpl<T> extends BatchCursorPublisher<T> impl
 
     ReadOperationCursor<T> asReadOperation(final int initialBatchSize) {
         return getOperations().listCollections(getNamespace().getDatabaseName(), getDocumentClass(), filter, collectionNamesOnly,
-                authorizedCollections, initialBatchSize, comment, getTimeoutMode());
+                authorizedCollections, initialBatchSize, comment);
     }
 
     @Override

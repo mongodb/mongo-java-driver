@@ -6,14 +6,12 @@ import com.mongodb.{ ClientSessionOptions, ReadConcern, ReadPreference, WriteCon
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
-import org.mongodb.scala.{ MongoCluster, SingleObservableFuture }
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
+import org.mongodb.scala.{ MongoCluster, SingleObservableFuture }
 
 import java.util
-import java.util.concurrent.TimeUnit
 import scala.collection.JavaConverters._
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
 import scala.reflect.ClassTag
 
 object SyncMongoCluster {
@@ -31,11 +29,6 @@ class SyncMongoCluster(wrapped: MongoCluster) extends JMongoCluster {
 
   override def getReadConcern: ReadConcern = wrapped.readConcern
 
-  override def getTimeout(timeUnit: TimeUnit): java.lang.Long = {
-    val timeout = wrapped.timeout.map(d => timeUnit.convert(d.toMillis, TimeUnit.MILLISECONDS))
-    if (timeout.isDefined) timeout.get else null
-  }
-
   override def withCodecRegistry(codecRegistry: CodecRegistry): JMongoCluster =
     SyncMongoCluster(wrapped.withCodecRegistry(codecRegistry))
 
@@ -47,9 +40,6 @@ class SyncMongoCluster(wrapped: MongoCluster) extends JMongoCluster {
 
   override def withReadConcern(readConcern: ReadConcern): JMongoCluster =
     SyncMongoCluster(wrapped.withReadConcern(readConcern))
-
-  override def withTimeout(timeout: Long, timeUnit: TimeUnit): JMongoCluster =
-    SyncMongoCluster(wrapped.withTimeout(Duration(timeout, timeUnit)))
 
   override def getDatabase(databaseName: String): JMongoDatabase =
     SyncMongoDatabase(wrapped.getDatabase(databaseName))

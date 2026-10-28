@@ -17,7 +17,6 @@
 package com.mongodb.internal;
 
 import com.mongodb.MongoCommandException;
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketException;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -42,10 +41,6 @@ public final class ExceptionUtils {
 
     public static boolean isMongoSocketException(final Throwable e) {
         return e instanceof MongoSocketException;
-    }
-
-    public static boolean isOperationTimeoutFromSocketException(final Throwable e) {
-        return e instanceof MongoOperationTimeoutException && e.getCause() instanceof MongoSocketException;
     }
 
     /**

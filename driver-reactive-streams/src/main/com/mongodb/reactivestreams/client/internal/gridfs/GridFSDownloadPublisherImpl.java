@@ -18,7 +18,6 @@ package com.mongodb.reactivestreams.client.internal.gridfs;
 
 import com.mongodb.MongoGridFSException;
 import com.mongodb.client.gridfs.model.GridFSFile;
-import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.FindPublisher;
@@ -36,34 +35,28 @@ import reactor.core.publisher.Mono;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.TimeoutContext.startTimeout;
-import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.collectionWithTimeout;
 import static java.lang.String.format;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class GridFSDownloadPublisherImpl implements GridFSDownloadPublisher {
-    private static final String TIMEOUT_ERROR_MESSAGE = "Finding chunks exceeded the timeout limit.";
     private final ClientSession clientSession;
-    private final Function<Timeout, GridFSFindPublisher> gridFSFileMono;
+    private final Supplier<GridFSFindPublisher> gridFSFileMono;
     private final MongoCollection<Document> chunksCollection;
     private Integer bufferSizeBytes;
 
     private volatile GridFSFile fileInfo;
-    @Nullable
-    private final Long timeoutMs;
 
     public GridFSDownloadPublisherImpl(@Nullable final ClientSession clientSession,
-                                       final Function<Timeout, GridFSFindPublisher> gridFSFilePublisherCreator,
+                                       final Supplier<GridFSFindPublisher> gridFSFilePublisherCreator,
                                        final MongoCollection<Document> chunksCollection) {
         this.clientSession = clientSession;
         this.gridFSFileMono = notNull("gridFSFilePublisherCreator", gridFSFilePublisherCreator);
         this.chunksCollection = notNull("chunksCollection", chunksCollection);
-        this.timeoutMs = chunksCollection.getTimeout(MILLISECONDS);
     }
 
     @Override
@@ -71,7 +64,7 @@ public class GridFSDownloadPublisherImpl implements GridFSDownloadPublisher {
         if (fileInfo != null) {
             return Mono.fromCallable(() -> fileInfo);
         }
-        return Mono.from(gridFSFileMono.apply(startTimeout(timeoutMs)))
+        return Mono.from(gridFSFileMono.get())
                 .doOnNext(gridFSFile -> fileInfo = gridFSFile);
     }
 
@@ -83,25 +76,22 @@ public class GridFSDownloadPublisherImpl implements GridFSDownloadPublisher {
 
     @Override
     public void subscribe(final Subscriber<? super ByteBuffer> subscriber) {
-        Flux.defer(()-> {
-            Timeout operationTimeout = startTimeout(timeoutMs);
-           return Mono.from(gridFSFileMono.apply(operationTimeout))
-                    .doOnSuccess(gridFSFile -> {
-                        if (gridFSFile == null) {
-                            throw new MongoGridFSException("File not found");
-                        }
-                        fileInfo = gridFSFile;
-                    }).flatMapMany((Function<GridFSFile, Flux<ByteBuffer>>) gridFSFile -> getChunkPublisher(gridFSFile, operationTimeout));
-        }).subscribe(subscriber);
+        Flux.defer(() -> Mono.from(gridFSFileMono.get())
+                 .doOnSuccess(gridFSFile -> {
+                     if (gridFSFile == null) {
+                         throw new MongoGridFSException("File not found");
+                     }
+                     fileInfo = gridFSFile;
+                 }).flatMapMany((Function<GridFSFile, Flux<ByteBuffer>>) this::getChunkPublisher)).subscribe(subscriber);
     }
 
-    private Flux<ByteBuffer> getChunkPublisher(final GridFSFile gridFSFile, @Nullable final Timeout timeout) {
+    private Flux<ByteBuffer> getChunkPublisher(final GridFSFile gridFSFile) {
         BsonDocument filter = GridFSFilters.eq("files_id", gridFSFile.getId());
         FindPublisher<Document> chunkPublisher;
         if (clientSession != null) {
-            chunkPublisher = collectionWithTimeout(chunksCollection, timeout, TIMEOUT_ERROR_MESSAGE).find(clientSession, filter);
+            chunkPublisher = chunksCollection.find(clientSession, filter);
         } else {
-            chunkPublisher = collectionWithTimeout(chunksCollection, timeout, TIMEOUT_ERROR_MESSAGE).find(filter);
+            chunkPublisher = chunksCollection.find(filter);
         }
 
         AtomicInteger chunkCounter = new AtomicInteger(0);

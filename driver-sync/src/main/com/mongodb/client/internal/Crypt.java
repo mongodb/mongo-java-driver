@@ -134,8 +134,7 @@ public class Crypt implements Closeable {
      */
     RawBsonDocument encrypt(
             final String databaseName,
-            final RawBsonDocument command,
-            @Nullable final Timeout timeout) {
+            final RawBsonDocument command) {
         notNull("databaseName", databaseName);
         notNull("command", command);
 
@@ -144,7 +143,7 @@ public class Crypt implements Closeable {
         }
 
        try (MongoCryptContext encryptionContext = mongoCrypt.createEncryptionContext(databaseName, command)) {
-           return executeStateMachine(encryptionContext, databaseName, timeout);
+           return executeStateMachine(encryptionContext, databaseName);
         } catch (MongoCryptException e) {
             throw wrapInClientException(e);
         }
@@ -156,10 +155,10 @@ public class Crypt implements Closeable {
      * @param commandResponse the encrypted command response
      * @return the decrypted command response
      */
-    RawBsonDocument decrypt(final RawBsonDocument commandResponse,  @Nullable final Timeout timeoutOperation) {
+    RawBsonDocument decrypt(final RawBsonDocument commandResponse) {
         notNull("commandResponse", commandResponse);
         try (MongoCryptContext decryptionContext = mongoCrypt.createDecryptionContext(commandResponse)) {
-            return executeStateMachine(decryptionContext, null, timeoutOperation);
+            return executeStateMachine(decryptionContext, null);
         } catch (MongoCryptException e) {
             throw wrapInClientException(e);
         }
@@ -172,7 +171,7 @@ public class Crypt implements Closeable {
      * @param options     the data key options
      * @return the document representing the data key to be added to the key vault
      */
-    BsonDocument createDataKey(final String kmsProvider, final DataKeyOptions options, @Nullable final Timeout operationTimeout) {
+    BsonDocument createDataKey(final String kmsProvider, final DataKeyOptions options) {
         notNull("kmsProvider", kmsProvider);
         notNull("options", options);
 
@@ -182,7 +181,7 @@ public class Crypt implements Closeable {
                         .masterKey(options.getMasterKey())
                         .keyMaterial(options.getKeyMaterial())
                         .build())) {
-            return executeStateMachine(dataKeyCreationContext, null, operationTimeout);
+            return executeStateMachine(dataKeyCreationContext, null);
         } catch (MongoCryptException e) {
             throw wrapInClientException(e);
         }
@@ -201,7 +200,7 @@ public class Crypt implements Closeable {
 
         try (MongoCryptContext encryptionContext = mongoCrypt.createExplicitEncryptionContext(
                 new BsonDocument("v", value), asMongoExplicitEncryptOptions(options))) {
-            return executeStateMachine(encryptionContext, null, timeoutOperation).getBinary("v");
+            return executeStateMachine(encryptionContext, null).getBinary("v");
         } catch (MongoCryptException e) {
             throw wrapInClientException(e);
         }
@@ -220,7 +219,7 @@ public class Crypt implements Closeable {
 
         try (MongoCryptContext encryptionContext = mongoCrypt.createEncryptExpressionContext(
                 new BsonDocument("v", expression), asMongoExplicitEncryptOptions(options))) {
-            return executeStateMachine(encryptionContext, null, timeoutOperation).getDocument("v");
+            return executeStateMachine(encryptionContext, null).getDocument("v");
         } catch (MongoCryptException e) {
             throw wrapInClientException(e);
         }
@@ -235,7 +234,7 @@ public class Crypt implements Closeable {
     BsonValue decryptExplicitly(final BsonBinary value, @Nullable final Timeout timeoutOperation) {
         notNull("value", value);
         try (MongoCryptContext decryptionContext = mongoCrypt.createExplicitDecryptionContext(new BsonDocument("v", value))) {
-            return assertNotNull(executeStateMachine(decryptionContext, null, timeoutOperation).get("v"));
+            return assertNotNull(executeStateMachine(decryptionContext, null).get("v"));
         } catch (MongoCryptException e) {
             throw wrapInClientException(e);
         }
@@ -257,7 +256,7 @@ public class Crypt implements Closeable {
                             .provider(options.getProvider())
                             .masterKey(options.getMasterKey())
                             .build())) {
-                return executeStateMachine(rewrapManyDatakeyContext, null, operationTimeout);
+                return executeStateMachine(rewrapManyDatakeyContext, null);
             }
         } catch (MongoCryptException e) {
             throw wrapInClientException(e);
@@ -279,25 +278,24 @@ public class Crypt implements Closeable {
 
     private RawBsonDocument executeStateMachine(
             final MongoCryptContext cryptContext,
-            @Nullable final String databaseName,
-            @Nullable final Timeout timeout) {
+            @Nullable final String databaseName) {
         while (true) {
             State state = cryptContext.getState();
             switch (state) {
                 case NEED_MONGO_COLLINFO:
-                    collInfo(cryptContext, notNull("databaseName", databaseName), timeout);
+                    collInfo(cryptContext, notNull("databaseName", databaseName));
                     break;
                 case NEED_MONGO_MARKINGS:
-                    mark(cryptContext, notNull("databaseName", databaseName), timeout);
+                    mark(cryptContext, notNull("databaseName", databaseName));
                     break;
                 case NEED_KMS_CREDENTIALS:
                     fetchCredentials(cryptContext);
                     break;
                 case NEED_MONGO_KEYS:
-                    fetchKeys(cryptContext, timeout);
+                    fetchKeys(cryptContext);
                     break;
                 case NEED_KMS:
-                    decryptKeys(cryptContext, timeout);
+                    decryptKeys(cryptContext);
                     break;
                 case READY:
                     return cryptContext.finish();
@@ -313,10 +311,10 @@ public class Crypt implements Closeable {
         cryptContext.provideKmsProviderCredentials(MongoCryptHelper.fetchCredentials(kmsProviders, kmsProviderPropertySuppliers));
     }
 
-    private void collInfo(final MongoCryptContext cryptContext, final String databaseName, @Nullable final Timeout operationTimeout) {
+    private void collInfo(final MongoCryptContext cryptContext, final String databaseName) {
         try {
             List<BsonDocument> results = assertNotNull(collectionInfoRetriever)
-                    .filter(databaseName, cryptContext.getMongoOperation(), operationTimeout);
+                    .filter(databaseName, cryptContext.getMongoOperation());
             for (BsonDocument result : results) {
                 cryptContext.addMongoOperationResult(result);
             }
@@ -326,9 +324,9 @@ public class Crypt implements Closeable {
         }
     }
 
-    private void mark(final MongoCryptContext cryptContext, final String databaseName, @Nullable final Timeout timeout) {
+    private void mark(final MongoCryptContext cryptContext, final String databaseName) {
         try {
-            RawBsonDocument markedCommand = assertNotNull(commandMarker).mark(databaseName, cryptContext.getMongoOperation(), timeout);
+            RawBsonDocument markedCommand = assertNotNull(commandMarker).mark(databaseName, cryptContext.getMongoOperation());
             cryptContext.addMongoOperationResult(markedCommand);
             cryptContext.completeMongoOperation();
         } catch (Exception e) {
@@ -336,9 +334,9 @@ public class Crypt implements Closeable {
         }
     }
 
-    private void fetchKeys(final MongoCryptContext keyBroker, @Nullable final Timeout operationTimeout) {
+    private void fetchKeys(final MongoCryptContext keyBroker) {
         try {
-            for (BsonDocument bsonDocument : keyRetriever.find(keyBroker.getMongoOperation(), operationTimeout)) {
+            for (BsonDocument bsonDocument : keyRetriever.find(keyBroker.getMongoOperation())) {
                 keyBroker.addMongoOperationResult(bsonDocument);
             }
             keyBroker.completeMongoOperation();
@@ -347,11 +345,11 @@ public class Crypt implements Closeable {
         }
     }
 
-    private void decryptKeys(final MongoCryptContext cryptContext, @Nullable final Timeout operationTimeout) {
+    private void decryptKeys(final MongoCryptContext cryptContext) {
         try {
             MongoKeyDecryptor keyDecryptor = cryptContext.nextKeyDecryptor();
             while (keyDecryptor != null) {
-                decryptKey(keyDecryptor, operationTimeout);
+                decryptKey(keyDecryptor);
                 keyDecryptor = cryptContext.nextKeyDecryptor();
             }
             cryptContext.completeKeyDecryptors();
@@ -361,9 +359,9 @@ public class Crypt implements Closeable {
         }
     }
 
-    private void decryptKey(final MongoKeyDecryptor keyDecryptor, @Nullable final Timeout operationTimeout) throws IOException {
+    private void decryptKey(final MongoKeyDecryptor keyDecryptor) throws IOException {
         try (InputStream inputStream = keyManagementService.stream(keyDecryptor.getKmsProvider(), keyDecryptor.getHostName(),
-                keyDecryptor.getMessage(), operationTimeout)) {
+                keyDecryptor.getMessage())) {
             int bytesNeeded = keyDecryptor.bytesNeeded();
 
             while (bytesNeeded > 0) {

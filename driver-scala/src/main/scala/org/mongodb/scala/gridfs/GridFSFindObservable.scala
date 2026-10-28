@@ -19,7 +19,7 @@ package org.mongodb.scala.gridfs
 import java.util.concurrent.TimeUnit
 import com.mongodb.reactivestreams.client.gridfs.GridFSFindPublisher
 import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.{ Observable, Observer, SingleObservable, TimeoutMode }
+import org.mongodb.scala.{ Observable, Observer, SingleObservable }
 
 import scala.concurrent.duration.Duration
 

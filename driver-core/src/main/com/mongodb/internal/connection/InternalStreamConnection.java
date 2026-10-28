@@ -24,12 +24,10 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketClosedException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoSocketWriteException;
-import com.mongodb.MongoSocketWriteTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.connection.AsyncCompletionHandler;
@@ -52,7 +50,6 @@ import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.session.SessionContext;
-import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import com.mongodb.observability.micrometer.MongodbObservationContext;
 import org.bson.BsonBinaryReader;
@@ -81,7 +78,6 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.ExceptionUtils.mapUnlessError;
 import static com.mongodb.internal.ExceptionUtils.rethrowIfError;
-import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.Authenticator.shouldAuthenticate;
@@ -169,18 +165,6 @@ public class InternalStreamConnection implements InternalConnection {
             final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer) {
         this(clusterConnectionMode, null, false, serverId, connectionGenerationSupplier, streamFactory, compressorList,
                 LoggerSettings.builder().build(), commandListener, connectionInitializer, false);
-    }
-
-    public InternalStreamConnection(final ClusterConnectionMode clusterConnectionMode,
-            @Nullable final Authenticator authenticator,
-            final boolean isMonitoringConnection,
-            final ServerId serverId,
-            final ConnectionGenerationSupplier connectionGenerationSupplier,
-            final StreamFactory streamFactory, final List<MongoCompressor> compressorList,
-            final LoggerSettings loggerSettings,
-            final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer) {
-        this(clusterConnectionMode, authenticator, isMonitoringConnection, serverId, connectionGenerationSupplier,
-                streamFactory, compressorList, loggerSettings, commandListener, connectionInitializer, false);
     }
 
     public InternalStreamConnection(final ClusterConnectionMode clusterConnectionMode,
@@ -560,9 +544,6 @@ public class InternalStreamConnection implements InternalConnection {
 
     private void trySendMessage(final CommandMessage message, final ByteBufferBsonOutput bsonOutput,
             final OperationContext operationContext) {
-        Timeout.onExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
-            throw TimeoutContext.createMongoRoundTripTimeoutException();
-        });
         List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
         try {
             sendMessage(byteBuffers, message.getId(), operationContext);
@@ -613,13 +594,13 @@ public class InternalStreamConnection implements InternalConnection {
             updateSessionContext(operationContext.getSessionContext(), responseBuffers);
             if (!isCommandOk(responseBuffers)) {
                 throw getCommandFailureException(responseBuffers.getResponseDocument(responseTo,
-                        new BsonDocumentCodec()), description.getServerAddress(), operationContext.getTimeoutContext());
+                        new BsonDocumentCodec()), description.getServerAddress());
             }
 
             commandEventSender.sendSucceededEvent(responseBuffers);
             commandSuccessful = true;
 
-            T commandResult = getCommandResult(decoder, responseBuffers, responseTo, operationContext.getTimeoutContext());
+            T commandResult = getCommandResult(decoder, responseBuffers, responseTo);
             hasMoreToCome = responseBuffers.getReplyHeader().hasMoreToCome();
             if (hasMoreToCome) {
                 responseTo = responseBuffers.getReplyHeader().getRequestId();
@@ -651,8 +632,7 @@ public class InternalStreamConnection implements InternalConnection {
      * Determines whether a failure raised while processing a command response leaves the connection
      * reusable. This predicate is only ever applied to <em>post-read</em> failures — those raised after
      * {@link #receiveResponseBuffers} (sync) or the {@code MessageHeaderCallback} (async) has fully read
-     * the framed response off the wire. Read-path failures (including a CSOT read-timeout translated to
-     * {@link MongoOperationTimeoutException}) are handled separately: the read path closes the connection
+     * the framed response off the wire. Read-path failures are handled separately: the read path closes the connection
      * itself and never routes through this predicate, so no verdict here can leave a desynchronized stream
      * in the pool. The types below are reusable because the stream remains synchronized:
      * <ul>
@@ -660,8 +640,6 @@ public class InternalStreamConnection implements InternalConnection {
      *     <li>{@link MongoExecutionTimeoutException} — a server-side {@code MaxTimeMSExpired} ({@code ok: 0})
      *         error response; derived from the fully-read response body</li>
      *     <li>{@link MongoWriteConcernWithResponseException} — a write concern error carrying the response</li>
-     *     <li>{@link MongoOperationTimeoutException} — a write concern timeout, or a server-side
-     *         {@code MaxTimeMSExpired} ({@code ok: 0}) timeout wrapped for CSOT; both are derived from the response body</li>
      *     <li>{@link BsonSerializationException} — a corrupt BSON body whose exact byte count was still consumed</li>
      * </ul>
      * Any other failure (e.g. a responseTo mismatch or an unexpected error) may have left the stream
@@ -671,7 +649,6 @@ public class InternalStreamConnection implements InternalConnection {
         return failure instanceof MongoCommandException
                 || failure instanceof MongoExecutionTimeoutException
                 || failure instanceof MongoWriteConcernWithResponseException
-                || failure instanceof MongoOperationTimeoutException
                 || failure instanceof BsonSerializationException;
     }
 
@@ -790,13 +767,6 @@ public class InternalStreamConnection implements InternalConnection {
                                              final SingleResultCallback<T> callback, final ByteBufferBsonOutput bsonOutput,
                                              final CommandEventSender commandEventSender, final boolean responseExpected) {
         boolean[] shouldReturn = {false};
-        Timeout.onExistsAndExpired(operationContext.getTimeoutContext().timeoutIncludingRoundTrip(), () -> {
-            bsonOutput.close();
-            MongoOperationTimeoutException operationTimeoutException = TimeoutContext.createMongoRoundTripTimeoutException();
-            commandEventSender.sendFailedEvent(operationTimeoutException);
-            callback.onResult(null, operationTimeoutException);
-            shouldReturn[0] = true;
-        });
         if (shouldReturn[0]) {
             return;
         }
@@ -831,12 +801,12 @@ public class InternalStreamConnection implements InternalConnection {
                         if (!commandOk) {
                             throw getCommandFailureException(
                                     responseBuffers.getResponseDocument(messageId, new BsonDocumentCodec()),
-                                    description.getServerAddress(), operationContext.getTimeoutContext());
+                                    description.getServerAddress());
                         }
                         commandEventSender.sendSucceededEvent(responseBuffers);
                         commandSuccessful = true;
 
-                        commandResult = getCommandResult(decoder, responseBuffers, messageId, operationContext.getTimeoutContext());
+                        commandResult = getCommandResult(decoder, responseBuffers, messageId);
                     } catch (Throwable localThrowable) {
                         failure = localThrowable;
                     } finally {
@@ -871,15 +841,11 @@ public class InternalStreamConnection implements InternalConnection {
 
     private <T> T getCommandResult(final Decoder<T> decoder,
                                    final ResponseBuffers responseBuffers,
-                                   final int messageId,
-                                   final TimeoutContext timeoutContext) {
+                                   final int messageId) {
         T result = new ReplyMessage<>(responseBuffers, decoder, messageId).getDocument();
         MongoException writeConcernBasedError = createSpecialWriteConcernException(responseBuffers,
-                description.getServerAddress(),
-                timeoutContext);
-        if (writeConcernBasedError instanceof MongoOperationTimeoutException) {
-            throw writeConcernBasedError;
-        }
+                description.getServerAddress()
+        );
         if (writeConcernBasedError != null) {
             throw new MongoWriteConcernWithResponseException(writeConcernBasedError, result);
         }
@@ -896,7 +862,7 @@ public class InternalStreamConnection implements InternalConnection {
             stream.write(byteBuffers, operationContext);
         } catch (Throwable t) {
             close();
-            throwTranslatedWriteException(t, operationContext);
+            throwTranslatedWriteException(t);
         }
     }
 
@@ -917,7 +883,7 @@ public class InternalStreamConnection implements InternalConnection {
         }, Throwable.class, (t, c) -> {
             try {
                 close();
-                throwTranslatedWriteException(t, operationContext);
+                throwTranslatedWriteException(t);
             } catch (Throwable translatedException) {
                 c.completeExceptionally(translatedException);
             }
@@ -970,12 +936,12 @@ public class InternalStreamConnection implements InternalConnection {
                 @Override
                 public void failed(final Throwable t) {
                     close();
-                    callback.onResult(null, mapUnlessError(t, e -> translateReadException(e, operationContext)));
+                    callback.onResult(null, mapUnlessError(t, e -> translateReadException(e)));
                 }
             });
         } catch (Throwable t) {
             close();
-            callback.onResult(null, mapUnlessError(t, e -> translateReadException(e, operationContext)));
+            callback.onResult(null, mapUnlessError(t, e -> translateReadException(e)));
         }
     }
 
@@ -999,17 +965,8 @@ public class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    private void throwTranslatedWriteException(final Throwable e, final OperationContext operationContext) {
+    private void throwTranslatedWriteException(final Throwable e) {
         rethrowIfError(e);
-        if (operationContext.getTimeoutContext().hasTimeoutMS()) {
-            if (e instanceof MongoSocketWriteTimeoutException) {
-                throw createMongoTimeoutException(e);
-            } else if (e instanceof SocketTimeoutException) {
-                // A blocking (SSL) write can surface the socket read-timeout as a bare SocketTimeoutException;
-                // mirror translateReadException so it is reported as a timeout rather than a generic write error.
-                throw createMongoTimeoutException(createWriteTimeoutException((SocketTimeoutException) e));
-            }
-        }
 
         if (e instanceof MongoException) {
             throw (MongoException) e;
@@ -1024,19 +981,7 @@ public class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    private MongoSocketWriteTimeoutException createWriteTimeoutException(final SocketTimeoutException e) {
-        return new MongoSocketWriteTimeoutException("Timeout while sending message", getServerAddress(), e);
-    }
-
-    private MongoException translateReadException(final Throwable e, final OperationContext operationContext) {
-        if (operationContext.getTimeoutContext().hasTimeoutMS()) {
-            if (e instanceof SocketTimeoutException) {
-                return createMongoTimeoutException(createReadTimeoutException((SocketTimeoutException) e));
-            } else if (e instanceof MongoSocketReadTimeoutException) {
-                return createMongoTimeoutException((e));
-            }
-        }
-
+    private MongoException translateReadException(final Throwable e) {
         if (e instanceof MongoException) {
             return (MongoException) e;
         }
@@ -1101,7 +1046,7 @@ public class InternalStreamConnection implements InternalConnection {
             }
             close();
             rethrowIfError(t);
-            throw translateReadException(t, operationContext);
+            throw translateReadException(t);
         }
     }
 

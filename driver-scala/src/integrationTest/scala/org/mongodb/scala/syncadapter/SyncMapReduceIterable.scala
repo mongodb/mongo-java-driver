@@ -19,7 +19,7 @@ package org.mongodb.scala.syncadapter
 import com.mongodb.client.MapReduceIterable
 import com.mongodb.client.model.{ Collation, MapReduceAction }
 import org.bson.conversions.Bson
-import org.mongodb.scala.{ MapReduceObservable, SingleObservableFuture, TimeoutMode }
+import org.mongodb.scala.{ MapReduceObservable, SingleObservableFuture }
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
@@ -86,11 +86,6 @@ case class SyncMapReduceIterable[T](wrapped: MapReduceObservable[T])
 
   override def batchSize(batchSize: Int): MapReduceIterable[T] = {
     wrapped.batchSize(batchSize)
-    this
-  }
-
-  override def timeoutMode(timeoutMode: TimeoutMode): MapReduceIterable[T] = {
-    wrapped.timeoutMode(timeoutMode)
     this
   }
 

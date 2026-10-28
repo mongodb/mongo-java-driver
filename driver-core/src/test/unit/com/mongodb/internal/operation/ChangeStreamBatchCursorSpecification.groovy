@@ -28,8 +28,6 @@ import org.bson.BsonInt32
 import org.bson.RawBsonDocument
 import spock.lang.Specification
 
-import java.util.concurrent.TimeUnit
-
 import static java.util.Collections.emptyList
 
 class ChangeStreamBatchCursorSpecification extends Specification {
@@ -81,7 +79,7 @@ class ChangeStreamBatchCursorSpecification extends Specification {
 
     OperationContext getOperationContext() {
         def timeoutContext = Spy(new TimeoutContext(TimeoutSettings.create(
-                MongoClientSettings.builder().timeout(3, TimeUnit.SECONDS).build())))
+                MongoClientSettings.builder().build())))
         Spy(new OperationContext(
                 IgnorableRequestContext.INSTANCE,
                 NoOpSessionContext.INSTANCE,

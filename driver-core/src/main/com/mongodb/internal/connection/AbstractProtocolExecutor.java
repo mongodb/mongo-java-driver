@@ -19,7 +19,6 @@ package com.mongodb.internal.connection;
 import com.mongodb.internal.session.SessionContext;
 
 import static com.mongodb.internal.ExceptionUtils.isMongoSocketException;
-import static com.mongodb.internal.ExceptionUtils.isOperationTimeoutFromSocketException;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -30,6 +29,6 @@ public abstract class AbstractProtocolExecutor implements ProtocolExecutor {
         if (!sessionContext.hasSession()) {
             return false;
         }
-        return isMongoSocketException(e) || isOperationTimeoutFromSocketException(e);
+        return isMongoSocketException(e);
     }
 }

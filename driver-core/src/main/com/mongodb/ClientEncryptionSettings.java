@@ -16,9 +16,7 @@
 
 package com.mongodb;
 
-import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.NotThreadSafe;
-import com.mongodb.annotations.Reason;
 import com.mongodb.lang.Nullable;
 
 import javax.net.ssl.SSLContext;
@@ -29,9 +27,7 @@ import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.TimeoutSettings.convertAndValidateTimeout;
 import static java.util.Collections.unmodifiableMap;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * The client-side settings for data key creation and explicit encryption.
@@ -52,8 +48,6 @@ public final class ClientEncryptionSettings {
     @Nullable
     private final KmsConnectCallback kmsConnectCallback;
     @Nullable
-    private final Long timeoutMS;
-    @Nullable
     private final Long keyExpirationMS;
 
     /**
@@ -69,8 +63,6 @@ public final class ClientEncryptionSettings {
         private Map<String, SSLContext> kmsProviderSslContextMap = new HashMap<>();
         @Nullable
         private KmsConnectCallback kmsConnectCallback;
-        @Nullable
-        private Long timeoutMS;
         @Nullable
         private Long keyExpirationMS;
 
@@ -169,48 +161,6 @@ public final class ClientEncryptionSettings {
         public Builder keyExpiration(@Nullable final Long keyExpiration, final TimeUnit timeUnit) {
             assertTrue(keyExpiration == null || keyExpiration >= 0, "keyExpiration must be >= 0 or null");
             this.keyExpirationMS = keyExpiration == null ? null : TimeUnit.MILLISECONDS.convert(keyExpiration, timeUnit);
-            return this;
-        }
-
-        /**
-         * Sets the time limit for the full execution of an operation.
-         *
-         * <ul>
-         *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
-         *    <ul>
-         *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
-         *        available</li>
-         *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
-         *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
-         *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
-         *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
-         *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
-         *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
-         *   </ul>
-         *   </li>
-         *   <li>{@code 0} means infinite timeout.</li>
-         *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
-         * </ul>
-         *
-         * <p>Note:
-         * <ul>
-         *   <li>The timeout set through this method overrides the timeout defined in the key vault client settings
-         *       specified in {@link #keyVaultMongoClientSettings(MongoClientSettings)}.
-         *       Essentially, for operations that require accessing the key vault, the remaining timeout from the initial operation
-         *       determines the duration allowed for key vault access.</li>
-         *   <li>When using synchronous API, this timeout does not limit socket writes, therefore there is a possibility that the
-         *       operation might not be timed out when expected. This limitation does not apply to the reactive streams API.</li>
-         * </ul>
-         *
-         * @param timeout the timeout
-         * @param timeUnit the time unit
-         * @return this
-         * @since 5.2
-         * @see #getTimeout
-         */
-        @Alpha(Reason.CLIENT)
-        public ClientEncryptionSettings.Builder timeout(final long timeout, final TimeUnit timeUnit) {
-            this.timeoutMS = convertAndValidateTimeout(timeout, timeUnit);
             return this;
         }
 
@@ -381,49 +331,6 @@ public final class ClientEncryptionSettings {
         return keyExpirationMS == null ? null : timeUnit.convert(keyExpirationMS, TimeUnit.MILLISECONDS);
     }
 
-    /**
-     * The time limit for the full execution of an operation.
-     *
-     * <p>If set the following deprecated options will be ignored:
-     * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
-     *
-     * <ul>
-     *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
-     *    <ul>
-     *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
-     *        available</li>
-     *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
-     *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
-     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
-     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
-     *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
-     *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
-     *   </ul>
-     *   </li>
-     *   <li>{@code 0} means infinite timeout.</li>
-     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
-     * </ul>
-     *
-     * <p>Note:
-     * <ul>
-     *   <li>The timeout set through this method overrides the timeout defined in the key vault client settings
-     *       specified in {@link Builder#keyVaultMongoClientSettings(MongoClientSettings)}.
-     *       Essentially, for operations that require accessing the key vault, the remaining timeout from the initial operation
-     *       determines the duration allowed for key vault access.</li>
-     *   <li>When using synchronous API, this timeout does not limit socket writes, therefore there is a possibility that the
-     *       operation might not be timed out when expected. This limitation does not apply to the reactive streams API.</li>
-     * </ul>
-     *
-     * @param timeUnit the time unit
-     * @return the timeout in the given time unit
-     * @since 5.2
-     */
-    @Alpha(Reason.CLIENT)
-    @Nullable
-    public Long getTimeout(final TimeUnit timeUnit) {
-        return timeoutMS == null ? null : timeUnit.convert(timeoutMS, MILLISECONDS);
-    }
-
     private ClientEncryptionSettings(final Builder builder) {
         this.keyVaultMongoClientSettings = notNull("keyVaultMongoClientSettings", builder.keyVaultMongoClientSettings);
         this.keyVaultNamespace = notNull("keyVaultNamespace", builder.keyVaultNamespace);
@@ -431,7 +338,6 @@ public final class ClientEncryptionSettings {
         this.kmsProviderPropertySuppliers = notNull("kmsProviderPropertySuppliers", builder.kmsProviderPropertySuppliers);
         this.kmsProviderSslContextMap = notNull("kmsProviderSslContextMap", builder.kmsProviderSslContextMap);
         this.kmsConnectCallback = builder.kmsConnectCallback;
-        this.timeoutMS = builder.timeoutMS;
         this.keyExpirationMS = builder.keyExpirationMS;
     }
 

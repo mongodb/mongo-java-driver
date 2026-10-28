@@ -16,12 +16,10 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.CursorType;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -46,7 +44,6 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.client.cursor.TimeoutMode.CURSOR_LIFETIME;
 
 /**
  * An operation that executes an {@code $changeStream} aggregation.
@@ -77,7 +74,7 @@ public class ChangeStreamOperation<T> implements ReadOperationCursor<T> {
             final ChangeStreamLevel changeStreamLevel,
             @Nullable final Integer maxAdaptiveRetriesSetting) {
         this.wrapped = new AggregateOperationImpl<>(namespace, pipeline, RAW_BSON_DOCUMENT_CODEC, getAggregateTarget(),
-                getPipelineCreator(), maxAdaptiveRetriesSetting).cursorType(CursorType.TailableAwait);
+                getPipelineCreator(), maxAdaptiveRetriesSetting);
         this.fullDocument = notNull("fullDocument", fullDocument);
         this.fullDocumentBeforeChange = notNull("fullDocumentBeforeChange", fullDocumentBeforeChange);
         this.decoder = notNull("decoder", decoder);
@@ -173,28 +170,6 @@ public class ChangeStreamOperation<T> implements ReadOperationCursor<T> {
         return this;
     }
 
-    /**
-     * Gets an aggregate operation with consideration for timeout settings.
-     * <p>
-     * Change streams act similarly to tailable awaitData cursors, with identical timeoutMS option behavior.
-     * Key distinctions include:
-     * - The timeoutMS option must be applied at the start of the aggregate operation for change streams.
-     * - Change streams support resumption on next() calls. The driver handles automatic resumption for transient errors.
-     * <p>
-     *
-     * As a result, when {@code timeoutContext.hasTimeoutMS()} the CURSOR_LIFETIME setting is utilized to manage the underlying cursor's
-     * lifespan in change streams.
-     *
-     * @param timeoutContext
-     * @return An AggregateOperationImpl
-     */
-    private AggregateOperationImpl<RawBsonDocument> getAggregateOperation(final TimeoutContext timeoutContext) {
-        if (timeoutContext.hasTimeoutMS()) {
-            return wrapped.timeoutMode(CURSOR_LIFETIME);
-        }
-        return wrapped;
-    }
-
     @Override
     public String getCommandName() {
         return wrapped.getCommandName();
@@ -202,7 +177,7 @@ public class ChangeStreamOperation<T> implements ReadOperationCursor<T> {
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
-        Cursor<RawBsonDocument> cursor = ((CommandBatchCursor<RawBsonDocument>) getAggregateOperation(operationContext.getTimeoutContext())
+        Cursor<RawBsonDocument> cursor = ((CommandBatchCursor<RawBsonDocument>) wrapped
                 .execute(binding, operationContext))
                 .getWrapped();
 
@@ -220,7 +195,7 @@ public class ChangeStreamOperation<T> implements ReadOperationCursor<T> {
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        getAggregateOperation(operationContext.getTimeoutContext()).executeAsync(binding, operationContext, (result, t) -> {
+        wrapped.executeAsync(binding, operationContext, (result, t) -> {
             if (t != null) {
                 callback.onResult(null, t);
             } else {

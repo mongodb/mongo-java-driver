@@ -16,7 +16,6 @@
 
 package org.mongodb.scala
 
-import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.reactivestreams.client.DistinctPublisher
 import org.mockito.Mockito.{ verify, verifyNoMoreInteractions }
 import org.mongodb.scala.model.Collation
@@ -52,13 +51,11 @@ class DistinctObservableSpec extends BaseSpec with MockitoSugar {
     observable.maxTime(duration)
     observable.collation(collation)
     observable.batchSize(batchSize)
-    observable.timeoutMode(TimeoutMode.ITERATION)
 
     verify(wrapper).filter(filter)
     verify(wrapper).maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
     verify(wrapper).collation(collation)
     verify(wrapper).batchSize(batchSize)
-    verify(wrapper).timeoutMode(TimeoutMode.ITERATION)
 
     verifyNoMoreInteractions(wrapper)
   }

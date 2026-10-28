@@ -17,7 +17,6 @@
 
 package com.mongodb.kotlin.client.coroutine
 
-import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.MapReduceAction
 import com.mongodb.reactivestreams.client.MapReducePublisher
@@ -28,11 +27,7 @@ import kotlinx.coroutines.runBlocking
 import org.bson.BsonDocument
 import org.bson.Document
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.doReturn
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.verify
-import org.mockito.kotlin.verifyNoMoreInteractions
-import org.mockito.kotlin.whenever
+import org.mockito.kotlin.*
 import reactor.core.publisher.Mono
 
 class MapReduceFlowTest {
@@ -73,7 +68,6 @@ class MapReduceFlowTest {
         flow.sort(bson)
         flow.verbose(true)
         flow.action(MapReduceAction.MERGE)
-        flow.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).batchSize(batchSize)
         verify(wrapped).bypassDocumentValidation(true)
@@ -90,7 +84,6 @@ class MapReduceFlowTest {
         verify(wrapped).sort(bson)
         verify(wrapped).verbose(true)
         verify(wrapped).action(MapReduceAction.MERGE)
-        verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
         whenever(wrapped.toCollection()).doReturn(Mono.empty())
         runBlocking { flow.toCollection() }

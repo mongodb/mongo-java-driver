@@ -18,7 +18,6 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
@@ -156,12 +155,6 @@ final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements
     public com.mongodb.reactivestreams.client.MapReducePublisher<T> bypassDocumentValidation(
             @Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
-        return this;
-    }
-
-    @Override
-    public com.mongodb.reactivestreams.client.MapReducePublisher<T> timeoutMode(final TimeoutMode timeoutMode) {
-        super.timeoutMode(timeoutMode);
         return this;
     }
 

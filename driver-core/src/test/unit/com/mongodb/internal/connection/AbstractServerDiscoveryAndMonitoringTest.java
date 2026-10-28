@@ -98,8 +98,8 @@ public class AbstractServerDiscoveryAndMonitoringTest {
 
         switch (type) {
             case "command":
-                exception = getCommandFailureException(applicationError.getDocument("response"), serverAddress,
-                        operationContext.getTimeoutContext());
+                exception = getCommandFailureException(applicationError.getDocument("response"), serverAddress
+                );
                 break;
             case "network":
                 exception = new MongoSocketReadException("Read error", serverAddress, new IOException());

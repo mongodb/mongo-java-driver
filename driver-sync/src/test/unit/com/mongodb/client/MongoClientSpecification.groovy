@@ -62,7 +62,7 @@ import static spock.util.matcher.HamcrestSupport.expect
 class MongoClientSpecification extends Specification {
 
     private static final CodecRegistry CODEC_REGISTRY = fromProviders(new ValueCodecProvider())
-    private static final TimeoutSettings TIMEOUT_SETTINGS = new TimeoutSettings(30_000, 10_000, 0, null, SECONDS.toMillis(120))
+    private static final TimeoutSettings TIMEOUT_SETTINGS = new TimeoutSettings(30_000, 10_000, 0, SECONDS.toMillis(120))
 
     def 'should pass the correct settings to getDatabase'() {
         given:
