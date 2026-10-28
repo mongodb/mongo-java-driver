@@ -48,6 +48,8 @@ import org.bson.io.BasicOutputBuffer;
 import org.bson.json.JsonReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -193,8 +195,11 @@ class ClientBulkWriteOperationTest {
         assertTrue(result.getVerboseResults().isPresent());
     }
 
-    @Test
-    void shouldReportWriteConcernErrorWhenErrmsgIsMissing() {
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{ code: 79, codeName: 'UnknownReplWriteConcern' }",
+            "{ code: 79, codeName: 'UnknownReplWriteConcern', errmsg: null }"})
+    void shouldReportWriteConcernErrorWhenErrmsgIsMissingOrNull(final String writeConcernError) {
         //given
         mockCommandExecutionResult("{"
                 + "  cursor: {"
@@ -208,7 +213,7 @@ class ClientBulkWriteOperationTest {
                 + "  nModified: 0,"
                 + "  nUpserted: 0,"
                 + "  nDeleted: 0,"
-                + "  writeConcernError: { code: 79, codeName: 'UnknownReplWriteConcern' },"
+                + "  writeConcernError: " + writeConcernError + ","
                 + "  ok: 1"
                 + "}");
         ClientBulkWriteOperation op = new ClientBulkWriteOperation(
@@ -231,13 +236,16 @@ class ClientBulkWriteOperationTest {
         assertTrue(exception.getWriteErrors().isEmpty());
     }
 
-    @Test
-    void shouldReportWriteErrorWhenErrmsgIsMissing() {
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{ ok: 0, idx: 0, code: 11000 }",
+            "{ ok: 0, idx: 0, code: 11000, errmsg: null }"})
+    void shouldReportWriteErrorWhenErrmsgIsMissingOrNull(final String individualWriteError) {
         //given
         mockCommandExecutionResult("{"
                 + "  cursor: {"
                 + "    id: NumberLong(0),"
-                + "    firstBatch: [ { ok: 0, idx: 0, code: 11000 } ],"
+                + "    firstBatch: [ " + individualWriteError + " ],"
                 + "    ns: 'admin.$cmd.bulkWrite'"
                 + "  },"
                 + "  nErrors: 1,"

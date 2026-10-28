@@ -338,7 +338,7 @@ public final class BulkWriteBatch {
             for (BsonValue cur : writeErrorsDocuments) {
                 BsonDocument curDocument = (BsonDocument) cur;
                 writeErrors.add(new BulkWriteError(curDocument.getNumber("code").intValue(),
-                        curDocument.getString("errmsg", new BsonString("")).getValue(),
+                        curDocument.isString("errmsg") ? curDocument.getString("errmsg").getValue() : "",
                         curDocument.getDocument("errInfo", new BsonDocument()),
                         curDocument.getNumber("index").intValue()));
             }

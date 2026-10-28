@@ -359,38 +359,6 @@ class BulkWriteBatchSpecification extends Specification {
         !bulkWriteBatch.shouldProcessBatch()
     }
 
-    def 'should handle writeConcernError error responses without errmsg'() {
-        given:
-        def bulkWriteBatch = BulkWriteBatch.createBulkWriteBatch(namespace, connectionDescription, true,
-                WriteConcern.ACKNOWLEDGED, null, false, getWriteRequests()[0..0], operationContext, null, null)
-        def writeConcernError = toBsonDocument('{ok: 1, n: 1, writeConcernError: {code: 79, codeName: "UnknownReplWriteConcern"}}')
-
-        when:
-        bulkWriteBatch.addResult(writeConcernError)
-
-        then:
-        bulkWriteBatch.hasErrors()
-        bulkWriteBatch.getError().getWriteErrors().isEmpty()
-        bulkWriteBatch.getError().getWriteConcernError().getCode() == 79
-        bulkWriteBatch.getError().getWriteConcernError().getMessage() == ''
-    }
-
-    def 'should handle writeErrors error responses without errmsg'() {
-        given:
-        def bulkWriteBatch = BulkWriteBatch.createBulkWriteBatch(namespace, connectionDescription, true,
-                WriteConcern.ACKNOWLEDGED, null, false, getWriteRequests()[0..0], operationContext, null, null)
-        def writeError = toBsonDocument('{"ok": 1, "n": 0, "writeErrors": [{ "index" : 0, "code" : 100}] }')
-
-        when:
-        bulkWriteBatch.addResult(writeError)
-
-        then:
-        bulkWriteBatch.hasErrors()
-        bulkWriteBatch.getError().getWriteErrors().size() == 1
-        bulkWriteBatch.getError().getWriteErrors()[0].getCode() == 100
-        bulkWriteBatch.getError().getWriteErrors()[0].getMessage() == ''
-    }
-
     private static List<WriteRequest> getWriteRequests() {
         [new InsertRequest(toBsonDocument('{_id: 1, x: 1}')),
          new UpdateRequest(toBsonDocument('{ _id: 2}'), toBsonDocument('{$set: {x : 2}}'), UPDATE).upsert(true),

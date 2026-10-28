@@ -87,7 +87,7 @@ public final class WriteConcernHelper {
     public static WriteConcernError createWriteConcernError(final BsonDocument writeConcernErrorDocument) {
         return new WriteConcernError(writeConcernErrorDocument.getNumber("code").intValue(),
                 writeConcernErrorDocument.getString("codeName", new BsonString("")).getValue(),
-                writeConcernErrorDocument.getString("errmsg", new BsonString("")).getValue(),
+                writeConcernErrorDocument.isString("errmsg") ? writeConcernErrorDocument.getString("errmsg").getValue() : "",
                 writeConcernErrorDocument.getDocument("errInfo", new BsonDocument()));
     }
 

@@ -21,9 +21,9 @@ import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.bulk.WriteConcernError;
 import org.bson.BsonDocument;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.concurrent.TimeUnit;
 
@@ -65,10 +65,13 @@ class WriteConcernHelperTest {
         assertNull(clonedWithoutTimeout.getWTimeout(TimeUnit.MILLISECONDS));
     }
 
-    @Test
-    void shouldCreateWriteConcernErrorWhenErrmsgIsMissing() {
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{code: 79, codeName: 'UnknownReplWriteConcern'}",
+            "{code: 79, codeName: 'UnknownReplWriteConcern', errmsg: null}"})
+    void shouldCreateWriteConcernErrorWhenErrmsgIsMissingOrNull(final String writeConcernErrorJson) {
         //given
-        BsonDocument writeConcernErrorDocument = BsonDocument.parse("{code: 79, codeName: 'UnknownReplWriteConcern'}");
+        BsonDocument writeConcernErrorDocument = BsonDocument.parse(writeConcernErrorJson);
 
         //when
         WriteConcernError writeConcernError = WriteConcernHelper.createWriteConcernError(writeConcernErrorDocument);
@@ -80,10 +83,13 @@ class WriteConcernHelperTest {
         assertTrue(writeConcernError.getDetails().isEmpty());
     }
 
-    @Test
-    void shouldCreateWriteConcernExceptionWhenErrmsgIsMissing() {
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{ok: 1, n: 1, writeConcernError: {code: 79, codeName: 'UnknownReplWriteConcern'}}",
+            "{ok: 1, n: 1, writeConcernError: {code: 79, codeName: 'UnknownReplWriteConcern', errmsg: null}}"})
+    void shouldCreateWriteConcernExceptionWhenErrmsgIsMissingOrNull(final String resultJson) {
         //given
-        BsonDocument result = BsonDocument.parse("{ok: 1, n: 1, writeConcernError: {code: 79, codeName: 'UnknownReplWriteConcern'}}");
+        BsonDocument result = BsonDocument.parse(resultJson);
 
         //when
         MongoWriteConcernException exception = WriteConcernHelper.createWriteConcernException(result, new ServerAddress());
