@@ -37,6 +37,7 @@ import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class BulkWriteBatchTest {
@@ -58,6 +59,7 @@ class BulkWriteBatchTest {
 
         assertTrue(bulkWriteBatch.hasErrors());
         MongoBulkWriteException error = bulkWriteBatch.getError();
+        assertNotNull(error);
         assertTrue(error.getWriteErrors().isEmpty());
         assertNotNull(error.getWriteConcernError());
         assertEquals(79, error.getWriteConcernError().getCode());
@@ -76,9 +78,11 @@ class BulkWriteBatchTest {
 
         assertTrue(bulkWriteBatch.hasErrors());
         MongoBulkWriteException error = bulkWriteBatch.getError();
+        assertNotNull(error);
         assertEquals(1, error.getWriteErrors().size());
         assertEquals(100, error.getWriteErrors().get(0).getCode());
         assertEquals("", error.getWriteErrors().get(0).getMessage());
+        assertNull(error.getWriteConcernError());
     }
 
     private static BulkWriteBatch createBulkWriteBatch() {
