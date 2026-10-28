@@ -267,6 +267,7 @@ class ClientBulkWriteOperationTest {
         assertEquals(1, exception.getWriteErrors().size());
         assertEquals(11000, exception.getWriteErrors().get(0).getCode());
         assertEquals("", exception.getWriteErrors().get(0).getMessage());
+        assertTrue(exception.getWriteConcernErrors().isEmpty());
     }
 
     private void mockCommandExecutionResult(final String serverResponse) {
