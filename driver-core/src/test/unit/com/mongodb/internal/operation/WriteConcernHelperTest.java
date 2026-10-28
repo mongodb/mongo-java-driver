@@ -70,13 +70,10 @@ class WriteConcernHelperTest {
             "{code: 79, codeName: 'UnknownReplWriteConcern'}",
             "{code: 79, codeName: 'UnknownReplWriteConcern', errmsg: null}"})
     void shouldCreateWriteConcernErrorWhenErrmsgIsMissingOrNull(final String writeConcernErrorJson) {
-        //given
         BsonDocument writeConcernErrorDocument = BsonDocument.parse(writeConcernErrorJson);
 
-        //when
         WriteConcernError writeConcernError = WriteConcernHelper.createWriteConcernError(writeConcernErrorDocument);
 
-        //then
         assertEquals(79, writeConcernError.getCode());
         assertEquals("UnknownReplWriteConcern", writeConcernError.getCodeName());
         assertEquals("", writeConcernError.getMessage());
@@ -88,13 +85,10 @@ class WriteConcernHelperTest {
             "{ok: 1, n: 1, writeConcernError: {code: 79, codeName: 'UnknownReplWriteConcern'}}",
             "{ok: 1, n: 1, writeConcernError: {code: 79, codeName: 'UnknownReplWriteConcern', errmsg: null}}"})
     void shouldCreateWriteConcernExceptionWhenErrmsgIsMissingOrNull(final String resultJson) {
-        //given
         BsonDocument result = BsonDocument.parse(resultJson);
 
-        //when
         MongoWriteConcernException exception = WriteConcernHelper.createWriteConcernException(result, new ServerAddress());
 
-        //then
         assertEquals(79, exception.getCode());
         assertEquals(79, exception.getWriteConcernError().getCode());
         assertEquals("", exception.getWriteConcernError().getMessage());

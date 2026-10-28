@@ -200,7 +200,6 @@ class ClientBulkWriteOperationTest {
             "{ code: 79, codeName: 'UnknownReplWriteConcern' }",
             "{ code: 79, codeName: 'UnknownReplWriteConcern', errmsg: null }"})
     void shouldReportWriteConcernErrorWhenErrmsgIsMissingOrNull(final String writeConcernError) {
-        //given
         mockCommandExecutionResult("{"
                 + "  cursor: {"
                 + "    id: NumberLong(0),"
@@ -225,11 +224,9 @@ class ClientBulkWriteOperationTest {
                 null,
                 getDefaultCodecRegistry());
 
-        //when
         ClientBulkWriteException exception = assertThrows(ClientBulkWriteException.class,
                 () -> op.execute(binding, ClusterFixture.createOperationContext()));
 
-        //then
         assertEquals(1, exception.getWriteConcernErrors().size());
         assertEquals(79, exception.getWriteConcernErrors().get(0).getCode());
         assertEquals("", exception.getWriteConcernErrors().get(0).getMessage());
@@ -241,7 +238,6 @@ class ClientBulkWriteOperationTest {
             "{ ok: 0, idx: 0, code: 11000 }",
             "{ ok: 0, idx: 0, code: 11000, errmsg: null }"})
     void shouldReportWriteErrorWhenErrmsgIsMissingOrNull(final String individualWriteError) {
-        //given
         mockCommandExecutionResult("{"
                 + "  cursor: {"
                 + "    id: NumberLong(0),"
@@ -265,11 +261,9 @@ class ClientBulkWriteOperationTest {
                 null,
                 getDefaultCodecRegistry());
 
-        //when
         ClientBulkWriteException exception = assertThrows(ClientBulkWriteException.class,
                 () -> op.execute(binding, ClusterFixture.createOperationContext()));
 
-        //then
         assertEquals(1, exception.getWriteErrors().size());
         assertEquals(11000, exception.getWriteErrors().get(0).getCode());
         assertEquals("", exception.getWriteErrors().get(0).getMessage());

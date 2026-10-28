@@ -52,13 +52,10 @@ class BulkWriteBatchTest {
             "{ok: 1, n: 1, writeConcernError: {code: 79, codeName: 'UnknownReplWriteConcern', errmsg: null}}"})
     @DisplayName("should report a writeConcernError whose errmsg is missing or null")
     void shouldHandleWriteConcernErrorWithoutErrmsg(final String result) {
-        //given
         BulkWriteBatch bulkWriteBatch = createBulkWriteBatch();
 
-        //when
         bulkWriteBatch.addResult(BsonDocument.parse(result));
 
-        //then
         assertTrue(bulkWriteBatch.hasErrors());
         MongoBulkWriteException error = bulkWriteBatch.getError();
         assertTrue(error.getWriteErrors().isEmpty());
@@ -73,13 +70,10 @@ class BulkWriteBatchTest {
             "{ok: 1, n: 0, writeErrors: [{index: 0, code: 100, errmsg: null}]}"})
     @DisplayName("should report a writeError whose errmsg is missing or null")
     void shouldHandleWriteErrorWithoutErrmsg(final String result) {
-        //given
         BulkWriteBatch bulkWriteBatch = createBulkWriteBatch();
 
-        //when
         bulkWriteBatch.addResult(BsonDocument.parse(result));
 
-        //then
         assertTrue(bulkWriteBatch.hasErrors());
         MongoBulkWriteException error = bulkWriteBatch.getError();
         assertEquals(1, error.getWriteErrors().size());
