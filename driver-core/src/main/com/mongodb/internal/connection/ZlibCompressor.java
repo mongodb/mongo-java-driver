@@ -102,16 +102,9 @@ class ZlibCompressor extends Compressor {
             final byte[] out, final int outOffset, final int outLength) throws DataFormatException {
         inflater.reset();
         inflater.setInput(in, inOffset, inLength);
-        int inflated = 0;
-        while (inflated < outLength) {
-            int length = inflater.inflate(out, outOffset + inflated, outLength - inflated);
-            if (length == 0 && (inflater.finished() || inflater.needsInput() || inflater.needsDictionary())) {
-                break;
-            }
-            inflated += length;
-        }
-        if (inflated == outLength && !inflater.finished() && inflater.inflate(new byte[1]) > 0) {
-            inflated++;
+        int inflated = inflater.inflate(out, outOffset, outLength);
+        if (!inflater.finished()) {
+            throw new DataFormatException("The zlib stream does not end within the uncompressed size of the message");
         }
         inflater.setInput(EMPTY);
         return inflated;

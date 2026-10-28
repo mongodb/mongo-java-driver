@@ -192,6 +192,18 @@ final class CompressorTest {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("compressors")
+    @DisplayName("should reject a truncated message")
+    void shouldRejectTruncatedInput(final String name, final Supplier<Compressor> factory) {
+        Compressor compressor = factory.get();
+        byte[] message = message(5000, 6);
+        byte[] compressed = compress(compressor, split(message, 1, false));
+        byte[] truncated = Arrays.copyOf(compressed, compressed.length - 4);
+
+        assertThrows(MongoInternalException.class, () -> compressor.uncompress(wrap(truncated, false), buffer(message.length, false)));
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("compressors")
     @DisplayName("should compress and uncompress concurrently")
     void shouldBeUsableConcurrently(final String name, final Supplier<Compressor> factory) throws Exception {
         ExecutorService executor = Executors.newFixedThreadPool(8);
