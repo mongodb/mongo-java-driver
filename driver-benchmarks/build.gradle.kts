@@ -36,7 +36,19 @@ sourceSets {
 
 dependencies {
     api(project(":driver-sync"))
+    api(project(":driver-reactive-streams"))
     api(project(":mongodb-crypt"))
+
+    // OpenTelemetry overhead suite (com.mongodb.benchmark.benchmarks.otel): the harness, not the driver,
+    // installs the OpenTelemetry SDK and sampler, as required by the OpenTelemetry spec's Benchmarking section.
+    implementation(platform(libs.micrometer.observation.bom))
+    implementation(libs.micrometer.observation)
+    implementation(platform(libs.micrometer.tracing.integration.test.bom))
+    implementation(libs.micrometer.tracing.bridge.otel)
+    implementation(platform(libs.opentelemetry.bom))
+    implementation(libs.opentelemetry.sdk.trace)
+    implementation(platform(libs.project.reactor.bom))
+    implementation(libs.project.reactor.core)
 
     implementation(platform(libs.netty.bom))
     implementation(libs.bundles.netty)
@@ -60,6 +72,17 @@ tasks.register<JavaExec>("runNetty") {
     mainClass.set("com.mongodb.benchmark.benchmarks.netty.BenchmarkNettyProviderSuite")
     classpath = sourceSets["main"].runtimeClasspath
     jvmArgs = application.applicationDefaultJvmArgs.toList()
+}
+
+tasks.register<JavaExec>("runOtel") {
+    group = "benchmark"
+    description = "Run the OpenTelemetry overhead suite (DRIVERS-3620) for one tracing configuration."
+    mainClass.set("com.mongodb.benchmark.benchmarks.otel.OtelBenchmarkSuite")
+    classpath = sourceSets["main"].runtimeClasspath
+    jvmArgs = application.applicationDefaultJvmArgs.toList() +
+        (System.getProperty("org.mongodb.benchmarks.jvmArgs")?.split(" ")?.filter { it.isNotBlank() } ?: emptyList())
+    systemProperties(System.getProperties().filterKeys { it.toString().startsWith("org.mongodb.benchmarks.") }
+        .mapKeys { it.key.toString() })
 }
 
 tasks.withType<Javadoc>().configureEach {
