@@ -59,6 +59,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 final class CompressorTest {
     private static final int[] SIZES = {1, 200, 511, 512, 4096, 65_536, 1_500_000};
+    private static final int HEADER_LENGTH = 16;
+    private static final int ARRAY_OFFSET = 3;
 
     static Stream<Arguments> compressors() {
         return Stream.of(
@@ -85,6 +87,21 @@ final class CompressorTest {
                     assertArrayEquals(message, contents(target), name + ", size " + size);
                 }
             }
+        }
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("compressors")
+    @DisplayName("should round trip buffers whose contents start past a header")
+    void shouldRoundTripBuffersPositionedPastAHeader(final String name, final Supplier<Compressor> factory) {
+        Compressor compressor = factory.get();
+        byte[] message = message(4096, 7);
+        for (boolean direct : new boolean[] {false, true}) {
+            byte[] compressed = compress(compressor, Arrays.asList(wrapAfterHeader(message, direct)));
+            ByteBuf target = wrapAfterHeader(new byte[message.length], direct);
+            compressor.uncompress(wrapAfterHeader(compressed, direct), target);
+            assertEquals(0, target.remaining());
+            assertArrayEquals(message, contentsAfterHeader(target), name);
         }
     }
 
@@ -303,6 +320,24 @@ final class CompressorTest {
         ByteBuf buffer = buffer(bytes.length, direct);
         buffer.put(bytes, 0, bytes.length);
         return buffer.flip();
+    }
+
+    private static ByteBuf wrapAfterHeader(final byte[] bytes, final boolean direct) {
+        int capacity = HEADER_LENGTH + bytes.length;
+        ByteBuffer backing = direct
+                ? ByteBuffer.allocateDirect(capacity)
+                : ByteBuffer.wrap(new byte[ARRAY_OFFSET + capacity], ARRAY_OFFSET, capacity).slice();
+        ByteBuf buffer = new ByteBufNIO(backing);
+        buffer.position(HEADER_LENGTH);
+        buffer.put(bytes, 0, bytes.length);
+        return buffer.position(HEADER_LENGTH);
+    }
+
+    private static byte[] contentsAfterHeader(final ByteBuf target) {
+        ByteBuf contents = target.duplicate().flip().position(HEADER_LENGTH);
+        byte[] bytes = new byte[contents.remaining()];
+        contents.get(bytes);
+        return bytes;
     }
 
     private static ByteBuf buffer(final int size, final boolean direct) {
