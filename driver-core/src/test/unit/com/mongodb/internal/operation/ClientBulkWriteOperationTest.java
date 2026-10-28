@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.ClientBulkWriteException;
 import com.mongodb.ClusterFixture;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
@@ -47,6 +48,8 @@ import org.bson.io.BasicOutputBuffer;
 import org.bson.json.JsonReader;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 
@@ -54,6 +57,7 @@ import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 import static com.mongodb.client.model.bulk.ClientReplaceOneOptions.clientReplaceOneOptions;
 import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -189,6 +193,81 @@ class ClientBulkWriteOperationTest {
         assertEquals(0, result.getModifiedCount());
         assertEquals(0, result.getDeletedCount());
         assertTrue(result.getVerboseResults().isPresent());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{ code: 79, codeName: 'UnknownReplWriteConcern' }",
+            "{ code: 79, codeName: 'UnknownReplWriteConcern', errmsg: null }"})
+    void shouldReportWriteConcernErrorWhenErrmsgIsMissingOrNull(final String writeConcernError) {
+        mockCommandExecutionResult("{"
+                + "  cursor: {"
+                + "    id: NumberLong(0),"
+                + "    firstBatch: [],"
+                + "    ns: 'admin.$cmd.bulkWrite'"
+                + "  },"
+                + "  nErrors: 0,"
+                + "  nInserted: 1,"
+                + "  nMatched: 0,"
+                + "  nModified: 0,"
+                + "  nUpserted: 0,"
+                + "  nDeleted: 0,"
+                + "  writeConcernError: " + writeConcernError + ","
+                + "  ok: 1"
+                + "}");
+        ClientBulkWriteOperation op = new ClientBulkWriteOperation(
+                singletonList(ClientNamespacedWriteModel.insertOne(NAMESPACE, new Document())),
+                ClientBulkWriteOptions.clientBulkWriteOptions(),
+                WriteConcern.ACKNOWLEDGED,
+                false,
+                false,
+                null,
+                getDefaultCodecRegistry());
+
+        ClientBulkWriteException exception = assertThrows(ClientBulkWriteException.class,
+                () -> op.execute(binding, ClusterFixture.createOperationContext()));
+
+        assertEquals(1, exception.getWriteConcernErrors().size());
+        assertEquals(79, exception.getWriteConcernErrors().get(0).getCode());
+        assertEquals("", exception.getWriteConcernErrors().get(0).getMessage());
+        assertTrue(exception.getWriteErrors().isEmpty());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{ ok: 0, idx: 0, code: 11000 }",
+            "{ ok: 0, idx: 0, code: 11000, errmsg: null }"})
+    void shouldReportWriteErrorWhenErrmsgIsMissingOrNull(final String individualWriteError) {
+        mockCommandExecutionResult("{"
+                + "  cursor: {"
+                + "    id: NumberLong(0),"
+                + "    firstBatch: [ " + individualWriteError + " ],"
+                + "    ns: 'admin.$cmd.bulkWrite'"
+                + "  },"
+                + "  nErrors: 1,"
+                + "  nInserted: 0,"
+                + "  nMatched: 0,"
+                + "  nModified: 0,"
+                + "  nUpserted: 0,"
+                + "  nDeleted: 0,"
+                + "  ok: 1"
+                + "}");
+        ClientBulkWriteOperation op = new ClientBulkWriteOperation(
+                singletonList(ClientNamespacedWriteModel.insertOne(NAMESPACE, new Document())),
+                ClientBulkWriteOptions.clientBulkWriteOptions(),
+                WriteConcern.ACKNOWLEDGED,
+                false,
+                false,
+                null,
+                getDefaultCodecRegistry());
+
+        ClientBulkWriteException exception = assertThrows(ClientBulkWriteException.class,
+                () -> op.execute(binding, ClusterFixture.createOperationContext()));
+
+        assertEquals(1, exception.getWriteErrors().size());
+        assertEquals(11000, exception.getWriteErrors().get(0).getCode());
+        assertEquals("", exception.getWriteErrors().get(0).getMessage());
+        assertTrue(exception.getWriteConcernErrors().isEmpty());
     }
 
     private void mockCommandExecutionResult(final String serverResponse) {
