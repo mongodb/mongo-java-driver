@@ -32,6 +32,9 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.Locks;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.annotations.DeadAsync;
+import com.mongodb.internal.annotations.GeneratedAsync;
+import com.mongodb.internal.annotations.HasAsync;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.authentication.AzureCredentialHelper;
 import com.mongodb.internal.authentication.CredentialInfo;
@@ -270,14 +273,27 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         };
     }
 
+    @HasAsync
     @Override
     public void reauthenticate(final InternalConnection connection, final OperationContext operationContext) {
         assertTrue(connection.opened());
         authenticationLoop(connection, connection.getDescription(), operationContext.withConnectionEstablishmentSessionContext());
     }
 
+    @GeneratedAsync
     @Override
-    public void reauthenticateAsync(final InternalConnection connection,
+    public void reauthenticateAsync(final InternalConnection connection, final OperationContext operationContext,
+            final SingleResultCallback<Void> callback) {
+        beginAsync().thenRun(c -> {
+            assertTrue(connection.opened());
+            authenticationLoopAsync(connection, connection.getDescription(), operationContext.withConnectionEstablishmentSessionContext(),
+                    c);
+        }).finish(callback);
+    }
+
+    @DeadAsync("replaced by generated reauthenticateAsync")
+    @SuppressWarnings("unused")
+    public void reauthenticateAsyncDefunct(final InternalConnection connection,
                                     final OperationContext operationContext,
                                     final SingleResultCallback<Void> callback) {
         beginAsync().thenRun(c -> {
@@ -286,6 +302,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         }).finish(callback);
     }
 
+    @HasAsync
     @Override
     public void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription,
                              final OperationContext operationContext) {
@@ -293,8 +310,19 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         authenticationLoop(connection, connectionDescription, operationContext);
     }
 
+    @GeneratedAsync
     @Override
-    void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
+    public void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
+            final OperationContext operationContext, final SingleResultCallback<Void> callback) {
+        beginAsync().thenRun(c -> {
+            assertFalse(connection.opened());
+            authenticationLoopAsync(connection, connectionDescription, operationContext, c);
+        }).finish(callback);
+    }
+
+    @DeadAsync("replaced by generated authenticateAsync")
+    @SuppressWarnings("unused")
+    void authenticateAsyncDefunct(final InternalConnection connection, final ConnectionDescription connectionDescription,
             final OperationContext operationContext,
             final SingleResultCallback<Void> callback) {
         beginAsync().thenRun(c -> {
@@ -315,6 +343,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         return false;
     }
 
+    @HasAsync
     private void authenticationLoop(final InternalConnection connection, final ConnectionDescription description,
                                     final OperationContext operationContext) {
         fallbackState = FallbackState.INITIAL;
@@ -331,7 +360,21 @@ public final class OidcAuthenticator extends SaslAuthenticator {
         }
     }
 
+    @GeneratedAsync
     private void authenticationLoopAsync(final InternalConnection connection, final ConnectionDescription description,
+            final OperationContext operationContext, final SingleResultCallback<Void> callback) {
+        beginAsync().thenRun(c -> {
+            fallbackState = FallbackState.INITIAL;
+            c.complete(c);
+        }).thenRunRetryingWhile(
+                c -> super.authenticateAsync(connection, description, operationContext, c),
+                e -> triggersRetry(e) && shouldRetryHandler()
+        ).finish(callback);
+    }
+
+    @DeadAsync("replaced by generated authenticationLoopAsync")
+    @SuppressWarnings("unused")
+    private void authenticationLoopAsyncDefunct(final InternalConnection connection, final ConnectionDescription description,
             final OperationContext operationContext,
             final SingleResultCallback<Void> callback) {
         fallbackState = FallbackState.INITIAL;

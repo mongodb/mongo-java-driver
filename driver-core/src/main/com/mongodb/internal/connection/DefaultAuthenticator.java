@@ -22,6 +22,9 @@ import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerApi;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.annotations.DeadAsync;
+import com.mongodb.internal.annotations.GeneratedAsync;
+import com.mongodb.internal.annotations.HasAsync;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -32,6 +35,7 @@ import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_1;
 import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_256;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static java.lang.String.format;
 
 class DefaultAuthenticator extends Authenticator implements SpeculativeAuthenticator {
@@ -45,6 +49,7 @@ class DefaultAuthenticator extends Authenticator implements SpeculativeAuthentic
         isTrueArgument("unspecified authentication mechanism", credential.getAuthenticationMechanism() == null);
     }
 
+    @HasAsync
     @Override
     void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription,
                       final OperationContext operationContext) {
@@ -56,9 +61,23 @@ class DefaultAuthenticator extends Authenticator implements SpeculativeAuthentic
         }
     }
 
+    @GeneratedAsync
     @Override
     void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
+            final OperationContext operationContext, final SingleResultCallback<Void> callback) {
+        beginAsync().thenRun(c -> {
+            setDelegate(connectionDescription);
+            delegate.authenticateAsync(connection, connectionDescription, operationContext, c);
+        }).onErrorIf(t -> true, (e, c) -> {
+            throw wrapException(e);
+        }).finish(callback);
+    }
+
+    @DeadAsync("replaced by generated authenticateAsync")
+    @SuppressWarnings("unused")
+    void authenticateAsyncDefunct(final InternalConnection connection, final ConnectionDescription connectionDescription,
                            final OperationContext operationContext, final SingleResultCallback<Void> callback) {
+        // bug: a failure reaches the callback unwrapped and a setDelegate throw escapes it; sync passes both through wrapException
         setDelegate(connectionDescription);
         delegate.authenticateAsync(connection, connectionDescription, operationContext, callback);
     }
