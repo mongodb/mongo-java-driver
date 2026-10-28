@@ -570,7 +570,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 case "reduce":
                 case "session":
                     break;
-                case "out":
+                case "out": {
                     BsonDocument out = cur.getValue().asDocument();
                     if (out.equals(new BsonDocument("inline", new BsonInt32(1)))) {
                         break;
@@ -581,6 +581,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                         break;
                     }
                     throw new UnsupportedOperationException("Unsupported value for out argument: " + cur.getValue());
+                }
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
