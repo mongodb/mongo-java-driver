@@ -94,6 +94,7 @@ import org.bson.BsonElement;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonObjectId;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.FieldNameValidator;
@@ -798,7 +799,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                     || (orderedSetting && individualOperationIndexInBatch > 0);
                             WriteError individualOperationWriteError = new WriteError(
                                     individualOperationResponse.getInt32("code").getValue(),
-                                    individualOperationResponse.getString("errmsg").getValue(),
+                                    individualOperationResponse.getString("errmsg", new BsonString("")).getValue(),
                                     individualOperationResponse.getDocument("errInfo", new BsonDocument()));
                             writeErrors.put(writeModelIndex, individualOperationWriteError);
                         }

@@ -16,7 +16,12 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.MongoWriteConcernException;
+import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
+import com.mongodb.bulk.WriteConcernError;
+import org.bson.BsonDocument;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -24,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class WriteConcernHelperTest {
 
@@ -57,5 +63,34 @@ class WriteConcernHelperTest {
         assertEquals(writeConcern.getWObject(), clonedWithoutTimeout.getWObject());
         assertEquals(writeConcern.getJournal(), clonedWithoutTimeout.getJournal());
         assertNull(clonedWithoutTimeout.getWTimeout(TimeUnit.MILLISECONDS));
+    }
+
+    @Test
+    void shouldCreateWriteConcernErrorWhenErrmsgIsMissing() {
+        //given
+        BsonDocument writeConcernErrorDocument = BsonDocument.parse("{code: 79, codeName: 'UnknownReplWriteConcern'}");
+
+        //when
+        WriteConcernError writeConcernError = WriteConcernHelper.createWriteConcernError(writeConcernErrorDocument);
+
+        //then
+        assertEquals(79, writeConcernError.getCode());
+        assertEquals("UnknownReplWriteConcern", writeConcernError.getCodeName());
+        assertEquals("", writeConcernError.getMessage());
+        assertTrue(writeConcernError.getDetails().isEmpty());
+    }
+
+    @Test
+    void shouldCreateWriteConcernExceptionWhenErrmsgIsMissing() {
+        //given
+        BsonDocument result = BsonDocument.parse("{ok: 1, n: 1, writeConcernError: {code: 79, codeName: 'UnknownReplWriteConcern'}}");
+
+        //when
+        MongoWriteConcernException exception = WriteConcernHelper.createWriteConcernException(result, new ServerAddress());
+
+        //then
+        assertEquals(79, exception.getCode());
+        assertEquals(79, exception.getWriteConcernError().getCode());
+        assertEquals("", exception.getWriteConcernError().getMessage());
     }
 }
