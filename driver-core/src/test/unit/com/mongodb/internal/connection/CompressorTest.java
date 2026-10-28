@@ -251,22 +251,26 @@ final class CompressorTest {
     }
 
     @Test
-    @DisplayName("pool should hand out a released context again and destroy one that is not reusable")
-    void poolShouldReuseOnlyReusableContexts() {
+    @DisplayName("pool should hand out a used context again and destroy one whose use threw")
+    void poolShouldReuseOnlyContextsWhoseUseCompleted() {
         AtomicInteger created = new AtomicInteger();
         AtomicInteger destroyed = new AtomicInteger();
         CompressionContextPool<Object> pool = new CompressionContextPool<>(() -> {
             created.incrementAndGet();
             return new Object();
         }, context -> destroyed.incrementAndGet());
+        List<Object> used = new ArrayList<>();
 
-        Object first = pool.get();
-        pool.release(first, true);
-        assertSame(first, pool.get());
+        pool.use(used::add);
+        pool.use(used::add);
+        assertSame(used.get(0), used.get(1));
 
-        pool.release(first, false);
+        assertThrows(IllegalStateException.class, () -> pool.use(context -> {
+            throw new IllegalStateException();
+        }));
         assertEquals(1, destroyed.get());
-        assertNotSame(first, pool.get());
+        pool.use(used::add);
+        assertNotSame(used.get(0), used.get(2));
         assertEquals(2, created.get());
     }
 
@@ -275,13 +279,14 @@ final class CompressorTest {
     void poolShouldBeBounded() {
         AtomicInteger destroyed = new AtomicInteger();
         CompressionContextPool<Object> pool = new CompressionContextPool<>(Object::new, context -> destroyed.incrementAndGet());
-        int count = Runtime.getRuntime().availableProcessors() * 2 + 5;
-        List<Object> contexts = new ArrayList<>();
-        for (int i = 0; i < count; i++) {
-            contexts.add(pool.get());
-        }
-        contexts.forEach(context -> pool.release(context, true));
+        useNested(pool, Runtime.getRuntime().availableProcessors() * 2 + 5);
         assertEquals(5, destroyed.get());
+    }
+
+    private static void useNested(final CompressionContextPool<Object> pool, final int depth) {
+        if (depth > 0) {
+            pool.use(context -> useNested(pool, depth - 1));
+        }
     }
 
     private static byte[] compress(final Compressor compressor, final List<ByteBuf> source) {

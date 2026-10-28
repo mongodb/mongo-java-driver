@@ -45,33 +45,23 @@ class ZstdCompressor extends Compressor {
     @Override
     public void compress(final List<ByteBuf> source, final BsonOutput target) {
         int uncompressedSize = getUncompressedSize(source);
-        CompressionContext context = COMPRESSION_CONTEXTS.get();
-        boolean reusable = false;
-        try {
-            byte[] in = context.uncompressedBuffer(uncompressedSize);
-            copy(source, in);
-            byte[] out = context.compressedBuffer((int) Zstd.compressBound(uncompressedSize));
-            int compressedSize = context.ctx.compressByteArray(out, 0, out.length, in, 0, uncompressedSize);
-            reusable = true;
-            target.writeBytes(out, 0, compressedSize);
-        } catch (Exception e) {
-            throw new MongoInternalException("Unexpected exception", e);
-        } finally {
-            COMPRESSION_CONTEXTS.release(context, reusable);
-        }
+        COMPRESSION_CONTEXTS.use(context -> {
+            try {
+                byte[] in = context.uncompressedBuffer(uncompressedSize);
+                copy(source, in);
+                byte[] out = context.compressedBuffer((int) Zstd.compressBound(uncompressedSize));
+                int compressedSize = context.ctx.compressByteArray(out, 0, out.length, in, 0, uncompressedSize);
+                target.writeBytes(out, 0, compressedSize);
+            } catch (Exception e) {
+                throw new MongoInternalException("Unexpected exception", e);
+            }
+        });
     }
 
     @Override
     void uncompress(final ByteBuf source, final ByteBuf target) {
-        ZstdDecompressCtx ctx = DECOMPRESSION_CONTEXTS.get();
-        boolean reusable = false;
-        try {
-            uncompressFully(source, target, (in, inOffset, inLength, out, outOffset, outLength) ->
-                    ctx.decompressByteArray(out, outOffset, outLength, in, inOffset, inLength));
-            reusable = true;
-        } finally {
-            DECOMPRESSION_CONTEXTS.release(ctx, reusable);
-        }
+        DECOMPRESSION_CONTEXTS.use(ctx -> uncompressFully(source, target, (in, inOffset, inLength, out, outOffset, outLength) ->
+                ctx.decompressByteArray(out, outOffset, outLength, in, inOffset, inLength)));
     }
 
     private int getUncompressedSize(final List<ByteBuf> source) {

@@ -53,9 +53,7 @@ class ZlibCompressor extends Compressor {
 
     @Override
     void compress(final List<ByteBuf> source, final BsonOutput target) {
-        CompressionContext context = compressionContexts.get();
-        boolean reusable = false;
-        try {
+        compressionContexts.use(context -> {
             Deflater deflater = context.deflater;
             deflater.reset();
             for (ByteBuf cur : source) {
@@ -79,23 +77,13 @@ class ZlibCompressor extends Compressor {
                 target.writeBytes(context.output, 0, deflater.deflate(context.output));
             }
             deflater.setInput(EMPTY);
-            reusable = true;
-        } finally {
-            compressionContexts.release(context, reusable);
-        }
+        });
     }
 
     @Override
     void uncompress(final ByteBuf source, final ByteBuf target) {
-        Inflater inflater = INFLATERS.get();
-        boolean reusable = false;
-        try {
-            uncompressFully(source, target, (in, inOffset, inLength, out, outOffset, outLength) ->
-                    inflate(inflater, in, inOffset, inLength, out, outOffset, outLength));
-            reusable = true;
-        } finally {
-            INFLATERS.release(inflater, reusable);
-        }
+        INFLATERS.use(inflater -> uncompressFully(source, target, (in, inOffset, inLength, out, outOffset, outLength) ->
+                inflate(inflater, in, inOffset, inLength, out, outOffset, outLength)));
     }
 
     private static int inflate(final Inflater inflater, final byte[] in, final int inOffset, final int inLength,

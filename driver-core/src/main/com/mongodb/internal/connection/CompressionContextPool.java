@@ -41,7 +41,21 @@ final class CompressionContextPool<T> {
         this.destroyer = destroyer;
     }
 
-    T get() {
+    /**
+     * Runs {@code action} with a context. A context whose action throws may have been left in an unknown state, so it is destroyed.
+     */
+    void use(final Consumer<T> action) {
+        T context = get();
+        boolean reusable = false;
+        try {
+            action.accept(context);
+            reusable = true;
+        } finally {
+            release(context, reusable);
+        }
+    }
+
+    private T get() {
         T context = pooled.poll();
         if (context == null) {
             return factory.get();
@@ -50,10 +64,7 @@ final class CompressionContextPool<T> {
         return context;
     }
 
-    /**
-     * @param reusable false if the context may have been left in an unknown state, in which case it is destroyed
-     */
-    void release(final T context, final boolean reusable) {
+    private void release(final T context, final boolean reusable) {
         if (reusable && pooledCount.incrementAndGet() <= MAX_POOLED) {
             pooled.offer(context);
             return;
