@@ -32,24 +32,21 @@ import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
-import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
-import org.bson.ByteBuf;
-import org.bson.ByteBufNIO;
 import org.bson.codecs.BsonDocumentCodec;
-import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.stream.Stream;
 
+import static com.mongodb.internal.connection.MessageHelper.findTelemetrySectionDocument;
+import static com.mongodb.internal.connection.MessageHelper.readTelemetrySectionDocument;
 import static com.mongodb.internal.mockito.MongoMockito.mock;
 import static com.mongodb.internal.operation.ServerVersionHelper.EIGHT_DOT_ZERO_WIRE_VERSION;
 import static com.mongodb.internal.operation.ServerVersionHelper.NINE_DOT_ZERO_WIRE_VERSION;
@@ -329,46 +326,5 @@ class CommandMessageOtelTraceContextTest {
             when(mock.getSessionContext()).thenReturn(sessionContext);
             when(mock.getTimeoutContext()).thenReturn(timeoutContext);
         });
-    }
-
-    /**
-     * Walks the OP_MSG sections: skips the type-0 body document, then reads the kind byte of each subsequent
-     * section. For kind 1 (document sequence) it skips past the {@code int32} section size; for kind 3 (telemetry)
-     * it decodes and returns the BSON document payload. Returns {@code null} if no kind-3 section is found.
-     */
-    private static BsonDocument findTelemetrySectionDocument(final byte[] buffer) {
-        ByteBuf byteBuf = new ByteBufNIO(ByteBuffer.wrap(buffer));
-        // MsgHeader (16 bytes) + flagBits (4 bytes) + payload type byte (1 byte) for the body section.
-        int position = 16 + 4 + 1;
-        byteBuf.position(position);
-        int bodyLength = byteBuf.getInt(byteBuf.position());
-        byteBuf.position(byteBuf.position() + bodyLength);
-
-        while (byteBuf.hasRemaining()) {
-            byte kind = byteBuf.get();
-            if (kind == 1) {
-                int sectionStart = byteBuf.position();
-                int sectionSize = byteBuf.getInt();
-                byteBuf.position(sectionStart + sectionSize);
-            } else if (kind == 3) {
-                BsonBinaryReader reader = new BsonBinaryReader(byteBuf.asNIO());
-                try {
-                    return new BsonDocumentCodec().decode(reader, DecoderContext.builder().build());
-                } finally {
-                    reader.close();
-                }
-            } else {
-                throw new AssertionError("Unexpected section kind byte: " + kind);
-            }
-        }
-        return null;
-    }
-
-    private static BsonDocument readTelemetrySectionDocument(final byte[] buffer) {
-        BsonDocument telemetry = findTelemetrySectionDocument(buffer);
-        if (telemetry == null) {
-            throw new AssertionError("Expected a kind-3 telemetry section but none was found");
-        }
-        return telemetry;
     }
 }
