@@ -21,37 +21,19 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoCompressor;
 import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoInternalException;
-import com.mongodb.MongoNamespace;
 import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketReadException;
-import com.mongodb.ServerAddress;
 import com.mongodb.async.FutureResultCallback;
 import com.mongodb.connection.AsyncCompletionHandler;
-import com.mongodb.connection.ClusterId;
-import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.ConnectionId;
-import com.mongodb.connection.ServerConnectionState;
-import com.mongodb.connection.ServerDescription;
-import com.mongodb.connection.ServerId;
-import com.mongodb.connection.ServerType;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
-import com.mongodb.internal.IgnorableRequestContext;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.observability.micrometer.Span;
-import com.mongodb.internal.observability.micrometer.TraceContext;
-import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.session.SessionContext;
-import com.mongodb.internal.thread.AsyncClientExecutor;
-import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
-import com.mongodb.observability.micrometer.MongodbObservationContext;
-import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonSerializationException;
@@ -60,8 +42,6 @@ import org.bson.BsonTimestamp;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 import org.bson.codecs.BsonDocumentCodec;
-import org.bson.codecs.EncoderContext;
-import org.bson.io.BasicOutputBuffer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -77,20 +57,22 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.DeflaterOutputStream;
 
-import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize;
-import static com.mongodb.connection.ConnectionDescription.getDefaultMaxWriteBatchSize;
-import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize;
-import static com.mongodb.internal.connection.MessageHelper.findTelemetrySectionDocument;
+import static com.mongodb.internal.connection.InternalStreamConnectionTestHelper.SERVER_ID;
+import static com.mongodb.internal.connection.InternalStreamConnectionTestHelper.createInitializationDescription;
+import static com.mongodb.internal.connection.InternalStreamConnectionTestHelper.createOpenConnection;
+import static com.mongodb.internal.connection.InternalStreamConnectionTestHelper.createOperationContext;
+import static com.mongodb.internal.connection.InternalStreamConnectionTestHelper.createPingCommand;
+import static com.mongodb.internal.connection.InternalStreamConnectionTestHelper.createResponseBody;
+import static com.mongodb.internal.connection.InternalStreamConnectionTestHelper.createResponseBodyBuffer;
+import static com.mongodb.internal.connection.InternalStreamConnectionTestHelper.createValidResponseHeader;
+import static com.mongodb.internal.connection.InternalStreamConnectionTestHelper.createValidResponseHeaderForBodyLength;
 import static com.mongodb.internal.connection.MessageHeader.MESSAGE_HEADER_LENGTH;
-import static com.mongodb.internal.operation.ServerVersionHelper.LATEST_WIRE_VERSION;
 import static java.util.Arrays.asList;
-import static com.mongodb.internal.mockito.MongoMockito.mock;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -98,12 +80,8 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
 
 class InternalStreamConnectionTest {
-
-    private static final ServerId SERVER_ID = new ServerId(new ClusterId(), new ServerAddress());
 
     /**
      * Unchecked failures that {@code stream.readAsync()} may raise during body buffer allocation:
@@ -1454,301 +1432,6 @@ class InternalStreamConnectionTest {
         }
     }
 
-    private InternalStreamConnection createOpenConnection(final TestStream stream) {
-        return createOpenConnection(stream, null);
-    }
-
-    // --- OTel trace-context propagation wiring (DRIVERS-3454) ---
-
-    private static final String TRACEPARENT = "00-0af7651916cd43dd8448eb211c80319c-b7ad6b7169203331-01";
-    private static final BsonDocument EXPECTED_TELEMETRY_DOCUMENT =
-            new BsonDocument("otel", new BsonDocument("traceparent", new BsonString(TRACEPARENT)));
-
-    /**
-     * Verifies the connection-level tracing wiring end to end on the wire bytes: the sync path must create the
-     * command span before encoding and pass it to the traced {@code encode} overload, so the sent OP_MSG carries
-     * the kind-3 telemetry section. A regression to the 2-arg {@code encode} (or creating the span after
-     * encoding) would pass all message-level tests but silently stop emitting the section.
-     */
-    @Test
-    @DisplayName("Sync: sent message carries telemetry section from the command span; span ends exactly once")
-    void syncSendAndReceiveAttachesTelemetrySectionAndEndsSpanOnce() {
-        AtomicInteger readCallCount = new AtomicInteger();
-        CapturingTestStream stream = new CapturingTestStream() {
-            @Override
-            public ByteBuf read(final int numBytes, final OperationContext operationContext) {
-                if (readCallCount.incrementAndGet() == 1) {
-                    return createValidResponseHeader(getCommandMessageId());
-                } else {
-                    return createResponseBody(new BsonDocument("ok", new BsonInt32(1)));
-                }
-            }
-        };
-        InternalStreamConnection connection = createOpenConnection(stream);
-        CommandMessage commandMessage = createPingCommand();
-        stream.setCommandMessageId(commandMessage.getId());
-        RecordingSpan span = new RecordingSpan();
-
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), createTracedOperationContext(span));
-
-        assertEquals(EXPECTED_TELEMETRY_DOCUMENT, findTelemetrySectionDocument(stream.getWrittenBytes()),
-                "the sent message must carry the telemetry section with the span's traceparent");
-        assertEquals(1, span.endCount.get(), "span must end exactly once");
-        assertEquals(0, span.errorCount.get());
-        assertEquals(span.openScopeCount.get(), span.closeScopeCount.get(), "scopes must be balanced");
-        connection.close();
-    }
-
-    /**
-     * Verifies exactly-once span termination when the sync send fails: the widened {@code catch (Throwable)}
-     * must fire {@code error()}/{@code closeScope()}/{@code end()} once each, with no double-firing from the
-     * receive path (which is never reached).
-     */
-    @Test
-    @DisplayName("Sync: span errors and ends exactly once when the stream write fails")
-    void syncSendFailureEndsSpanExactlyOnceWithError() {
-        RuntimeException writeFailure = new RuntimeException("simulated write failure");
-        CapturingTestStream stream = new CapturingTestStream() {
-            @Override
-            public void write(final List<ByteBuf> buffers, final OperationContext operationContext) {
-                throw writeFailure;
-            }
-        };
-        InternalStreamConnection connection = createOpenConnection(stream);
-        CommandMessage commandMessage = createPingCommand();
-        RecordingSpan span = new RecordingSpan();
-
-        MongoInternalException thrown = assertThrows(MongoInternalException.class,
-                () -> connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), createTracedOperationContext(span)));
-        assertSame(writeFailure, thrown.getCause());
-        assertEquals(1, span.errorCount.get(), "span must record the failure exactly once");
-        assertEquals(1, span.endCount.get(), "span must end exactly once");
-        assertEquals(span.openScopeCount.get(), span.closeScopeCount.get(), "scopes must be balanced");
-        connection.close();
-    }
-
-    /**
-     * Async counterpart of {@link #syncSendAndReceiveAttachesTelemetrySectionAndEndsSpanOnce()}.
-     */
-    @Test
-    @DisplayName("Async: sent message carries telemetry section from the command span; span ends exactly once")
-    void asyncSendAndReceiveAttachesTelemetrySectionAndEndsSpanOnce() {
-        AtomicInteger readAsyncCallCount = new AtomicInteger();
-        CapturingTestStream stream = new CapturingTestStream() {
-            @Override
-            public void readAsync(final int numBytes, final OperationContext operationContext,
-                    final AsyncCompletionHandler<ByteBuf> handler) {
-                if (readAsyncCallCount.incrementAndGet() == 1) {
-                    handler.completed(createValidResponseHeader(getCommandMessageId()));
-                } else {
-                    handler.completed(createResponseBody(new BsonDocument("ok", new BsonInt32(1))));
-                }
-            }
-        };
-        InternalStreamConnection connection = createOpenConnection(stream);
-        CommandMessage commandMessage = createPingCommand();
-        stream.setCommandMessageId(commandMessage.getId());
-        RecordingSpan span = new RecordingSpan();
-
-        FutureResultCallback<BsonDocument> callback = new FutureResultCallback<>();
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), createTracedOperationContext(span), callback);
-        callback.get(5, TimeUnit.SECONDS);
-
-        assertEquals(EXPECTED_TELEMETRY_DOCUMENT, findTelemetrySectionDocument(stream.getWrittenBytes()),
-                "the sent message must carry the telemetry section with the span's traceparent");
-        assertEquals(1, span.endCount.get(), "span must end exactly once");
-        assertEquals(0, span.errorCount.get());
-        connection.close();
-    }
-
-    /**
-     * Async counterpart of {@link #syncSendFailureEndsSpanExactlyOnceWithError()}: a failed async write must
-     * error and end the span exactly once via the tracing callback.
-     */
-    @Test
-    @DisplayName("Async: span errors and ends exactly once when the stream write fails")
-    void asyncSendFailureEndsSpanExactlyOnceWithError() {
-        RuntimeException writeFailure = new RuntimeException("simulated async write failure");
-        CapturingTestStream stream = new CapturingTestStream() {
-            @Override
-            public void writeAsync(final List<ByteBuf> buffers, final OperationContext operationContext,
-                    final AsyncCompletionHandler<Void> handler) {
-                handler.failed(writeFailure);
-            }
-        };
-        InternalStreamConnection connection = createOpenConnection(stream);
-        CommandMessage commandMessage = createPingCommand();
-        RecordingSpan span = new RecordingSpan();
-
-        FutureResultCallback<BsonDocument> callback = new FutureResultCallback<>();
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), createTracedOperationContext(span), callback);
-        assertThrows(RuntimeException.class, () -> callback.get(5, TimeUnit.SECONDS));
-
-        assertEquals(1, span.errorCount.get(), "span must record the failure exactly once");
-        assertEquals(1, span.endCount.get(), "span must end exactly once");
-        connection.close();
-    }
-
-    private OperationContext createTracedOperationContext(final Span span) {
-        TracingManager tracingManager = mock(TracingManager.class, mocked -> {
-            when(mocked.createTracingSpan(any(), any(), any(), any(), any())).thenReturn(span);
-            when(mocked.isCommandPayloadEnabled()).thenReturn(false);
-        });
-        return new OperationContext(IgnorableRequestContext.INSTANCE, NoOpSessionContext.INSTANCE,
-                new TimeoutContext(TimeoutSettings.DEFAULT), AsyncClientExecutor.NO_OP, tracingManager, null, null);
-    }
-
-    /** A {@link TestStream} that records every written buffer, for assertions on the raw wire bytes. */
-    private abstract static class CapturingTestStream extends TestStream {
-        private final ByteArrayOutputStream writtenBytes = new ByteArrayOutputStream();
-
-        @Override
-        public void write(final List<ByteBuf> buffers, final OperationContext operationContext) {
-            for (ByteBuf buffer : buffers) {
-                ByteBuf duplicate = buffer.duplicate();
-                byte[] bytes = new byte[duplicate.remaining()];
-                duplicate.get(bytes);
-                writtenBytes.write(bytes, 0, bytes.length);
-            }
-        }
-
-        @Override
-        public void writeAsync(final List<ByteBuf> buffers, final OperationContext operationContext,
-                final AsyncCompletionHandler<Void> handler) {
-            write(buffers, operationContext);
-            handler.completed(null);
-        }
-
-        byte[] getWrittenBytes() {
-            return writtenBytes.toByteArray();
-        }
-    }
-
-    /** A {@link Span} that counts lifecycle calls and exposes a fixed traceparent. */
-    private static final class RecordingSpan implements Span {
-        private final AtomicInteger openScopeCount = new AtomicInteger();
-        private final AtomicInteger closeScopeCount = new AtomicInteger();
-        private final AtomicInteger errorCount = new AtomicInteger();
-        private final AtomicInteger endCount = new AtomicInteger();
-
-        @Override
-        public void openScope() {
-            openScopeCount.incrementAndGet();
-        }
-
-        @Override
-        public void closeScope() {
-            closeScopeCount.incrementAndGet();
-        }
-
-        @Override
-        public void setQueryText(final BsonDocument commandDocument) {
-        }
-
-        @Override
-        public void event(final String event) {
-        }
-
-        @Override
-        public void error(final Throwable throwable) {
-            errorCount.incrementAndGet();
-        }
-
-        @Override
-        public void end() {
-            endCount.incrementAndGet();
-        }
-
-        @Override
-        public TraceContext context() {
-            return () -> TRACEPARENT;
-        }
-
-        @Override
-        @Nullable
-        public MongodbObservationContext getMongodbObservationContext() {
-            return null;
-        }
-
-        @Override
-        @Nullable
-        public MongoNamespace getNamespace() {
-            return null;
-        }
-    }
-
-    private InternalStreamConnection createOpenConnection(final TestStream stream, @Nullable final CommandListener commandListener) {
-        return createOpenConnection(stream, commandListener, Collections.emptyList());
-    }
-
-    private InternalStreamConnection createOpenConnection(final TestStream stream, @Nullable final CommandListener commandListener,
-            final List<MongoCompressor> compressorList) {
-        StreamFactory streamFactory = serverAddress -> stream;
-        InternalConnectionInitializationDescription initDesc = createInitializationDescription();
-
-        InternalConnectionInitializer initializer = new InternalConnectionInitializer() {
-            @Override
-            public InternalConnectionInitializationDescription startHandshake(final InternalConnection connection,
-                    final OperationContext operationContext) {
-                return initDesc;
-            }
-
-            @Override
-            public InternalConnectionInitializationDescription finishHandshake(final InternalConnection connection,
-                    final InternalConnectionInitializationDescription description, final OperationContext operationContext) {
-                return initDesc;
-            }
-
-            @Override
-            public void startHandshakeAsync(final InternalConnection connection, final OperationContext operationContext,
-                    final SingleResultCallback<InternalConnectionInitializationDescription> callback) {
-                callback.onResult(initDesc, null);
-            }
-
-            @Override
-            public void finishHandshakeAsync(final InternalConnection connection,
-                    final InternalConnectionInitializationDescription description, final OperationContext operationContext,
-                    final SingleResultCallback<InternalConnectionInitializationDescription> callback) {
-                callback.onResult(initDesc, null);
-            }
-        };
-
-        InternalStreamConnection connection = new InternalStreamConnection(
-                SINGLE, SERVER_ID, new TestConnectionGenerationSupplier(),
-                streamFactory, compressorList, commandListener, initializer);
-        connection.open(createOperationContext());
-        return connection;
-    }
-
-    private static InternalConnectionInitializationDescription createInitializationDescription() {
-        ConnectionDescription connectionDescription = new ConnectionDescription(
-                new ConnectionId(SERVER_ID, 1, 1L), LATEST_WIRE_VERSION,
-                ServerType.STANDALONE, getDefaultMaxWriteBatchSize(),
-                getDefaultMaxDocumentSize(), getDefaultMaxMessageSize(), Collections.emptyList());
-        ServerDescription serverDescription = ServerDescription.builder()
-                .ok(true)
-                .state(ServerConnectionState.CONNECTED)
-                .type(ServerType.STANDALONE)
-                .address(new ServerAddress())
-                .build();
-        return new InternalConnectionInitializationDescription(connectionDescription, serverDescription);
-    }
-
-    private CommandMessage createPingCommand() {
-        return new CommandMessage(
-                "admin",
-                new BsonDocument("ping", new BsonInt32(1)),
-                NoOpFieldNameValidator.INSTANCE,
-                primary(),
-                MessageSettings.builder().maxWireVersion(LATEST_WIRE_VERSION).build(),
-                SINGLE,
-                null);
-    }
-
-    private OperationContext createOperationContext() {
-        return OperationContext.simpleOperationContext(TimeoutSettings.DEFAULT);
-    }
-
     /**
      * Creates an operation context with CSOT enabled (timeoutMS set), so that server-side timeouts are
      * wrapped as {@link MongoOperationTimeoutException}. The timeout is large enough not to expire during
@@ -1819,43 +1502,6 @@ class InternalStreamConnectionTest {
                 .append("recoveryToken", RECOVERY_TOKEN);
     }
 
-    /**
-     * Creates a valid OP_REPLY response body: reply header (20 bytes) + BSON {ok: 1}.
-     */
-    private static ByteBuf createResponseBody() {
-        return createResponseBody(new BsonDocument("ok", new BsonInt32(1)));
-    }
-
-    /**
-     * Creates a valid OP_REPLY response body: reply header (20 bytes) + the given BSON document.
-     */
-    private static ByteBuf createResponseBody(final BsonDocument document) {
-        return new ByteBufNIO(createResponseBodyBuffer(document));
-    }
-
-    /**
-     * Creates the raw buffer for a valid OP_REPLY response body: reply header (20 bytes) + {ok: 1}.
-     */
-    private static ByteBuffer createResponseBodyBuffer() {
-        return createResponseBodyBuffer(new BsonDocument("ok", new BsonInt32(1)));
-    }
-
-    /**
-     * Creates the raw buffer for a valid OP_REPLY response body: reply header (20 bytes) + the given BSON document.
-     */
-    private static ByteBuffer createResponseBodyBuffer(final BsonDocument document) {
-        byte[] bson = toBson(document);
-        ByteBuffer buffer = ByteBuffer.allocate(20 + bson.length);
-        buffer.order(ByteOrder.LITTLE_ENDIAN);
-        buffer.putInt(0);     // responseFlags
-        buffer.putLong(0);    // cursorId
-        buffer.putInt(0);     // startingFrom
-        buffer.putInt(1);     // numberReturned
-        buffer.put(bson);
-        ((Buffer) buffer).flip();
-        return buffer;
-    }
-
     private static final int CORRUPT_BODY_LENGTH = 28; // reply header (20) + truncated BSON (8)
 
     /**
@@ -1872,36 +1518,6 @@ class InternalStreamConnectionTest {
         buffer.putInt(1000);  // BSON document length (invalid: only 4 more bytes follow)
         buffer.putInt(0);
         ((Buffer) buffer).flip();
-        return new ByteBufNIO(buffer);
-    }
-
-    /**
-     * Creates a valid 16-byte wire protocol header (OP_REPLY) for the given responseTo.
-     */
-    private static ByteBuf createValidResponseHeader(final int responseTo) {
-        return createValidResponseHeader(responseTo, new BsonDocument("ok", new BsonInt32(1)));
-    }
-
-    /**
-     * Creates a valid 16-byte wire protocol header (OP_REPLY) for the given responseTo,
-     * sized for a body containing the given BSON document.
-     */
-    private static ByteBuf createValidResponseHeader(final int responseTo, final BsonDocument document) {
-        return createValidResponseHeaderForBodyLength(responseTo, 20 + toBson(document).length);
-    }
-
-    /**
-     * Creates a valid 16-byte wire protocol header (OP_REPLY) for the given responseTo and body length.
-     */
-    private static ByteBuf createValidResponseHeaderForBodyLength(final int responseTo, final int bodyLength) {
-        ByteBuffer buffer = ByteBuffer.allocate(MESSAGE_HEADER_LENGTH);
-        buffer.order(ByteOrder.LITTLE_ENDIAN);
-        buffer.putInt(MESSAGE_HEADER_LENGTH + bodyLength); // messageLength
-        buffer.putInt(1);            // requestId (server's response message ID)
-        buffer.putInt(responseTo);   // responseTo (echoes client's requestId)
-        buffer.putInt(1);            // opCode = OP_REPLY
-        ((Buffer) buffer).flip();
-
         return new ByteBufNIO(buffer);
     }
 
@@ -1970,14 +1586,6 @@ class InternalStreamConnectionTest {
                 super.release();
             }
         };
-    }
-
-    private static byte[] toBson(final BsonDocument document) {
-        BasicOutputBuffer outputBuffer = new BasicOutputBuffer();
-        new BsonDocumentCodec().encode(
-                new BsonBinaryWriter(outputBuffer), document,
-                EncoderContext.builder().build());
-        return outputBuffer.toByteArray();
     }
 
     /**
@@ -2071,91 +1679,4 @@ class InternalStreamConnectionTest {
         }
     }
 
-    /**
-     * A test Stream implementation that handles writes (no-op) and delegates reads to subclasses.
-     * Unexpected calls must be recorded via {@link #recordUnexpectedCall()} rather than JUnit's
-     * {@code fail()}: the production code under test catches {@code Throwable}, so an assertion
-     * error thrown inside a stub is swallowed and translated into the very exception a test expects.
-     */
-    private abstract static class TestStream implements Stream {
-        private int commandMessageId;
-        private boolean closed;
-        private final AtomicBoolean unexpectedCall = new AtomicBoolean();
-
-        void setCommandMessageId(final int id) {
-            this.commandMessageId = id;
-        }
-
-        int getCommandMessageId() {
-            return commandMessageId;
-        }
-
-        boolean wasClosed() {
-            return closed;
-        }
-
-        void recordUnexpectedCall() {
-            unexpectedCall.set(true);
-        }
-
-        boolean hadUnexpectedCall() {
-            return unexpectedCall.get();
-        }
-
-        @Override
-        public void open(final OperationContext operationContext) {
-        }
-
-        @Override
-        public void openAsync(final OperationContext operationContext,
-                final AsyncCompletionHandler<Void> handler) {
-            handler.completed(null);
-        }
-
-        @Override
-        public void write(final List<ByteBuf> buffers, final OperationContext operationContext) {
-        }
-
-        @Override
-        public void writeAsync(final List<ByteBuf> buffers, final OperationContext operationContext,
-                final AsyncCompletionHandler<Void> handler) {
-            handler.completed(null);
-        }
-
-        // Both read methods default to recording an unexpected call and throwing: a test that uses the
-        // sync path overrides read() (and inherits this readAsync), and vice versa. Recording (rather
-        // than calling fail()) is required because the production code catches Throwable.
-        @Override
-        public ByteBuf read(final int numBytes, final OperationContext operationContext) {
-            recordUnexpectedCall();
-            throw new UnsupportedOperationException("read should not be called in this test");
-        }
-
-        @Override
-        public void readAsync(final int numBytes, final OperationContext operationContext,
-                final AsyncCompletionHandler<ByteBuf> handler) {
-            recordUnexpectedCall();
-            throw new UnsupportedOperationException("readAsync should not be called in this test");
-        }
-
-        @Override
-        public ByteBuf getBuffer(final int size) {
-            return new ByteBufNIO(ByteBuffer.allocate(size));
-        }
-
-        @Override
-        public ServerAddress getAddress() {
-            return new ServerAddress();
-        }
-
-        @Override
-        public void close() {
-            closed = true;
-        }
-
-        @Override
-        public boolean isClosed() {
-            return closed;
-        }
-    }
 }
