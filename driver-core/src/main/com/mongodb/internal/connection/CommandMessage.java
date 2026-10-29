@@ -97,7 +97,6 @@ public final class CommandMessage extends RequestMessage {
      * {@code {otel: {traceparent: <value>}}} document, whose size is fixed because a W3C traceparent is always
      * 55 characters: 4 (length) + 1 (0x03) + 5 ("otel\0") + [4 (length) + 1 (0x02) + 12 ("traceparent\0")
      * + 4 (string length) + 56 (55 chars + "\0") + 1 (terminator)] + 1 (terminator) = 90.
-     * {@code CommandMessageOtelTraceContextTest} asserts this matches the actual encoding.
      */
     @VisibleForTesting(otherwise = PRIVATE)
     static final int TELEMETRY_SECTION_SIZE = 90;
