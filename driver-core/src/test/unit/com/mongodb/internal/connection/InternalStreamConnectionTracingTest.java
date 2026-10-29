@@ -23,12 +23,15 @@ import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
 import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.observability.micrometer.TraceContext;
 import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.thread.AsyncClientExecutor;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.lang.Nullable;
 import com.mongodb.observability.micrometer.MongodbObservationContext;
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
@@ -42,13 +45,19 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
 import static com.mongodb.internal.connection.InternalStreamConnectionTestHelper.createOpenConnection;
 import static com.mongodb.internal.connection.InternalStreamConnectionTestHelper.createPingCommand;
 import static com.mongodb.internal.connection.InternalStreamConnectionTestHelper.createResponseBody;
 import static com.mongodb.internal.connection.InternalStreamConnectionTestHelper.createValidResponseHeader;
 import static com.mongodb.internal.connection.MessageHelper.findTelemetrySectionDocument;
 import static com.mongodb.internal.mockito.MongoMockito.mock;
+import static com.mongodb.internal.operation.ServerVersionHelper.LATEST_WIRE_VERSION;
+import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -188,6 +197,64 @@ class InternalStreamConnectionTracingTest {
         assertEquals(1, span.errorCount.get(), "span must record the failure exactly once");
         assertEquals(1, span.endCount.get(), "span must end exactly once");
         connection.close();
+    }
+
+    /**
+     * Unacknowledged writes ({@code w:0}) are one-way: the message is sent with the {@code moreToCome} flag and no
+     * reply is read. They still go through the traced send path, so the sent message must carry the telemetry
+     * section, and the one-way branch (rather than the receive path) must end the span exactly once.
+     */
+    @Test
+    @DisplayName("Sync: unacknowledged (w:0) message carries telemetry section; span ends exactly once")
+    void syncUnacknowledgedSendAttachesTelemetrySectionAndEndsSpanOnce() {
+        CapturingTestStream stream = new CapturingTestStream() {
+        };
+        InternalStreamConnection connection = createOpenConnection(stream);
+        CommandMessage commandMessage = createUnacknowledgedInsertCommand();
+        RecordingSpan span = new RecordingSpan();
+
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), createTracedOperationContext(span));
+
+        assertEquals(EXPECTED_TELEMETRY_DOCUMENT, findTelemetrySectionDocument(stream.getWrittenBytes()),
+                "the sent message must carry the telemetry section with the span's traceparent");
+        assertEquals(1, span.endCount.get(), "span must end exactly once");
+        assertEquals(0, span.errorCount.get());
+        assertEquals(span.openScopeCount.get(), span.closeScopeCount.get(), "scopes must be balanced");
+        assertFalse(stream.hadUnexpectedCall(), "no reply must be read for an unacknowledged write");
+        connection.close();
+    }
+
+    /**
+     * Async counterpart of {@link #syncUnacknowledgedSendAttachesTelemetrySectionAndEndsSpanOnce()}.
+     */
+    @Test
+    @DisplayName("Async: unacknowledged (w:0) message carries telemetry section; span ends exactly once")
+    void asyncUnacknowledgedSendAttachesTelemetrySectionAndEndsSpanOnce() {
+        CapturingTestStream stream = new CapturingTestStream() {
+        };
+        InternalStreamConnection connection = createOpenConnection(stream);
+        CommandMessage commandMessage = createUnacknowledgedInsertCommand();
+        RecordingSpan span = new RecordingSpan();
+
+        FutureResultCallback<BsonDocument> callback = new FutureResultCallback<>();
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), createTracedOperationContext(span), callback);
+        assertNull(callback.get(5, TimeUnit.SECONDS));
+
+        assertEquals(EXPECTED_TELEMETRY_DOCUMENT, findTelemetrySectionDocument(stream.getWrittenBytes()),
+                "the sent message must carry the telemetry section with the span's traceparent");
+        assertEquals(1, span.endCount.get(), "span must end exactly once");
+        assertEquals(0, span.errorCount.get());
+        assertFalse(stream.hadUnexpectedCall(), "no reply must be read for an unacknowledged write");
+        connection.close();
+    }
+
+    private static CommandMessage createUnacknowledgedInsertCommand() {
+        BsonDocument insert = new BsonDocument("insert", new BsonString("coll"))
+                .append("documents", new BsonArray(singletonList(new BsonDocument("_id", new BsonInt32(1)))))
+                .append("writeConcern", new BsonDocument("w", new BsonInt32(0)));
+        return new CommandMessage("db", insert, NoOpFieldNameValidator.INSTANCE, primary(),
+                MessageSettings.builder().maxWireVersion(LATEST_WIRE_VERSION).build(),
+                false, EmptyMessageSequences.INSTANCE, SINGLE, null);
     }
 
     private OperationContext createTracedOperationContext(final Span span) {
