@@ -86,6 +86,7 @@ import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize;
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxWriteBatchSize;
 import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize;
+import static com.mongodb.internal.connection.MessageHelper.findTelemetrySectionDocument;
 import static com.mongodb.internal.connection.MessageHeader.MESSAGE_HEADER_LENGTH;
 import static com.mongodb.internal.operation.ServerVersionHelper.LATEST_WIRE_VERSION;
 import static java.util.Arrays.asList;
@@ -1674,33 +1675,6 @@ class InternalStreamConnectionTest {
         public MongoNamespace getNamespace() {
             return null;
         }
-    }
-
-    /**
-     * Walks the OP_MSG sections of the captured wire bytes: skips the type-0 body document, then reads the kind
-     * byte of each subsequent section, returning the decoded kind-3 telemetry document or {@code null}.
-     */
-    @Nullable
-    private static BsonDocument findTelemetrySectionDocument(final byte[] buffer) {
-        ByteBuf byteBuf = new ByteBufNIO(ByteBuffer.wrap(buffer)).order(ByteOrder.LITTLE_ENDIAN);
-        // MsgHeader (16 bytes) + flagBits (4 bytes) + payload type byte (1 byte) for the body section.
-        byteBuf.position(16 + 4 + 1);
-        int bodyLength = byteBuf.getInt(byteBuf.position());
-        byteBuf.position(byteBuf.position() + bodyLength);
-        while (byteBuf.hasRemaining()) {
-            byte kind = byteBuf.get();
-            if (kind == 1) {
-                int sectionStart = byteBuf.position();
-                byteBuf.position(sectionStart + byteBuf.getInt());
-            } else if (kind == 3) {
-                try (org.bson.BsonBinaryReader reader = new org.bson.BsonBinaryReader(byteBuf.asNIO())) {
-                    return new BsonDocumentCodec().decode(reader, org.bson.codecs.DecoderContext.builder().build());
-                }
-            } else {
-                throw new AssertionError("Unexpected section kind byte: " + kind);
-            }
-        }
-        return null;
     }
 
     private InternalStreamConnection createOpenConnection(final TestStream stream, @Nullable final CommandListener commandListener) {
