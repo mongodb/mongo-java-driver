@@ -450,20 +450,19 @@ public class InternalStreamConnection implements InternalConnection {
     @Nullable
     private <T> T sendAndReceiveInternal(final CommandMessage message, final Decoder<T> decoder,
             final OperationContext operationContext) {
-        CommandEventSender commandEventSender;
-        Span tracingSpan;
+        CommandEventSender commandEventSender = new NoOpCommandEventSender();
+        Span tracingSpan = null;
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
-            message.encode(bsonOutput, operationContext);
             tracingSpan = operationContext
                     .getTracingManager()
                     .createTracingSpan(message,
                             operationContext,
-                            () -> message.getCommandDocument(bsonOutput),
                             cmdName -> SECURITY_SENSITIVE_COMMANDS.contains(cmdName)
                                     || SECURITY_SENSITIVE_HELLO_COMMANDS.contains(cmdName),
                             () -> getDescription().getServerAddress(),
                             () -> getDescription().getConnectionId()
                     );
+            message.encode(bsonOutput, operationContext, tracingSpan);
             boolean isLoggingCommandNeeded = isLoggingCommandNeeded();
             boolean isTracingCommandPayloadNeeded = tracingSpan != null && operationContext.getTracingManager().isCommandPayloadEnabled();
 
@@ -478,8 +477,6 @@ public class InternalStreamConnection implements InternalConnection {
                         operationContext, message, commandDocument,
                         COMMAND_PROTOCOL_LOGGER, loggerSettings);
                 commandEventSender.sendStartedEvent();
-            } else {
-                commandEventSender = new NoOpCommandEventSender();
             }
             if (isTracingCommandPayloadNeeded) {
                 tracingSpan.setQueryText(commandDocument);
@@ -487,18 +484,15 @@ public class InternalStreamConnection implements InternalConnection {
             if (tracingSpan != null) {
                 tracingSpan.openScope();
             }
-
-            try {
-                sendCommandMessage(message, bsonOutput, operationContext);
-            } catch (Exception e) {
-                if (tracingSpan != null) {
-                    tracingSpan.error(e);
-                    tracingSpan.closeScope();
-                    tracingSpan.end();
-                }
-                commandEventSender.sendFailedEvent(e);
-                throw e;
+            sendCommandMessage(message, bsonOutput, operationContext);
+        } catch (Throwable t) {
+            if (tracingSpan != null) {
+                tracingSpan.error(t);
+                tracingSpan.closeScope();
+                tracingSpan.end();
             }
+            commandEventSender.sendFailedEvent(t);
+            throw t;
         }
 
         if (message.isResponseExpected()) {
@@ -539,7 +533,7 @@ public class InternalStreamConnection implements InternalConnection {
             final OperationContext operationContext) {
 
         Compressor localSendCompressor = sendCompressor;
-        if (localSendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
+        if (localSendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandName())) {
             trySendMessage(message, bsonOutput, operationContext);
         } else {
             ByteBufferBsonOutput compressedBsonOutput;
@@ -706,18 +700,17 @@ public class InternalStreamConnection implements InternalConnection {
 
         Span tracingSpan = null;
         try {
-            message.encode(bsonOutput, operationContext);
-
             tracingSpan = operationContext
                     .getTracingManager()
                     .createTracingSpan(message,
                             operationContext,
-                            () -> message.getCommandDocument(bsonOutput),
                             cmdName -> SECURITY_SENSITIVE_COMMANDS.contains(cmdName)
                                     || SECURITY_SENSITIVE_HELLO_COMMANDS.contains(cmdName),
                             () -> getDescription().getServerAddress(),
                             () -> getDescription().getConnectionId()
                     );
+
+            message.encode(bsonOutput, operationContext, tracingSpan);
 
             CommandEventSender commandEventSender;
             boolean isLoggingCommandNeeded = isLoggingCommandNeeded();
@@ -759,7 +752,7 @@ public class InternalStreamConnection implements InternalConnection {
 
             commandEventSender.sendStartedEvent();
             Compressor localSendCompressor = sendCompressor;
-            if (localSendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
+            if (localSendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandName())) {
                 sendCommandMessageAsync(message.getId(), decoder, operationContext, tracingCallback, bsonOutput, commandEventSender,
                         message.isResponseExpected());
             } else {
