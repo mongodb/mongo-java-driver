@@ -32,6 +32,10 @@ import java.util.concurrent.TimeUnit;
  * @since 3.0
  * @mongodb.driver.manual reference/command/listCollections/ listCollections
  */
+/*
+ * This interface should declare almost the same set of methods as `ListCollectionNamesIterable`.
+ * See `com.mongodb.client.ListCollectionNamesIterableTest`.
+ */
 public interface ListCollectionsIterable<TResult> extends MongoIterable<TResult> {
 
     /**

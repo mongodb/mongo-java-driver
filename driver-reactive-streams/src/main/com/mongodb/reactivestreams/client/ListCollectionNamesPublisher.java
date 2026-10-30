@@ -29,6 +29,10 @@ import java.util.concurrent.TimeUnit;
  * @since 5.0
  * @mongodb.driver.manual reference/command/listCollections/ listCollections
  */
+/*
+ * This interface should declare almost the same set of methods as `ListCollectionsPublisher`.
+ * See `com.mongodb.reactivestreams.client.ListCollectionNamesPublisherTest`.
+ */
 public interface ListCollectionNamesPublisher extends Publisher<String> {
     /**
      * Sets the query filter to apply to the query.

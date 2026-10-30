@@ -67,11 +67,11 @@ class ChangeStreamIterableSpecification extends Specification {
         changeStreamIterable.iterator()
 
         def codec = new RawBsonDocumentCodec()
-        def operation = executor.getReadOperation() as ChangeStreamOperation<Document>
+        def operation = executor.getReadOperation() as ChangeStreamOperation<RawBsonDocument>
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace,
+        expect operation, isTheSameAs(new ChangeStreamOperation<RawBsonDocument>(namespace,
                 FullDocument.DEFAULT, FullDocumentBeforeChange.DEFAULT, [BsonDocument.parse('{$match: 1}')], codec,
                 ChangeStreamLevel.COLLECTION, null)
                 .retryReads(true))
@@ -87,10 +87,10 @@ class ChangeStreamIterableSpecification extends Specification {
                 .resumeAfter(resumeToken).startAtOperationTime(startAtOperationTime)
                 .startAfter(resumeToken).iterator()
 
-        operation = executor.getReadOperation() as ChangeStreamOperation<Document>
+        operation = executor.getReadOperation() as ChangeStreamOperation<RawBsonDocument>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace,
+        expect operation, isTheSameAs(new ChangeStreamOperation<RawBsonDocument>(namespace,
                 FullDocument.UPDATE_LOOKUP, FullDocumentBeforeChange.WHEN_AVAILABLE, [BsonDocument.parse('{$match: 1}')], codec,
                 ChangeStreamLevel.COLLECTION, null)
                 .retryReads(true)
@@ -169,7 +169,7 @@ class ChangeStreamIterableSpecification extends Specification {
         def results = mongoIterable.first()
 
         then:
-        results.getResumeToken().equals(cannedResults[0].getDocument('_id'))
+        results.getResumeToken() == cannedResults[0].getDocument('_id')
 
         when:
         mongoIterable.forEach(new Consumer<ChangeStreamDocument<Document>>() {

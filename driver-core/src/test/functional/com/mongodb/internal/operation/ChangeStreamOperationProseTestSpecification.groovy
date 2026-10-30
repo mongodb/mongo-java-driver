@@ -40,7 +40,11 @@ import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.internal.connection.ServerHelper.waitForLastRelease
 import static java.util.Arrays.asList
 
-// See https://github.com/mongodb/specifications/tree/master/source/change-streams/tests/README.md#prose-tests
+/**
+ * See <a href="https://github.com/mongodb/specifications/tree/master/source/change-streams/tests/README.md#prose-tests">Prose Tests</a>.
+ * <p>
+ * New tests should be added to {@link com.mongodb.client.ChangeStreamProseTest}.
+ */
 @IgnoreIf({ isStandalone() })
 class ChangeStreamOperationProseTestSpecification extends OperationFunctionalSpecification {
 
