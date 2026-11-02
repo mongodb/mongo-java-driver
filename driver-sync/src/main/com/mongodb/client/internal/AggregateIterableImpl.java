@@ -44,7 +44,8 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements AggregateIterable<TResult> {
+class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult>
+        implements InternalCommonIterable<TResult>, AggregateIterable<TResult> {
     private final Operations<TDocument> operations;
     private final MongoNamespace namespace;
     private final Class<TDocument> documentClass;

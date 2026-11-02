@@ -43,7 +43,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 
 final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStreamDocument<T>>
-        implements ChangeStreamPublisher<T> {
+        implements InternalCommonBatchCursorPublisher<ChangeStreamDocument<T>>, ChangeStreamPublisher<T> {
 
     private final List<? extends Bson> pipeline;
     private final Codec<ChangeStreamDocument<T>> codec;

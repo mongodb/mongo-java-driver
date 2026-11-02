@@ -54,7 +54,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeStreamDocument<TResult>>
-        implements ChangeStreamIterable<TResult> {
+        implements InternalCommonIterable<ChangeStreamDocument<TResult>>, ChangeStreamIterable<TResult> {
     private final CodecRegistry codecRegistry;
     private final List<? extends Bson> pipeline;
     private final Codec<ChangeStreamDocument<TResult>> codec;

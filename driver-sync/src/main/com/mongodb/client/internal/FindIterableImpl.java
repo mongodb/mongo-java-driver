@@ -43,7 +43,8 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * This class is not part of the public API and may be removed or changed at any time.
  */
-public class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements FindIterable<TResult> {
+public class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult>
+        implements InternalCommonIterable<TResult>, FindIterable<TResult> {
 
     private final Operations<TDocument> operations;
 

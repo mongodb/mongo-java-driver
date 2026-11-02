@@ -268,7 +268,8 @@ class MongoDatabaseSpecification extends Specification {
                 BsonDocument, codecRegistry, primary(), executor, false, null, TIMEOUT_SETTINGS))
 
         when:
-        def listCollectionNamesIterable = execute(listCollectionNamesMethod, session)
+        ListCollectionNamesIterableImpl listCollectionNamesIterable =
+                (ListCollectionNamesIterableImpl) execute(listCollectionNamesMethod, session)
 
         then:
         // `listCollectionNamesIterable` is an instance of a `ListCollectionNamesIterableImpl`, so have to get the wrapped iterable from it

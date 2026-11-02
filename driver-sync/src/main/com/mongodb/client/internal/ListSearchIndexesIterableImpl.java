@@ -38,7 +38,8 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-final class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListSearchIndexesIterable<TResult> {
+final class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult>
+        implements InternalCommonIterable<TResult>, ListSearchIndexesIterable<TResult> {
     private final Operations<BsonDocument> operations;
     private final Class<TResult> resultClass;
     @Nullable

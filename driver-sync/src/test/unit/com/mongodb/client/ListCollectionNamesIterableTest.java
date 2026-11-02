@@ -18,6 +18,7 @@ package com.mongodb.client;
 
 import org.junit.jupiter.api.Test;
 
+import java.lang.reflect.Method;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -64,10 +65,14 @@ public final class ListCollectionNamesIterableTest {
 
     private static Set<String> declaredMethodSignatures(final Class<?> klass) {
         return stream(klass.getDeclaredMethods())
-                .map(method -> stream(method.getParameterTypes())
-                        .map(Class::getTypeName)
-                        .collect(joining(", ", method.getName() + "(", ")")))
+                .map(ListCollectionNamesIterableTest::signature)
                 // `TreeSet` results in the alphabetic order of signatures in `toString`, improving assertion messages
                 .collect(toCollection(TreeSet::new));
+    }
+
+    public static String signature(final Method method) {
+        return stream(method.getParameterTypes())
+                .map(Class::getTypeName)
+                .collect(joining(", ", method.getName() + "(", ")"));
     }
 }

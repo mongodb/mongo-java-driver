@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
-final class ListCollectionNamesIterableImpl implements ListCollectionNamesIterable {
+final class ListCollectionNamesIterableImpl implements InternalCommonIterable<String>, ListCollectionNamesIterable {
     private final ListCollectionsIterableImpl<BsonDocument> wrapped;
     private final MongoIterable<String> wrappedWithMapping;
 

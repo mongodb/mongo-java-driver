@@ -39,7 +39,8 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListDatabasesIterable<TResult> {
+public class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResult>
+        implements InternalCommonIterable<TResult>, ListDatabasesIterable<TResult> {
     private final Operations<BsonDocument> operations;
     private final Class<TResult> resultClass;
 
