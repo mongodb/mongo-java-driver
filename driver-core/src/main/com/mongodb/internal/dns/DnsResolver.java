@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.dns;
 
-import com.mongodb.lang.Nullable;
+import com.mongodb.connection.SrvHostValidator;
 
 import java.util.List;
 
@@ -27,7 +27,7 @@ import java.util.List;
  */
 public interface DnsResolver {
 
-    List<String> resolveHostFromSrvRecords(String srvHost, String srvServiceName, @Nullable String srvAllowedHostsSuffix);
+    List<String> resolveHostFromSrvRecords(String srvHost, String srvServiceName, SrvHostValidator srvHostValidator);
 
     String resolveAdditionalQueryParametersFromTxtRecords(String host);
 }
