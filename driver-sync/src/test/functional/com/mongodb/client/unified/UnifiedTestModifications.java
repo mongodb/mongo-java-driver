@@ -639,8 +639,6 @@ public final class UnifiedTestModifications {
 
         // Server problems
         def.skipJira("https://jira.mongodb.org/browse/JAVA-6342")
-                .test("server-discovery-and-monitoring", "auth-network-timeout-error",
-                "Reset server and pool after network timeout error during authentication")
                 .test("server-discovery-and-monitoring", "hello-timeout", "Driver extends timeout while streaming")
                 .test("load-balancers",
                         "cursors are correctly pinned to connections for load-balanced clusters",
