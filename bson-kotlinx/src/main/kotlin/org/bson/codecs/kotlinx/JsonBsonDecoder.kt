@@ -114,7 +114,7 @@ internal class JsonBsonDecoderImpl(
     serializersModule: SerializersModule,
     configuration: BsonConfiguration
 ) : BsonDecoderImpl(reader, serializersModule, configuration), JsonBsonDecoder {
-    override val json = json()
+    override val json by lazy(LazyThreadSafetyMode.NONE) { json() }
 }
 
 internal class JsonBsonArrayDecoder(
@@ -123,7 +123,7 @@ internal class JsonBsonArrayDecoder(
     serializersModule: SerializersModule,
     configuration: BsonConfiguration
 ) : BsonArrayDecoder(descriptor, reader, serializersModule, configuration), JsonBsonDecoder {
-    override val json = json()
+    override val json by lazy(LazyThreadSafetyMode.NONE) { json() }
 }
 
 internal class JsonBsonDocumentDecoder(
@@ -132,7 +132,7 @@ internal class JsonBsonDocumentDecoder(
     serializersModule: SerializersModule,
     configuration: BsonConfiguration
 ) : BsonDocumentDecoder(descriptor, reader, serializersModule, configuration), JsonBsonDecoder {
-    override val json = json()
+    override val json by lazy(LazyThreadSafetyMode.NONE) { json() }
 }
 
 internal class JsonBsonPolymorphicDecoder(
@@ -141,7 +141,7 @@ internal class JsonBsonPolymorphicDecoder(
     serializersModule: SerializersModule,
     configuration: BsonConfiguration
 ) : BsonPolymorphicDecoder(descriptor, reader, serializersModule, configuration), JsonBsonDecoder {
-    override val json = json()
+    override val json by lazy(LazyThreadSafetyMode.NONE) { json() }
 }
 
 internal class JsonBsonMapDecoder(
@@ -150,5 +150,5 @@ internal class JsonBsonMapDecoder(
     serializersModule: SerializersModule,
     configuration: BsonConfiguration
 ) : BsonMapDecoder(descriptor, reader, serializersModule, configuration), JsonBsonDecoder {
-    override val json = json()
+    override val json by lazy(LazyThreadSafetyMode.NONE) { json() }
 }

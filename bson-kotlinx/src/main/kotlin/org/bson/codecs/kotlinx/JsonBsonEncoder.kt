@@ -46,13 +46,16 @@ internal class JsonBsonEncoder(
         private val LONG_MAX_VALUE = BigDecimal.valueOf(Long.MAX_VALUE)
     }
 
-    override val json = Json {
-        explicitNulls = configuration.explicitNulls
-        encodeDefaults = configuration.encodeDefaults
-        classDiscriminator = configuration.classDiscriminator
-        namingStrategy = configuration.bsonNamingStrategy.toJsonNamingStrategy()
-        serializersModule = this@JsonBsonEncoder.serializersModule
-    }
+    override val json by
+        lazy(LazyThreadSafetyMode.NONE) {
+            Json {
+                explicitNulls = configuration.explicitNulls
+                encodeDefaults = configuration.encodeDefaults
+                classDiscriminator = configuration.classDiscriminator
+                namingStrategy = configuration.bsonNamingStrategy.toJsonNamingStrategy()
+                serializersModule = this@JsonBsonEncoder.serializersModule
+            }
+        }
 
     override fun <T> encodeSerializableValue(serializer: SerializationStrategy<T>, value: T) {
         if (value is JsonElement) encodeJsonElement(value)
