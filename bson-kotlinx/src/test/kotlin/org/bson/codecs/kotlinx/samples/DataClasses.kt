@@ -368,6 +368,9 @@ data class DataClassWithFailingInit(val id: String) {
 
 @Serializable data class DataClassWithNullableGeneric(val box: Box<String?>)
 
+@Serializable
+data class DataClassWithMissingNullables(val first: String?, val second: String?, val third: String? = "c")
+
 @Serializable(with = JsonConfigurationValueSerializer::class) data class JsonConfigurationValue(val value: String)
 
 object JsonConfigurationValueSerializer : KSerializer<JsonConfigurationValue> {

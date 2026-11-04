@@ -106,6 +106,7 @@ import org.bson.codecs.kotlinx.samples.DataClassWithJsonElements
 import org.bson.codecs.kotlinx.samples.DataClassWithJsonElementsNullable
 import org.bson.codecs.kotlinx.samples.DataClassWithKotlinAllowedName
 import org.bson.codecs.kotlinx.samples.DataClassWithListThatLastItemDefaultsToNull
+import org.bson.codecs.kotlinx.samples.DataClassWithMissingNullables
 import org.bson.codecs.kotlinx.samples.DataClassWithMutableList
 import org.bson.codecs.kotlinx.samples.DataClassWithMutableMap
 import org.bson.codecs.kotlinx.samples.DataClassWithMutableSet
@@ -1093,6 +1094,14 @@ class KotlinSerializerCodecTest {
                     Pair("nestedLong", buildJsonObject { put("long", 3000000000L) })))
 
         assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithMissingNullableFields() {
+        assertDecodesTo(BsonDocument.parse("{}"), DataClassWithMissingNullables(null, null))
+        assertDecodesTo(BsonDocument.parse("""{"second": "b"}"""), DataClassWithMissingNullables(null, "b"))
+        assertDecodesTo(
+            BsonDocument.parse("""{"first": "a", "third": "c"}"""), DataClassWithMissingNullables("a", null, "c"))
     }
 
     @Test
