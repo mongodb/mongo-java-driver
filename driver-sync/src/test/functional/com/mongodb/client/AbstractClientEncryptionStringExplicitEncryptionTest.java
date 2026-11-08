@@ -63,7 +63,6 @@ import static util.JsonPoweredTestHelper.getTestDocument;
 public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
 
     private static final ServerVersion MIN_SUPPORTED_LIB_MONGOCRYPT_VERSION = new ServerVersion(asList(1, 20, 0));
-    private boolean gaSupported;
     private MongoClient explicitEncryptedClient;
     private MongoClient autoEncryptedClient;
     private MongoDatabase explicitEncryptedDatabase;
@@ -78,22 +77,18 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
     public void setUp() {
         assumeTrue(hasEncryptionTestsEnabled(), "String explicit encryption tests disabled");
         assumeTrue(getMongoCryptVersion().compareTo(MIN_SUPPORTED_LIB_MONGOCRYPT_VERSION) >= 0, "Requires newer MongoCrypt version");
-        assumeTrue(serverVersionAtLeast(8, 2));
+        assumeTrue(serverVersionAtLeast(9, 0));
         assumeFalse(isStandalone());
-
-        gaSupported = serverVersionAtLeast(9, 0);
 
         MongoNamespace dataKeysNamespace = new MongoNamespace("keyvault.datakeys");
         BsonDocument key1Document = bsonDocumentFromPath("keys/key1-document.json");
 
         Map<String, Map<String, Object>> kmsProviders = getKmsProviders(EncryptionFixture.KmsProviderType.LOCAL);
 
-        if (gaSupported) {
-            createEncryptedCollection("prefix-suffix", "encryptedFields-prefix-suffix.json");
-            createEncryptedCollection("prefix-suffix-ci-di", "encryptedFields-prefix-suffix-ci-di.json");
-            createEncryptedCollection("substring", "encryptedFields-substring.json");
-            createEncryptedCollection("substring-ci-di", "encryptedFields-substring-ci-di.json");
-        }
+        createEncryptedCollection("prefix-suffix", "encryptedFields-prefix-suffix.json");
+        createEncryptedCollection("prefix-suffix-ci-di", "encryptedFields-prefix-suffix-ci-di.json");
+        createEncryptedCollection("substring", "encryptedFields-substring.json");
+        createEncryptedCollection("substring-ci-di", "encryptedFields-substring-ci-di.json");
 
         MongoCollection<BsonDocument> dataKeysCollection = getMongoClient()
                 .getDatabase(dataKeysNamespace.getDatabaseName())
@@ -138,12 +133,10 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
                                 .diacriticSensitive(true)
                                 .prefixOptions(BsonDocument.parse("{strMaxQueryLength: 10, strMinQueryLength: 2}"))
                                 .suffixOptions(BsonDocument.parse("{strMaxQueryLength: 10, strMinQueryLength: 2}"))));
-        if (gaSupported) {
-            explicitEncryptedDatabase.getCollection("prefix-suffix")
-                    .insertOne(new Document("_id", 0).append("encryptedText", prefixSuffixSeed));
-        }
+        explicitEncryptedDatabase.getCollection("prefix-suffix")
+                .insertOne(new Document("_id", 0).append("encryptedText", prefixSuffixSeed));
 
-        // Seed the substring collection: GA "substring" on 9.0+.
+        // Seed the substring collection.
         BsonBinary substringSeed = clientEncryption.encrypt(new BsonString("foobarbaz"),
                 new EncryptOptions("String")
                         .keyId(key1Id)
@@ -153,20 +146,15 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
                                 .diacriticSensitive(true)
                                 .substringOptions(BsonDocument.parse(
                                         "{strMaxLength: 10, strMaxQueryLength: 6, strMinQueryLength: 2}"))));
-        if (gaSupported) {
-            explicitEncryptedDatabase.getCollection("substring")
-                    .insertOne(new Document("_id", 0).append("encryptedText", substringSeed));
-        }
+        explicitEncryptedDatabase.getCollection("substring")
+                .insertOne(new Document("_id", 0).append("encryptedText", substringSeed));
     }
 
     @Test
     @DisplayName("Case 1: can find a document by prefix")
     public void test1CanFindADocumentByPrefix() {
-        assumeTrue(gaSupported);
-        String queryType = "prefix";
-        String collection = "prefix-suffix";
-        BsonBinary encrypted = encryptForPrefix("foo", queryType, true, true);
-        Document result = explicitEncryptedDatabase.getCollection(collection)
+        BsonBinary encrypted = encryptForPrefix("foo", "prefix", true, true);
+        Document result = explicitEncryptedDatabase.getCollection("prefix-suffix")
                 .find(encStrStartsWith(encrypted)).first();
         assertDocumentEquals(Document.parse("{ \"_id\": 0, \"encryptedText\": \"foobarbaz\" }"), result);
     }
@@ -174,11 +162,8 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
     @Test
     @DisplayName("Case 2: can find a document by suffix")
     public void test2CanFindADocumentBySuffix() {
-        assumeTrue(gaSupported);
-        String queryType = "suffix";
-        String collection = "prefix-suffix";
-        BsonBinary encrypted = encryptForSuffix("baz", queryType, true, true);
-        Document result = explicitEncryptedDatabase.getCollection(collection)
+        BsonBinary encrypted = encryptForSuffix("baz", "suffix", true, true);
+        Document result = explicitEncryptedDatabase.getCollection("prefix-suffix")
                 .find(encStrEndsWith(encrypted)).first();
         assertDocumentEquals(Document.parse("{ \"_id\": 0, \"encryptedText\": \"foobarbaz\" }"), result);
     }
@@ -186,11 +171,8 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
     @Test
     @DisplayName("Case 3: assert no document found by prefix")
     public void test3AssertNoDocumentFoundByPrefix() {
-        assumeTrue(gaSupported);
-        String queryType = "prefix";
-        String collection = "prefix-suffix";
-        BsonBinary encrypted = encryptForPrefix("baz", queryType, true, true);
-        Document result = explicitEncryptedDatabase.getCollection(collection)
+        BsonBinary encrypted = encryptForPrefix("baz", "prefix", true, true);
+        Document result = explicitEncryptedDatabase.getCollection("prefix-suffix")
                 .find(encStrStartsWith(encrypted)).first();
         assertNull(result);
     }
@@ -198,11 +180,8 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
     @Test
     @DisplayName("Case 4: assert no document found by suffix")
     public void test4AssertNoDocumentFoundBySuffix() {
-        assumeTrue(gaSupported);
-        String queryType = "suffix";
-        String collection = "prefix-suffix";
-        BsonBinary encrypted = encryptForSuffix("foo", queryType, true, true);
-        Document result = explicitEncryptedDatabase.getCollection(collection)
+        BsonBinary encrypted = encryptForSuffix("foo", "suffix", true, true);
+        Document result = explicitEncryptedDatabase.getCollection("prefix-suffix")
                 .find(encStrEndsWith(encrypted)).first();
         assertNull(result);
     }
@@ -210,11 +189,8 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
     @Test
     @DisplayName("Case 5: can find a document by substring")
     public void test5CanFindADocumentBySubstring() {
-        assumeTrue(gaSupported);
-        String queryType = "substring";
-        String collection = "substring";
-        BsonBinary encrypted = encryptForSubstring("bar", queryType, true, true);
-        Document result = explicitEncryptedDatabase.getCollection(collection)
+        BsonBinary encrypted = encryptForSubstring("bar", "substring", true, true);
+        Document result = explicitEncryptedDatabase.getCollection("substring")
                 .find(encStrContains(encrypted)).first();
         assertDocumentEquals(Document.parse("{ \"_id\": 0, \"encryptedText\": \"foobarbaz\" }"), result);
     }
@@ -222,11 +198,8 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
     @Test
     @DisplayName("Case 6: assert no document found by substring")
     public void test6AssertNoDocumentFoundBySubstring() {
-        assumeTrue(gaSupported);
-        String queryType = "substring";
-        String collection = "substring";
-        BsonBinary encrypted = encryptForSubstring("qux", queryType, true, true);
-        Document result = explicitEncryptedDatabase.getCollection(collection)
+        BsonBinary encrypted = encryptForSubstring("qux", "substring", true, true);
+        Document result = explicitEncryptedDatabase.getCollection("substring")
                 .find(encStrContains(encrypted)).first();
         assertNull(result);
     }
@@ -234,7 +207,6 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
     @Test
     @DisplayName("Case 7: assert `contentionFactor` is required")
     public void test7AssertContentionFactorIsRequired() {
-        assumeTrue(gaSupported);
         EncryptOptions encryptOptions = new EncryptOptions("String")
                 .keyId(key1Id)
                 .queryType("prefix")
@@ -250,7 +222,6 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
     @Test
     @DisplayName("Case 8: can find an auto-encrypted case-insensitively indexed document by prefix and suffix")
     public void test8AutoEncryptedCaseInsensitivePrefixAndSuffix() {
-        assumeTrue(gaSupported);
         autoEncryptedDatabase.getCollection("prefix-suffix-ci-di")
                 .insertOne(new Document("encryptedText", "BingQiLin"));
 
@@ -268,7 +239,6 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
     @Test
     @DisplayName("Case 9: can find an auto-encrypted diacritic-insensitively indexed document by prefix and suffix")
     public void test9AutoEncryptedDiacriticInsensitivePrefixAndSuffix() {
-        assumeTrue(gaSupported);
         autoEncryptedDatabase.getCollection("prefix-suffix-ci-di")
                 .insertOne(new Document("encryptedText", "cafébarbäz"));
 
@@ -286,7 +256,6 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
     @Test
     @DisplayName("Case 10: can find an auto-encrypted case-insensitively indexed document by substring")
     public void test10AutoEncryptedCaseInsensitiveSubstring() {
-        assumeTrue(gaSupported);
         autoEncryptedDatabase.getCollection("substring-ci-di")
                 .insertOne(new Document("encryptedText", "FooBarBaz"));
 
@@ -299,7 +268,6 @@ public abstract class AbstractClientEncryptionStringExplicitEncryptionTest {
     @Test
     @DisplayName("Case 11: can find an auto-encrypted diacritic-insensitively indexed document by substring")
     public void test11AutoEncryptedDiacriticInsensitiveSubstring() {
-        assumeTrue(gaSupported);
         autoEncryptedDatabase.getCollection("substring-ci-di")
                 .insertOne(new Document("encryptedText", "foocafébaz"));
 

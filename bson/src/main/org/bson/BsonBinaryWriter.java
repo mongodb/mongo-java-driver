@@ -379,17 +379,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
 
             if (extraElements != null) {
                 bsonOutput.truncateToPosition(bsonOutput.getPosition() - 1);
-                setContext(new Context(getContext(), BsonContextType.DOCUMENT, pipedDocumentStartPosition));
-                setState(State.NAME);
-                pipeExtraElements(extraElements);
-                bsonOutput.writeByte(0);
-                bsonOutput.writeInt32(pipedDocumentStartPosition, bsonOutput.getPosition() - pipedDocumentStartPosition);
-                setContext(getContext().getParentContext());
-            }
-
-            completePipeDocument(pipedDocumentStartPosition);
-        } else if (extraElements != null) {
-            super.pipe(reader, extraElements);
+                setContext(pipe(reader, extraElements);
         } else {
             super.pipe(reader);
         }
