@@ -48,6 +48,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
 import static com.mongodb.internal.connection.InternalStreamConnectionTestHelper.createOpenConnection;
+import static com.mongodb.internal.connection.InternalStreamConnectionTestHelper.createOperationContext;
 import static com.mongodb.internal.connection.InternalStreamConnectionTestHelper.createPingCommand;
 import static com.mongodb.internal.connection.InternalStreamConnectionTestHelper.createResponseBody;
 import static com.mongodb.internal.connection.InternalStreamConnectionTestHelper.createValidResponseHeader;
@@ -60,6 +61,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
@@ -257,8 +259,44 @@ class InternalStreamConnectionTracingTest {
                 false, EmptyMessageSequences.INSTANCE, SINGLE, null);
     }
 
+    /**
+     * {@code send()} is reserved for monitoring: it creates no command span and never propagates trace context, so
+     * a tracing-enabled context must use {@code sendAndReceive} instead. Using it here must fail before anything
+     * is written.
+     */
+    @Test
+    @DisplayName("send() rejects a tracing-enabled operation context before writing")
+    void sendRejectsTracingEnabledOperationContext() {
+        CapturingTestStream stream = new CapturingTestStream() {
+        };
+        InternalStreamConnection connection = createOpenConnection(stream);
+
+        assertThrows(IllegalStateException.class, () -> connection.send(createPingCommand(), new BsonDocumentCodec(),
+                createTracedOperationContext(new RecordingSpan())));
+        assertEquals(0, stream.getWrittenBytes().length, "nothing must be written");
+        connection.close();
+    }
+
+    /**
+     * The monitoring caller runs with {@code TracingManager.NO_OP}, which {@code send()} accepts.
+     */
+    @Test
+    @DisplayName("send() accepts a tracing-disabled (monitoring) operation context")
+    void sendAcceptsTracingDisabledOperationContext() {
+        CapturingTestStream stream = new CapturingTestStream() {
+        };
+        InternalStreamConnection connection = createOpenConnection(stream);
+
+        connection.send(createPingCommand(), new BsonDocumentCodec(), createOperationContext());
+
+        assertTrue(stream.getWrittenBytes().length > 0, "the message must be written");
+        assertNull(findTelemetrySectionDocument(stream.getWrittenBytes()));
+        connection.close();
+    }
+
     private OperationContext createTracedOperationContext(final Span span) {
         TracingManager tracingManager = mock(TracingManager.class, mocked -> {
+            when(mocked.isEnabled()).thenReturn(true);
             when(mocked.createTracingSpan(any(), any(), any(), any(), any())).thenReturn(span);
             when(mocked.isCommandPayloadEnabled()).thenReturn(false);
         });

@@ -509,6 +509,7 @@ public class InternalStreamConnection implements InternalConnection {
 
     @Override
     public <T> void send(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext) {
+        isTrue("tracing disabled for send()", !operationContext.getTracingManager().isEnabled());
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
             message.encode(bsonOutput, operationContext);
             sendCommandMessage(message, bsonOutput, operationContext);
