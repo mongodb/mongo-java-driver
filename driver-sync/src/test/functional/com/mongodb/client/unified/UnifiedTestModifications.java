@@ -432,7 +432,9 @@ public final class UnifiedTestModifications {
                 .file("gridfs", "gridfs-rename");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5689")
                 .file("gridfs", "gridfs-deleteByName")
-                .file("gridfs", "gridfs-renameByName");
+                .file("gridfs", "gridfs-renameByName")
+                .test("read-write-concern", "write-concern-errors-gridfs", "deleteByName reports a writeConcernError")
+                .test("read-write-concern", "write-concern-errors-gridfs", "renameByName reports a writeConcernError");
 
         // Skip all rawData based tests
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5830 rawData support only added to Go and Node")
