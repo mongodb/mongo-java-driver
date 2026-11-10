@@ -176,6 +176,12 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
     }
 
     @Override
+    public ChangeStreamPublisher<T> commandOption(final String name, final Object value) {
+        super.commandOption(notNull("name", name), notNull("value", value));
+        return this;
+    }
+
+    @Override
     ReadOperationCursor<ChangeStreamDocument<T>> asReadOperation(final int initialBatchSize) {
         return createChangeStreamOperation(codec, initialBatchSize);
     }

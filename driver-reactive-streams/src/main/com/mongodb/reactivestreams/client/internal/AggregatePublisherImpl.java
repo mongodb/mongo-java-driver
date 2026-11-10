@@ -171,6 +171,12 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T>
         return publishExplain(explainResultClass, notNull("verbosity", verbosity));
     }
 
+    @Override
+    public AggregatePublisher<T> commandOption(final String name, final Object value) {
+        super.commandOption(notNull("name", name), notNull("value", value));
+        return this;
+    }
+
     private <E> Publisher<E> publishExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
         notNull("explainDocumentClass", explainResultClass);
         return getMongoOperationPublisher().createReadOperationMono(

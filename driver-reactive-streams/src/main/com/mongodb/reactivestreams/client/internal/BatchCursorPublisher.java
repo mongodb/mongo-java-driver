@@ -37,6 +37,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -128,6 +129,11 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
                                 return Mono.fromCallable(() -> results.get(0));
                             });
                 });
+    }
+
+    // VAKOTODO maybe rename and document that a subclass must actually support it for it to work
+    public Publisher<T> commandOption(final String name, final Object value) {
+        throw fail("VAKOTODO");
     }
 
     @Override

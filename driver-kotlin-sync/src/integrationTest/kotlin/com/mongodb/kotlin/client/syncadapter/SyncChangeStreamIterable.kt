@@ -58,4 +58,8 @@ internal class SyncChangeStreamIterable<T : Any>(val wrapped: ChangeStreamIterab
     override fun startAtOperationTime(startAtOperationTime: BsonTimestamp): SyncChangeStreamIterable<T> = apply {
         wrapped.startAtOperationTime(startAtOperationTime)
     }
+
+    override fun commandOption(name: String, value: Any): SyncChangeStreamIterable<T> = apply {
+        wrapped.commandOption(name, value)
+    }
 }

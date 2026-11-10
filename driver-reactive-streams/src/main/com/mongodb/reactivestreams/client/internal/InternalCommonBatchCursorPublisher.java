@@ -129,4 +129,8 @@ public interface InternalCommonBatchCursorPublisher<TResult> extends Publisher<T
     default Publisher<TResult> bypassDocumentValidation(@Nullable Boolean bypassDocumentValidation) {
         throw fail();
     }
+
+    default Publisher<TResult> commandOption(String name, Object value) {
+        throw fail();
+    }
 }

@@ -197,6 +197,12 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
     }
 
     @Override
+    public ChangeStreamIterable<TResult> commandOption(final String name, final Object value) {
+        super.commandOption(notNull("name", name), notNull("value", value));
+        return this;
+    }
+
+    @Override
     public MongoCursor<ChangeStreamDocument<TResult>> iterator() {
         return cursor();
     }

@@ -121,4 +121,8 @@ public interface InternalCommonIterable<TResult> extends MongoIterable<TResult> 
     default MongoIterable<TResult> bypassDocumentValidation(@Nullable Boolean bypassDocumentValidation) {
         throw fail();
     }
+
+    default MongoIterable<TResult> commandOption(String name, Object value) {
+        throw fail();
+    }
 }

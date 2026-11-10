@@ -178,4 +178,16 @@ public class ChangeStreamIterable<T : Any>(private val wrapped: JChangeStreamIte
     public fun showExpandedEvents(showExpandedEvents: Boolean): ChangeStreamIterable<T> = apply {
         wrapped.showExpandedEvents(showExpandedEvents)
     }
+
+    /**
+     * VAKOTODO
+     *
+     * @param name VAKOTODO.
+     * @param value VAKOTODO.
+     * @return VAKOTODO.
+     * @since 5.15
+     */
+    public fun commandOption(name: String, value: Any): ChangeStreamIterable<T> = apply {
+        wrapped.commandOption(name, value)
+    }
 }

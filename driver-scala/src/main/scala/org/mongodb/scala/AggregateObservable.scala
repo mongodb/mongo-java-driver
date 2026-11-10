@@ -264,6 +264,19 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
     wrapped.explain[ExplainResult](ct, verbosity)
 
   /**
+   * VAKOTODO.
+   *
+   * @param name VAKOTODO.
+   * @param value VAKOTODO.
+   * @return VAKOTODO.
+   * @since 5.15
+   */
+  def commandOption(name: String, value: Any): AggregateObservable[TResult] = {
+    wrapped.commandOption(name, value)
+    this
+  }
+
+  /**
    * Requests [[AggregateObservable]] to start streaming data according to the specified aggregation pipeline.
    *
    *  - If the aggregation pipeline ends with an `\$out` or `\$merge` stage,

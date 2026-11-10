@@ -219,4 +219,16 @@ public class AggregateIterable<T : Any>(private val wrapped: JAggregateIterable<
      */
     public inline fun <reified R : Any> explain(verbosity: ExplainVerbosity? = null): R =
         explain(R::class.java, verbosity)
+
+    /**
+     * VAKOTODO
+     *
+     * @param name VAKOTODO.
+     * @param value VAKOTODO.
+     * @return VAKOTODO.
+     * @since 5.15
+     */
+    public fun commandOption(name: String, value: Any): AggregateIterable<T> = apply {
+        wrapped.commandOption(name, value)
+    }
 }

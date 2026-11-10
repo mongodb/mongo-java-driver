@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -112,6 +113,11 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
         }
         this.timeoutMode = timeoutMode;
         return this;
+    }
+
+    // VAKOTODO maybe rename and document that a subclass must actually support it for it to work
+    public MongoIterable<TResult> commandOption(final String name, final Object value) {
+        throw fail("VAKOTODO");
     }
 
     @Override

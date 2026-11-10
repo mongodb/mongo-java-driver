@@ -178,4 +178,14 @@ public interface ChangeStreamPublisher<TResult> extends Publisher<ChangeStreamDo
      * @mongodb.server.release 6.0
      */
     ChangeStreamPublisher<TResult> showExpandedEvents(boolean showExpandedEvents);
+
+    /**
+     * VAKOTODO
+     *
+     * @param name VAKOTODO.
+     * @param value VAKOTODO.
+     * @return VAKOTODO.
+     * @since 5.15
+     */
+    ChangeStreamPublisher<TResult> commandOption(String name, Object value);
 }

@@ -107,4 +107,9 @@ case class SyncAggregateIterable[T](wrapped: AggregateObservable[T])
       .explain[E](verbosity)(DefaultsTo.overrideDefault[E, org.mongodb.scala.Document], ClassTag(explainResultClass))
       .toFuture()
       .get()
+
+  override def commandOption(name: String, value: Object): AggregateIterable[T] = {
+    wrapped.commandOption(name, value)
+    this
+  }
 }

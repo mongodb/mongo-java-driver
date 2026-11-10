@@ -200,6 +200,12 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         return executeExplain(explainResultClass, notNull("verbosity", verbosity));
     }
 
+    @Override
+    public AggregateIterable<TResult> commandOption(final String name, final Object value) {
+        super.commandOption(notNull("name", name), notNull("value", value));
+        return this;
+    }
+
     private <E> E executeExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
         notNull("explainDocumentClass", explainResultClass);
         return getExecutor().execute(
