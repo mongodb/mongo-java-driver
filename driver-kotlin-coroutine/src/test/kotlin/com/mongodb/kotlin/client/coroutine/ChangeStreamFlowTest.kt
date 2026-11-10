@@ -56,6 +56,10 @@ class ChangeStreamFlowTest {
         val comment = "comment"
         val operationTime = BsonTimestamp(1)
         val resumeToken = BsonDocument()
+        val stringCommandOptionName = "stringCommandOptionName"
+        val stringCommandOptionValue = "stringCommandOptionValue"
+        val intCommandOptionName = "intCommandOptionName"
+        val intCommandOptionValue = 1
 
         flow.batchSize(batchSize)
         flow.collation(collation)
@@ -69,6 +73,8 @@ class ChangeStreamFlowTest {
         flow.showExpandedEvents(true)
         flow.startAfter(resumeToken)
         flow.startAtOperationTime(operationTime)
+        flow.commandOption(stringCommandOptionName, stringCommandOptionValue)
+        flow.commandOption(intCommandOptionName, intCommandOptionValue)
 
         verify(wrapped).batchSize(batchSize)
         verify(wrapped).collation(collation)
@@ -82,6 +88,8 @@ class ChangeStreamFlowTest {
         verify(wrapped).showExpandedEvents(true)
         verify(wrapped).startAfter(resumeToken)
         verify(wrapped).startAtOperationTime(operationTime)
+        verify(wrapped).commandOption(stringCommandOptionName, stringCommandOptionValue)
+        verify(wrapped).commandOption(intCommandOptionName, intCommandOptionValue)
 
         whenever(wrapped.withDocumentClass(BsonDocument::class.java)).doReturn(mock())
         runBlocking { flow.withDocumentClass<BsonDocument>() }

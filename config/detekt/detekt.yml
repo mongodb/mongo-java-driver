@@ -120,6 +120,7 @@ complexity:
   LongMethod:
     active: true
     threshold: 60
+    excludes: ['**/test/**']
   LongParameterList:
     active: true
     functionThreshold: 6

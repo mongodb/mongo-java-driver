@@ -279,4 +279,14 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * @mongodb.server.release 3.6
      */
     <E> E explain(Class<E> explainResultClass, ExplainVerbosity verbosity);
+
+    /**
+     * VAKOTODO
+     *
+     * @param name VAKOTODO.
+     * @param value VAKOTODO.
+     * @return VAKOTODO.
+     * @since 5.15
+     */
+    AggregateIterable<TResult> commandOption(String name, Object value);
 }

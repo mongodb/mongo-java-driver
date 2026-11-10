@@ -57,6 +57,10 @@ class AggregateIterableTest {
         val hint = Document("h", 1)
         val hintString = "hintString"
         val verbosity = ExplainVerbosity.QUERY_PLANNER
+        val stringCommandOptionName = "stringCommandOptionName"
+        val stringCommandOptionValue = "stringCommandOptionValue"
+        val intCommandOptionName = "intCommandOptionName"
+        val intCommandOptionValue = 1
 
         whenever(wrapped.explain(Document::class.java)).doReturn(mock())
         whenever(wrapped.explain(Document::class.java, verbosity)).doReturn(mock())
@@ -82,6 +86,8 @@ class AggregateIterableTest {
         iterable.maxTime(1)
         iterable.maxTime(1, TimeUnit.SECONDS)
         iterable.timeoutMode(TimeoutMode.ITERATION)
+        iterable.commandOption(stringCommandOptionName, stringCommandOptionValue)
+        iterable.commandOption(intCommandOptionName, intCommandOptionValue)
 
         verify(wrapped).allowDiskUse(true)
         verify(wrapped).batchSize(batchSize)
@@ -100,6 +106,8 @@ class AggregateIterableTest {
         verify(wrapped).maxTime(1, TimeUnit.SECONDS)
         verify(wrapped).let(bson)
         verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
+        verify(wrapped).commandOption(stringCommandOptionName, stringCommandOptionValue)
+        verify(wrapped).commandOption(intCommandOptionName, intCommandOptionValue)
 
         iterable.toCollection()
         verify(wrapped).toCollection()

@@ -48,6 +48,10 @@ class AggregateObservableSpec extends BaseSpec with MockitoSugar {
     val batchSize = 10
     val ct = classOf[Document]
     val verbosity = ExplainVerbosity.QUERY_PLANNER
+    val stringCommandOptionName = "stringCommandOptionName"
+    val stringCommandOptionValue = "stringCommandOptionValue"
+    val intCommandOptionName = "intCommandOptionName"
+    val intCommandOptionValue = 1
 
     observable.allowDiskUse(true)
     observable.maxTime(duration)
@@ -60,6 +64,8 @@ class AggregateObservableSpec extends BaseSpec with MockitoSugar {
     observable.explain[Document]()
     observable.explain[Document](verbosity)
     observable.timeoutMode(TimeoutMode.ITERATION)
+    observable.commandOption(stringCommandOptionName, stringCommandOptionValue)
+    observable.commandOption(intCommandOptionName, intCommandOptionValue)
 
     verify(wrapper).allowDiskUse(true)
     verify(wrapper).maxTime(duration.toMillis, TimeUnit.MILLISECONDS)
@@ -72,6 +78,8 @@ class AggregateObservableSpec extends BaseSpec with MockitoSugar {
     verify(wrapper).explain(ct)
     verify(wrapper).explain(ct, verbosity)
     verify(wrapper).timeoutMode(TimeoutMode.ITERATION)
+    verify(wrapper).commandOption(stringCommandOptionName, stringCommandOptionValue)
+    verify(wrapper).commandOption(intCommandOptionName, intCommandOptionValue)
 
     observable.toCollection()
     verify(wrapper).toCollection

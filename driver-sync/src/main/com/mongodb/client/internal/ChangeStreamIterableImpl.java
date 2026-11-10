@@ -138,6 +138,7 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
                 return cursor();
             }
 
+            // VAKOTODO use commandOption
             @Override
             public MongoChangeStreamCursor<TDocument> cursor() {
                 return new MongoChangeStreamCursorImpl<>(execute(getBatchSize()), codecRegistry.get(clazz), initialResumeToken());
@@ -197,10 +198,17 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
     }
 
     @Override
+    public ChangeStreamIterable<TResult> commandOption(final String name, final Object value) {
+        setOverridingCommandOption(notNull("name", name), notNull("value", value));
+        return this;
+    }
+
+    @Override
     public MongoCursor<ChangeStreamDocument<TResult>> iterator() {
         return cursor();
     }
 
+    // VAKOTODO use commandOption
     @Override
     public MongoChangeStreamCursor<ChangeStreamDocument<TResult>> cursor() {
         return new MongoChangeStreamCursorImpl<>(execute(getBatchSize()), codec, initialResumeToken());
@@ -227,6 +235,7 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
         return getExecutor(operations.createTimeoutSettings(0, maxAwaitTimeMS));
     }
 
+    // VAKOTODO use commandOption
     private ReadOperationCursor<RawBsonDocument> createChangeStreamOperation(@Nullable final Integer batchSize) {
         return operations.changeStream(fullDocument, fullDocumentBeforeChange, pipeline, new RawBsonDocumentCodec(), changeStreamLevel,
                 batchSize, collation, comment, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);
