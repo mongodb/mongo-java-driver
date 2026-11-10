@@ -70,7 +70,6 @@ import org.bson.conversions.Bson;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
@@ -79,7 +78,6 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.TimeoutContext.createTimeoutContext;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 final class MongoClusterImpl implements MongoCluster {
     @Nullable
@@ -172,14 +170,6 @@ final class MongoClusterImpl implements MongoCluster {
     }
 
     @Override
-    @Nullable
-    public Long getTimeout(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        Long timeoutMS = timeoutSettings.getTimeoutMS();
-        return timeoutMS == null ? null : timeUnit.convert(timeoutMS, MILLISECONDS);
-    }
-
-    @Override
     public MongoCluster withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, maxAdaptiveRetriesSetting, enableOverloadRetargeting,
@@ -205,14 +195,6 @@ final class MongoClusterImpl implements MongoCluster {
         return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
                 operationExecutor, readConcern, readPreference, retryReads, retryWrites, maxAdaptiveRetriesSetting, enableOverloadRetargeting,
                 serverApi, serverSessionPool, timeoutSettings, uuidRepresentation, writeConcern, clientExecutor, tracingManager);
-    }
-
-    @Override
-    public MongoCluster withTimeout(final long timeout, final TimeUnit timeUnit) {
-        return new MongoClusterImpl(autoEncryptionSettings, cluster, codecRegistry, contextProvider, crypt, originator,
-                operationExecutor, readConcern, readPreference, retryReads, retryWrites, maxAdaptiveRetriesSetting, enableOverloadRetargeting,
-                serverApi, serverSessionPool, timeoutSettings.withTimeout(timeout, timeUnit), uuidRepresentation, writeConcern, clientExecutor,
-                tracingManager);
     }
 
     @Override

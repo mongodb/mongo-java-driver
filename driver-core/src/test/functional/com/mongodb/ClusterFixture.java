@@ -119,15 +119,11 @@ public final class ClusterFixture {
     private static final String MONGODB_OCSP_SHOULD_SUCCEED = "org.mongodb.test.ocsp.tls.should.succeed";
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
     private static final int COMMAND_NOT_FOUND_ERROR_CODE = 59;
-    /** Factor by which CSOT timeout/block values are widened on Windows, whose slower TLS setup eats tight budgets. */
-    public static final int WINDOWS_CSOT_TIMEOUT_MULTIPLIER = 10;
     public static final long TIMEOUT = 120L;
     public static final Duration TIMEOUT_DURATION = Duration.ofSeconds(TIMEOUT);
     public static final ClientMetadata CLIENT_METADATA = new ClientMetadata("test", MongoDriverInformation.builder().build());
 
-    public static final TimeoutSettings TIMEOUT_SETTINGS = new TimeoutSettings(30_000, 10_000, 0, null, SECONDS.toMillis(5));
-    public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_TIMEOUT = TIMEOUT_SETTINGS.withTimeout(TIMEOUT, SECONDS);
-    public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_INFINITE_TIMEOUT = TIMEOUT_SETTINGS.withTimeout(0L, MILLISECONDS);
+    public static final TimeoutSettings TIMEOUT_SETTINGS = new TimeoutSettings(30_000, 10_000, 0, SECONDS.toMillis(5));
     public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_TIME = TIMEOUT_SETTINGS.withMaxTimeMS(100);
     public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_AWAIT_TIME = TIMEOUT_SETTINGS.withMaxAwaitTimeMS(101);
     public static final TimeoutSettings TIMEOUT_SETTINGS_WITH_MAX_TIME_AND_AWAIT_TIME =
@@ -830,11 +826,4 @@ public final class ClusterFixture {
         return System.getProperty("os.name", "").startsWith("Windows");
     }
 
-    /**
-     * Scales a CSOT timeout / failpoint-block value by {@link #WINDOWS_CSOT_TIMEOUT_MULTIPLIER} on Windows (unchanged
-     * elsewhere). Scale a test's timeout and its blockTimeMS together to preserve which command times out.
-     */
-    public static int scaleForWindows(final int millis) {
-        return isWindows() ? millis * WINDOWS_CSOT_TIMEOUT_MULTIPLIER : millis;
-    }
 }

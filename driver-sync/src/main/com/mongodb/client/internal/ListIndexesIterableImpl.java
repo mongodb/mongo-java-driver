@@ -21,7 +21,6 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListIndexesIterable;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.Operations;
 import com.mongodb.internal.operation.ReadOperationCursor;
@@ -64,12 +63,6 @@ class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implem
     }
 
     @Override
-    public ListIndexesIterable<TResult> timeoutMode(final TimeoutMode timeoutMode) {
-        super.timeoutMode(timeoutMode);
-        return this;
-    }
-
-    @Override
     public ListIndexesIterable<TResult> comment(@Nullable final String comment) {
         this.comment = comment != null ? new BsonString(comment) : null;
         return this;
@@ -83,7 +76,7 @@ class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implem
 
     @Override
     public ReadOperationCursor<TResult> asReadOperation() {
-        return operations.listIndexes(resultClass, getBatchSize(), comment, getTimeoutMode());
+        return operations.listIndexes(resultClass, getBatchSize(), comment);
     }
 
     protected OperationExecutor getExecutor() {

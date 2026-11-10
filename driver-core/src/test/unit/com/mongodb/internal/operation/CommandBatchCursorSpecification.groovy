@@ -24,7 +24,6 @@ import com.mongodb.MongoSocketException
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.ServerAddress
 import com.mongodb.ServerCursor
-import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
@@ -45,8 +44,6 @@ import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.Specification
-
-import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.internal.operation.CommandBatchCursorHelper.MESSAGE_IF_CLOSED_AS_CURSOR
@@ -74,7 +71,7 @@ class CommandBatchCursorSpecification extends Specification {
 
         when:
         def commandCoreCursor = new CommandCursor<>(firstBatch, batchSize, CODEC, null, connectionSource, initialConnection, false, null)
-        def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, maxTimeMS, operationContext, commandCoreCursor)
+        def cursor = new CommandBatchCursor<Document>(maxTimeMS, operationContext, commandCoreCursor)
 
         then:
         1 * timeoutContext.withMaxTimeOverride(*_)
@@ -110,7 +107,7 @@ class CommandBatchCursorSpecification extends Specification {
         def connection = referenceCountedConnection(serverVersion)
         def connectionSource = getConnectionSource(connection)
         def commandCoreCursor = new CommandCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection, false, null)
-        def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
+        def cursor = new CommandBatchCursor<Document>(0, operationContext, commandCoreCursor)
 
         when:
         cursor.close()
@@ -138,7 +135,7 @@ class CommandBatchCursorSpecification extends Specification {
         when:
         def firstBatch = createCommandResult(FIRST_BATCH, 0)
         def commandCoreCursor = new CommandCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection, false, null)
-        def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
+        def cursor = new CommandBatchCursor<Document>(0, operationContext, commandCoreCursor)
 
         then:
         cursor.next() == FIRST_BATCH
@@ -162,7 +159,7 @@ class CommandBatchCursorSpecification extends Specification {
         when:
         def firstBatch = createCommandResult([], CURSOR_ID)
         def commandCoreCursor = new CommandCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection, false, null)
-        def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
+        def cursor = new CommandBatchCursor<Document>(0, operationContext, commandCoreCursor)
         def batch = cursor.next()
 
         then:
@@ -216,7 +213,7 @@ class CommandBatchCursorSpecification extends Specification {
 
         when:
         def commandCoreCursor = new CommandCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection, false, null)
-        def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
+        def cursor = new CommandBatchCursor<Document>(0, operationContext, commandCoreCursor)
         List<Document> batch = cursor.next()
 
         then:
@@ -269,7 +266,7 @@ class CommandBatchCursorSpecification extends Specification {
         when:
         def commandCoreCursor = new CommandCursor<>(createCommandResult(FIRST_BATCH, 42), 0, CODEC,
                 null, connectionSource, initialConnection, false, null)
-        def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
+        def cursor = new CommandBatchCursor<Document>(0, operationContext, commandCoreCursor)
         def batch = cursor.next()
 
         then:
@@ -305,7 +302,7 @@ class CommandBatchCursorSpecification extends Specification {
 
         when:
         def commandCoreCursor = new CommandCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection, false, null)
-        def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
+        def cursor = new CommandBatchCursor<Document>(0, operationContext, commandCoreCursor)
         def batch = cursor.next()
 
         then:
@@ -344,7 +341,7 @@ class CommandBatchCursorSpecification extends Specification {
         def connectionSource = getConnectionSourceWithResult(ServerType.STANDALONE) { throw MONGO_EXCEPTION }
         def firstBatch = createCommandResult()
         def commandCoreCursor = new CommandCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection, false, null)
-        def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
+        def cursor = new CommandBatchCursor<Document>(0, operationContext, commandCoreCursor)
 
         when:
         cursor.close()
@@ -365,7 +362,7 @@ class CommandBatchCursorSpecification extends Specification {
         when:
         def firstBatch = createCommandResult()
         def commandCoreCursor = new CommandCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection, false, null)
-        def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
+        def cursor = new CommandBatchCursor<Document>(0, operationContext, commandCoreCursor)
 
         then:
         cursor.next()
@@ -392,7 +389,7 @@ class CommandBatchCursorSpecification extends Specification {
         when:
         def firstBatch = createCommandResult()
         def commandCoreCursor = new CommandCursor<>(firstBatch, 0, CODEC, null, connectionSource, initialConnection, false, null)
-        def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 0, operationContext, commandCoreCursor)
+        def cursor = new CommandBatchCursor<Document>(0, operationContext, commandCoreCursor)
         then:
         connectionSource.getCount() == 1
 
@@ -451,7 +448,7 @@ class CommandBatchCursorSpecification extends Specification {
 
         def initialResults = createCommandResult([])
         def commandCoreCursor = new CommandCursor<>(initialResults, 2, CODEC, null, connectionSource, initialConnection, false, null)
-        def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 100, operationContext, commandCoreCursor)
+        def cursor = new CommandBatchCursor<Document>(100, operationContext, commandCoreCursor)
 
         when:
         cursor.close()
@@ -477,7 +474,7 @@ class CommandBatchCursorSpecification extends Specification {
 
         def initialResults = createCommandResult([])
         def commandCoreCursor = new CommandCursor<>(initialResults, 2, CODEC, null, connectionSource, initialConnection, false, null)
-        def cursor = new CommandBatchCursor<Document>(TimeoutMode.CURSOR_LIFETIME, 100, operationContext, commandCoreCursor)
+        def cursor = new CommandBatchCursor<Document>(100, operationContext, commandCoreCursor)
 
         when:
         cursor.close()
@@ -605,7 +602,7 @@ class CommandBatchCursorSpecification extends Specification {
 
     OperationContext getOperationContext() {
         def timeoutContext = Spy(new TimeoutContext(TimeoutSettings.create(
-                MongoClientSettings.builder().timeout(3, TimeUnit.SECONDS).build())))
+                MongoClientSettings.builder().build())))
         Spy(new OperationContext(
                 IgnorableRequestContext.INSTANCE,
                 NoOpSessionContext.INSTANCE,

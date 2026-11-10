@@ -49,7 +49,7 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE
 import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE
 
 class BulkWriteBatchSpecification extends Specification {
-    private static final TimeoutContext TIMEOUT_CONTEXT = new TimeoutContext(new TimeoutSettings(0, 0, 0, 0, 0))
+    private static final TimeoutContext TIMEOUT_CONTEXT = new TimeoutContext(new TimeoutSettings(0, 0, 0, 0))
     def namespace = new MongoNamespace('db.coll')
     def serverDescription = ServerDescription.builder().address(new ServerAddress()).state(CONNECTED)
             .logicalSessionTimeoutMinutes(30)

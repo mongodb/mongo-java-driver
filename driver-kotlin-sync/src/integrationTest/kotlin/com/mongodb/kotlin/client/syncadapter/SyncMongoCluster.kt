@@ -29,7 +29,6 @@ import com.mongodb.client.model.bulk.ClientBulkWriteOptions
 import com.mongodb.client.model.bulk.ClientBulkWriteResult
 import com.mongodb.client.model.bulk.ClientNamespacedWriteModel
 import com.mongodb.kotlin.client.MongoCluster
-import java.util.concurrent.TimeUnit
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.conversions.Bson
@@ -43,8 +42,6 @@ internal open class SyncMongoCluster(open val wrapped: MongoCluster) : JMongoClu
 
     override fun getReadConcern(): ReadConcern = wrapped.readConcern
 
-    override fun getTimeout(timeUnit: TimeUnit): Long? = wrapped.timeout(timeUnit)
-
     override fun withCodecRegistry(codecRegistry: CodecRegistry): SyncMongoCluster =
         SyncMongoCluster(wrapped.withCodecRegistry(codecRegistry))
 
@@ -56,9 +53,6 @@ internal open class SyncMongoCluster(open val wrapped: MongoCluster) : JMongoClu
 
     override fun withWriteConcern(writeConcern: WriteConcern): SyncMongoCluster =
         SyncMongoCluster(wrapped.withWriteConcern(writeConcern))
-
-    override fun withTimeout(timeout: Long, timeUnit: TimeUnit): SyncMongoCluster =
-        SyncMongoCluster(wrapped.withTimeout(timeout, timeUnit))
 
     override fun getDatabase(databaseName: String): MongoDatabase = SyncMongoDatabase(wrapped.getDatabase(databaseName))
 

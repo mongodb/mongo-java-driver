@@ -16,7 +16,6 @@
 package com.mongodb.kotlin.client
 
 import com.mongodb.client.ListCollectionsIterable as JListCollectionsIterable
-import com.mongodb.client.cursor.TimeoutMode
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.full.declaredFunctions
 import kotlin.test.assertEquals
@@ -54,7 +53,6 @@ class ListCollectionsIterableTest {
         iterable.filter(filter)
         iterable.maxTime(1)
         iterable.maxTime(1, TimeUnit.SECONDS)
-        iterable.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).batchSize(batchSize)
         verify(wrapped).comment(bsonComment)
@@ -62,7 +60,6 @@ class ListCollectionsIterableTest {
         verify(wrapped).filter(filter)
         verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
         verify(wrapped).maxTime(1, TimeUnit.SECONDS)
-        verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
         verifyNoMoreInteractions(wrapped)
     }

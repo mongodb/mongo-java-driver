@@ -77,7 +77,6 @@ import org.bson.conversions.Bson;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.assertions.Assertions.notNullElements;
@@ -86,7 +85,6 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
 import static java.util.Collections.singletonList;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
 
 class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
@@ -161,13 +159,6 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    @Nullable
-    public Long getTimeout(final TimeUnit timeUnit) {
-        Long timeoutMS = timeoutSettings.getTimeoutMS();
-        return timeoutMS == null ? null : notNull("timeUnit", timeUnit).convert(timeoutMS, MILLISECONDS);
-    }
-
-    @Override
     public <NewTDocument> MongoCollection<NewTDocument> withDocumentClass(final Class<NewTDocument> clazz) {
         return new MongoCollectionImpl<>(namespace, clazz, codecRegistry, readPreference, writeConcern,
                 retryWrites, retryReads, maxAdaptiveRetriesSetting,
@@ -201,13 +192,6 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern,
                 retryWrites, retryReads, maxAdaptiveRetriesSetting,
                 readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
-    }
-
-    @Override
-    public MongoCollection<TDocument> withTimeout(final long timeout, final TimeUnit timeUnit) {
-        return new MongoCollectionImpl<>(namespace, documentClass, codecRegistry, readPreference, writeConcern,
-                retryWrites, retryReads, maxAdaptiveRetriesSetting,
-                readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings.withTimeout(timeout, timeUnit), executor);
     }
 
     @Override

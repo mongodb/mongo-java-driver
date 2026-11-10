@@ -18,7 +18,6 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -129,11 +128,6 @@ public class AggregateOperation<T> implements ReadOperationExplainable<T> {
 
     public AggregateOperation<T> hint(@Nullable final BsonValue hint) {
         wrapped.hint(hint);
-        return this;
-    }
-
-    public AggregateOperation<T> timeoutMode(@Nullable final TimeoutMode timeoutMode) {
-        wrapped.timeoutMode(timeoutMode);
         return this;
     }
 

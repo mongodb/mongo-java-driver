@@ -16,7 +16,6 @@
 package com.mongodb.kotlin.client.coroutine
 
 import com.mongodb.ExplainVerbosity
-import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.reactivestreams.client.AggregatePublisher
 import java.util.concurrent.TimeUnit
@@ -27,12 +26,7 @@ import org.bson.BsonDocument
 import org.bson.BsonString
 import org.bson.Document
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.doReturn
-import org.mockito.kotlin.mock
-import org.mockito.kotlin.times
-import org.mockito.kotlin.verify
-import org.mockito.kotlin.verifyNoMoreInteractions
-import org.mockito.kotlin.whenever
+import org.mockito.kotlin.*
 import reactor.core.publisher.Mono
 
 class AggregateFlowTest {
@@ -73,7 +67,6 @@ class AggregateFlowTest {
         flow.maxAwaitTime(1, TimeUnit.SECONDS)
         flow.maxTime(1)
         flow.maxTime(1, TimeUnit.SECONDS)
-        flow.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).allowDiskUse(true)
         verify(wrapped).batchSize(batchSize)
@@ -88,7 +81,6 @@ class AggregateFlowTest {
         verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
         verify(wrapped).maxTime(1, TimeUnit.SECONDS)
         verify(wrapped).let(bson)
-        verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
         whenever(wrapped.explain(Document::class.java)).doReturn(Mono.fromCallable { Document() })
         whenever(wrapped.explain(Document::class.java, verbosity)).doReturn(Mono.fromCallable { Document() })

@@ -18,7 +18,6 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ConnectionDescription;
@@ -46,13 +45,10 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 
 import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -89,8 +85,9 @@ class CommandCursorTest {
         when(mockConnection.retain()).thenReturn(mockConnection);
 
         connectionSource = mock(ConnectionSource.class);
+        MongoClientSettings.Builder builder = MongoClientSettings.builder();
         timeoutContext = spy(new TimeoutContext(TimeoutSettings.create(
-                MongoClientSettings.builder().timeout(TIMEOUT.toMillis(), MILLISECONDS).build())));
+                builder.build())));
         operationContext = spy(new OperationContext(
                 IgnorableRequestContext.INSTANCE,
                 NoOpSessionContext.INSTANCE,
@@ -117,52 +114,6 @@ class CommandCursorTest {
         //then
         cursor.close(operationContext);
         verify(mockConnection, times(1)).command(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any());
-    }
-
-    @Test
-    void shouldNotSkipKillsCursorsCommandWhenTimeoutExceptionDoesNotHaveNetworkErrorCause() {
-        //given
-        when(mockConnection.command(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any())).thenThrow(
-                new MongoOperationTimeoutException("test"));
-        when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
-
-        Cursor<Document> cursor = createCoreCursor();
-
-        //when
-        assertThrows(MongoOperationTimeoutException.class, () -> cursor.next(operationContext));
-
-        cursor.close(operationContext);
-
-
-        //then
-        verify(mockConnection, times(2)).command(any(),
-                any(), any(), any(), any(), any());
-        verify(mockConnection, times(1)).command(eq(NAMESPACE.getDatabaseName()),
-                argThat(bsonDocument -> bsonDocument.containsKey("getMore")), any(), any(), any(), any());
-        verify(mockConnection, times(1)).command(eq(NAMESPACE.getDatabaseName()),
-                argThat(bsonDocument -> bsonDocument.containsKey("killCursors")), any(), any(), any(), any());
-    }
-
-    @Test
-    void shouldSkipKillsCursorsCommandWhenTimeoutExceptionHaveNetworkErrorCause() {
-        //given
-        when(mockConnection.command(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any())).thenThrow(
-                new MongoOperationTimeoutException("test", new MongoSocketException("test", new ServerAddress())));
-        when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
-
-        Cursor<Document> cursor = createCoreCursor();
-
-        //when
-        assertThrows(MongoOperationTimeoutException.class, () -> cursor.next(operationContext));
-        cursor.close(operationContext);
-
-        //then
-        verify(mockConnection, times(1)).command(any(),
-                any(), any(), any(), any(), any());
-        verify(mockConnection, times(1)).command(eq(NAMESPACE.getDatabaseName()),
-                argThat(bsonDocument -> bsonDocument.containsKey("getMore")), any(), any(), any(), any());
-        verify(mockConnection, never()).command(eq(NAMESPACE.getDatabaseName()),
-                argThat(bsonDocument -> bsonDocument.containsKey("killCursors")), any(), any(), any(), any());
     }
 
     private Cursor<Document> createCoreCursor() {

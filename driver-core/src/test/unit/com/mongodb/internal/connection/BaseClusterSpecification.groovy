@@ -96,15 +96,6 @@ class BaseClusterSpecification extends Specification {
 
         then: 'a MongoTimeoutException is thrown'
         thrown(MongoTimeoutException)
-
-        when: 'a server is selected before initialization and timeoutMS is set'
-        cluster.selectServer({ def clusterDescription -> [] },
-                createOperationContext(TIMEOUT_SETTINGS
-                        .withServerSelectionTimeoutMS(1)
-                        .withTimeout(1, MILLISECONDS)))
-
-        then: 'a MongoTimeoutException is thrown'
-        thrown(MongoTimeoutException)
     }
 
     def 'should get cluster settings'() {

@@ -30,7 +30,6 @@ import com.mongodb.ServerApiVersion;
 import com.mongodb.TransactionOptions;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoCluster;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
@@ -46,7 +45,6 @@ import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import com.mongodb.internal.connection.TestServerListener;
 import com.mongodb.internal.logging.LogMessage;
-import com.mongodb.lang.Nullable;
 import com.mongodb.logging.TestLoggingInterceptor;
 import com.mongodb.observability.ObservabilitySettings;
 import io.micrometer.observation.ObservationRegistry;
@@ -201,18 +199,6 @@ public final class Entities {
 
     public MongoCollection<BsonDocument> getCollection(final String id) {
         return getEntity(id, collections, "collection");
-    }
-
-    public MongoCluster getMongoClusterWithTimeoutMS(final String id, @Nullable final Long timeoutMS) {
-        return timeoutMS != null ? getClient(id).withTimeout(timeoutMS, TimeUnit.MILLISECONDS) : getClient(id);
-    }
-
-    public MongoDatabase getDatabaseWithTimeoutMS(final String id, @Nullable final Long timeoutMS) {
-        return timeoutMS != null ? getDatabase(id).withTimeout(timeoutMS, TimeUnit.MILLISECONDS) : getDatabase(id);
-    }
-
-    public MongoCollection<BsonDocument> getCollectionWithTimeoutMS(final String id, @Nullable final Long timeoutMS) {
-        return timeoutMS != null ? getCollection(id).withTimeout(timeoutMS, TimeUnit.MILLISECONDS) : getCollection(id);
     }
 
     public ClientSession getSession(final String id) {
@@ -461,9 +447,6 @@ public final class Entities {
                     case "appName":
                         clientSettingsBuilder.applicationName(value.asString().getValue());
                         break;
-                    case "timeoutMS":
-                        clientSettingsBuilder.timeout(value.asNumber().longValue(), TimeUnit.MILLISECONDS);
-                        break;
                     case "serverMonitoringMode":
                         clientSettingsBuilder.applyToServerSettings(builder -> builder.serverMonitoringMode(
                                 ServerMonitoringModeUtil.fromString(value.asString().getValue())));
@@ -684,9 +667,6 @@ public final class Entities {
                     case "writeConcern":
                         database = database.withWriteConcern(asWriteConcern(entry.getValue().asDocument()));
                         break;
-                    case "timeoutMS":
-                        database = database.withTimeout(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
-                        break;
                     default:
                         throw new UnsupportedOperationException("Unsupported database option: " + entry.getKey());
                 }
@@ -711,9 +691,6 @@ public final class Entities {
                     case "writeConcern":
                         collection = collection.withWriteConcern(asWriteConcern(entry.getValue().asDocument()));
                         break;
-                    case "timeoutMS":
-                        collection = collection.withTimeout(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
-                        break;
                     default:
                         throw new UnsupportedOperationException("Unsupported collection option: " + entry.getKey());
                 }
@@ -733,9 +710,6 @@ public final class Entities {
                         break;
                     case "snapshot":
                         optionsBuilder.snapshot(entry.getValue().asBoolean().getValue());
-                        break;
-                    case "defaultTimeoutMS":
-                        optionsBuilder.defaultTimeout(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
                         break;
                     case "causalConsistency":
                         optionsBuilder.causallyConsistent(entry.getValue().asBoolean().getValue());

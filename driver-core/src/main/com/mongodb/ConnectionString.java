@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-import com.mongodb.annotations.Alpha;
 import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Reason;
 import com.mongodb.connection.ClusterSettings;
@@ -143,12 +142,9 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for TLS connections.</li>
  * <li>{@code tlsAllowInvalidHostnames=true|false}: Whether to allow invalid host names for TLS connections. Supersedes the
  * sslInvalidHostNameAllowed option</li>
- * <li>{@code timeoutMS=ms}: Time limit for the full execution of an operation. Note: This parameter is part of an {@linkplain Alpha Alpha API} and may be
- * subject to changes or even removal in future releases.</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
  * <li>{@code socketTimeoutMS=ms}: How long a receive on a socket can take before timing out.
- * This option is the same as {@link SocketSettings#getReadTimeout(TimeUnit)}.
- * Deprecated, use {@code timeoutMS} instead.</li>
+ * This option is the same as {@link SocketSettings#getReadTimeout(TimeUnit)}.</li>
  * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * <li>{@code maxLifeTimeMS=ms}: Maximum life time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * </ul>
@@ -168,7 +164,7 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code waitQueueTimeoutMS=ms}: The maximum duration to wait until either:
  * an {@linkplain ConnectionCheckedOutEvent in-use connection} becomes {@linkplain ConnectionCheckedInEvent available},
  * or a {@linkplain ConnectionCreatedEvent connection is created} and begins to be {@linkplain ConnectionReadyEvent established}.
- * See {@link #getMaxWaitTime()} for more details. . Deprecated, use {@code timeoutMS} instead.</li>
+ * See {@link #getMaxWaitTime()} for more details.</li>
  * <li>{@code maxConnecting=n}: The maximum number of connections a pool may be establishing concurrently.</li>
  * </ul>
  * <p>Write concern configuration:</p>
@@ -196,7 +192,7 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code wtimeoutMS=ms}
  * <ul>
  * <li>The driver adds { wtimeout : ms } to all write commands. Implies {@code safe=true}.</li>
- * <li>Used in combination with {@code w}. Deprecated, use {@code timeoutMS} instead</li>
+ * <li>Used in combination with {@code w}.</li>
  * </ul>
  * </li>
  * </ul>
@@ -335,7 +331,6 @@ public class ConnectionString {
     private Integer maxConnectionLifeTime;
     private Integer maxConnecting;
     private Integer connectTimeout;
-    private Long timeout;
     private Integer socketTimeout;
     private Boolean sslEnabled;
     private Boolean sslInvalidHostnameAllowed;
@@ -548,7 +543,6 @@ public class ConnectionString {
     static {
         GENERAL_OPTIONS_KEYS.add("minpoolsize");
         GENERAL_OPTIONS_KEYS.add("maxpoolsize");
-        GENERAL_OPTIONS_KEYS.add("timeoutms");
         GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
         GENERAL_OPTIONS_KEYS.add("waitqueuetimeoutms");
         GENERAL_OPTIONS_KEYS.add("connecttimeoutms");
@@ -674,9 +668,6 @@ public class ConnectionString {
                     break;
                 case "sockettimeoutms":
                     socketTimeout = parseInteger(value, "sockettimeoutms");
-                    break;
-                case "timeoutms":
-                    timeout = parseLong(value, "timeoutms");
                     break;
                 case "proxyhost":
                     proxyHost = value;
@@ -1658,38 +1649,6 @@ public class ConnectionString {
     }
 
     /**
-     * The time limit for the full execution of an operation in milliseconds.
-     *
-     * <p>If set the following deprecated options will be ignored:
-     * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
-     *
-     * <ul>
-     *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
-     *    <ul>
-     *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
-     *        available</li>
-     *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
-     *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
-     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
-     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
-     *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
-     *        See: {@link TransactionOptions#getMaxCommitTime}.</li>
-     *   </ul>
-     *   </li>
-     *   <li>{@code 0} means infinite timeout.</li>
-     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
-     * </ul>
-     *
-     * @return the time limit for the full execution of an operation in milliseconds or null.
-     * @since 5.2
-     */
-    @Alpha(Reason.CLIENT)
-    @Nullable
-    public Long getTimeout() {
-        return timeout;
-    }
-
-    /**
      * Gets the socket connect timeout specified in the connection string.
      * @return the socket connect timeout
      */
@@ -1895,7 +1854,6 @@ public class ConnectionString {
                 && Objects.equals(maxConnectionLifeTime, that.maxConnectionLifeTime)
                 && Objects.equals(maxConnecting, that.maxConnecting)
                 && Objects.equals(connectTimeout, that.connectTimeout)
-                && Objects.equals(timeout, that.timeout)
                 && Objects.equals(socketTimeout, that.socketTimeout)
                 && Objects.equals(proxyHost, that.proxyHost)
                 && Objects.equals(proxyPort, that.proxyPort)
@@ -1920,7 +1878,7 @@ public class ConnectionString {
     public int hashCode() {
         return Objects.hash(credential, isSrvProtocol, hosts, database, collection, directConnection, readPreference,
                 writeConcern, retryWrites, retryReads, maxAdaptiveRetries, enableOverloadRetargeting, readConcern, minConnectionPoolSize, maxConnectionPoolSize, maxWaitTime,
-                maxConnectionIdleTime, maxConnectionLifeTime, maxConnecting, connectTimeout, timeout, socketTimeout, sslEnabled,
+                maxConnectionIdleTime, maxConnectionLifeTime, maxConnecting, connectTimeout, socketTimeout, sslEnabled,
                 sslInvalidHostnameAllowed, requiredReplicaSetName, serverSelectionTimeout, localThreshold, heartbeatFrequency,
                 serverMonitoringMode, applicationName, compressorList, uuidRepresentation, srvServiceName, srvMaxHosts,
                 srvAllowedHostsSuffix, proxyHost, proxyPort, proxyUsername, proxyPassword);

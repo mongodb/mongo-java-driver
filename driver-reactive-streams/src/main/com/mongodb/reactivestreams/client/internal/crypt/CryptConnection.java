@@ -121,14 +121,14 @@ class CryptConnection implements AsyncConnection {
                     : new SplittablePayloadBsonWriter(bsonBinaryWriter, bsonOutput, createSplittablePayloadMessageSettings(), payload,
                                                       MAX_SPLITTABLE_DOCUMENT_SIZE);
 
-            Timeout timeout = operationContext.getTimeoutContext().getTimeout();
+            Timeout timeout = null;
 
             getEncoder(command).encode(writer, command, EncoderContext.builder().build());
-            crypt.encrypt(database, new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()), timeout)
+            crypt.encrypt(database, new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()))
                     .flatMap((Function<RawBsonDocument, Mono<RawBsonDocument>>) encryptedCommand ->
                             Mono.create(sink -> wrapped.commandAsync(database, encryptedCommand, commandFieldNameValidator, readPreference,
                                     new RawBsonDocumentCodec(), operationContext, responseExpected, EmptyMessageSequences.INSTANCE, sinkToCallback(sink))))
-                    .flatMap(rawBsonDocument -> crypt.decrypt(rawBsonDocument, timeout))
+                    .flatMap(rawBsonDocument -> crypt.decrypt(rawBsonDocument))
                     .map(decryptedResponse ->
                         commandResultDecoder.decode(new BsonBinaryReader(decryptedResponse.getByteBuffer().asNIO()),
                                                     DecoderContext.builder().build())

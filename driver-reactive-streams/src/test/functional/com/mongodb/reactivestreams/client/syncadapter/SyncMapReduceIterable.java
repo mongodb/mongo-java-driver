@@ -16,7 +16,6 @@
 
 package com.mongodb.reactivestreams.client.syncadapter;
 
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
@@ -124,12 +123,6 @@ class SyncMapReduceIterable<T> extends SyncMongoIterable<T> implements com.mongo
     @Override
     public com.mongodb.client.MapReduceIterable<T> collation(@Nullable final Collation collation) {
         wrapped.collation(collation);
-        return this;
-    }
-
-    @Override
-    public com.mongodb.client.MapReduceIterable<T> timeoutMode(final TimeoutMode timeoutMode) {
-        wrapped.timeoutMode(timeoutMode);
         return this;
     }
 }

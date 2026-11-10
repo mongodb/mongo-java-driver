@@ -47,7 +47,6 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.ClusterFixture.sleep;
@@ -194,11 +193,6 @@ public class SyncMongoClient implements MongoClient {
     }
 
     @Override
-    public Long getTimeout(final TimeUnit timeUnit) {
-        return delegate.getTimeout(timeUnit);
-    }
-
-    @Override
     public MongoCluster withCodecRegistry(final CodecRegistry codecRegistry) {
         return delegate.withCodecRegistry(codecRegistry);
     }
@@ -216,11 +210,6 @@ public class SyncMongoClient implements MongoClient {
     @Override
     public MongoCluster withReadConcern(final ReadConcern readConcern) {
         return delegate.withReadConcern(readConcern);
-    }
-
-    @Override
-    public MongoCluster withTimeout(final long timeout, final TimeUnit timeUnit) {
-        return delegate.withTimeout(timeout, timeUnit);
     }
 
     @Override

@@ -65,7 +65,6 @@ class MongoClientSettingsSpecification extends Specification {
         settings.contextProvider == null
         settings.dnsClient == null
         settings.inetAddressResolver == null
-        settings.getTimeout(TimeUnit.MILLISECONDS) == null
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -159,7 +158,6 @@ class MongoClientSettingsSpecification extends Specification {
                 .contextProvider(contextProvider)
                 .dnsClient(dnsClient)
                 .inetAddressResolver(inetAddressResolver)
-                .timeout(1000, TimeUnit.SECONDS)
                 .build()
 
         then:
@@ -182,7 +180,6 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getContextProvider() == contextProvider
         settings.getDnsClient() == dnsClient
         settings.getInetAddressResolver() == inetAddressResolver
-        settings.getTimeout(TimeUnit.MILLISECONDS) == 1_000_000
     }
 
     def 'should be easy to create new settings from existing'() {
@@ -225,7 +222,6 @@ class MongoClientSettingsSpecification extends Specification {
                 .contextProvider(contextProvider)
                 .dnsClient(dnsClient)
                 .inetAddressResolver(inetAddressResolver)
-                .timeout(0, TimeUnit.SECONDS)
                 .build()
 
         then:
@@ -252,30 +248,6 @@ class MongoClientSettingsSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
-    }
-
-    def 'should throw an exception if the timeout is invalid'() {
-        given:
-        def builder = MongoClientSettings.builder()
-
-        when:
-        builder.timeout(500, TimeUnit.NANOSECONDS)
-
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        builder.timeout(-1, TimeUnit.SECONDS)
-
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        def connectionString = new ConnectionString('mongodb://localhost/?timeoutMS=-1')
-        builder.applyConnectionString(connectionString).build()
-
-        then:
-        thrown(IllegalStateException)
     }
 
     def 'should add command listeners'() {
@@ -346,7 +318,6 @@ class MongoClientSettingsSpecification extends Specification {
                 + '&readConcernLevel=majority'
                 + '&compressors=zlib&zlibCompressionLevel=5'
                 + '&uuidRepresentation=standard'
-                + '&timeoutMS=10000'
                 + '&proxyHost=proxy.com'
                 + '&proxyPort=1080'
                 + '&proxyUsername=username'
@@ -410,7 +381,6 @@ class MongoClientSettingsSpecification extends Specification {
             .retryReads(true)
             .maxAdaptiveRetries(42)
             .uuidRepresentation(UuidRepresentation.STANDARD)
-            .timeout(10000, TimeUnit.MILLISECONDS)
             .build()
 
         then:
@@ -581,7 +551,7 @@ class MongoClientSettingsSpecification extends Specification {
                         'maxAdaptiveRetries', 'observabilitySettings',
                         'readConcern', 'readPreference', 'retryReads',
                         'retryWrites', 'serverApi', 'serverSettingsBuilder', 'socketSettingsBuilder', 'sslSettingsBuilder',
-                        'timeoutMS', 'transportSettings', 'uuidRepresentation',
+                        'transportSettings', 'uuidRepresentation',
                         'writeConcern']
 
         then:
@@ -601,7 +571,7 @@ class MongoClientSettingsSpecification extends Specification {
                         'heartbeatSocketTimeoutMS', 'inetAddressResolver', 'maxAdaptiveRetries', 'observabilitySettings', 'readConcern',
                         'readPreference',
                         'retryReads', 'retryWrites',
-                        'serverApi', 'timeout', 'transportSettings',
+                        'serverApi', 'transportSettings',
                         'uuidRepresentation', 'writeConcern']
 
         then:

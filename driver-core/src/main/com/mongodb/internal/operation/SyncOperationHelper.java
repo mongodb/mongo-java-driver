@@ -18,9 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.MutableValue;
 import com.mongodb.internal.async.function.RetryControl;
@@ -99,9 +97,7 @@ final class SyncOperationHelper {
     static <T> T withReadConnectionSource(final ReadBinding binding,
                                           final OperationContext operationContext,
                                           final CallableWithSource<T> callable) {
-        OperationContext serverSelectionOperationContext =
-                operationContext.withOverride(TimeoutContext::withComputedServerSelectionTimeout);
-        ConnectionSource source = binding.getReadConnectionSource(serverSelectionOperationContext);
+        ConnectionSource source = binding.getReadConnectionSource(operationContext);
         try {
             return callable.call(source, operationContext.withMinRoundTripTime(source.getServerDescription()));
         } finally {
@@ -129,17 +125,15 @@ final class SyncOperationHelper {
             final boolean wrapConnectionSourceException,
             final OperationContext operationContext,
             final ExecutionFunction<R> function) throws ResourceSupplierInternalException {
-        OperationContext serverSelectionOperationContext =
-                operationContext.withOverride(TimeoutContext::withComputedServerSelectionTimeout);
 
         return withSuppliedResource(
                 sourceFunction,
                 wrapConnectionSourceException,
-                serverSelectionOperationContext,
+                operationContext,
                 source -> withSuppliedResource(
                         source::getConnection,
                         wrapConnectionSourceException,
-                        serverSelectionOperationContext.withMinRoundTripTime(source.getServerDescription()),
+                        operationContext.withMinRoundTripTime(source.getServerDescription()),
                         connection -> function.apply(
                                 source,
                                 connection,
@@ -361,11 +355,11 @@ final class SyncOperationHelper {
     }
 
 
-    static CommandWriteTransformer<BsonDocument, Void> writeConcernErrorTransformer(final TimeoutContext timeoutContext) {
+    static CommandWriteTransformer<BsonDocument, Void> writeConcernErrorTransformer() {
         return (result, connection) -> {
             assertNotNull(result);
             throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
-                    connection.getDescription().getMaxWireVersion(), timeoutContext);
+                    connection.getDescription().getMaxWireVersion());
             return null;
         };
     }
@@ -377,7 +371,6 @@ final class SyncOperationHelper {
     }
 
     static <T> BatchCursor<T> cursorDocumentToBatchCursor(
-            final TimeoutMode timeoutMode,
             final BsonDocument cursorDocument,
             final int batchSize,
             final Decoder<T> decoder,
@@ -388,7 +381,7 @@ final class SyncOperationHelper {
             final OperationContext operationContext,
             final boolean retryReads,
             @Nullable final Integer maxAdaptiveRetriesSetting) {
-        return new CommandBatchCursor<>(timeoutMode, 0, operationContext, new CommandCursor<>(
+        return new CommandBatchCursor<>(0, operationContext, new CommandCursor<>(
                 cursorDocument, batchSize, decoder, comment, source, connection, retryReads, maxAdaptiveRetriesSetting
         ));
 

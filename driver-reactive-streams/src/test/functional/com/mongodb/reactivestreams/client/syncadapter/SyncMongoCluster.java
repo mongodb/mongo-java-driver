@@ -37,7 +37,6 @@ import org.bson.conversions.Bson;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
 import static com.mongodb.reactivestreams.client.syncadapter.ContextHelper.CONTEXT;
@@ -167,11 +166,6 @@ public class SyncMongoCluster implements MongoCluster {
     }
 
     @Override
-    public Long getTimeout(final TimeUnit timeUnit) {
-        return wrapped.getTimeout(timeUnit);
-    }
-
-    @Override
     public MongoCluster withCodecRegistry(final CodecRegistry codecRegistry) {
         return new SyncMongoCluster(wrapped.withCodecRegistry(codecRegistry));
     }
@@ -189,11 +183,6 @@ public class SyncMongoCluster implements MongoCluster {
     @Override
     public MongoCluster withReadConcern(final ReadConcern readConcern) {
         return new SyncMongoCluster(wrapped.withReadConcern(readConcern));
-    }
-
-    @Override
-    public MongoCluster withTimeout(final long timeout, final TimeUnit timeUnit) {
-        return new SyncMongoCluster(wrapped.withTimeout(timeout, timeUnit));
     }
 
     @Override

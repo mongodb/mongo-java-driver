@@ -32,7 +32,6 @@ import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.internal.IgnorableRequestContext;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
@@ -86,13 +85,12 @@ public final class ProtocolHelper {
 
     @Nullable
     static MongoException createSpecialWriteConcernException(final ResponseBuffers responseBuffers,
-                                                             final ServerAddress serverAddress,
-                                                             final TimeoutContext timeoutContext) {
+                                                             final ServerAddress serverAddress) {
         BsonValue writeConcernError = getField(createBsonReader(responseBuffers), "writeConcernError");
         if (writeConcernError == null) {
             return null;
         } else {
-            return createSpecialException(writeConcernError.asDocument(), serverAddress, "errmsg", timeoutContext);
+            return createSpecialException(writeConcernError.asDocument(), serverAddress, "errmsg");
         }
     }
 
@@ -201,9 +199,8 @@ public final class ProtocolHelper {
         }
     }
 
-    static MongoException getCommandFailureException(final BsonDocument response, final ServerAddress serverAddress,
-                                                     final TimeoutContext timeoutContext) {
-        MongoException specialException = createSpecialException(response, serverAddress, "errmsg", timeoutContext);
+    static MongoException getCommandFailureException(final BsonDocument response, final ServerAddress serverAddress) {
+        MongoException specialException = createSpecialException(response, serverAddress, "errmsg");
         if (specialException != null) {
             return specialException;
         }
@@ -218,9 +215,8 @@ public final class ProtocolHelper {
         return response.getString(errorMessageFieldName, new BsonString("")).getValue();
     }
 
-    static MongoException getQueryFailureException(final BsonDocument errorDocument, final ServerAddress serverAddress,
-                                                   final TimeoutContext timeoutContext) {
-        MongoException specialException = createSpecialException(errorDocument, serverAddress, "$err", timeoutContext);
+    static MongoException getQueryFailureException(final BsonDocument errorDocument, final ServerAddress serverAddress) {
+        MongoException specialException = createSpecialException(errorDocument, serverAddress, "$err");
         if (specialException != null) {
             return specialException;
         }
@@ -247,26 +243,21 @@ public final class ProtocolHelper {
     @Nullable
     public static MongoException createSpecialException(@Nullable final BsonDocument response,
                                                         final ServerAddress serverAddress,
-                                                        final String errorMessageFieldName,
-                                                        final TimeoutContext timeoutContext) {
+                                                        final String errorMessageFieldName) {
         if (response == null) {
             return null;
         }
         int errorCode = getErrorCode(response);
         String errorMessage = getErrorMessage(response, errorMessageFieldName);
         if (ErrorCategory.fromErrorCode(errorCode) == ErrorCategory.EXECUTION_TIMEOUT) {
-            MongoExecutionTimeoutException mongoExecutionTimeoutException = new MongoExecutionTimeoutException(errorCode, errorMessage, response);
-            if (timeoutContext.hasTimeoutMS()) {
-                return TimeoutContext.createMongoTimeoutException(mongoExecutionTimeoutException);
-            }
-            return mongoExecutionTimeoutException;
+            return new MongoExecutionTimeoutException(errorCode, errorMessage, response);
         } else if (isNodeIsRecoveringError(errorCode, errorMessage)) {
             return new MongoNodeIsRecoveringException(response, serverAddress);
         } else if (isNotPrimaryError(errorCode, errorMessage)) {
             return new MongoNotPrimaryException(response, serverAddress);
         } else if (response.containsKey("writeConcernError")) {
             MongoException writeConcernException = createSpecialException(response.getDocument("writeConcernError"), serverAddress,
-                    "errmsg", timeoutContext);
+                    "errmsg");
             if (writeConcernException != null && response.isArray("errorLabels")) {
                 for (BsonValue errorLabel : response.getArray("errorLabels")) {
                     writeConcernException.addLabel(errorLabel.asString().getValue());

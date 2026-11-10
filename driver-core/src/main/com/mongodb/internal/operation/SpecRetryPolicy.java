@@ -19,7 +19,6 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoConnectionPoolClearedException;
 import com.mongodb.MongoException;
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
@@ -51,7 +50,6 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.fail;
-import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
 import static com.mongodb.internal.operation.CommandOperationHelper.DEFAULT_MAX_ADAPTIVE_RETRIES;
 import static com.mongodb.internal.operation.CommandOperationHelper.NO_WRITES_PERFORMED_ERROR_LABEL;
 import static com.mongodb.internal.operation.CommandOperationHelper.RETRYABLE_WRITE_ERROR_LABEL;
@@ -256,9 +254,6 @@ final class SpecRetryPolicy implements RetryPolicy {
             newProspectiveFailedResult = decideReadProspectiveFailedResult(currentProspectiveFailedResult, mostRecentAttemptFailedResult);
         } else {
             throw fail(toString());
-        }
-        if (mostRecentAttemptFailedResult instanceof MongoOperationTimeoutException) {
-            newProspectiveFailedResult = createMongoTimeoutException(newProspectiveFailedResult);
         }
         return newProspectiveFailedResult;
     }

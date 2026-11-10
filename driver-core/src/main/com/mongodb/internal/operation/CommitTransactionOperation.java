@@ -147,12 +147,11 @@ public class CommitTransactionOperation extends TransactionOperation {
 
     @Override
     protected Function<BsonDocument, BsonDocument> getRetryCommandModifier(final OperationContext operationContext) {
-        TimeoutContext timeoutContext = operationContext.getTimeoutContext();
         return command -> {
             if (!assertNotNull(operationContext.getSessionContext().getOverloadRetryPolicyState().getCommitScoped())
                     .observedErrorsAndTheyAreAllRetryableOverloadErrors()) {
                 WriteConcern retryWriteConcern = getWriteConcern().withW("majority");
-                if (retryWriteConcern.getWTimeout(MILLISECONDS) == null && !timeoutContext.hasTimeoutMS()) {
+                if (retryWriteConcern.getWTimeout(MILLISECONDS) == null) {
                     retryWriteConcern = retryWriteConcern.withWTimeout(10000, MILLISECONDS);
                 }
                 command.put("writeConcern", retryWriteConcern.asDocument());

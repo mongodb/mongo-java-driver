@@ -17,7 +17,6 @@
 package com.mongodb.reactivestreams.client.internal.crypt;
 
 import com.mongodb.MongoException;
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoSocketWriteTimeoutException;
@@ -25,7 +24,6 @@ import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.connection.AsynchronousChannelStream;
 import com.mongodb.internal.connection.DefaultInetAddressResolver;
@@ -37,7 +35,6 @@ import com.mongodb.internal.crypt.capi.MongoKeyDecryptor;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.thread.AsyncClientExecutor;
-import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
@@ -74,7 +71,7 @@ class KeyManagementService implements Closeable {
         tlsChannelStreamFactoryFactory.close();
     }
 
-    Mono<Void> decryptKey(final MongoKeyDecryptor keyDecryptor, @Nullable final Timeout operationTimeout) {
+    Mono<Void> decryptKey(final MongoKeyDecryptor keyDecryptor) {
         SocketSettings socketSettings = SocketSettings.builder()
                 .connectTimeout(timeoutMillis, MILLISECONDS)
                 .readTimeout(timeoutMillis, MILLISECONDS)
@@ -88,7 +85,7 @@ class KeyManagementService implements Closeable {
 
         return Mono.<Void>create(sink -> {
             Stream stream = streamFactory.create(serverAddress);
-            OperationContext operationContext = createOperationContext(operationTimeout, socketSettings);
+            OperationContext operationContext = createOperationContext(socketSettings);
             stream.openAsync(operationContext, new AsyncCompletionHandler<Void>() {
                 @Override
                 public void completed(@Nullable final Void ignored) {
@@ -98,7 +95,7 @@ class KeyManagementService implements Closeable {
                 @Override
                 public void failed(final Throwable t) {
                     stream.close();
-                    handleError(t, operationContext, sink);
+                    handleError(t, sink);
                 }
             });
         }).onErrorMap(Exception.class, this::unWrapException);
@@ -116,7 +113,7 @@ class KeyManagementService implements Closeable {
             @Override
             public void failed(final Throwable t) {
                 stream.close();
-                handleError(t, operationContext, sink);
+                handleError(t, sink);
             }
         });
     }
@@ -152,7 +149,7 @@ class KeyManagementService implements Closeable {
                                               public void failed(final Throwable t, final Void aVoid) {
                                                   buffer.release();
                                                   stream.close();
-                                                  handleError(t, operationContext, sink);
+                                                  handleError(t, sink);
                                               }
                                           });
         } else {
@@ -161,39 +158,21 @@ class KeyManagementService implements Closeable {
         }
     }
 
-    private static void handleError(final Throwable t, final OperationContext operationContext, final MonoSink<Void> sink) {
-        if (isTimeoutException(t) && operationContext.getTimeoutContext().hasTimeoutMS()) {
-            sink.error(TimeoutContext.createMongoTimeoutException(TIMEOUT_ERROR_MESSAGE, t));
-        } else {
-            sink.error(t);
-        }
+    private static void handleError(final Throwable t, final MonoSink<Void> sink) {
+        sink.error(t);
     }
 
-    private OperationContext createOperationContext(@Nullable final Timeout operationTimeout, final SocketSettings socketSettings) {
-        TimeoutSettings timeoutSettings;
-        if (operationTimeout == null) {
-            timeoutSettings = createTimeoutSettings(socketSettings, null);
-        } else {
-            timeoutSettings = operationTimeout.call(MILLISECONDS,
-                    () -> {
-                        throw new AssertionError("operationTimeout cannot be infinite");
-                    },
-                    (ms) -> createTimeoutSettings(socketSettings, ms),
-                    () -> {
-                        throw new MongoOperationTimeoutException(TIMEOUT_ERROR_MESSAGE);
-                    });
-        }
+    private OperationContext createOperationContext(final SocketSettings socketSettings) {
+        TimeoutSettings timeoutSettings = createTimeoutSettings(socketSettings);
         return OperationContext.simpleOperationContext(timeoutSettings, null, AsyncClientExecutor.NO_OP);
     }
 
     @NonNull
-    private static TimeoutSettings createTimeoutSettings(final SocketSettings socketSettings,
-            @Nullable final Long ms) {
+    private static TimeoutSettings createTimeoutSettings(final SocketSettings socketSettings) {
         return new TimeoutSettings(
                 0,
                 socketSettings.getConnectTimeout(MILLISECONDS),
                 socketSettings.getReadTimeout(MILLISECONDS),
-                ms,
                 0);
     }
 

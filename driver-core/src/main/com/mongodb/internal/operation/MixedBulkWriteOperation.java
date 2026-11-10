@@ -451,7 +451,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                 NoOpFieldNameValidator.INSTANCE, null,
                 batch.getDecoder(), operationContext.withOperationName(commandName),
                 shouldExpectResponse(batch, effectiveWriteConcern), batch.getPayload());
-        addResultOrThrowWriteConcernWithResponseException(batch, result, connection.getDescription(), operationContext);
+        addResultOrThrowWriteConcernWithResponseException(batch, result, connection.getDescription());
     }
 
     private void executeBatchAsync(
@@ -469,7 +469,7 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
                         batch.getDecoder(), operationContext.withOperationName(commandName),
                         shouldExpectResponse(batch, effectiveWriteConcern), batch.getPayload(), commandCallback);
             }).thenConsume((result, consumeCommandResultCallback) -> {
-                addResultOrThrowWriteConcernWithResponseException(batch, result, connection.getDescription(), operationContext);
+                addResultOrThrowWriteConcernWithResponseException(batch, result, connection.getDescription());
                 consumeCommandResultCallback.complete(consumeCommandResultCallback);
             }).finish(c);
         }).finish(callback);
@@ -482,11 +482,10 @@ public class MixedBulkWriteOperation implements WriteOperation<BulkWriteResult> 
     private static void addResultOrThrowWriteConcernWithResponseException(
             final BulkWriteBatch batch,
             @Nullable final BsonDocument result,
-            final ConnectionDescription connectionDescription,
-            final OperationContext operationContext) throws MongoWriteConcernWithResponseException {
+            final ConnectionDescription connectionDescription) throws MongoWriteConcernWithResponseException {
         if (batch.isWriteRetryRequirementsMet()) {
             MongoException writeConcernBasedError = ProtocolHelper.createSpecialException(
-                    result, connectionDescription.getServerAddress(), "errMsg", operationContext.getTimeoutContext());
+                    result, connectionDescription.getServerAddress(), "errMsg");
             if (writeConcernBasedError != null) {
                 assertNotNull(result);
                 addRetryableWriteErrorLabelIfNeeded(writeConcernBasedError, connectionDescription.getMaxWireVersion());

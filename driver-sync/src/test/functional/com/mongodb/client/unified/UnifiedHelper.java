@@ -16,16 +16,5 @@
 
 package com.mongodb.client.unified;
 
-import org.bson.BsonDocument;
-
 abstract class UnifiedHelper {
-
-    static Long getAndRemoveTimeoutMS(final BsonDocument arguments) {
-        Long timeoutMS = null;
-        if (arguments.containsKey("timeoutMS")) {
-            timeoutMS = arguments.getNumber("timeoutMS").longValue();
-            arguments.remove("timeoutMS");
-        }
-        return timeoutMS;
-    }
 }

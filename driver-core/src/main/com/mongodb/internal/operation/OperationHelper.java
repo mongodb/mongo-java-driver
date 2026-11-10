@@ -20,11 +20,9 @@ import com.mongodb.ClientBulkWriteException;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerType;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.function.AsyncCallbackFunction;
 import com.mongodb.internal.bulk.DeleteRequest;
@@ -179,14 +177,6 @@ public final class OperationHelper {
             return false;
         }
         return true;
-    }
-
-    static OperationContext applyTimeoutModeToOperationContext(final TimeoutMode timeoutMode,
-                                                               final OperationContext operationContext) {
-        if (timeoutMode == TimeoutMode.ITERATION) {
-            return operationContext.withOverride(TimeoutContext::withDisabledMaxTime);
-        }
-        return operationContext;
     }
 
     /**

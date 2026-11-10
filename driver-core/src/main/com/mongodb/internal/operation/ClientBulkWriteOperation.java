@@ -28,7 +28,6 @@ import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteError;
 import com.mongodb.bulk.WriteConcernError;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.bulk.ClientBulkWriteOptions;
 import com.mongodb.client.model.bulk.ClientBulkWriteResult;
 import com.mongodb.client.model.bulk.ClientDeleteResult;
@@ -512,7 +511,6 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final Connection connection,
             final ClientBulkWriteCommandOkResponse response) {
         try (BatchCursor<BsonDocument> cursor = cursorDocumentToBatchCursor(
-                TimeoutMode.CURSOR_LIFETIME,
                 response.getDocument(),
                 SERVER_DEFAULT_CURSOR_BATCH_SIZE,
                 codecRegistry.get(BsonDocument.class),
@@ -535,7 +533,6 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
             final SingleResultCallback<List<List<BsonDocument>>> callback) {
         beginAsync().<List<List<BsonDocument>>>thenSupply(c -> {
             AsyncBatchCursor<BsonDocument> cursor = cursorDocumentToAsyncBatchCursor(
-                    TimeoutMode.CURSOR_LIFETIME,
                     response.getDocument(),
                     SERVER_DEFAULT_CURSOR_BATCH_SIZE,
                     codecRegistry.get(BsonDocument.class),

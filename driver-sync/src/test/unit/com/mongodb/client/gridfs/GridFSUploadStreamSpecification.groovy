@@ -35,7 +35,7 @@ class GridFSUploadStreamSpecification extends Specification {
     def 'should return the file id'() {
         when:
         def uploadStream = new GridFSUploadStreamImpl(null, Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255
-                , metadata, null)
+                , metadata)
         then:
         uploadStream.getId() == fileId
     }
@@ -45,7 +45,7 @@ class GridFSUploadStreamSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 2
-                , metadata, null)
+                , metadata)
         when:
         uploadStream.write(1)
 
@@ -71,7 +71,7 @@ class GridFSUploadStreamSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255
-                , null, null)
+                , null)
 
         when:
         uploadStream.write('file content ' as byte[])
@@ -102,7 +102,7 @@ class GridFSUploadStreamSpecification extends Specification {
         def content = 'file content ' as byte[]
         def metadata = new Document('contentType', 'text/txt')
         def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255,
-                metadata, null)
+                metadata)
         def filesId = fileId
 
         when:
@@ -160,7 +160,7 @@ class GridFSUploadStreamSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255
-                , metadata, null)
+                , metadata)
         when:
         uploadStream.close()
 
@@ -180,7 +180,7 @@ class GridFSUploadStreamSpecification extends Specification {
         given:
         def chunksCollection = Mock(MongoCollection)
         def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255
-                , metadata, null)
+                , metadata)
 
         when:
         uploadStream.write('file content ' as byte[])
@@ -200,7 +200,7 @@ class GridFSUploadStreamSpecification extends Specification {
     def 'should close the stream on abort'() {
         given:
         def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255
-                , metadata, null)
+                , metadata)
         uploadStream.write('file content ' as byte[])
         uploadStream.abort()
 
@@ -218,7 +218,7 @@ class GridFSUploadStreamSpecification extends Specification {
         given:
         def chunksCollection = Mock(MongoCollection)
         def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255
-                , metadata, null)
+                , metadata)
 
         when:
         uploadStream.write('file content ' as byte[])
@@ -236,7 +236,7 @@ class GridFSUploadStreamSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255
-                , metadata, null)
+                , metadata)
         when:
         uploadStream.close()
         uploadStream.write(1)
@@ -254,7 +254,7 @@ class GridFSUploadStreamSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255
-                , metadata, null)
+                , metadata)
         when:
         uploadStream.getObjectId()
 

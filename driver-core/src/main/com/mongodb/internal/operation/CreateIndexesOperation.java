@@ -138,7 +138,7 @@ public class CreateIndexesOperation implements WriteOperation<Void> {
         Supplier<Void> retryingCommandExecutor = decorateWithRetries(retryControl, operationContext, () -> {
             retryControl.getPolicy().onCommand(this::getCommandName);
             return executeCommand(binding, operationContext, namespace.getDatabaseName(), getCommandCreator(),
-                    writeConcernErrorTransformer(operationContext.getTimeoutContext()));
+                    writeConcernErrorTransformer());
         });
         try {
             return retryingCommandExecutor.get();
@@ -155,7 +155,7 @@ public class CreateIndexesOperation implements WriteOperation<Void> {
         AsyncCallbackSupplier<Void> retryingCommandExecutor = decorateWithRetriesAsync(retryControl, operationContext, supplierCallback -> {
             retryControl.getPolicy().onCommand(this::getCommandName);
             executeCommandAsync(binding, operationContext, namespace.getDatabaseName(), getCommandCreator(),
-                    writeConcernErrorTransformerAsync(operationContext.getTimeoutContext()), supplierCallback);
+                    writeConcernErrorTransformerAsync(), supplierCallback);
         });
         retryingCommandExecutor.get((result, t) -> {
             if (t != null) {

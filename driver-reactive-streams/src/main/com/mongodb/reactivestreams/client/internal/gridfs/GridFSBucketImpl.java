@@ -22,7 +22,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
-import com.mongodb.internal.time.Timeout;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
@@ -39,8 +38,7 @@ import org.bson.types.ObjectId;
 import org.reactivestreams.Publisher;
 
 import java.nio.ByteBuffer;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.reactivestreams.client.internal.gridfs.GridFSPublisherCreator.createDeletePublisher;
@@ -49,7 +47,6 @@ import static com.mongodb.reactivestreams.client.internal.gridfs.GridFSPublisher
 import static com.mongodb.reactivestreams.client.internal.gridfs.GridFSPublisherCreator.createGridFSFindPublisher;
 import static com.mongodb.reactivestreams.client.internal.gridfs.GridFSPublisherCreator.createGridFSUploadPublisher;
 import static com.mongodb.reactivestreams.client.internal.gridfs.GridFSPublisherCreator.createRenamePublisher;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 
 
@@ -119,12 +116,6 @@ public final class GridFSBucketImpl implements GridFSBucket {
     }
 
     @Override
-    public Long getTimeout(final TimeUnit timeUnit) {
-        Long timeoutMS = filesCollection.getTimeout(MILLISECONDS);
-        return timeoutMS == null ? null : notNull("timeUnit", timeUnit).convert(timeoutMS, MILLISECONDS);
-    }
-
-    @Override
     public GridFSBucket withChunkSizeBytes(final int chunkSizeBytes) {
         return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection, chunksCollection);
     }
@@ -148,12 +139,6 @@ public final class GridFSBucketImpl implements GridFSBucket {
         notNull("readConcern", readConcern);
         return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection.withReadConcern(readConcern),
                                     chunksCollection.withReadConcern(readConcern));
-    }
-
-    @Override
-    public GridFSBucket withTimeout(final long timeout, final TimeUnit timeUnit) {
-        return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection.withTimeout(timeout, timeUnit),
-                chunksCollection.withTimeout(timeout, timeUnit));
     }
 
     @Override
@@ -218,8 +203,8 @@ public final class GridFSBucketImpl implements GridFSBucket {
     @Override
     public GridFSDownloadPublisher downloadToPublisher(final BsonValue id) {
 
-        Function<Timeout, GridFSFindPublisher> findPublisherCreator =
-                operationTimeout -> createGridFSFindPublisher(filesCollection, null, GridFSFilters.eq("_id", id), operationTimeout);
+        Supplier<GridFSFindPublisher> findPublisherCreator =
+                () -> createGridFSFindPublisher(filesCollection, null, GridFSFilters.eq("_id", id));
         return createGridFSDownloadPublisher(chunksCollection, null, findPublisherCreator);
     }
 
@@ -230,8 +215,8 @@ public final class GridFSBucketImpl implements GridFSBucket {
 
     @Override
     public GridFSDownloadPublisher downloadToPublisher(final String filename, final GridFSDownloadOptions options) {
-        Function<Timeout, GridFSFindPublisher> findPublisherCreator =
-                timeout -> createGridFSFindPublisher(filesCollection, null, filename, options, timeout);
+        Supplier<GridFSFindPublisher> findPublisherCreator =
+                () -> createGridFSFindPublisher(filesCollection, null, filename, options);
         return createGridFSDownloadPublisher(chunksCollection, null, findPublisherCreator);
     }
 
@@ -242,8 +227,8 @@ public final class GridFSBucketImpl implements GridFSBucket {
 
     @Override
     public GridFSDownloadPublisher downloadToPublisher(final ClientSession clientSession, final BsonValue id) {
-        Function<Timeout, GridFSFindPublisher> findPublisherCreator =
-                operationTimeout -> createGridFSFindPublisher(filesCollection, clientSession, GridFSFilters.eq("_id", id), operationTimeout);
+        Supplier<GridFSFindPublisher> findPublisherCreator =
+                () -> createGridFSFindPublisher(filesCollection, clientSession, GridFSFilters.eq("_id", id));
         return createGridFSDownloadPublisher(chunksCollection, notNull("clientSession", clientSession), findPublisherCreator);
     }
 
@@ -256,9 +241,9 @@ public final class GridFSBucketImpl implements GridFSBucket {
     public GridFSDownloadPublisher downloadToPublisher(final ClientSession clientSession,
                                                        final String filename,
                                                        final GridFSDownloadOptions options) {
-        Function<Timeout, GridFSFindPublisher> findPublisherCreator =
-                operationTimeout -> createGridFSFindPublisher(filesCollection, clientSession, filename,
-                        options, operationTimeout);
+        Supplier<GridFSFindPublisher> findPublisherCreator =
+                () -> createGridFSFindPublisher(filesCollection, clientSession, filename,
+                        options);
 
         return createGridFSDownloadPublisher(chunksCollection, notNull("clientSession", clientSession), findPublisherCreator);
     }

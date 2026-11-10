@@ -45,6 +45,9 @@ public class UriOptionsTest extends AbstractConnectionStringTest {
         assumeFalse(getDescription().contains("tlsDisableOCSPEndpointCheck"));
         // No CANONICALIZE_HOST_NAME support https://jira.mongodb.org/browse/JAVA-4278
         assumeFalse(getDescription().equals("Valid auth options are parsed correctly (GSSAPI)"));
+        // CSOT not implemented, so timeoutMS not supported
+        assumeFalse(getDescription().equals("Valid connection and timeout options are parsed correctly"));
+        assumeFalse(getDescription().equals("timeoutMS=0"));
 
         if (getDefinition().getBoolean("valid", BsonBoolean.TRUE).getValue()) {
             testValidOptions();

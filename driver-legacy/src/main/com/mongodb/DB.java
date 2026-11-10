@@ -574,11 +574,6 @@ public class DB {
                 .withUuidRepresentation(getMongoClient().getMongoClientOptions().getUuidRepresentation());
     }
 
-    @Nullable
-    Long getTimeoutMS() {
-        return mongo.getMongoClientOptions().getTimeout();
-    }
-
     private static final Set<String> OBEDIENT_COMMANDS = new HashSet<>();
 
     static {

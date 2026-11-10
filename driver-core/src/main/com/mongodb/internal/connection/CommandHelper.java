@@ -125,15 +125,12 @@ public final class CommandHelper {
 
 
     /**
-     * Appends a user-defined maxTimeMS to the command if CSOT is not enabled.
+     * Appends a user-defined maxTimeMS to the command.
      * This is necessary when maxTimeMS must be explicitly set on the command being explained,
-     * rather than appending it lazily to the explain command in the {@link CommandMessage} via {@link TimeoutContext#setMaxTimeOverride(long)}.
-     * This ensures backwards compatibility with pre-CSOT behavior.
+     * rather than appending it lazily to the explain command in the {@link CommandMessage}.
      */
     public static void applyMaxTimeMS(final TimeoutContext timeoutContext, final BsonDocument command) {
-        if (!timeoutContext.hasTimeoutMS()) {
-            command.append("maxTimeMS", new BsonInt64(timeoutContext.getTimeoutSettings().getMaxTimeMS()));
-        }
+        command.append("maxTimeMS", new BsonInt64(timeoutContext.getTimeoutSettings().getMaxTimeMS()));
     }
 
     private CommandHelper() {

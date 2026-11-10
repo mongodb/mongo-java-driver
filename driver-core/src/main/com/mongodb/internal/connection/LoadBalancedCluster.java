@@ -19,7 +19,6 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.ThreadSafe;
@@ -193,7 +192,7 @@ final class LoadBalancedCluster implements Cluster {
             final Timeout serverSelectionTimeout,
             final TimeoutContext timeoutContext) {
         isTrue("open", !isClosed());
-        waitForSrv(serverSelectionTimeout, timeoutContext);
+        waitForSrv(serverSelectionTimeout);
         ClusterableServer server = assertNotNull(this.server);
         return serverAddress -> server;
     }
@@ -219,7 +218,7 @@ final class LoadBalancedCluster implements Cluster {
     public ServerTuple selectServer(final ServerSelector serverSelector, final OperationContext operationContext) {
         isTrue("open", !isClosed());
         Timeout computedServerSelectionTimeout = operationContext.getTimeoutContext().computeServerSelectionTimeout();
-        waitForSrv(computedServerSelectionTimeout, operationContext.getTimeoutContext());
+        waitForSrv(computedServerSelectionTimeout);
         if (srvRecordResolvedToMultipleHosts) {
             throw createResolvedToMultipleHostsException();
         }
@@ -231,7 +230,7 @@ final class LoadBalancedCluster implements Cluster {
         return serverTuple;
     }
 
-    private void waitForSrv(final Timeout serverSelectionTimeout, final TimeoutContext timeoutContext) {
+    private void waitForSrv(final Timeout serverSelectionTimeout) {
         if (initializationCompleted) {
             return;
         }
@@ -241,7 +240,7 @@ final class LoadBalancedCluster implements Cluster {
                     throw createShutdownException();
                 }
                 serverSelectionTimeout.onExpired(() -> {
-                    throw createTimeoutException(timeoutContext);
+                    throw createTimeoutException();
                 });
                 serverSelectionTimeout.awaitOn(condition, () -> format("resolving SRV records for %s", settings.getSrvHost()));
             }
@@ -324,7 +323,7 @@ final class LoadBalancedCluster implements Cluster {
                 + "to multiple hosts");
     }
 
-    private MongoTimeoutException createTimeoutException(final TimeoutContext timeoutContext) {
+    private MongoTimeoutException createTimeoutException() {
         MongoException localSrvResolutionException = srvResolutionException;
         String message;
         if (localSrvResolutionException == null) {
@@ -333,11 +332,11 @@ final class LoadBalancedCluster implements Cluster {
             message = format("Timed out while waiting to resolve SRV records for %s. "
                     + "Resolution exception was '%s'", settings.getSrvHost(), localSrvResolutionException);
         }
-        return createTimeoutException(timeoutContext, message);
+        return createTimeoutException(message);
     }
 
-    private static MongoTimeoutException createTimeoutException(final TimeoutContext timeoutContext, final String message) {
-        return timeoutContext.hasTimeoutMS() ? new MongoOperationTimeoutException(message) : new MongoTimeoutException(message);
+    private static MongoTimeoutException createTimeoutException(final String message) {
+        return new MongoTimeoutException(message);
     }
 
     private void notifyWaitQueueHandler(final ServerSelectionRequest request) {
@@ -399,9 +398,7 @@ final class LoadBalancedCluster implements Cluster {
                     } finally {
                         lock.unlock();
                     }
-                    timeoutList.forEach(request -> request.onError(createTimeoutException(request
-                            .getOperationContext()
-                            .getTimeoutContext())));
+                    timeoutList.forEach(request -> request.onError(createTimeoutException()));
                     timeoutList.clear();
                 }
 

@@ -20,10 +20,8 @@ import com.mongodb.Function;
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
 import com.mongodb.assertions.Assertions;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.MutableValue;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -92,13 +90,12 @@ final class AsyncOperationHelper {
     }
 
     static void withAsyncConnection(final AsyncWriteBinding binding,
-                                    final OperationContext originalOperationContext,
+                                    final OperationContext operationContext,
                                     final AsyncCallableWithConnection callable) {
-        OperationContext serverSelectionOperationContext = originalOperationContext.withOverride(TimeoutContext::withComputedServerSelectionTimeout);
         binding.getWriteConnectionSource(
-                serverSelectionOperationContext,
+                operationContext,
                 errorHandlingCallback(
-                        new AsyncCallableWithConnectionCallback(callable, serverSelectionOperationContext, originalOperationContext),
+                        new AsyncCallableWithConnectionCallback(callable, operationContext, operationContext),
                         OperationHelper.LOGGER));
     }
 
@@ -113,18 +110,16 @@ final class AsyncOperationHelper {
             final AsyncCallbackTriFunction<AsyncConnectionSource, AsyncConnection, OperationContext, R> asyncFunction) {
         SingleResultCallback<R> errorHandlingCallback = errorHandlingCallback(callback, OperationHelper.LOGGER);
 
-        OperationContext serverSelectionOperationContext =
-                operationContext.withOverride(TimeoutContext::withComputedServerSelectionTimeout);
         withAsyncSuppliedResource(
                 sourceAsyncFunction,
                 wrapConnectionSourceException,
-                serverSelectionOperationContext,
+                operationContext,
                 errorHandlingCallback,
                 (source, sourceReleasingCallback) ->
                         withAsyncSuppliedResource(
                                 source::getConnection,
                                 wrapConnectionSourceException,
-                                serverSelectionOperationContext.withMinRoundTripTime(source.getServerDescription()),
+                                operationContext.withMinRoundTripTime(source.getServerDescription()),
                                 sourceReleasingCallback,
                                 (connection, connectionAndSourceReleasingCallback) ->
                                         asyncFunction.apply(
@@ -367,12 +362,12 @@ final class AsyncOperationHelper {
         };
     }
 
-    static CommandWriteTransformerAsync<BsonDocument, Void> writeConcernErrorTransformerAsync(final TimeoutContext timeoutContext) {
+    static CommandWriteTransformerAsync<BsonDocument, Void> writeConcernErrorTransformerAsync() {
         return (result, connection) -> {
             assertNotNull(result);
             throwOnWriteConcernError(result, connection.getDescription().getServerAddress(),
-                    connection.getDescription().getMaxWireVersion(),
-                    timeoutContext);
+                    connection.getDescription().getMaxWireVersion()
+            );
             return null;
         };
     }
@@ -382,8 +377,7 @@ final class AsyncOperationHelper {
                 new AsyncSingleBatchCursor<>(BsonDocumentWrapperHelper.toList(result, fieldName), 0);
     }
 
-    static <T> AsyncBatchCursor<T> cursorDocumentToAsyncBatchCursor(final TimeoutMode timeoutMode,
-                                                                    final BsonDocument cursorDocument,
+    static <T> AsyncBatchCursor<T> cursorDocumentToAsyncBatchCursor(final BsonDocument cursorDocument,
                                                                     final int batchSize,
                                                                     final Decoder<T> decoder,
                                                                     @Nullable final BsonValue comment,
@@ -392,7 +386,7 @@ final class AsyncOperationHelper {
                                                                     final OperationContext operationContext,
                                                                     final boolean retryReads,
                                                                     @Nullable final Integer maxAdaptiveRetriesSetting) {
-        return new AsyncCommandBatchCursor<>(timeoutMode, 0, operationContext, new AsyncCommandCursor<>(
+        return new AsyncCommandBatchCursor<>(0, operationContext, new AsyncCommandCursor<>(
                 cursorDocument, batchSize, decoder, comment, source, connection, retryReads, maxAdaptiveRetriesSetting
         ));
     }

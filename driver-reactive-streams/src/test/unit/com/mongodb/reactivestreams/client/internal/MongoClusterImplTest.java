@@ -38,7 +38,6 @@ import org.mockito.Mock;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -74,11 +73,6 @@ public class MongoClusterImplTest extends TestHelper {
     public void withReadPreference() {
         assertEquals(ReadPreference.secondaryPreferred(), mongoCluster.withReadPreference(ReadPreference.secondaryPreferred())
                 .getReadPreference());
-    }
-
-    @Test
-    public void withTimeout() {
-        assertEquals(1000, mongoCluster.withTimeout(1000, TimeUnit.MILLISECONDS).getTimeout(TimeUnit.MILLISECONDS));
     }
 
     @Test

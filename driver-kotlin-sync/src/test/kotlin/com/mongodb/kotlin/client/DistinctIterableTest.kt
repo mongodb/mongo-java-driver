@@ -16,7 +16,6 @@
 package com.mongodb.kotlin.client
 
 import com.mongodb.client.DistinctIterable as JDistinctIterable
-import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.full.declaredFunctions
@@ -57,7 +56,6 @@ class DistinctIterableTest {
         iterable.filter(filter)
         iterable.maxTime(1)
         iterable.maxTime(1, TimeUnit.SECONDS)
-        iterable.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).batchSize(batchSize)
         verify(wrapped).collation(collation)
@@ -66,7 +64,6 @@ class DistinctIterableTest {
         verify(wrapped).filter(filter)
         verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
         verify(wrapped).maxTime(1, TimeUnit.SECONDS)
-        verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
         verifyNoMoreInteractions(wrapped)
     }

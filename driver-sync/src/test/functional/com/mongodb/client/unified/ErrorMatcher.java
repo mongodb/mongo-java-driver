@@ -24,7 +24,6 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoGridFSException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.MongoExecutionTimeoutException;
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoServerException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoWriteConcernException;
@@ -83,10 +82,8 @@ final class ErrorMatcher {
         }
 
         if (expectedError.containsKey("isTimeoutError")) {
-            assertEquals(context.getMessage("Exception must be of type MongoOperationTimeoutException when checking for results"),
-                    expectedError.getBoolean("isTimeoutError").getValue(),
-                    e instanceof MongoOperationTimeoutException
-            );
+            assertFalse(context.getMessage("Exception must be of timeout exception when checking for results"),
+                    expectedError.getBoolean("isTimeoutError").getValue());
         }
 
         if (expectedError.containsKey("errorContains")) {

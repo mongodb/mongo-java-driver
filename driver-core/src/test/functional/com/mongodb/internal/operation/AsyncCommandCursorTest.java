@@ -18,7 +18,6 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ConnectionDescription;
@@ -48,7 +47,6 @@ import java.time.Duration;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -58,7 +56,6 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -88,7 +85,7 @@ class AsyncCommandCursorTest {
     @BeforeEach
     void setUp() {
         timeoutContext = spy(new TimeoutContext(TimeoutSettings.create(
-                MongoClientSettings.builder().timeout(TIMEOUT.toMillis(), MILLISECONDS).build())));
+                MongoClientSettings.builder().build())));
         operationContext = spy(new OperationContext(
                 IgnorableRequestContext.INSTANCE,
                 NoOpSessionContext.INSTANCE,
@@ -137,69 +134,6 @@ class AsyncCommandCursorTest {
         commandBatchCursor.close(operationContext);
         verify(mockConnection, times(1)).commandAsync(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any(), any());
     }
-
-
-    @Test
-    void shouldNotSkipKillsCursorsCommandWhenTimeoutExceptionDoesNotHaveNetworkErrorCause() {
-        //given
-        doAnswer(invocation -> {
-            SingleResultCallback<Object> argument = invocation.getArgument(6);
-            argument.onResult(null, new MongoOperationTimeoutException("test"));
-            return null;
-        }).when(mockConnection).commandAsync(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any(), any());
-        when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
-
-        AsyncCursor<Document> commandBatchCursor = createBatchCursor();
-
-        //when
-        commandBatchCursor.next(operationContext, (result, t) -> {
-            assertNull(result);
-            assertNotNull(t);
-            assertEquals(MongoOperationTimeoutException.class, t.getClass());
-        });
-
-        commandBatchCursor.close(operationContext);
-
-
-        //then
-        verify(mockConnection, times(2)).commandAsync(any(),
-                any(), any(), any(), any(), any(), any());
-        verify(mockConnection, times(1)).commandAsync(eq(NAMESPACE.getDatabaseName()),
-                argThat(bsonDocument -> bsonDocument.containsKey("getMore")), any(), any(), any(), any(), any());
-        verify(mockConnection, times(1)).commandAsync(eq(NAMESPACE.getDatabaseName()),
-                argThat(bsonDocument -> bsonDocument.containsKey("killCursors")), any(), any(), any(), any(), any());
-    }
-
-    @Test
-    void shouldSkipKillsCursorsCommandWhenTimeoutExceptionHaveNetworkErrorCause() {
-        //given
-        doAnswer(invocation -> {
-            SingleResultCallback<Object> argument = invocation.getArgument(6);
-            argument.onResult(null, new MongoOperationTimeoutException("test", new MongoSocketException("test", new ServerAddress())));
-            return null;
-        }).when(mockConnection).commandAsync(eq(NAMESPACE.getDatabaseName()), any(), any(), any(), any(), any(), any());
-        when(serverDescription.getType()).thenReturn(ServerType.LOAD_BALANCER);
-
-        AsyncCursor<Document> commandBatchCursor = createBatchCursor();
-
-        //when
-        commandBatchCursor.next(operationContext, (result, t) -> {
-            assertNull(result);
-            assertNotNull(t);
-            assertEquals(MongoOperationTimeoutException.class, t.getClass());
-        });
-
-        commandBatchCursor.close(operationContext);
-
-        //then
-        verify(mockConnection, times(1)).commandAsync(any(),
-                any(), any(), any(), any(), any(), any());
-        verify(mockConnection, times(1)).commandAsync(eq(NAMESPACE.getDatabaseName()),
-                argThat(bsonDocument -> bsonDocument.containsKey("getMore")), any(), any(), any(), any(), any());
-        verify(mockConnection, never()).commandAsync(eq(NAMESPACE.getDatabaseName()),
-                argThat(bsonDocument -> bsonDocument.containsKey("killCursors")), any(), any(), any(), any(), any());
-    }
-
 
     @Test
     void shouldReleaseConnectionBetweenEmptyGetMoreResponses() {

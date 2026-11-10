@@ -109,16 +109,6 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
   type TagSet = com.mongodb.TagSet
 
   /**
-   * The timeout mode for a cursor
-   *
-   * For operations that create cursors, `timeoutMS` can either cap the lifetime of the cursor or be applied separately to the
-   * original operation and all next calls.
-   *
-   * @since 5.2
-   */
-  type TimeoutMode = com.mongodb.client.cursor.TimeoutMode
-
-  /**
    * Controls the acknowledgment of write operations with various options.
    */
   type WriteConcern = com.mongodb.WriteConcern
@@ -401,19 +391,6 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
    * An exception indicating that the driver has timed out waiting for either a server or a connection to become available.
    */
   type MongoTimeoutException = com.mongodb.MongoTimeoutException
-
-  /**
-   * Exception thrown to indicate that a MongoDB operation has exceeded the specified timeout for
-   * the full execution of operation.
-   *
-   * <p> The [[MongoOperationTimeoutException]] might provide information about the underlying
-   * cause of the timeout, if available. For example, if retries are attempted due to transient failures,
-   * and a timeout occurs in any of the attempts, the exception from one of the retries may be appended
-   * as the cause to this [[MongoOperationTimeoutException]].
-   
-   @since 5.0
-   */
-  type MongoOperationTimeoutException = com.mongodb.MongoOperationTimeoutException
 
   /**
    * An exception indicating that the convenient transactions API (`withTransaction`) exceeded its overall timeout

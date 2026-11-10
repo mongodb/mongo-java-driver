@@ -18,11 +18,8 @@ package com.mongodb.internal.connection
 
 import com.mongodb.ClusterFixture
 import com.mongodb.MongoInternalException
-import com.mongodb.MongoOperationTimeoutException
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
-import com.mongodb.internal.TimeoutContext
-import com.mongodb.internal.TimeoutSettings
 import jdk.net.ExtendedSocketOptions
 import spock.lang.IgnoreIf
 import spock.lang.Specification
@@ -81,30 +78,6 @@ class SocketStreamHelperSpecification extends Specification {
         cleanup:
         socket?.close()
     }
-
-    def 'should throw MongoOperationTimeoutException during initialization when timeoutMS expires'() {
-        given:
-        Socket socket = SocketFactory.default.createSocket()
-
-        when:
-        SocketStreamHelper.initialize(
-                createOperationContext().withTimeoutContext(new TimeoutContext(
-                                new TimeoutSettings(
-                                        1,
-                                        100,
-                                        100,
-                                        1,
-                                        100))),
-                socket, getSocketAddresses(getPrimary(), new DefaultInetAddressResolver()).get(0),
-                SocketSettings.builder().build(), SslSettings.builder().build())
-
-        then:
-        thrown(MongoOperationTimeoutException)
-
-        cleanup:
-        socket?.close()
-    }
-
 
     def 'should connect socket()'() {
         given:

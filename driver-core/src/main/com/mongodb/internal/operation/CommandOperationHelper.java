@@ -29,7 +29,6 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.connection.OperationContext;
-import com.mongodb.internal.operation.SpecRetryPolicy.ExplicitMaxRetries;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -38,7 +37,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static com.mongodb.internal.operation.SpecRetryPolicy.ExplicitMaxRetries.RETRIES_LIMITED_BY_INDIVIDUAL_POLICIES;
-import static com.mongodb.internal.operation.SpecRetryPolicy.ExplicitMaxRetries.NO_RETRIES_LIMIT;
 import static java.util.Arrays.asList;
 
 @SuppressWarnings("overloads")
@@ -78,12 +76,9 @@ public final class CommandOperationHelper {
     static RetryControl<SpecRetryPolicy> createSpecRetryControl(
             final SpecRetryPolicy.IndividualPolicies policies,
             final OperationContext operationContext) {
-        ExplicitMaxRetries explicitMaxRetries = operationContext.getTimeoutContext().hasTimeoutMS()
-                ? NO_RETRIES_LIMIT
-                : RETRIES_LIMITED_BY_INDIVIDUAL_POLICIES;
         return new RetryControl<>(new SpecRetryPolicy(
                 policies,
-                explicitMaxRetries,
+                RETRIES_LIMITED_BY_INDIVIDUAL_POLICIES,
                 operationContext.getServerDeprioritization()));
     }
 

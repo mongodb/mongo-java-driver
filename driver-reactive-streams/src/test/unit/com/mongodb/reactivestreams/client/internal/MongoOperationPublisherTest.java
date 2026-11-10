@@ -29,12 +29,8 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 
-import java.util.concurrent.TimeUnit;
-
-import static com.mongodb.ClusterFixture.TIMEOUT;
-import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS_WITH_TIMEOUT;
+import static com.mongodb.ClusterFixture.TIMEOUT_SETTINGS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -55,7 +51,7 @@ public class MongoOperationPublisherTest {
     private static final MongoOperationPublisher<Document> DEFAULT_MOP = new MongoOperationPublisher<>(
             MONGO_NAMESPACE, Document.class, MongoClientSettings.getDefaultCodecRegistry(), ReadPreference.primary(),
             ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, true, true, null, UuidRepresentation.STANDARD,
-            null, TIMEOUT_SETTINGS_WITH_TIMEOUT, OPERATION_EXECUTOR);
+            null, TIMEOUT_SETTINGS, OPERATION_EXECUTOR);
 
     @Test
     public void withCodecRegistry() {
@@ -110,13 +106,6 @@ public class MongoOperationPublisherTest {
         assertEquals(DEFAULT_MOP, DEFAULT_MOP.withReadPreference(ReadPreference.primary()));
         assertEquals(ReadPreference.secondaryPreferred(), DEFAULT_MOP.withReadPreference(ReadPreference.secondaryPreferred())
                 .getReadPreference());
-    }
-
-    @Test
-    public void withTimeout() {
-        assertEquals(DEFAULT_MOP, DEFAULT_MOP.withTimeout(TIMEOUT, TimeUnit.SECONDS));
-        assertEquals(1000, DEFAULT_MOP.withTimeout(1000, TimeUnit.MILLISECONDS).getTimeoutMS());
-        assertThrows(IllegalArgumentException.class, () -> DEFAULT_MOP.withTimeout(500, TimeUnit.NANOSECONDS));
     }
 
     @Test

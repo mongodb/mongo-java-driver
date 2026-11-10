@@ -16,7 +16,6 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.ServerApi;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.thread.AsyncClientExecutor;
 import com.mongodb.lang.Nullable;
@@ -40,17 +39,9 @@ public final class InternalOperationContextFactory {
     }
 
     /**
-     * @return a simple operation context without timeoutMS
+     * @return a simple operation context
      */
     OperationContext create() {
         return simpleOperationContext(timeoutSettings.connectionOnly(), serverApi, clientExecutor);
-    }
-
-    /**
-     * @return a simple operation context with timeoutMS if set at the MongoClientSettings level
-     */
-
-    OperationContext createMaintenanceContext() {
-        return create().withTimeoutContext(TimeoutContext.createMaintenanceTimeoutContext(timeoutSettings));
     }
 }

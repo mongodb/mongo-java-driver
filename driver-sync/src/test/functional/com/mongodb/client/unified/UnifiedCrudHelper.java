@@ -46,7 +46,6 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.ChangeStreamPreAndPostImagesOptions;
 import com.mongodb.client.model.ClusteredIndexOptions;
@@ -118,8 +117,6 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistries;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -319,9 +316,6 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                     case "batchSize":
                         iterable.batchSize(cur.getValue().asNumber().intValue());
                         break;
-                    case "timeoutMode":
-                        setTimeoutMode(iterable, cur);
-                        break;
                     case "maxTimeMS":
                         iterable.maxTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
                         break;
@@ -391,9 +385,6 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                     break;
                 case "batchSize":
                     iterable.batchSize(cur.getValue().asNumber().intValue());
-                    break;
-                case "timeoutMode":
-                    setTimeoutMode(iterable, cur);
                     break;
                 case "maxTimeMS":
                     iterable.maxTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
@@ -496,9 +487,6 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                     break;
                 case "cursorType":
                     setCursorType(iterable, cur);
-                    break;
-                case "timeoutMode":
-                    setTimeoutMode(iterable, cur);
                     break;
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
@@ -797,14 +785,12 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         List<BsonDocument> pipeline = arguments.getArray("pipeline").stream().map(BsonValue::asDocument).collect(toList());
         AggregateIterable<BsonDocument> iterable;
         if (entities.hasDatabase(entityName)) {
-            Long timeoutMS = getAndRemoveTimeoutMS(operation.getDocument("arguments"));
-            MongoDatabase database = entities.getDatabaseWithTimeoutMS(entityName, timeoutMS);
+            MongoDatabase database = entities.getDatabase(entityName);
             iterable = session == null
                     ? database.aggregate(requireNonNull(pipeline), BsonDocument.class)
                     : database.aggregate(session, requireNonNull(pipeline), BsonDocument.class);
         } else if (entities.hasCollection(entityName)) {
-            Long timeoutMS = getAndRemoveTimeoutMS(operation.getDocument("arguments"));
-            MongoCollection<BsonDocument> collection = entities.getCollectionWithTimeoutMS(entityName, timeoutMS);
+            MongoCollection<BsonDocument> collection = entities.getCollection(entityName);
             iterable = session == null
                     ? collection.aggregate(requireNonNull(pipeline))
                     : collection.aggregate(session, requireNonNull(pipeline));
@@ -831,9 +817,6 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                         break;
                     case "comment":
                         iterable.comment(cur.getValue());
-                        break;
-                    case "timeoutMode":
-                        setTimeoutMode(iterable, cur);
                         break;
                     case "maxTimeMS":
                         iterable.maxTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
@@ -1280,9 +1263,6 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 case "readConcern":
                     optionsBuilder.readConcern(asReadConcern(cur.getValue().asDocument()));
                     break;
-                case "timeoutMS":
-                    optionsBuilder.timeout(cur.getValue().asInt32().longValue(), TimeUnit.MILLISECONDS);
-                    break;
                 case "maxCommitTimeMS":
                     optionsBuilder.maxCommitTime(cur.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
                     break;
@@ -1336,9 +1316,6 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                     break;
                 case "writeConcern":
                     optionsBuilder.writeConcern(asWriteConcern(entry.getValue().asDocument()));
-                    break;
-                case "timeoutMS":
-                    optionsBuilder.timeout(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
                     break;
                 case "maxCommitTimeMS":
                     optionsBuilder.maxCommitTime(entry.getValue().asNumber().longValue(), TimeUnit.MILLISECONDS);
@@ -1834,13 +1811,12 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         List<BsonDocument> pipeline = arguments.getArray("pipeline").stream().map(BsonValue::asDocument).collect(toList());
         ChangeStreamIterable<BsonDocument> iterable;
 
-        Long timeoutMS = arguments.containsKey("timeoutMS") ? arguments.remove("timeoutMS").asNumber().longValue() : null;
         if (entities.hasCollection(entityName)) {
-            iterable = entities.getCollectionWithTimeoutMS(entityName, timeoutMS).watch(pipeline);
+            iterable = entities.getCollection(entityName).watch(pipeline);
         } else if (entities.hasDatabase(entityName)) {
-            iterable = entities.getDatabaseWithTimeoutMS(entityName, timeoutMS).watch(pipeline, BsonDocument.class);
+            iterable = entities.getDatabase(entityName).watch(pipeline, BsonDocument.class);
         } else if (entities.hasClient(entityName)) {
-            iterable = entities.getMongoClusterWithTimeoutMS(entityName, timeoutMS).watch(pipeline, BsonDocument.class);
+            iterable = entities.getClient(entityName).watch(pipeline, BsonDocument.class);
         } else {
             throw new UnsupportedOperationException("No entity found for id: " + entityName);
         }
@@ -2363,37 +2339,14 @@ final class UnifiedCrudHelper extends UnifiedHelper {
     }
 
     private MongoCollection<BsonDocument> getMongoCollection(final BsonDocument operation) {
-        MongoCollection<BsonDocument> collection = entities.getCollection(operation.getString("object").getValue());
-        Long timeoutMS = getAndRemoveTimeoutMS(operation.getDocument("arguments", new BsonDocument()));
-        if (timeoutMS != null) {
-            collection = collection.withTimeout(timeoutMS, TimeUnit.MILLISECONDS);
-        }
-        return collection;
+        return entities.getCollection(operation.getString("object").getValue());
     }
     private MongoDatabase getMongoDatabase(final BsonDocument operation) {
-        MongoDatabase database = entities.getDatabase(operation.getString("object").getValue());
-        if (operation.containsKey("arguments")) {
-            BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
-            Long timeoutMS = getAndRemoveTimeoutMS(arguments);
-            if (timeoutMS != null) {
-                database = database.withTimeout(timeoutMS, TimeUnit.MILLISECONDS);
-                arguments.remove("timeoutMS");
-            }
-        }
-        return database;
+        return entities.getDatabase(operation.getString("object").getValue());
     }
 
     private MongoCluster getMongoCluster(final BsonDocument operation) {
-        MongoCluster mongoCluster = entities.getClient(operation.getString("object").getValue());
-        if (operation.containsKey("arguments")) {
-            BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
-            Long timeoutMS = getAndRemoveTimeoutMS(arguments);
-            if (timeoutMS != null) {
-                mongoCluster = mongoCluster.withTimeout(timeoutMS, TimeUnit.MILLISECONDS);
-                arguments.remove("timeoutMS");
-            }
-        }
-        return mongoCluster;
+        return entities.getClient(operation.getString("object").getValue());
     }
 
     private static void setCursorType(final FindIterable<BsonDocument> iterable, final Map.Entry<String, BsonValue> cur) {
@@ -2409,37 +2362,6 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 break;
             default:
                 throw new UnsupportedOperationException("Unsupported cursorType: " + cur.getValue());
-        }
-    }
-
-    private static void setTimeoutMode(final MongoIterable<BsonDocument> iterable, final Map.Entry<String, BsonValue> cur) {
-         switch (cur.getValue().asString().getValue()) {
-            case "cursorLifetime":
-                invokeTimeoutMode(iterable, TimeoutMode.CURSOR_LIFETIME);
-                break;
-            case "iteration":
-                invokeTimeoutMode(iterable, TimeoutMode.ITERATION);
-                break;
-            default:
-                throw new UnsupportedOperationException("Unsupported timeoutMode: " + cur.getValue());
-        }
-    }
-
-    private static void invokeTimeoutMode(final MongoIterable<BsonDocument> iterable, final TimeoutMode timeoutMode) {
-        try {
-            Method timeoutModeMethod = iterable.getClass().getDeclaredMethod("timeoutMode", TimeoutMode.class);
-            timeoutModeMethod.setAccessible(true);
-            timeoutModeMethod.invoke(iterable, timeoutMode);
-        } catch (NoSuchMethodException e) {
-            throw new UnsupportedOperationException("Unsupported timeoutMode method for class: " + iterable.getClass(), e);
-        } catch (IllegalAccessException e) {
-            throw new UnsupportedOperationException("Unable to set timeoutMode method for class: " + iterable.getClass(), e);
-        } catch (InvocationTargetException e) {
-            Throwable targetException = e.getTargetException();
-            if (targetException instanceof IllegalArgumentException) {
-                throw (IllegalArgumentException) targetException;
-            }
-            throw new UnsupportedOperationException("Unable to set timeoutMode method for class: " + iterable.getClass(), targetException);
         }
     }
 }

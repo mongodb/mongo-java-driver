@@ -16,12 +16,9 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.CursorType;
 import com.mongodb.MongoNamespace;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.TimeoutContext;
-import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -47,7 +44,6 @@ import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTra
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.OperationHelper.applyTimeoutModeToOperationContext;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
@@ -73,8 +69,6 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
     private BsonValue comment;
     private BsonValue hint;
     private BsonDocument variables;
-    private TimeoutMode timeoutMode;
-    private CursorType cursorType;
 
     AggregateOperationImpl(final MongoNamespace namespace,
             final List<BsonDocument> pipeline, final Decoder<T> decoder, final AggregationLevel aggregationLevel,
@@ -152,19 +146,6 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
         return this;
     }
 
-    /**
-     * When {@link TimeoutContext#hasTimeoutMS()} then {@link TimeoutSettings#getMaxAwaitTimeMS()} usage in {@code getMore} commands
-     * depends on the type of cursor. For {@link CursorType#TailableAwait} it is used, for others it is not.
-     * {@link CursorType#TailableAwait} is used mainly for change streams in {@link AggregateOperationImpl}.
-     *
-     * @param cursorType
-     * @return this
-     */
-    AggregateOperationImpl<T> cursorType(final CursorType cursorType) {
-        this.cursorType = cursorType;
-        return this;
-    }
-
     boolean getRetryReads() {
         return retryReads;
     }
@@ -172,13 +153,6 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
     @Nullable
     BsonValue getHint() {
         return hint;
-    }
-
-    public AggregateOperationImpl<T> timeoutMode(@Nullable final TimeoutMode timeoutMode) {
-        if (timeoutMode != null) {
-            this.timeoutMode = timeoutMode;
-        }
-        return this;
     }
 
     AggregateOperationImpl<T> hint(@Nullable final BsonValue hint) {
@@ -199,7 +173,7 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding, final OperationContext operationContext) {
-        return executeRetryableRead(binding, applyTimeoutModeToOperationContext(timeoutMode, operationContext), namespace.getDatabaseName(),
+        return executeRetryableRead(binding, operationContext, namespace.getDatabaseName(),
                 getCommandCreator(), CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT),
                 transformer(), retryReads, maxAdaptiveRetriesSetting);
     }
@@ -207,7 +181,7 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
     @Override
     public void executeAsync(final AsyncReadBinding binding, final OperationContext operationContext, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
         SingleResultCallback<AsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        executeRetryableReadAsync(binding, applyTimeoutModeToOperationContext(timeoutMode, operationContext),  namespace.getDatabaseName(),
+        executeRetryableReadAsync(binding, operationContext,  namespace.getDatabaseName(),
                 getCommandCreator(), CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT),
                 asyncTransformer(), retryReads, maxAdaptiveRetriesSetting,
                 errHandlingCallback);
@@ -248,7 +222,7 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
 
     private CommandReadTransformer<BsonDocument, CommandBatchCursor<T>> transformer() {
         return (result, source, connection, operationContext) ->
-                new CommandBatchCursor<>(getTimeoutMode(), getMaxTimeForCursor(operationContext.getTimeoutContext()), operationContext, new CommandCursor<>(
+                new CommandBatchCursor<>(getMaxTimeForCursor(operationContext.getTimeoutContext()), operationContext, new CommandCursor<>(
                         result, batchSize != null ? batchSize : 0,
                         decoder, comment, source, connection,
                         retryReads, maxAdaptiveRetriesSetting
@@ -257,27 +231,15 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
 
     private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
         return (result, source, connection, operationContext) ->
-            new AsyncCommandBatchCursor<>(getTimeoutMode(), getMaxTimeForCursor(operationContext.getTimeoutContext()),
+            new AsyncCommandBatchCursor<>(getMaxTimeForCursor(operationContext.getTimeoutContext()),
                     operationContext, new AsyncCommandCursor<>(
                     result, batchSize != null ? batchSize : 0, decoder, comment, source, connection,
                     retryReads, maxAdaptiveRetriesSetting
             ));
     }
 
-    private TimeoutMode getTimeoutMode() {
-        TimeoutMode localTimeoutMode = timeoutMode;
-        if (localTimeoutMode == null) {
-            localTimeoutMode = TimeoutMode.CURSOR_LIFETIME;
-        }
-        return localTimeoutMode;
-    }
-
     private long getMaxTimeForCursor(final TimeoutContext timeoutContext) {
-        long maxAwaitTimeMS = timeoutContext.getMaxAwaitTimeMS();
-        if (timeoutContext.hasTimeoutMS()){
-           return CursorType.TailableAwait == cursorType ? maxAwaitTimeMS : 0;
-        }
-        return maxAwaitTimeMS;
+        return timeoutContext.getMaxAwaitTimeMS();
     }
 
     interface AggregateTarget {

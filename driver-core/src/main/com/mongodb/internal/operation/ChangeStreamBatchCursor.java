@@ -18,7 +18,6 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoChangeStreamException;
 import com.mongodb.MongoException;
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
@@ -53,11 +52,6 @@ import static com.mongodb.internal.operation.SyncOperationHelper.withReadConnect
  * </p>
  * If an error occurring during any of these method calls is not resumable, it is immediately propagated to the caller, and the {@link ChangeStreamBatchCursor}
  * is closed and invalidated on the server. Server errors that occur during this invalidation process are not propagated to the caller.
- * <p>
- * A {@link MongoOperationTimeoutException} does not invalidate the {@link ChangeStreamBatchCursor}, but is immediately propagated to the caller.
- * Subsequent method call will attempt to resume operation by establishing a new change stream on the server, without doing {@code getMore}
- * request first.
- * </p>
  */
 final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private ReadBinding binding;
@@ -70,13 +64,6 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
     private Cursor<RawBsonDocument> wrapped;
     private BsonDocument resumeToken;
     private final AtomicBoolean closed;
-
-    /**
-     * This flag is used to manage change stream resumption logic after a timeout error.
-     * Indicates whether the last {@code hasNext()}, {@code next()}, or {@code tryNext()} call resulted in a {@link MongoOperationTimeoutException}.
-     * If {@code true}, indicates a timeout occurred, prompting an attempt to resume the change stream on the subsequent call.
-     */
-    private boolean lastOperationTimedOut;
 
     ChangeStreamBatchCursor(final ChangeStreamOperation<T> changeStreamOperation,
                             final Cursor<RawBsonDocument> wrapped,
@@ -93,7 +80,6 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         this.resumeToken = resumeToken;
         this.maxWireVersion = maxWireVersion;
         closed = new AtomicBoolean();
-        lastOperationTimedOut = false;
     }
 
     Cursor<RawBsonDocument> getWrapped() {
@@ -224,17 +210,15 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
         OperationContext operationContextWithNewlyStartedTimeout = initialOperationContext.withNewlyStartedTimeout();
         try {
             R result = execute(function, operationContextWithNewlyStartedTimeout);
-            lastOperationTimedOut = false;
             return result;
         } catch (Throwable exception) {
-            lastOperationTimedOut = isTimeoutException(exception);
             throw exception;
         }
     }
 
     private <R> R execute(final BiFunction<Cursor<RawBsonDocument>, OperationContext, R> function,
                           final OperationContext operationContext) {
-        boolean shouldBeResumed = hasPreviousNextTimedOut();
+        boolean shouldBeResumed = false;
         while (true) {
             if (shouldBeResumed) {
                 resumeChangeStream(operationContext);
@@ -264,14 +248,6 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
             return null;
         });
         binding.release(); // release the new change stream batch cursor's reference to the binding
-    }
-
-    private boolean hasPreviousNextTimedOut() {
-        return lastOperationTimedOut && !closed.get();
-    }
-
-    private static boolean isTimeoutException(final Throwable exception) {
-        return exception instanceof MongoOperationTimeoutException;
     }
 
     /**

@@ -16,7 +16,6 @@
 
 package org.mongodb.scala
 
-import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher
 import org.mockito.Mockito.{ verify, verifyNoMoreInteractions }
 import org.mongodb.scala.bson.BsonTimestamp

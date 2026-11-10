@@ -39,10 +39,8 @@ import com.mongodb.client.model.vault.RewrapManyDataKeyOptions;
 import com.mongodb.client.model.vault.RewrapManyDataKeyResult;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.vault.ClientEncryption;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.time.Timeout;
-import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
@@ -58,14 +56,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.client.internal.TimeoutHelper.collectionWithTimeout;
-import static com.mongodb.client.internal.TimeoutHelper.databaseWithTimeout;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.capi.MongoCryptHelper.validateRewrapManyDataKeyOptions;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.internal.BsonUtil.mutableDeepCopy;
 
 /**
@@ -98,10 +93,6 @@ public class ClientEncryptionImpl implements ClientEncryption {
                 .withWriteConcern(WriteConcern.MAJORITY)
                 .withReadConcern(ReadConcern.MAJORITY);
 
-        Long timeoutMs = options.getTimeout(MILLISECONDS);
-        if (timeoutMs != null){
-            vaultCollection = vaultCollection.withTimeout(timeoutMs, MILLISECONDS);
-        }
         return vaultCollection;
     }
 
@@ -112,48 +103,43 @@ public class ClientEncryptionImpl implements ClientEncryption {
 
     @Override
     public BsonBinary createDataKey(final String kmsProvider, final DataKeyOptions dataKeyOptions) {
-        Timeout operationTimeout = startTimeout();
-       return createDataKey(kmsProvider, dataKeyOptions, operationTimeout);
-    }
-
-    public BsonBinary createDataKey(final String kmsProvider, final DataKeyOptions dataKeyOptions, @Nullable final Timeout operationTimeout) {
-        BsonDocument dataKeyDocument = crypt.createDataKey(kmsProvider, dataKeyOptions, operationTimeout);
-        collectionWithTimeout(collection, "Data key insertion exceeded the timeout limit.", operationTimeout).insertOne(dataKeyDocument);
+        BsonDocument dataKeyDocument = crypt.createDataKey(kmsProvider, dataKeyOptions);
+        collection.insertOne(dataKeyDocument);
         return dataKeyDocument.getBinary("_id");
     }
 
     @Override
     public BsonBinary encrypt(final BsonValue value, final EncryptOptions options) {
-        Timeout operationTimeout = startTimeout();
+        Timeout operationTimeout = null;
         return crypt.encryptExplicitly(value, options, operationTimeout);
     }
 
     @Override
     public BsonDocument encryptExpression(final Bson expression, final EncryptOptions options) {
-        Timeout operationTimeout = startTimeout();
+        Timeout operationTimeout = null;
         return crypt.encryptExpression(expression.toBsonDocument(BsonDocument.class, collection.getCodecRegistry()), options,
                 operationTimeout);
     }
 
     @Override
     public BsonValue decrypt(final BsonBinary value) {
-        Timeout operationTimeout = startTimeout();
+        Timeout operationTimeout = null;
         return crypt.decryptExplicitly(value, operationTimeout);
     }
 
     @Override
     public DeleteResult deleteKey(final BsonBinary id) {
-        return collectionWithTimeout(collection, startTimeout()).deleteOne(Filters.eq("_id", id));
+        return collection.deleteOne(Filters.eq("_id", id));
     }
 
     @Override
     public BsonDocument getKey(final BsonBinary id) {
-        return collectionWithTimeout(collection, startTimeout()).find(Filters.eq("_id", id)).first();
+        return collection.find(Filters.eq("_id", id)).first();
     }
 
     @Override
     public FindIterable<BsonDocument> getKeys() {
-        return collectionWithTimeout(collection, startTimeout()).find();
+        return collection.find();
     }
 
     @Override
@@ -198,7 +184,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
     @Override
     public RewrapManyDataKeyResult rewrapManyDataKey(final Bson filter, final RewrapManyDataKeyOptions options) {
         validateRewrapManyDataKeyOptions(options);
-        Timeout operationTimeout = startTimeout();
+        Timeout operationTimeout = null;
         BsonDocument results = crypt.rewrapManyDataKey(filter.toBsonDocument(BsonDocument.class, collection.getCodecRegistry()),
                 options, operationTimeout);
         if (results.isEmpty()) {
@@ -213,7 +199,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
                                     Updates.currentDate("updateDate"))
                     );
         }).collect(Collectors.toList());
-        BulkWriteResult bulkWriteResult = collectionWithTimeout(collection, operationTimeout).bulkWrite(updateModels);
+        BulkWriteResult bulkWriteResult = collection.bulkWrite(updateModels);
         return new RewrapManyDataKeyResult(bulkWriteResult);
     }
 
@@ -223,7 +209,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
         notNull("collectionName", collectionName);
         notNull("createCollectionOptions", createCollectionOptions);
         notNull("createEncryptedCollectionParams", createEncryptedCollectionParams);
-        Timeout operationTimeout = startTimeout();
+        Timeout operationTimeout = null;
         MongoNamespace namespace = new MongoNamespace(database.getName(), collectionName);
         Bson rawEncryptedFields = createCollectionOptions.getEncryptedFields();
         if (rawEncryptedFields == null) {
@@ -254,10 +240,10 @@ public class ClientEncryptionImpl implements ClientEncryption {
                             // It is crucial to set the `dataKeyMightBeCreated` flag either immediately before calling `createDataKey`,
                             // or after that in a `finally` block.
                             dataKeyMightBeCreated.set(true);
-                            BsonBinary dataKeyId = createDataKey(kmsProvider, dataKeyOptions, operationTimeout);
+                            BsonBinary dataKeyId = createDataKey(kmsProvider, dataKeyOptions);
                             field.put(keyIdBsonKey, dataKeyId);
                         });
-                databaseWithTimeout(database, operationTimeout).createCollection(collectionName,
+                database.createCollection(collectionName,
                         new CreateCollectionOptions(createCollectionOptions).encryptedFields(maybeUpdatedEncryptedFields));
                 return maybeUpdatedEncryptedFields;
             } catch (Exception e) {
@@ -268,7 +254,7 @@ public class ClientEncryptionImpl implements ClientEncryption {
                 }
             }
         } else {
-            databaseWithTimeout(database, operationTimeout).createCollection(collectionName, createCollectionOptions);
+            database.createCollection(collectionName, createCollectionOptions);
             return encryptedFields;
         }
     }
@@ -277,10 +263,5 @@ public class ClientEncryptionImpl implements ClientEncryption {
     public void close() {
         crypt.close();
         keyVaultClient.close();
-    }
-
-    @Nullable
-    private Timeout startTimeout() {
-        return TimeoutContext.startTimeout(options.getTimeout(MILLISECONDS));
     }
 }

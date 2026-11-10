@@ -44,11 +44,9 @@ import org.bson.conversions.Bson;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.assertions.Assertions.notNull;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.bson.codecs.configuration.CodecRegistries.withUuidRepresentation;
 
 /**
@@ -121,13 +119,6 @@ public class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    @Nullable
-    public Long getTimeout(final TimeUnit timeUnit) {
-        Long timeoutMS = timeoutSettings.getTimeoutMS();
-        return timeoutMS == null ? null : notNull("timeUnit", timeUnit).convert(timeoutMS, MILLISECONDS);
-    }
-
-    @Override
     public MongoDatabase withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoDatabaseImpl(name, withUuidRepresentation(codecRegistry, uuidRepresentation), readPreference, writeConcern, retryWrites,
                 retryReads, maxAdaptiveRetriesSetting, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
@@ -149,12 +140,6 @@ public class MongoDatabaseImpl implements MongoDatabase {
     public MongoDatabase withReadConcern(final ReadConcern readConcern) {
         return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads,
                 maxAdaptiveRetriesSetting, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings, executor);
-    }
-
-    @Override
-    public MongoDatabase withTimeout(final long timeout, final TimeUnit timeUnit) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads,
-                maxAdaptiveRetriesSetting, readConcern, uuidRepresentation, autoEncryptionSettings, timeoutSettings.withTimeout(timeout, timeUnit), executor);
     }
 
     @Override

@@ -43,11 +43,9 @@ import reactor.core.publisher.Mono;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 final class MongoClusterImpl implements MongoCluster {
 
@@ -91,14 +89,6 @@ final class MongoClusterImpl implements MongoCluster {
     }
 
     @Override
-    @Nullable
-    public Long getTimeout(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        Long timeoutMS = mongoOperationPublisher.getTimeoutMS();
-        return timeoutMS == null ? null : timeUnit.convert(timeoutMS, MILLISECONDS);
-    }
-
-    @Override
     public MongoCluster withCodecRegistry(final CodecRegistry codecRegistry) {
         return new MongoClusterImpl(cluster, crypt, operationExecutor, serverSessionPool, clientSessionHelper,
                 mongoOperationPublisher.withCodecRegistry(codecRegistry));
@@ -120,12 +110,6 @@ final class MongoClusterImpl implements MongoCluster {
     public MongoCluster withReadConcern(final ReadConcern readConcern) {
         return new MongoClusterImpl(cluster, crypt, operationExecutor, serverSessionPool, clientSessionHelper,
                 mongoOperationPublisher.withReadConcern(readConcern));
-    }
-
-    @Override
-    public MongoCluster withTimeout(final long timeout, final TimeUnit timeUnit) {
-        return new MongoClusterImpl(cluster, crypt, operationExecutor, serverSessionPool, clientSessionHelper,
-                mongoOperationPublisher.withTimeout(timeout, timeUnit));
     }
 
     public Cluster getCluster() {
