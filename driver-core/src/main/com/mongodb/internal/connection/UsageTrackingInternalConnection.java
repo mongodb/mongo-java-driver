@@ -20,21 +20,17 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
 
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
 /**
  * A connection that tracks when it was opened and when it was last used.
  */
 class UsageTrackingInternalConnection implements InternalConnection {
-    private static final Logger LOGGER = Loggers.getLogger("connection");
     private volatile long openedAt;
     private volatile long lastUsedAt;
     private volatile boolean closeSilently;
@@ -134,11 +130,10 @@ class UsageTrackingInternalConnection implements InternalConnection {
     @Override
     public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder, final OperationContext operationContext,
             final SingleResultCallback<T> callback) {
-        SingleResultCallback<T> errHandlingCallback = errorHandlingCallback((result, t) -> {
+        wrapped.sendAndReceiveAsync(message, decoder, operationContext, (result, t) -> {
             lastUsedAt = System.currentTimeMillis();
             callback.onResult(result, t);
-        }, LOGGER);
-        wrapped.sendAndReceiveAsync(message, decoder, operationContext, errHandlingCallback);
+        });
     }
 
     @Override
@@ -151,21 +146,19 @@ class UsageTrackingInternalConnection implements InternalConnection {
     @Override
     public void sendMessageAsync(final List<ByteBuf> byteBuffers, final int lastRequestId, final OperationContext operationContext,
             final SingleResultCallback<Void> callback) {
-        SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback((result, t) -> {
+        wrapped.sendMessageAsync(byteBuffers, lastRequestId, operationContext, (result, t) -> {
             lastUsedAt = System.currentTimeMillis();
             callback.onResult(result, t);
-        }, LOGGER);
-        wrapped.sendMessageAsync(byteBuffers, lastRequestId, operationContext, errHandlingCallback);
+        });
     }
 
     @Override
     public void receiveMessageAsync(final int responseTo, final OperationContext operationContext,
             final SingleResultCallback<ResponseBuffers> callback) {
-        SingleResultCallback<ResponseBuffers> errHandlingCallback = errorHandlingCallback((result, t) -> {
+        wrapped.receiveMessageAsync(responseTo, operationContext, (result, t) -> {
             lastUsedAt = System.currentTimeMillis();
             callback.onResult(result, t);
-        }, LOGGER);
-        wrapped.receiveMessageAsync(responseTo, operationContext, errHandlingCallback);
+        });
     }
 
     @Override

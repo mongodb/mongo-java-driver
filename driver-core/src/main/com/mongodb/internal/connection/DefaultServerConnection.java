@@ -21,21 +21,16 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class DefaultServerConnection extends AbstractReferenceCounted implements Connection, AsyncConnection {
-    private static final Logger LOGGER = Loggers.getLogger("connection");
     private final InternalConnection wrapped;
     private final ProtocolExecutor protocolExecutor;
     private final ClusterConnectionMode clusterConnectionMode;
@@ -114,11 +109,10 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
 
     private <T> void executeProtocolAsync(final CommandProtocol<T> protocol, final SessionContext sessionContext,
                                           final SingleResultCallback<T> callback) {
-        SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         try {
-            protocolExecutor.executeAsync(protocol, this.wrapped, sessionContext, errHandlingCallback);
+            protocolExecutor.executeAsync(protocol, this.wrapped, sessionContext, callback);
         } catch (Throwable t) {
-            errHandlingCallback.onResult(null, t);
+            callback.onResult(null, t);
         }
     }
 }

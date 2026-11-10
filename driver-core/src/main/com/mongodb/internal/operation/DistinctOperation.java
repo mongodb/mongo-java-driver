@@ -31,12 +31,10 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.Decoder;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.asyncSingleBatchCursorTransformer;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableReadAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
-import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableRead;
 import static com.mongodb.internal.operation.SyncOperationHelper.singleBatchCursorTransformer;
@@ -134,7 +132,7 @@ public class DistinctOperation<T> implements ReadOperationCursor<T> {
         executeRetryableReadAsync(binding, operationContext,  namespace.getDatabaseName(),
                                   getCommandCreator(), createCommandDecoder(), asyncSingleBatchCursorTransformer(VALUES),
                                   retryReads, maxAdaptiveRetriesSetting,
-                                  errorHandlingCallback(callback, LOGGER));
+                                  callback);
     }
 
     private Codec<BsonDocument> createCommandDecoder() {

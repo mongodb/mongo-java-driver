@@ -24,6 +24,7 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.annotations.NoAsync;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -247,6 +248,7 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             return operation.getNamespace();
         }
 
+        @NoAsync
         @Override
         public BatchCursor<TResult> execute(final ReadBinding binding, final OperationContext operationContext) {
             return operation.execute(binding, operationContext);

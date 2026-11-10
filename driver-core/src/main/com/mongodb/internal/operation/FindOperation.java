@@ -42,7 +42,6 @@ import org.bson.codecs.Decoder;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.CommandHelper.applyMaxTimeMS;
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.createReadCommandAndExecuteAsync;
@@ -53,7 +52,6 @@ import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRe
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNullOrEmpty;
 import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
-import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
@@ -347,7 +345,7 @@ public class FindOperation<T> implements ReadOperationExplainable<T> {
                                         asyncTransformer(), connection, wrappedCallback);
                             })
                 ).whenComplete(binding::release);
-        asyncRead.get(errorHandlingCallback(callback, LOGGER));
+        asyncRead.get(callback);
     }
 
     private static <T> SingleResultCallback<T> exceptionTransformingCallback(final SingleResultCallback<T> callback) {

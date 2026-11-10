@@ -16,6 +16,7 @@
 package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.MongoClientException;
+import com.mongodb.internal.annotations.CallbackBoundary;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoQueryException;
@@ -52,6 +53,8 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.TimeoutContext.createTimeoutContext;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.reactivestreams.client.internal.MongoOperationPublisher.sinkToCallback;
 
 /**
@@ -77,6 +80,7 @@ public class OperationExecutorImpl implements OperationExecutor {
     }
 
     @Override
+    @CallbackBoundary("operation gate: binding release, error labeling and span handling run inside the callback before the sink")
     public <T> Mono<T> execute(final ReadOperation<?, T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
             @Nullable final ClientSession session) {
         isTrue("open", !mongoClient.getCluster().isClosed());
@@ -109,7 +113,8 @@ public class OperationExecutorImpl implements OperationExecutor {
                                 }
                                 return Mono.error(error);
                             } else {
-                                return Mono.<T>create(sink -> operation.executeAsync(binding, operationContext, (result, t) -> {
+                                return Mono.<T>create(sink -> operation.executeAsync(binding, operationContext,
+                                        errorHandlingCallback((result, t) -> {
                                     try {
                                         binding.release();
                                     } finally {
@@ -127,13 +132,14 @@ public class OperationExecutorImpl implements OperationExecutor {
                                         }
                                         sinkToCallback(sink).onResult(result, t);
                                     }
-                                }));
+                                }, LOGGER)));
                             }
                         }).subscribe(subscriber)
         );
     }
 
     @Override
+    @CallbackBoundary("operation gate: binding release, error labeling and span handling run inside the callback before the sink")
     public <T> Mono<T> execute(final WriteOperation<T> operation, final ReadConcern readConcern,
             @Nullable final ClientSession session) {
         isTrue("open", !mongoClient.getCluster().isClosed());
@@ -155,7 +161,8 @@ public class OperationExecutorImpl implements OperationExecutor {
                                     Span span = tracingManager.createOperationSpan(actualClientSession.getTransactionSpan(),
                                             operationContext, operation.getCommandName(), operation.getNamespace());
 
-                                    return Mono.<T>create(sink -> operation.executeAsync(binding, operationContext, (result, t) -> {
+                                    return Mono.<T>create(sink -> operation.executeAsync(binding, operationContext,
+                                            errorHandlingCallback((result, t) -> {
                                     try {
                                         binding.release();
                                     } finally {
@@ -173,7 +180,7 @@ public class OperationExecutorImpl implements OperationExecutor {
                                         }
                                         sinkToCallback(sink).onResult(result, t);
                                     }
-                                }));
+                                }, LOGGER)));
                                 }
                         ).subscribe(subscriber)
         );

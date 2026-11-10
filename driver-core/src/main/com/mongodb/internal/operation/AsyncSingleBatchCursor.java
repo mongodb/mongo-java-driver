@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoException;
+import com.mongodb.internal.annotations.AsyncLeaf;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 
@@ -26,6 +27,7 @@ import static java.util.Collections.emptyList;
 
 class AsyncSingleBatchCursor<T> implements AsyncBatchCursor<T> {
 
+    @AsyncLeaf(syncMethod = "createEmptySingleBatchCursor")
     static <R> AsyncSingleBatchCursor<R> createEmptyAsyncSingleBatchCursor(final int batchSize) {
         return new AsyncSingleBatchCursor<>(emptyList(), batchSize);
     }

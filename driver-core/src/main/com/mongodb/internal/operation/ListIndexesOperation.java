@@ -36,7 +36,6 @@ import org.bson.codecs.Decoder;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.CommandReadTransformerAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.createReadCommandAndExecuteAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.cursorDocumentToAsyncBatchCursor;
@@ -49,7 +48,6 @@ import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceE
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
 import static com.mongodb.internal.operation.CursorHelper.getCursorDocumentFromBatchSize;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
-import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.OperationHelper.applyTimeoutModeToOperationContext;
 import static com.mongodb.internal.operation.SingleBatchCursor.createEmptySingleBatchCursor;
 import static com.mongodb.internal.operation.SyncOperationHelper.CommandReadTransformer;
@@ -179,7 +177,7 @@ public class ListIndexesOperation<T> implements ReadOperationCursor<T> {
                                         });
                             })
                 ).whenComplete(binding::release);
-        asyncRead.get(errorHandlingCallback(callback, LOGGER));
+        asyncRead.get(callback);
     }
 
 

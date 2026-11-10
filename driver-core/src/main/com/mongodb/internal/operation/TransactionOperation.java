@@ -31,11 +31,9 @@ import org.bson.codecs.BsonDocumentCodec;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeRetryableWriteAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernErrorTransformerAsync;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
-import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeRetryableWrite;
 import static com.mongodb.internal.operation.SyncOperationHelper.writeConcernErrorTransformer;
 
@@ -75,7 +73,7 @@ public abstract class TransactionOperation implements WriteOperation<Void> {
                                    new BsonDocumentCodec(), getCommandCreator(),
                 writeConcernErrorTransformerAsync(timeoutContext), getRetryCommandModifier(operationContext),
                                    true, maxAdaptiveRetriesSetting,
-                                   errorHandlingCallback(callback, LOGGER));
+                                   callback);
     }
 
     CommandCreator getCommandCreator() {

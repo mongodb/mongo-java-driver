@@ -18,6 +18,7 @@ package com.mongodb.internal.operation;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 
+import com.mongodb.internal.annotations.SyncLeaf;
 import java.util.List;
 import java.util.NoSuchElementException;
 
@@ -25,6 +26,7 @@ import static java.util.Collections.emptyList;
 
 class SingleBatchCursor<T> implements BatchCursor<T> {
 
+    @SyncLeaf(asyncMethod = "createEmptyAsyncSingleBatchCursor")
     static <R> SingleBatchCursor<R> createEmptySingleBatchCursor(final ServerAddress serverAddress, final int batchSize) {
         return new SingleBatchCursor<>(emptyList(), batchSize, serverAddress);
     }

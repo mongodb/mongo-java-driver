@@ -22,6 +22,7 @@ import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.VisibleForTesting;
+import com.mongodb.internal.annotations.SyncLeaf;
 import com.mongodb.internal.async.MutableValue;
 import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.async.function.RetryingSyncSupplier;
@@ -96,6 +97,7 @@ final class SyncOperationHelper {
 
     private static final BsonDocumentCodec BSON_DOCUMENT_CODEC = new BsonDocumentCodec();
 
+    @SyncLeaf(asyncMethod = "withAsyncReadConnectionSource")
     static <T> T withReadConnectionSource(final ReadBinding binding,
                                           final OperationContext operationContext,
                                           final CallableWithSource<T> callable) {
@@ -109,6 +111,7 @@ final class SyncOperationHelper {
         }
     }
 
+    @SyncLeaf(asyncMethod = "withAsyncConnection")
     static <T> T withConnection(final WriteBinding binding,
                                 final OperationContext operationContext,
                                 final CallableWithConnection<T> callable) {
@@ -124,6 +127,7 @@ final class SyncOperationHelper {
      * Gets a {@link ConnectionSource} and a {@link Connection} from the {@code sourceSupplier} and executes the {@code function} with them.
      * Guarantees to {@linkplain ReferenceCounted#release() release} the source and the connection after completion of the {@code function}.
      */
+    @SyncLeaf(asyncMethod = "withAsyncSourceAndConnection")
     static <R> R withSourceAndConnection(
             final Function<OperationContext, ConnectionSource> sourceFunction,
             final boolean wrapConnectionSourceException,
@@ -155,6 +159,7 @@ final class SyncOperationHelper {
      * into {@link OperationHelper.ResourceSupplierInternalException}, such that it can be accessed
      * via {@link OperationHelper.ResourceSupplierInternalException#getCause()}.
      */
+    @SyncLeaf(asyncMethod = "withAsyncSuppliedResource")
     static <R, T extends ReferenceCounted> R withSuppliedResource(final Function<OperationContext, T> resourceSupplier,
                                                                   final boolean wrapSupplierException,
                                                                   final OperationContext operationContext,
@@ -344,6 +349,7 @@ final class SyncOperationHelper {
         return transformer.apply(result, source, connection, operationContext);
     }
 
+    @SyncLeaf(asyncMethod = "decorateWithRetriesAsync")
     static <R> Supplier<R> decorateWithRetries(
             final RetryControl<SpecRetryPolicy> retryControl,
             final OperationContext operationContext,

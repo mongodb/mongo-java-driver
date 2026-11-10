@@ -16,8 +16,6 @@
 
 package com.mongodb.internal.async;
 
-import com.mongodb.internal.async.function.AsyncCallbackLoop;
-import com.mongodb.internal.async.function.LoopControl;
 import com.mongodb.internal.async.function.RetryControl;
 import com.mongodb.internal.async.function.RetryingAsyncCallbackSupplier;
 import com.mongodb.internal.thread.AsyncClientExecutor;
@@ -252,25 +250,32 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
      * @param whileCheck a condition to check before each iteration; the loop continues as long as this condition returns true
      * @param loopBodyRunnable the asynchronous task to be executed in each iteration of the loop
      * @return the composition of this and the looping branch
-     * @see AsyncCallbackLoop
      */
     default AsyncRunnable thenRunWhileLoop(final BooleanSupplier whileCheck, final AsyncRunnable loopBodyRunnable) {
         return thenRun(finalCallback -> {
-            LoopControl loopControl = new LoopControl();
-            new AsyncCallbackLoop(loopControl, iterationCallback -> {
-
-                if (loopControl.breakAndCompleteIf(() -> !whileCheck.getAsBoolean(), iterationCallback)) {
+            Runnable[] iteration = new Runnable[1];
+            iteration[0] = () -> {
+                boolean proceed;
+                try {
+                    proceed = whileCheck.getAsBoolean();
+                } catch (Throwable t) {
+                    finalCallback.completeExceptionally(t);
+                    return;
+                }
+                if (!proceed) {
+                    finalCallback.complete(finalCallback);
                     return;
                 }
                 loopBodyRunnable.finish((result, t) -> {
                     if (t != null) {
-                        iterationCallback.completeExceptionally(t);
+                        finalCallback.completeExceptionally(t);
                         return;
                     }
-                    iterationCallback.complete(iterationCallback);
+                    // trampolined so that synchronously-completing bodies do not grow the stack
+                    AsyncTrampoline.run(iteration[0]);
                 });
-
-            }).run(finalCallback);
+            };
+            iteration[0].run();
         });
     }
 
@@ -279,27 +284,10 @@ public interface AsyncRunnable extends AsyncSupplier<Void>, AsyncConsumer<Void> 
      * then the condition is checked to determine whether the loop should continue.
      *
      * @param loopBodyRunnable the asynchronous task to be executed in each iteration of the loop
-     * @param whileCheck a condition to check after each iteration; the loop continues as long as this condition returns true
+     * @param whileCheck a condition to check after each iteration; the loop continues as long as this condition continues to return true
      * @return the composition of this and the looping branch
-     * @see AsyncCallbackLoop
      */
     default AsyncRunnable thenRunDoWhileLoop(final AsyncRunnable loopBodyRunnable, final BooleanSupplier whileCheck) {
-        return thenRun(finalCallback -> {
-            LoopControl loopControl = new LoopControl();
-            new AsyncCallbackLoop(loopControl, iterationCallback -> {
-
-                loopBodyRunnable.finish((result, t) -> {
-                    if (t != null) {
-                        iterationCallback.completeExceptionally(t);
-                        return;
-                    }
-                    if (loopControl.breakAndCompleteIf(() -> !whileCheck.getAsBoolean(), iterationCallback)) {
-                        return;
-                    }
-                    iterationCallback.complete(iterationCallback);
-                });
-
-            }).run(finalCallback);
-        });
+        return thenRun(loopBodyRunnable).thenRunWhileLoop(whileCheck, loopBodyRunnable);
     }
 }

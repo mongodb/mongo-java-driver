@@ -15,18 +15,24 @@
  */
 package com.mongodb.reactivestreams.client.internal;
 
+import com.mongodb.internal.annotations.CallbackBoundary;
 import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.function.Supplier;
 
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class BatchCursor<T> implements AutoCloseable {
+
+    private static final Logger LOGGER = Loggers.getLogger("client");
 
     private final AsyncBatchCursor<T> wrapped;
 
@@ -38,9 +44,10 @@ public class BatchCursor<T> implements AutoCloseable {
         return next(() -> false);
     }
 
+    @CallbackBoundary("cursor next: sink adapter callback")
     public Publisher<List<T>> next(final Supplier<Boolean> hasBeenCancelled) {
         return Mono.create(sink -> wrapped.next(
-                (result, t) -> {
+                errorHandlingCallback((result, t) -> {
                     if (!hasBeenCancelled.get()) {
                         if (t != null) {
                             sink.error(t);
@@ -48,7 +55,7 @@ public class BatchCursor<T> implements AutoCloseable {
                             sink.success(result);
                         }
                     }
-                }));
+                }, LOGGER)));
     }
 
     public void setBatchSize(final int batchSize) {
