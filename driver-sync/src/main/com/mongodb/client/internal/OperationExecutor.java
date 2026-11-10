@@ -20,8 +20,10 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
+import com.mongodb.internal.operation.WriteThenReadOperationCursor;
 import com.mongodb.lang.Nullable;
 
 /**
@@ -74,6 +76,20 @@ public interface OperationExecutor {
      * @return the result of executing the operation.
      */
     <T> T execute(WriteOperation<T> operation, ReadConcern readConcern, @Nullable ClientSession session);
+
+    /**
+     * Execute an operation that writes and then reads a cursor within a single read-write binding.
+     *
+     * <p>The binding is acquired once and used for both phases, avoiding the need to narrow a
+     * {@code ReadBinding} to a {@code WriteBinding}.
+     *
+     * @param <T>         the document type returned by the cursor.
+     * @param operation   the write-then-read operation.
+     * @param readConcern the read concern
+     * @param session     the session to associate this operation with
+     * @return the batch cursor produced by the read phase.
+     */
+    <T> BatchCursor<T> execute(WriteThenReadOperationCursor<T> operation, ReadConcern readConcern, @Nullable ClientSession session);
 
     /**
      * Create a new OperationExecutor with a specific timeout settings

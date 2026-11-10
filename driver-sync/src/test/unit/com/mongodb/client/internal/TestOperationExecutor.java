@@ -20,8 +20,10 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.internal.TimeoutSettings;
+import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
+import com.mongodb.internal.operation.WriteThenReadOperationCursor;
 import com.mongodb.lang.Nullable;
 
 import java.util.ArrayList;
@@ -36,6 +38,7 @@ public class TestOperationExecutor implements OperationExecutor {
     private final List<ReadConcern> readConcerns = new ArrayList<>();
     private final List<ReadOperation> readOperations = new ArrayList<>();
     private final List<WriteOperation> writeOperations = new ArrayList<>();
+    private final List<WriteThenReadOperationCursor> writeThenReadOperations = new ArrayList<>();
 
     public TestOperationExecutor(final List<Object> responses) {
         this.responses = responses;
@@ -65,6 +68,15 @@ public class TestOperationExecutor implements OperationExecutor {
     public <T> T execute(final WriteOperation<T> operation, final ReadConcern readConcern, @Nullable final ClientSession session) {
         clientSessions.add(session);
         writeOperations.add(operation);
+        readConcerns.add(readConcern);
+        return getResponse();
+    }
+
+    @Override
+    public <T> BatchCursor<T> execute(final WriteThenReadOperationCursor<T> operation, final ReadConcern readConcern,
+            @Nullable final ClientSession session) {
+        clientSessions.add(session);
+        writeThenReadOperations.add(operation);
         readConcerns.add(readConcern);
         return getResponse();
     }
@@ -110,5 +122,10 @@ public class TestOperationExecutor implements OperationExecutor {
     @Nullable
     public WriteOperation getWriteOperation() {
        return writeOperations.isEmpty() ? null : writeOperations.remove(0);
+    }
+
+    @Nullable
+    public WriteThenReadOperationCursor getWriteThenReadOperation() {
+        return writeThenReadOperations.isEmpty() ? null : writeThenReadOperations.remove(0);
     }
 }
