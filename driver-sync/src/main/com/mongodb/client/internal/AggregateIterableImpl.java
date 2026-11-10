@@ -44,7 +44,8 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements AggregateIterable<TResult> {
+class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult>
+        implements InternalCommonIterable<TResult>, AggregateIterable<TResult> {
     private final Operations<TDocument> operations;
     private final MongoNamespace namespace;
     private final Class<TDocument> documentClass;
@@ -197,6 +198,12 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     @Override
     public <E> E explain(final Class<E> explainResultClass, final ExplainVerbosity verbosity) {
         return executeExplain(explainResultClass, notNull("verbosity", verbosity));
+    }
+
+    @Override
+    public AggregateIterable<TResult> commandOption(final String name, final Object value) {
+        super.commandOption(notNull("name", name), notNull("value", value));
+        return this;
     }
 
     private <E> E executeExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {

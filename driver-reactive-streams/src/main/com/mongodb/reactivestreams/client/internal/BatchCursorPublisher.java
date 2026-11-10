@@ -37,25 +37,23 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PROTECTED)
 public abstract class BatchCursorPublisher<T> implements Publisher<T> {
+    @Nullable
     private final ClientSession clientSession;
     private final MongoOperationPublisher<T> mongoOperationPublisher;
+    @Nullable
     private Integer batchSize;
+    @Nullable
     private TimeoutMode timeoutMode;
 
     BatchCursorPublisher(@Nullable final ClientSession clientSession, final MongoOperationPublisher<T> mongoOperationPublisher) {
-        this(clientSession, mongoOperationPublisher, null);
-    }
-
-    BatchCursorPublisher(@Nullable final ClientSession clientSession, final MongoOperationPublisher<T> mongoOperationPublisher,
-                         @Nullable final Integer batchSize) {
         this.clientSession = clientSession;
         this.mongoOperationPublisher = notNull("mongoOperationPublisher", mongoOperationPublisher);
-        this.batchSize = batchSize;
     }
 
     abstract ReadOperationCursor<T> asReadOperation(int initialBatchSize);
@@ -88,10 +86,6 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
 
     CodecRegistry getCodecRegistry() {
         return mongoOperationPublisher.getCodecRegistry();
-    }
-
-    boolean getRetryReads() {
-        return mongoOperationPublisher.getRetryReads();
     }
 
     Class<T> getDocumentClass() {
@@ -135,6 +129,11 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
                                 return Mono.fromCallable(() -> results.get(0));
                             });
                 });
+    }
+
+    // VAKOTODO maybe rename and document that a subclass must actually support it for it to work
+    public Publisher<T> commandOption(final String name, final Object value) {
+        throw fail("VAKOTODO");
     }
 
     @Override

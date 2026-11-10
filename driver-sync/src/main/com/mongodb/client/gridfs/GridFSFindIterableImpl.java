@@ -21,6 +21,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.gridfs.model.GridFSFile;
+import com.mongodb.client.internal.InternalCommonIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
@@ -29,7 +30,7 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-class GridFSFindIterableImpl implements GridFSFindIterable {
+class GridFSFindIterableImpl implements InternalCommonIterable<GridFSFile>, GridFSFindIterable {
     private final FindIterable<GridFSFile> underlying;
 
     GridFSFindIterableImpl(final FindIterable<GridFSFile> underlying) {

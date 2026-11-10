@@ -32,6 +32,7 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -39,13 +40,16 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResult> {
+    @Nullable
     private final ClientSession clientSession;
     private final ReadConcern readConcern;
     private final OperationExecutor executor;
     private final ReadPreference readPreference;
     private final boolean retryReads;
     private final TimeoutSettings timeoutSettings;
+    @Nullable
     private Integer batchSize;
+    @Nullable
     private TimeoutMode timeoutMode;
 
     public MongoIterableImpl(@Nullable final ClientSession clientSession, final OperationExecutor executor, final ReadConcern readConcern,
@@ -109,6 +113,11 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
         }
         this.timeoutMode = timeoutMode;
         return this;
+    }
+
+    // VAKOTODO maybe rename and document that a subclass must actually support it for it to work
+    public MongoIterable<TResult> commandOption(final String name, final Object value) {
+        throw fail("VAKOTODO");
     }
 
     @Override

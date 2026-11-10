@@ -137,4 +137,10 @@ class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements Aggregate
     public <E> E explain(final Class<E> explainResultClass, final ExplainVerbosity verbosity) {
         return requireNonNull(Mono.from(wrapped.explain(explainResultClass, verbosity)).contextWrite(CONTEXT).block(TIMEOUT_DURATION));
     }
+
+    @Override
+    public AggregateIterable<T> commandOption(final String name, final Object value) {
+        wrapped.commandOption(name, value);
+        return this;
+    }
 }

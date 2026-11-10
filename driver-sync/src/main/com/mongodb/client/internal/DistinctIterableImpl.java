@@ -36,7 +36,8 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements DistinctIterable<TResult> {
+class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult>
+        implements InternalCommonIterable<TResult>, DistinctIterable<TResult> {
     private final Operations<TDocument> operations;
 
     private final Class<TResult> resultClass;

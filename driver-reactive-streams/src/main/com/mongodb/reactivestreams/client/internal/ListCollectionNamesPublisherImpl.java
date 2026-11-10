@@ -32,7 +32,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 
-public final class ListCollectionNamesPublisherImpl implements ListCollectionNamesPublisher {
+public final class ListCollectionNamesPublisherImpl implements InternalCommonBatchCursorPublisher<String>, ListCollectionNamesPublisher {
     private final ListCollectionsPublisherImpl<Document> wrapped;
     private final Flux<String> wrappedWithMapping;
 

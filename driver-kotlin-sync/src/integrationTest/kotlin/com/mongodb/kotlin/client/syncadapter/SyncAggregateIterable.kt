@@ -70,4 +70,8 @@ internal class SyncAggregateIterable<T : Any>(val wrapped: AggregateIterable<T>)
 
     override fun <E : Any> explain(explainResultClass: Class<E>, verbosity: ExplainVerbosity): E =
         wrapped.explain(explainResultClass, verbosity)
+
+    override fun commandOption(name: String, value: Any): SyncAggregateIterable<T> = apply {
+        wrapped.commandOption(name, value)
+    }
 }

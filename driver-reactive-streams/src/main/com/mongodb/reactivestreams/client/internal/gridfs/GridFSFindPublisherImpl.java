@@ -21,6 +21,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.gridfs.GridFSFindPublisher;
+import com.mongodb.reactivestreams.client.internal.InternalCommonBatchCursorPublisher;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -32,7 +33,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public final class GridFSFindPublisherImpl implements GridFSFindPublisher {
+public final class GridFSFindPublisherImpl implements InternalCommonBatchCursorPublisher<GridFSFile>, GridFSFindPublisher {
     private final FindPublisher<GridFSFile> wrapped;
 
     GridFSFindPublisherImpl(final FindPublisher<GridFSFile> wrapped) {

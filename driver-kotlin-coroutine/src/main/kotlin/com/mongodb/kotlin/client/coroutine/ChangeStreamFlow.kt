@@ -173,6 +173,19 @@ public class ChangeStreamFlow<T : Any>(private val wrapped: ChangeStreamPublishe
     public fun showExpandedEvents(showExpandedEvents: Boolean): ChangeStreamFlow<T> = apply {
         wrapped.showExpandedEvents(showExpandedEvents)
     }
+
+    /**
+     * VAKOTODO
+     *
+     * @param name VAKOTODO.
+     * @param value VAKOTODO.
+     * @return VAKOTODO.
+     * @since 5.15
+     */
+    public fun commandOption(name: String, value: Any): ChangeStreamFlow<T> = apply {
+        wrapped.commandOption(name, value)
+    }
+
     public override suspend fun collect(collector: FlowCollector<ChangeStreamDocument<T>>): Unit =
         wrapped.asFlow().collect(collector)
 }

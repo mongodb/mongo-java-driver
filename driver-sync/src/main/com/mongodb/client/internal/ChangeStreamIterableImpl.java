@@ -47,13 +47,14 @@ import org.bson.conversions.Bson;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeStreamDocument<TResult>>
-        implements ChangeStreamIterable<TResult> {
+        implements InternalCommonIterable<ChangeStreamDocument<TResult>>, ChangeStreamIterable<TResult> {
     private final CodecRegistry codecRegistry;
     private final List<? extends Bson> pipeline;
     private final Codec<ChangeStreamDocument<TResult>> codec;
@@ -139,18 +140,27 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
 
             @Override
             public MongoChangeStreamCursor<TDocument> cursor() {
-                return new MongoChangeStreamCursorImpl<>(execute(), codecRegistry.get(clazz), initialResumeToken());
+                return new MongoChangeStreamCursorImpl<>(execute(getBatchSize()), codecRegistry.get(clazz), initialResumeToken());
             }
 
             @Override
             public ReadOperationCursor<TDocument> asReadOperation() {
-                throw new UnsupportedOperationException();
+                throw fail();
             }
 
             @Override
-
             protected OperationExecutor getExecutor() {
                 return ChangeStreamIterableImpl.this.getExecutor();
+            }
+
+            @Nullable
+            @Override
+            public Integer getBatchSize() {
+                Integer batchSize = super.getBatchSize();
+                if (batchSize == null) {
+                    batchSize = ChangeStreamIterableImpl.this.getBatchSize();
+                }
+                return batchSize;
             }
         };
     }
@@ -187,13 +197,19 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
     }
 
     @Override
+    public ChangeStreamIterable<TResult> commandOption(final String name, final Object value) {
+        super.commandOption(notNull("name", name), notNull("value", value));
+        return this;
+    }
+
+    @Override
     public MongoCursor<ChangeStreamDocument<TResult>> iterator() {
         return cursor();
     }
 
     @Override
     public MongoChangeStreamCursor<ChangeStreamDocument<TResult>> cursor() {
-        return new MongoChangeStreamCursorImpl<>(execute(), codec, initialResumeToken());
+        return new MongoChangeStreamCursorImpl<>(execute(getBatchSize()), codec, initialResumeToken());
     }
 
     @Nullable
@@ -209,7 +225,7 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
 
     @Override
     public ReadOperationCursor<ChangeStreamDocument<TResult>> asReadOperation() {
-        throw new UnsupportedOperationException();
+        throw fail();
     }
 
 
@@ -217,13 +233,18 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
         return getExecutor(operations.createTimeoutSettings(0, maxAwaitTimeMS));
     }
 
-    private ReadOperationCursor<RawBsonDocument> createChangeStreamOperation() {
+    private ReadOperationCursor<RawBsonDocument> createChangeStreamOperation(@Nullable final Integer batchSize) {
         return operations.changeStream(fullDocument, fullDocumentBeforeChange, pipeline, new RawBsonDocumentCodec(), changeStreamLevel,
-                getBatchSize(), collation, comment, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);
+                batchSize, collation, comment, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);
     }
 
-    private BatchCursor<RawBsonDocument> execute() {
-        return getExecutor().execute(createChangeStreamOperation(), getReadPreference(), getReadConcern(), getClientSession());
+    /**
+     * @param batchSize This parameter exists to allow both {@code this} {@link ChangeStreamIterableImpl},
+     * and the {@link MongoIterable} created and returned by {@link withDocumentClass}
+     * to pass their own {@link #getBatchSize()}.
+     */
+    private BatchCursor<RawBsonDocument> execute(@Nullable final Integer batchSize) {
+        return getExecutor().execute(createChangeStreamOperation(batchSize), getReadPreference(), getReadConcern(), getClientSession());
     }
 
     private BsonDocument initialResumeToken() {

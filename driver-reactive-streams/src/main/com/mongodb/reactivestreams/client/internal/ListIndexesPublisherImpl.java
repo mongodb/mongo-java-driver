@@ -32,7 +32,8 @@ import java.util.function.Function;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-final class ListIndexesPublisherImpl<T> extends BatchCursorPublisher<T> implements ListIndexesPublisher<T> {
+final class ListIndexesPublisherImpl<T> extends BatchCursorPublisher<T>
+        implements InternalCommonBatchCursorPublisher<T>, ListIndexesPublisher<T> {
 
     private long maxTimeMS;
     private BsonValue comment;

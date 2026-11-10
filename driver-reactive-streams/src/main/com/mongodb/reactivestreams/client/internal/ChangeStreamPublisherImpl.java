@@ -43,7 +43,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 
 final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStreamDocument<T>>
-        implements ChangeStreamPublisher<T> {
+        implements InternalCommonBatchCursorPublisher<ChangeStreamDocument<T>>, ChangeStreamPublisher<T> {
 
     private final List<? extends Bson> pipeline;
     private final Codec<ChangeStreamDocument<T>> codec;
@@ -134,8 +134,7 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
 
     @Override
     public <TDocument> Publisher<TDocument> withDocumentClass(final Class<TDocument> clazz) {
-        return new BatchCursorPublisher<TDocument>(getClientSession(), getMongoOperationPublisher().withDocumentClass(clazz),
-                getBatchSize()) {
+        return new BatchCursorPublisher<TDocument>(getClientSession(), getMongoOperationPublisher().withDocumentClass(clazz)) {
             @Override
             ReadOperationCursor<TDocument> asReadOperation(final int initialBatchSize) {
                 return createChangeStreamOperation(getMongoOperationPublisher().getCodecRegistry().get(clazz), initialBatchSize);
@@ -144,6 +143,16 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
             @Override
             Function<Operations<?>, TimeoutSettings> getTimeoutSettings() {
                 return (operations -> operations.createTimeoutSettings(0, maxAwaitTimeMS));
+            }
+
+            @Nullable
+            @Override
+            public Integer getBatchSize() {
+                Integer batchSize = super.getBatchSize();
+                if (batchSize == null) {
+                    batchSize = ChangeStreamPublisherImpl.this.getBatchSize();
+                }
+                return batchSize;
             }
         };
     }
@@ -163,6 +172,12 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
     @Override
     public ChangeStreamPublisherImpl<T> startAfter(final BsonDocument startAfter) {
         this.startAfter = notNull("startAfter", startAfter);
+        return this;
+    }
+
+    @Override
+    public ChangeStreamPublisher<T> commandOption(final String name, final Object value) {
+        super.commandOption(notNull("name", name), notNull("value", value));
         return this;
     }
 

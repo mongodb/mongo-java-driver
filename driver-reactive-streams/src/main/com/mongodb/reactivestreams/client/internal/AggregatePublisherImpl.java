@@ -43,7 +43,8 @@ import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements AggregatePublisher<T> {
+final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T>
+        implements InternalCommonBatchCursorPublisher<T>, AggregatePublisher<T> {
     private final List<? extends Bson> pipeline;
     private final AggregationLevel aggregationLevel;
     private Boolean allowDiskUse;
@@ -168,6 +169,12 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
     @Override
     public <E> Publisher<E> explain(final Class<E> explainResultClass, final ExplainVerbosity verbosity) {
         return publishExplain(explainResultClass, notNull("verbosity", verbosity));
+    }
+
+    @Override
+    public AggregatePublisher<T> commandOption(final String name, final Object value) {
+        super.commandOption(notNull("name", name), notNull("value", value));
+        return this;
     }
 
     private <E> Publisher<E> publishExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {

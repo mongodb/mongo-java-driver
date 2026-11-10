@@ -272,4 +272,14 @@ public interface AggregatePublisher<TResult> extends Publisher<TResult> {
      * @mongodb.server.release 3.6
      */
     <E> Publisher<E> explain(Class<E> explainResultClass, ExplainVerbosity verbosity);
+
+    /**
+     * VAKOTODO
+     *
+     * @param name VAKOTODO.
+     * @param value VAKOTODO.
+     * @return VAKOTODO.
+     * @since 5.15
+     */
+    AggregatePublisher<TResult> commandOption(String name, Object value);
 }

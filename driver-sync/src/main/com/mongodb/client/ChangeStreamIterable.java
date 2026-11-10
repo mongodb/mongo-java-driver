@@ -178,4 +178,14 @@ public interface ChangeStreamIterable<TResult> extends MongoIterable<ChangeStrea
      * @mongodb.server.release 6.0
      */
     ChangeStreamIterable<TResult> showExpandedEvents(boolean showExpandedEvents);
+
+    /**
+     * VAKOTODO
+     *
+     * @param name VAKOTODO.
+     * @param value VAKOTODO.
+     * @return VAKOTODO.
+     * @since 5.15
+     */
+    ChangeStreamIterable<TResult> commandOption(String name, Object value);
 }

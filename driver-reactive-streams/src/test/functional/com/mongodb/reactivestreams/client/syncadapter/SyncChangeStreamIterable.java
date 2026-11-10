@@ -165,4 +165,10 @@ class SyncChangeStreamIterable<T> extends SyncMongoIterable<ChangeStreamDocument
         wrapped.showExpandedEvents(showExpandedEvents);
         return this;
     }
+
+    @Override
+    public ChangeStreamIterable<T> commandOption(final String name, final Object value) {
+        wrapped.commandOption(name, value);
+        return this;
+    }
 }
