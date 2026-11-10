@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
@@ -100,6 +101,46 @@ final class MessageHelper {
 
         BsonBinaryReader reader = new BsonBinaryReader(bsonInput);
         return new BsonDocumentCodec().decode(reader, DecoderContext.builder().build());
+    }
+
+    /**
+     * Walks the OP_MSG sections of an encoded message: skips the type-0 body document, then reads the kind byte of
+     * each subsequent section. For kind 1 (document sequence) it skips past the {@code int32} section size; for kind 3
+     * (telemetry) it decodes and returns the BSON document payload. Returns {@code null} if no kind-3 section is found.
+     */
+    @Nullable
+    public static BsonDocument findTelemetrySectionDocument(final byte[] buffer) {
+        ByteBuf byteBuf = new ByteBufNIO(ByteBuffer.wrap(buffer));
+        // MsgHeader (16 bytes) + flagBits (4 bytes) + payload type byte (1 byte) for the body section.
+        byteBuf.position(16 + 4 + 1);
+        int bodyLength = byteBuf.getInt(byteBuf.position());
+        byteBuf.position(byteBuf.position() + bodyLength);
+
+        while (byteBuf.hasRemaining()) {
+            byte kind = byteBuf.get();
+            if (kind == 1) {
+                int sectionStart = byteBuf.position();
+                byteBuf.position(sectionStart + byteBuf.getInt());
+            } else if (kind == 3) {
+                try (BsonBinaryReader reader = new BsonBinaryReader(byteBuf.asNIO())) {
+                    return new BsonDocumentCodec().decode(reader, DecoderContext.builder().build());
+                }
+            } else {
+                throw new AssertionError("Unexpected section kind byte: " + kind);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Like {@link #findTelemetrySectionDocument(byte[])}, but fails if the message has no kind-3 section.
+     */
+    public static BsonDocument readTelemetrySectionDocument(final byte[] buffer) {
+        BsonDocument telemetry = findTelemetrySectionDocument(buffer);
+        if (telemetry == null) {
+            throw new AssertionError("Expected a kind-3 telemetry section but none was found");
+        }
+        return telemetry;
     }
 
     public static String decodeCommandAsJson(final BsonInput bsonInput) {
