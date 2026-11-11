@@ -386,7 +386,7 @@ public final class Entities {
         }
 
         clientSettingsBuilder.applyToServerSettings(builder -> {
-            builder.heartbeatFrequency(50, TimeUnit.MILLISECONDS);
+            builder.heartbeatFrequency(500, TimeUnit.MILLISECONDS);
             builder.minHeartbeatFrequency(50, TimeUnit.MILLISECONDS);
         });
         if (entity.containsKey("uriOptions")) {
