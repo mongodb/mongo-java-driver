@@ -42,6 +42,11 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.reactivestreams.client.Fixture.getDefaultDatabase
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClientBuilderFromConnectionString
 
+/**
+ * @deprecated Do not add new tests to this Groovy specification.
+ *             New tests should be added to {@link MongoClientSessionFunctionalTest} instead.
+ *             Tests from this specification should be gradually migrated to the Java class.
+ */
 class MongoClientSessionSpecification extends FunctionalSpecification {
 
     def 'should throw IllegalArgumentException if options are null'() {
