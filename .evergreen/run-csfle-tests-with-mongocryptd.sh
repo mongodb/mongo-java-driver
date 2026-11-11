@@ -67,6 +67,7 @@ echo "Running tests with Java ${JAVA_VERSION}"
 ./gradlew -PjavaVersion=${JAVA_VERSION} -Dorg.mongodb.test.uri=${MONGODB_URI} \
       ${GRADLE_EXTRA_VARS} \
       -Dorg.mongodb.test.fle.on.demand.credential.test.failure.enabled=true \
+      -Dorg.mongodb.test.diagnostics.thread.dump.enabled=true \
       --stacktrace --info --continue \
       driver-sync:test \
           --tests "*.Client*Encryption*" \
