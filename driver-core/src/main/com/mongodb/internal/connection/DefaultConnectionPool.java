@@ -52,6 +52,8 @@ import com.mongodb.internal.event.EventReasonMessageResolver;
 import com.mongodb.internal.inject.OptionalProvider;
 import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.internal.logging.StructuredLogger;
+import com.mongodb.internal.observability.micrometer.Span;
+import com.mongodb.internal.observability.micrometer.SpanScopes;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.internal.time.StartTime;
 import com.mongodb.internal.time.Timeout;
@@ -273,11 +275,12 @@ final class DefaultConnectionPool implements ConnectionPool {
         ClusterId clusterId = serverId.getClusterId();
         if (requiresLogging(clusterId)) {
             String message = "Checkout failed for connection to {}:{}. Reason: {}.[ Error: {}.] Duration: {} ms";
-            List<LogMessage.Entry> entries = createBasicEntries();
+            final List<LogMessage.Entry> entries = createBasicEntries();
             entries.add(new LogMessage.Entry(REASON_DESCRIPTION, EventReasonMessageResolver.getMessage(reason)));
             entries.add(new LogMessage.Entry(ERROR_DESCRIPTION, reason == Reason.CONNECTION_ERROR ? result.toString() : null));
             entries.add(new LogMessage.Entry(DURATION_MS, checkoutDuration.toMillis()));
-            logMessage("Connection checkout failed", clusterId, message, entries);
+            SpanScopes.runInScope(operationContext.getTracingSpan(),
+                    () -> logMessage("Connection checkout failed", clusterId, message, entries));
         }
         connectionPoolListener.connectionCheckOutFailed(
                 new ConnectionCheckOutFailedEvent(serverId, operationContext.getId(), reason, checkoutDuration.toNanos()));
@@ -565,11 +568,12 @@ final class DefaultConnectionPool implements ConnectionPool {
         ConnectionId connectionId = getId(connection);
         ClusterId clusterId = serverId.getClusterId();
         if (requiresLogging(clusterId)) {
-            List<LogMessage.Entry> entries = createBasicEntries();
+            final List<LogMessage.Entry> entries = createBasicEntries();
             entries.add(new LogMessage.Entry(DRIVER_CONNECTION_ID, connectionId.getLocalValue()));
             entries.add(new LogMessage.Entry(DURATION_MS, checkoutDuration.toMillis()));
-            logMessage("Connection checked out", clusterId,
-                    "Connection checked out: address={}:{}, driver-generated ID={}, duration={} ms", entries);
+            SpanScopes.runInScope(operationContext.getTracingSpan(),
+                    () -> logMessage("Connection checked out", clusterId,
+                            "Connection checked out: address={}:{}, driver-generated ID={}, duration={} ms", entries));
         }
 
         connectionPoolListener.connectionCheckedOut(
@@ -585,7 +589,8 @@ final class DefaultConnectionPool implements ConnectionPool {
      */
     private StartTime connectionCheckoutStarted(final OperationContext operationContext) {
         StartTime checkoutStart = StartTime.now();
-        logEventMessage("Connection checkout started", "Checkout started for connection to {}:{}");
+        SpanScopes.runInScope(operationContext.getTracingSpan(),
+                () -> logEventMessage("Connection checkout started", "Checkout started for connection to {}:{}"));
 
         connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId, operationContext.getId()));
         return checkoutStart;
@@ -615,6 +620,8 @@ final class DefaultConnectionPool implements ConnectionPool {
         private final AtomicBoolean isClosed = new AtomicBoolean();
         private Connection.PinningMode pinningMode;
         private long operationId;
+        @Nullable
+        private volatile Span operationSpan;
 
         PooledConnection(final UsageTrackingInternalConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
@@ -630,6 +637,7 @@ final class DefaultConnectionPool implements ConnectionPool {
          */
         public void checkedOutForOperation(final OperationContext operationContext) {
             this.operationId = operationContext.getId();
+            this.operationSpan = operationContext.getTracingSpan();
         }
 
         @Override
@@ -677,9 +685,9 @@ final class DefaultConnectionPool implements ConnectionPool {
 
         private void connectionCheckedIn() {
             ConnectionId connectionId = getId(wrapped);
-            logEventMessage("Connection checked in",
+            SpanScopes.runInScope(operationSpan, () -> logEventMessage("Connection checked in",
                     "Connection checked in: address={}:{}, driver-generated ID={}",
-                    connectionId.getLocalValue());
+                    connectionId.getLocalValue()));
             connectionPoolListener.connectionCheckedIn(new ConnectionCheckedInEvent(connectionId, operationId));
         }
 
