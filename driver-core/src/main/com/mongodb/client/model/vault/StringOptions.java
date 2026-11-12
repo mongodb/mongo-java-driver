@@ -23,7 +23,7 @@ import org.bson.BsonDocument;
  * String options for a Queryable Encryption field that supports string queries (prefix, suffix, and substring).
  *
  * @since 5.9
- * @mongodb.server.release 8.2
+ * @mongodb.server.release 9.0
  * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
  */
 public class StringOptions {

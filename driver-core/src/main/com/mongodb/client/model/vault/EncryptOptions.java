@@ -59,8 +59,7 @@ public class EncryptOptions {
      * </ul>
      *
      * <p>The "String" algorithm supports Queryable Encryption prefix, suffix, and substring string queries.
-     *   Use the "String" algorithm with query types "prefix"/"suffix"/"substring" (server 9.0+) or the deprecated
-     *   aliases "prefixPreview"/"suffixPreview"/"substringPreview" (server 8.2 to pre-9.0).</p>
+     *   Use the "String" algorithm with query types "prefix"/"suffix"/"substring" (server 9.0+).</p>
      *
      * @return the encryption algorithm
      */
@@ -150,11 +149,9 @@ public class EncryptOptions {
     /**
      * The QueryType.
      *
-     * <p>Currently, we support only "equality", "range", "prefix", "suffix", "substring", "prefixPreview",
-     * "suffixPreview" or "substringPreview" queryType.</p>
-     * <p>The "prefix", "suffix", "substring", "prefixPreview", "suffixPreview" and "substringPreview" query types are
-     * only valid with the "String" algorithm. "prefixPreview"/"suffixPreview"/"substringPreview" are deprecated
-     * aliases supported for servers 8.2 to pre-9.0; use "prefix"/"suffix"/"substring" on server 9.0+.</p>
+     * <p>Currently, we support only "equality", "range", "prefix", "suffix" or "substring" queryType.</p>
+     * <p>The "prefix", "suffix" and "substring" query types are only valid with the "String" algorithm
+     * and require server 9.0 or later.</p>
      * <p>It is an error to set queryType when the algorithm is not "Indexed", "Range" or "String".</p>
      * @param queryType the query type
      * @return this
@@ -248,7 +245,7 @@ public class EncryptOptions {
      * @param stringOptions the string options
      * @return this
      * @since 5.9
-     * @mongodb.server.release 8.2
+     * @mongodb.server.release 9.0
      * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
      */
     public EncryptOptions stringOptions(@Nullable final StringOptions stringOptions) {
@@ -261,7 +258,7 @@ public class EncryptOptions {
      * @see #stringOptions(StringOptions)
      * @return the string options or null if not set
      * @since 5.9
-     * @mongodb.server.release 8.2
+     * @mongodb.server.release 9.0
      * @mongodb.driver.manual /core/queryable-encryption/ queryable encryption
      */
     @Nullable
