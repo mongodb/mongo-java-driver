@@ -49,10 +49,19 @@ class SpanScopesTest {
     void closesScopeWhenActionThrows() {
         List<String> calls = new ArrayList<>();
         RuntimeException failure = new RuntimeException("appender failed");
-        RuntimeException thrown = assertThrows(RuntimeException.class,
-                () -> SpanScopes.runInScope(new RecordingSpan(calls), () -> { throw failure; }));
+        RuntimeException thrown = assertThrows(RuntimeException.class, () -> SpanScopes.runInScope(new RecordingSpan(calls), () -> {
+            throw failure;
+        }));
         assertEquals(failure, thrown);
         assertEquals(asList("open", "close"), calls);
+    }
+
+    @Test
+    void nestsScopes() {
+        List<String> calls = new ArrayList<>();
+        RecordingSpan span = new RecordingSpan(calls);
+        SpanScopes.runInScope(span, () -> SpanScopes.runInScope(span, () -> calls.add("action")));
+        assertEquals(asList("open", "open", "action", "close", "close"), calls);
     }
 
     static final class RecordingSpan implements Span {
@@ -62,14 +71,47 @@ class SpanScopesTest {
             this.calls = calls;
         }
 
-        @Override public void openScope() { calls.add("open"); }
-        @Override public void closeScope() { calls.add("close"); }
-        @Override public void setQueryText(final BsonDocument commandDocument) { }
-        @Override public void event(final String event) { }
-        @Override public void error(final Throwable throwable) { }
-        @Override public void end() { }
-        @Override public TraceContext context() { return TraceContext.EMPTY; }
-        @Override @Nullable public MongodbObservationContext getMongodbObservationContext() { return null; }
-        @Override @Nullable public MongoNamespace getNamespace() { return null; }
+        @Override
+        public void openScope() {
+            calls.add("open");
+        }
+
+        @Override
+        public void closeScope() {
+            calls.add("close");
+        }
+
+        @Override
+        public void setQueryText(final BsonDocument commandDocument) {
+        }
+
+        @Override
+        public void event(final String event) {
+        }
+
+        @Override
+        public void error(final Throwable throwable) {
+        }
+
+        @Override
+        public void end() {
+        }
+
+        @Override
+        public TraceContext context() {
+            return TraceContext.EMPTY;
+        }
+
+        @Override
+        @Nullable
+        public MongodbObservationContext getMongodbObservationContext() {
+            return null;
+        }
+
+        @Override
+        @Nullable
+        public MongoNamespace getNamespace() {
+            return null;
+        }
     }
 }
