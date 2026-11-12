@@ -454,8 +454,7 @@ public class InternalStreamConnection implements InternalConnection {
         Span tracingSpan = null;
         // Single owner of the span and event sender until the message is handed off to the receive phase:
         // any failure from span creation through sendCommandMessage ends the span exactly once and emits at
-        // most one failed event (LoggingCommandEventSender suppresses terminal events until the started event
-        // has completed, and Span.closeScope() is a no-op if no scope was opened).
+        // most one failed event; closing a span scope that was never opened is a no-op.
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
             tracingSpan = operationContext
                     .getTracingManager()
