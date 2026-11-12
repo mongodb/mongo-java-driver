@@ -91,13 +91,16 @@ public interface Span {
     /**
      * Opens a scope for this span, making it the current observation on the thread.
      * A successful {@code openScope()} must be followed by {@link #closeScope()}.
+     * Scopes nest: each {@code openScope()} may be paired with a {@link #closeScope()}, and calling
+     * {@code openScope()} after {@link #end()} does not throw.
      */
     void openScope();
 
     /**
-     * Closes the scope previously opened by {@link #openScope()}, restoring the previous observation.
-     * Calling this without a prior {@code openScope()}, or more than once, is a no-op — error-handling
-     * paths may therefore call it unconditionally.
+     * Closes the most recently opened scope for this span, restoring the previous observation.
+     * Scopes nest: each {@code closeScope()} closes the most recently opened scope, so an equal number
+     * of {@code openScope()} and {@code closeScope()} calls leaves no scope open.
+     * Calling this with no open scope is a no-op — error-handling paths may therefore call it unconditionally.
      */
     void closeScope();
 
