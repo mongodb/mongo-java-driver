@@ -32,6 +32,8 @@ import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
 
 import java.io.StringWriter;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.observability.micrometer.TracingManager.ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH;
@@ -210,13 +212,13 @@ public class MicrometerTracer implements Tracer {
     /**
      * Represents a Micrometer-based span.
      */
-    private static class MicrometerSpan implements Span {
+    // visible for testing
+    static class MicrometerSpan implements Span {
         private final Observation observation;
         @Nullable
         private final MongoNamespace namespace;
         private final int queryTextLength;
-        @Nullable
-        private Observation.Scope scope;
+        private final Deque<Observation.Scope> scopes = new ArrayDeque<>();
 
         /**
          * Constructs a new {@link MicrometerSpan} instance with an associated Observation and MongoDB namespace.
@@ -232,15 +234,15 @@ public class MicrometerTracer implements Tracer {
         }
 
         @Override
-        public void openScope() {
-            this.scope = observation.openScope();
+        public synchronized void openScope() {
+            scopes.push(observation.openScope());
         }
 
         @Override
-        public void closeScope() {
+        public synchronized void closeScope() {
+            Observation.Scope scope = scopes.poll();
             if (scope != null) {
                 scope.close();
-                scope = null;
             }
         }
 
