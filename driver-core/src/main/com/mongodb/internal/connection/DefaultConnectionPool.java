@@ -589,8 +589,10 @@ final class DefaultConnectionPool implements ConnectionPool {
      */
     private StartTime connectionCheckoutStarted(final OperationContext operationContext) {
         StartTime checkoutStart = StartTime.now();
-        SpanScopes.runInScope(operationContext.getTracingSpan(),
-                () -> logEventMessage("Connection checkout started", "Checkout started for connection to {}:{}"));
+        if (requiresLogging(serverId.getClusterId())) {
+            SpanScopes.runInScope(operationContext.getTracingSpan(),
+                    () -> logEventMessage("Connection checkout started", "Checkout started for connection to {}:{}"));
+        }
 
         connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId, operationContext.getId()));
         return checkoutStart;
@@ -685,9 +687,11 @@ final class DefaultConnectionPool implements ConnectionPool {
 
         private void connectionCheckedIn() {
             ConnectionId connectionId = getId(wrapped);
-            SpanScopes.runInScope(operationSpan, () -> logEventMessage("Connection checked in",
-                    "Connection checked in: address={}:{}, driver-generated ID={}",
-                    connectionId.getLocalValue()));
+            if (requiresLogging(serverId.getClusterId())) {
+                SpanScopes.runInScope(operationSpan, () -> logEventMessage("Connection checked in",
+                        "Connection checked in: address={}:{}, driver-generated ID={}",
+                        connectionId.getLocalValue()));
+            }
             connectionPoolListener.connectionCheckedIn(new ConnectionCheckedInEvent(connectionId, operationId));
         }
 
