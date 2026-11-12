@@ -22,6 +22,7 @@ import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
+import com.mongodb.connection.SrvHostValidator;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -37,6 +38,32 @@ import java.io.Closeable;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public interface Cluster extends Closeable {
+    static SrvHostValidator getEffectiveSrvHostValidator(ClusterSettings settings) {
+        if (settings.getSrvHostValidator() != null) {
+           return settings.getSrvHostValidator();
+        } else if (settings.getSrvAllowedHostsSuffix() != null) {
+            return new DnsSuffixValidator(settings.getSrvAllowedHostsSuffix());
+        } else if (settings.getSrvHost() != null) {
+            int firstDot = settings.getSrvHost().indexOf('.');
+            boolean hasThreeParts = firstDot >= 0 && settings.getSrvHost().indexOf('.', firstDot + 1) >= 0;
+            DnsSuffixValidator suffixValidator = new DnsSuffixValidator(hasThreeParts ? settings.getSrvHost().substring(firstDot) : settings.getSrvHost());
+            return suffixValidator.isAllowedSingleLabel() ? suffixValidator : new SrvHostValidator() {
+                @Override
+                public boolean isValidHost(final String discoveredHostName) {
+                    return suffixValidator.isValidHost(discoveredHostName)
+                            && discoveredHostName.chars().filter(c -> c == '.').count() >= 2;
+                }
+
+                @Override
+                public String toString() {
+                    return String.format("ends with %s and has at least 3 labels", suffixValidator.getSuffix());
+                }
+            };
+        } else {
+            // This should be unreachable
+            return h -> false;
+        }
+    }
 
     ClusterSettings getSettings();
 
