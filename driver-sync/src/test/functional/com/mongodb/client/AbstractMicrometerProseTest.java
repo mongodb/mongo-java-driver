@@ -58,9 +58,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.getPrimary;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
+import static com.mongodb.ClusterFixture.isLoadBalanced;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
@@ -72,8 +74,10 @@ import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
@@ -457,6 +461,7 @@ public abstract class AbstractMicrometerProseTest {
              MongoClient client = createMongoClient(settings);
              FailPoint ignored = FailPoint.enable(failPoint, getPrimary())) {
             client.getDatabase(getDefaultDatabaseName()).getCollection("test").find().first();
+            assertNoSpanIsCurrent();
 
             List<FinishedSpan> spans = inMemoryOtel.getFinishedSpans();
             FinishedSpan firstAttempt = spanNamed(spans, "find", 0);
@@ -495,6 +500,7 @@ public abstract class AbstractMicrometerProseTest {
         try (SpanRecordingInterceptor logs = new SpanRecordingInterceptor(appName, inMemoryOtel.getTracer());
              MongoClient client = createMongoClient(tracedSettings(appName))) {
             client.getDatabase(getDefaultDatabaseName()).getCollection("test").insertOne(new Document("x", 1));
+            assertNoSpanIsCurrent();
 
             FinishedSpan operation = spanNamed(inMemoryOtel.getFinishedSpans(), operationName, 0);
             succeedingTraceId = operation.getTraceId();
@@ -509,6 +515,10 @@ public abstract class AbstractMicrometerProseTest {
             }
         }
 
+        // a fixed localhost host list is incompatible with an SRV fixture, and a load-balanced fixture would not time out
+        assumeFalse(getConnectionString().isSrvProtocol());
+        assumeFalse(isLoadBalanced());
+
         String failingAppName = "otel-log-test11-failing";
         MongoClientSettings failing = MongoClientSettings.builder(tracedSettings(failingAppName))
                 .applyToClusterSettings(b -> b.hosts(singletonList(new ServerAddress("localhost", 1)))
@@ -518,6 +528,7 @@ public abstract class AbstractMicrometerProseTest {
              MongoClient client = createMongoClient(failing)) {
             assertThrows(MongoTimeoutException.class,
                     () -> client.getDatabase(getDefaultDatabaseName()).getCollection("test").insertOne(new Document("x", 1)));
+            assertNoSpanIsCurrent();
 
             // the failing operation is the only one outside the trace of the succeeding operation above
             List<FinishedSpan> failingOperations = inMemoryOtel.getFinishedSpans().stream()
@@ -549,6 +560,7 @@ public abstract class AbstractMicrometerProseTest {
             session.startTransaction();
             collection.insertOne(session, new Document("x", 1));
             session.commitTransaction();
+            assertNoSpanIsCurrent();
 
             List<FinishedSpan> spans = inMemoryOtel.getFinishedSpans();
             FinishedSpan transaction = spanNamed(spans, "transaction", 0);
@@ -618,6 +630,11 @@ public abstract class AbstractMicrometerProseTest {
                         .observationRegistry(observationRegistry)
                         .build())
                 .build();
+    }
+
+    private void assertNoSpanIsCurrent() {
+        assertNull(inMemoryOtel.getTracer().currentSpan(), "no span may be current after the operation");
+        assertNull(observationRegistry.getCurrentObservation(), "no observation may be current after the operation");
     }
 
     private static FinishedSpan spanNamed(final List<FinishedSpan> spans, final String name, final int index) {
