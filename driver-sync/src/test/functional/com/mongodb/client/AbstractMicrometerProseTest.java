@@ -472,11 +472,13 @@ public abstract class AbstractMicrometerProseTest {
             List<ObservedLog> failed = logs.messages("Command failed");
             assertEquals(1, failed.size());
             assertEquals(firstAttempt.getSpanId(), failed.get(0).spanId);
+            assertEquals(firstAttempt.getTraceId(), failed.get(0).traceId);
 
             List<ObservedLog> succeeded = logs.messages("Command succeeded").stream()
                     .filter(l -> secondAttempt.getTraceId().equals(l.traceId)).collect(Collectors.toList());
             assertEquals(1, succeeded.size());
             assertEquals(secondAttempt.getSpanId(), succeeded.get(0).spanId);
+            assertEquals(secondAttempt.getTraceId(), succeeded.get(0).traceId);
 
             for (ObservedLog l : logs.component(LogMessage.Component.COMMAND)) {
                 assertNotEquals(operation.getSpanId(), l.spanId, "command messages must not carry the operation span");
@@ -551,12 +553,29 @@ public abstract class AbstractMicrometerProseTest {
             List<FinishedSpan> spans = inMemoryOtel.getFinishedSpans();
             FinishedSpan transaction = spanNamed(spans, "transaction", 0);
             FinishedSpan insertCommand = spanNamed(spans, "insert", 0);
-            List<ObservedLog> started = logs.messages("Command started").stream()
-                    .filter(l -> transaction.getTraceId().equals(l.traceId)).collect(Collectors.toList());
-            assertFalse(started.isEmpty(), "command started messages must carry the transaction's trace");
-            ObservedLog insertStarted = started.stream().filter(l -> insertCommand.getSpanId().equals(l.spanId)).findFirst()
-                    .orElseThrow(() -> new AssertionError("insert started message must carry the insert command span"));
-            assertEquals(transaction.getTraceId(), insertStarted.traceId);
+            FinishedSpan commitCommand = spanNamed(spans, "commitTransaction", 0);
+            for (FinishedSpan command : asList(insertCommand, commitCommand)) {
+                assertEquals(transaction.getTraceId(), command.getTraceId(), command.getName() + " must be in the transaction's trace");
+                for (String messageId : asList("Command started", "Command succeeded")) {
+                    List<ObservedLog> observed = logs.messages(messageId).stream()
+                            .filter(l -> command.getSpanId().equals(l.spanId)).collect(Collectors.toList());
+                    assertEquals(1, observed.size(), messageId + " must carry the " + command.getName() + " command span");
+                    assertEquals(transaction.getTraceId(), observed.get(0).traceId,
+                            messageId + " for " + command.getName() + " must carry the transaction's trace");
+                }
+            }
+
+            // command spans are named after the command alone; operation spans add the namespace
+            Set<String> commandSpanIds = spans.stream()
+                    .filter(s -> transaction.getTraceId().equals(s.getTraceId()))
+                    .filter(s -> !s.getName().equals("transaction") && !s.getName().contains(" "))
+                    .map(FinishedSpan::getSpanId).collect(Collectors.toSet());
+            for (ObservedLog l : logs.component(LogMessage.Component.COMMAND)) {
+                if (transaction.getTraceId().equals(l.traceId)) {
+                    assertNotEquals(transaction.getSpanId(), l.spanId, l.messageId + " must not carry the transaction span");
+                    assertTrue(commandSpanIds.contains(l.spanId), l.messageId + " must carry a command span of the transaction");
+                }
+            }
         }
     }
 
