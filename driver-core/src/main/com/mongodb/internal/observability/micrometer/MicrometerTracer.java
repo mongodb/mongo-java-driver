@@ -244,7 +244,7 @@ public class MicrometerTracer implements Tracer {
         @Nullable
         private final MongoNamespace namespace;
         private final int queryTextLength;
-        private final Deque<Observation.Scope> scopes = new ArrayDeque<>();
+        private final ThreadLocal<Deque<Observation.Scope>> scopes = ThreadLocal.withInitial(ArrayDeque::new);
 
         /**
          * Constructs a new {@link MicrometerSpan} instance with an associated Observation and MongoDB namespace.
@@ -260,13 +260,13 @@ public class MicrometerTracer implements Tracer {
         }
 
         @Override
-        public synchronized void openScope() {
-            scopes.push(observation.openScope());
+        public void openScope() {
+            scopes.get().push(observation.openScope());
         }
 
         @Override
-        public synchronized void closeScope() {
-            Observation.Scope scope = scopes.poll();
+        public void closeScope() {
+            Observation.Scope scope = scopes.get().poll();
             if (scope != null) {
                 scope.close();
             }
