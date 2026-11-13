@@ -46,19 +46,7 @@ public interface Cluster extends Closeable {
         } else if (settings.getSrvHost() != null) {
             int firstDot = settings.getSrvHost().indexOf('.');
             boolean hasThreeParts = firstDot >= 0 && settings.getSrvHost().indexOf('.', firstDot + 1) >= 0;
-            DnsSuffixValidator suffixValidator = new DnsSuffixValidator(hasThreeParts ? settings.getSrvHost().substring(firstDot) : settings.getSrvHost());
-            return suffixValidator.isAllowedSingleLabel() ? suffixValidator : new SrvHostValidator() {
-                @Override
-                public boolean isValidHost(final String discoveredHostName) {
-                    return suffixValidator.isValidHost(discoveredHostName)
-                            && discoveredHostName.chars().filter(c -> c == '.').count() >= 2;
-                }
-
-                @Override
-                public String toString() {
-                    return String.format("ends with %s and has at least 3 labels", suffixValidator.getSuffix());
-                }
-            };
+            return new DnsSuffixValidator(hasThreeParts ? settings.getSrvHost().substring(firstDot) : settings.getSrvHost());
         } else {
             // This should be unreachable
             return h -> false;
