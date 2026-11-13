@@ -17,6 +17,7 @@
 package com.mongodb.internal.dns;
 
 import com.mongodb.MongoConfigurationException;
+import com.mongodb.internal.connection.DnsSuffixValidator;
 import com.mongodb.spi.dns.DnsClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -58,43 +59,50 @@ public class DefaultDnsResolverTest {
     @Test
     public void nonDnsProviderUrlShouldBeIgnored() {
         System.setProperty(Context.PROVIDER_URL, "file:///tmp/provider.txt");
-        assertDoesNotThrow(() -> new DefaultDnsResolver().resolveHostFromSrvRecords(TEST_HOST, "mongodb", null));
+        assertDoesNotThrow(() -> new DefaultDnsResolver().resolveHostFromSrvRecords(TEST_HOST, "mongodb",
+                h -> true));
     }
 
     @Test
     public void dnsProviderUrlShouldNotBeIgnored() {
         System.setProperty(Context.PROVIDER_URL, "dns:///mongodb.unknown.server.com");
-        assertThrows(MongoConfigurationException.class, () -> new DefaultDnsResolver().resolveHostFromSrvRecords(TEST_HOST, "mongodb", null));
+        assertThrows(MongoConfigurationException.class, () -> new DefaultDnsResolver().resolveHostFromSrvRecords(TEST_HOST,
+                "mongodb.com",
+                new DnsSuffixValidator("mongodb.com")));
     }
 
     @Test
     public void shouldAcceptResolvedHostEndingWithSrvAllowedHostsSuffix() {
         DefaultDnsResolver resolver = resolverReturning("localhost.build.10gen.cc.");
         assertEquals(singletonList("localhost.build.10gen.cc:27017"),
-                resolver.resolveHostFromSrvRecords(TEST_HOST, "mongodb", ".build.10gen.cc"));
+                resolver.resolveHostFromSrvRecords(TEST_HOST, "mongodb",
+                        new DnsSuffixValidator(".build.10gen.cc")));
     }
 
 
     @Test
     public void shouldMatchSrvAllowedHostsSuffixCaseInsensitively() {
         DefaultDnsResolver resolver = resolverReturning("LOCALHOST.Build.10GEN.cc.");
-        assertEquals(singletonList("LOCALHOST.Build.10GEN.cc:27017"),
-                resolver.resolveHostFromSrvRecords(TEST_HOST, "mongodb", ".build.10gen.cc"));
+        assertEquals(singletonList("localhost.build.10gen.cc:27017"),
+                resolver.resolveHostFromSrvRecords(TEST_HOST, "mongodb",
+                        new DnsSuffixValidator(".build.10gen.cc")));
     }
 
     @Test
     public void shouldThrowWhenResolvedHostDoesNotEndWithSrvAllowedHostsSuffix() {
         DefaultDnsResolver resolver = resolverReturning("localhost.build.10gen.cc.");
         MongoConfigurationException e = assertThrows(MongoConfigurationException.class,
-                () -> resolver.resolveHostFromSrvRecords(TEST_HOST, "mongodb", ".test.build.10gen.cc"));
-        assertTrue(e.getMessage().contains("srvAllowedHostsSuffix"));
+                () -> resolver.resolveHostFromSrvRecords(TEST_HOST, "mongodb",
+                        new DnsSuffixValidator(".test.build.10gen.cc")));
+        assertTrue(e.getMessage().contains("does not match configuration: .test.build.10gen.cc"));
     }
 
     @Test
     public void shouldThrowWhenAnyResolvedHostDoesNotEndWithSrvAllowedHostsSuffix() {
         DefaultDnsResolver resolver = resolverReturning("ok.build.10gen.cc.", "bad.evil.example.com.");
         MongoConfigurationException e = assertThrows(MongoConfigurationException.class,
-                () -> resolver.resolveHostFromSrvRecords(TEST_HOST, "mongodb", ".build.10gen.cc"));
+                () -> resolver.resolveHostFromSrvRecords(TEST_HOST, "mongodb",
+                        new DnsSuffixValidator(".build.10gen.cc")));
         assertTrue(e.getMessage().contains("bad.evil.example.com"));
     }
 
@@ -103,6 +111,7 @@ public class DefaultDnsResolverTest {
         // a leading '.' is prepended, so a bare host equal to the suffix has no label boundary and must be rejected
         DefaultDnsResolver resolver = resolverReturning("build.10gen.cc.");
         assertThrows(MongoConfigurationException.class,
-                () -> resolver.resolveHostFromSrvRecords(TEST_HOST, "mongodb", ".build.10gen.cc"));
+                () -> resolver.resolveHostFromSrvRecords(TEST_HOST, "mongodb",
+                        new DnsSuffixValidator(".build.10gen.cc")));
     }
 }
