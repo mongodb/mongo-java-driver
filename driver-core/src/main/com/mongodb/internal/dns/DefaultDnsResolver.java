@@ -92,7 +92,7 @@ public final class DefaultDnsResolver implements DnsResolver {
                     throw e;
                 } catch (Exception e) {
                     throw new MongoConfigurationException(
-                            format("The SRV validator '%s' thew an exception while validating resolved host '%s' for host name '%s'",
+                            format("The SRV validator '%s' threw an exception while validating resolved host '%s' for host name '%s'",
                                     srvHostValidator, resolvedHost,
                                     srvHost), e);
                 }
