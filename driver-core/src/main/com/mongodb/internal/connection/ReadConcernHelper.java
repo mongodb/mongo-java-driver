@@ -31,6 +31,13 @@ import static com.mongodb.internal.operation.ServerVersionHelper.FIVE_DOT_ZERO_W
  */
 public final class ReadConcernHelper {
 
+    public static void appendReadConcernToWriteCommand(final SessionContext sessionContext, final BsonDocument commandDocument) {
+    if (!sessionContext.hasActiveTransaction() && !sessionContext.isSnapshot() && sessionContext.isCausallyConsistent()
+            && sessionContext.getOperationTime() != null) {
+            commandDocument.put("readConcern", new BsonDocument("afterClusterTime", sessionContext.getOperationTime()));
+        }
+    }
+
     public static BsonDocument getReadConcernDocument(final SessionContext sessionContext, final int maxWireVersion) {
         notNull("sessionContext", sessionContext);
 

@@ -40,6 +40,7 @@ import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.connection.ReadConcernHelper.appendReadConcernToWriteCommand;
 import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
@@ -114,7 +115,7 @@ public class DropCollectionOperation implements WriteOperation<Void> {
     @Override
     public Void execute(final WriteBinding binding, final OperationContext operationContext) {
         BsonDocument localEncryptedFields = getEncryptedFields((ReadWriteBinding) binding, operationContext);
-        getCommands(localEncryptedFields).forEach(commandCreator -> {
+        getCommands(operationContext, localEncryptedFields).forEach(commandCreator -> {
             RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(
                     overloadForWrite(retryWrites, maxAdaptiveRetriesSetting), operationContext);
             Supplier<Void> retryingCommandExecutor = decorateWithRetries(retryControl, operationContext, () -> {
@@ -142,7 +143,7 @@ public class DropCollectionOperation implements WriteOperation<Void> {
                 errorHandlingCallback(callback, LOGGER).onResult(null, t);
                 return;
             }
-            new ProcessCommandsCallback(binding, operationContext, getCommands(localEncryptedFields), callback).onResult(null, null);
+            new ProcessCommandsCallback(binding, operationContext, getCommands(operationContext, localEncryptedFields), callback).onResult(null, null);
         });
     }
 
@@ -173,14 +174,14 @@ public class DropCollectionOperation implements WriteOperation<Void> {
      *
      * @return the list of commands to run to create the collection
      */
-    private List<Supplier<BsonDocument>> getCommands(@Nullable final BsonDocument encryptedFields) {
+    private List<Supplier<BsonDocument>> getCommands(final OperationContext operationContext, @Nullable final BsonDocument encryptedFields) {
         if (encryptedFields == null || encryptedFields.isEmpty()) {
-            return singletonList(this::dropCollectionCommand);
+            return singletonList(() -> dropCollectionCommand(operationContext));
         } else  {
             return asList(
                     () -> getDropEncryptedFieldsCollectionCommand(encryptedFields, "esc"),
                     () -> getDropEncryptedFieldsCollectionCommand(encryptedFields, "ecoc"),
-                    this::dropCollectionCommand
+                    () -> dropCollectionCommand(operationContext)
             );
         }
     }
@@ -190,9 +191,10 @@ public class DropCollectionOperation implements WriteOperation<Void> {
         return new BsonDocument("drop", encryptedFields.getOrDefault(collectionSuffix + "Collection", defaultCollectionName));
     }
 
-    private BsonDocument dropCollectionCommand() {
+    private BsonDocument dropCollectionCommand(final OperationContext operationContext) {
         BsonDocument commandDocument = new BsonDocument("drop", new BsonString(namespace.getCollectionName()));
         appendWriteConcernToCommand(writeConcern, commandDocument);
+        appendReadConcernToWriteCommand(operationContext.getSessionContext(), commandDocument);
         return commandDocument;
     }
 

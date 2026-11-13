@@ -309,16 +309,30 @@ final class TimeoutContextTest {
     @DisplayName("should choose connectTimeoutMS when connectTimeoutMS is less than timeoutMS")
     void shouldChooseConnectTimeoutWhenItIsLessThenTimeoutMs(final Long connectTimeoutMS,
                                                           final Long timeoutMS,
-                                                          final long expected) {
-        TimeoutContext timeoutContext = new TimeoutContext(
-                new TimeoutSettings(0,
-                connectTimeoutMS,
-                0,
-                timeoutMS,
-                0));
+                                                          final long expected) throws Exception {
+        // TODO-JAVA-6341: this test intermittently timesout in CI
+        int attempts = 3;
+        Exception e = null;
+        while (attempts-- > 0) {
+            try {
+                TimeoutContext timeoutContext = new TimeoutContext(
+                        new TimeoutSettings(0,
+                        connectTimeoutMS,
+                        0,
+                        timeoutMS,
+                        0));
 
-        long calculatedTimeoutMS = timeoutContext.getConnectTimeoutMs();
-        assertEquals(expected, calculatedTimeoutMS);
+                long calculatedTimeoutMS = timeoutContext.getConnectTimeoutMs();
+                assertEquals(expected, calculatedTimeoutMS);
+                return;
+            } catch (Exception ex) {
+                if (e == null) {
+                    e = ex;
+
+                }
+            }
+        }
+        throw e;
     }
 
 

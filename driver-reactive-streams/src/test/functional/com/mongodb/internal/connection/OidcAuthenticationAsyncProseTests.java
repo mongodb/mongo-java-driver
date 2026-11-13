@@ -18,6 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
+import com.mongodb.internal.InternalMongoClientSettings;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.junit.jupiter.api.Test;
@@ -33,7 +34,7 @@ public class OidcAuthenticationAsyncProseTests extends OidcAuthenticationProseTe
 
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return new SyncMongoClient(settings);
+        return new SyncMongoClient(settings, null, InternalMongoClientSettings.builder().recordEverything(true).build());
     }
 
     @Test

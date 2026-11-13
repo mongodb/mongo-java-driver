@@ -102,13 +102,14 @@ final class ErrorMatcher {
             if (e instanceof MongoSecurityException && e.getCause() instanceof MongoCommandException) {
                 errorCodeException = (Exception) e.getCause();
             }
-            assertTrue(context.getMessage("Exception must be of type MongoCommandException or MongoWriteException when checking"
-                            + " for error codes, but was " + e.getClass().getSimpleName()),
+            assertTrue(context.getMessage("Exception must be of type MongoCommandException, MongoWriteException"
+                            + " or MongoWriteConcernException when checking for error codes, but was " + e.getClass().getSimpleName()),
                     errorCodeException instanceof MongoCommandException
-                            || errorCodeException instanceof MongoWriteException);
+                            || errorCodeException instanceof MongoWriteException
+                            || errorCodeException instanceof MongoWriteConcernException);
             int errorCode = (errorCodeException instanceof MongoCommandException)
                     ? ((MongoCommandException) errorCodeException).getErrorCode()
-                    : ((MongoWriteException) errorCodeException).getCode();
+                    : ((MongoServerException) errorCodeException).getCode();
 
             assertEquals(context.getMessage("Error codes must match"), expectedError.getNumber("errorCode").intValue(),
                     errorCode);

@@ -744,6 +744,8 @@ public abstract class UnifiedTest {
                     return gridFSHelper.executeDelete(operation);
                 case "drop":
                     return gridFSHelper.executeDrop(operation);
+                case "dropDatabase":
+                    return crudHelper.executeDropDatabase(operation);
                 case "download":
                     return gridFSHelper.executeDownload(operation);
                 case "downloadByName":

@@ -63,6 +63,7 @@ import static com.mongodb.internal.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
+import static com.mongodb.internal.connection.ReadConcernHelper.appendReadConcernToWriteCommand;
 import static com.mongodb.internal.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.internal.operation.CommandOperationHelper.commandWriteConcern;
 import static com.mongodb.internal.operation.OperationHelper.LOGGER;
@@ -165,6 +166,7 @@ public final class BulkWriteBatch {
             command.put("ordered", new BsonBoolean(ordered));
             commandWriteConcern(writeConcern, sessionContext).ifPresent(value ->
                     command.put("writeConcern", value.asDocument()));
+            appendReadConcernToWriteCommand(sessionContext, command);
             if (bypassDocumentValidation != null) {
                 command.put("bypassDocumentValidation", new BsonBoolean(bypassDocumentValidation));
             }
@@ -336,7 +338,7 @@ public final class BulkWriteBatch {
             for (BsonValue cur : writeErrorsDocuments) {
                 BsonDocument curDocument = (BsonDocument) cur;
                 writeErrors.add(new BulkWriteError(curDocument.getNumber("code").intValue(),
-                        curDocument.getString("errmsg").getValue(),
+                        curDocument.isString("errmsg") ? curDocument.getString("errmsg").getValue() : "",
                         curDocument.getDocument("errInfo", new BsonDocument()),
                         curDocument.getNumber("index").intValue()));
             }

@@ -562,6 +562,7 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         com.mongodb.client.MapReduceIterable<BsonDocument> iterable = session == null
                 ? collection.mapReduce(mapFunction, reduceFunction)
                 : collection.mapReduce(session, mapFunction, reduceFunction);
+        boolean outputToCollection = false;
 
         for (Map.Entry<String, BsonValue> cur : arguments.entrySet()) {
             switch (cur.getKey()) {
@@ -569,16 +570,29 @@ final class UnifiedCrudHelper extends UnifiedHelper {
                 case "reduce":
                 case "session":
                     break;
-                case "out":
-                    if (!cur.getValue().asDocument().equals(new BsonDocument("inline", new BsonInt32(1)))) {
-                        throw new UnsupportedOperationException("Unsupported value for out argument: " + cur.getValue());
+                case "out": {
+                    BsonDocument out = cur.getValue().asDocument();
+                    if (out.equals(new BsonDocument("inline", new BsonInt32(1)))) {
+                        break;
                     }
-                    break;
+                    if (out.size() == 1 && out.isString("replace")) {
+                        iterable.collectionName(out.getString("replace").getValue());
+                        outputToCollection = true;
+                        break;
+                    }
+                    throw new UnsupportedOperationException("Unsupported value for out argument: " + cur.getValue());
+                }
                 default:
                     throw new UnsupportedOperationException("Unsupported argument: " + cur.getKey());
             }
         }
 
+        if (outputToCollection) {
+            return resultOf(() -> {
+                iterable.toCollection();
+                return null;
+            });
+        }
         return resultOf(() ->
                 new BsonArray(iterable.into(new ArrayList<>())));
     }
@@ -1365,18 +1379,53 @@ final class UnifiedCrudHelper extends UnifiedHelper {
         MongoDatabase database = getMongoDatabase(operation);
         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
         String collectionName = arguments.remove("collection").asString().getValue();
+        ClientSession session = getSession(arguments);
 
         DropCollectionOptions dropCollectionOptions = new DropCollectionOptions();
         for (Map.Entry<String, BsonValue> entry : arguments.entrySet()) {
             if (entry.getKey().equals("encryptedFields")) {
                 dropCollectionOptions.encryptedFields(entry.getValue().asDocument());
+            } else if (entry.getKey().equals("session")) {
+                // Already handled.
             } else {
                 throw new UnsupportedOperationException("Unsupported drop collections option: " + entry.getKey());
             }
         }
 
         return resultOf(() -> {
-            database.getCollection(collectionName).drop(dropCollectionOptions);
+            if (session != null) {
+                database.getCollection(collectionName).drop(session, dropCollectionOptions);
+            } else {
+                database.getCollection(collectionName).drop(dropCollectionOptions);
+            }
+            return null;
+        });
+    }
+
+    public OperationResult executeDropDatabase(final BsonDocument operation) {
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+        MongoClient client = entities.getClient(operation.getString("object").getValue());
+        String database = arguments.getString("database").getValue();
+        ClientSession session = getSession(arguments);
+
+        for (Map.Entry<String, BsonValue> entry : arguments.entrySet()) {
+            switch (entry.getKey()) {
+                case "session":
+                case "database":
+                    // Already handled.
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unsupported drop database option: " + entry.getKey());
+            }
+        }
+
+        return resultOf(() -> {
+            MongoDatabase db = client.getDatabase(database);
+            if (session != null) {
+                db.drop(session);
+            } else {
+                db.drop();
+            }
             return null;
         });
     }

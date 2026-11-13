@@ -142,6 +142,12 @@ public class BsonBinaryReader extends AbstractBsonReader {
             }
             numBytes -= 4;
         }
+        int remaining = bsonInput.getRemaining();
+        if (numBytes < 0 || numBytes > remaining) {
+            throw new BsonSerializationException(format(
+                    "While decoding a BSON binary found a size of %d bytes, but only %d bytes remain",
+                    numBytes, remaining));
+        }
         byte[] bytes = new byte[numBytes];
         bsonInput.readBytes(bytes);
         return new BsonBinary(type, bytes);
@@ -304,10 +310,10 @@ public class BsonBinaryReader extends AbstractBsonReader {
         int skip;
         switch (getCurrentBsonType()) {
             case ARRAY:
-                skip = readSize() - 4;
+                skip = readContainerSize(5) - 4;
                 break;
             case BINARY:
-                skip = readSize() + 1;
+                skip = addSkipBytes(readSize(), 1);
                 break;
             case BOOLEAN:
                 skip = 1;
@@ -316,7 +322,7 @@ public class BsonBinaryReader extends AbstractBsonReader {
                 skip = 8;
                 break;
             case DOCUMENT:
-                skip = readSize() - 4;
+                skip = readContainerSize(5) - 4;
                 break;
             case DOUBLE:
                 skip = 8;
@@ -331,10 +337,10 @@ public class BsonBinaryReader extends AbstractBsonReader {
                 skip = 16;
                 break;
             case JAVASCRIPT:
-                skip = readSize();
+                skip = readStringSize();
                 break;
             case JAVASCRIPT_WITH_SCOPE:
-                skip = readSize() - 4;
+                skip = readJavaScriptWithScopeSize();
                 break;
             case MAX_KEY:
                 skip = 0;
@@ -354,10 +360,10 @@ public class BsonBinaryReader extends AbstractBsonReader {
                 skip = 0;
                 break;
             case STRING:
-                skip = readSize();
+                skip = readStringSize();
                 break;
             case SYMBOL:
-                skip = readSize();
+                skip = readStringSize();
                 break;
             case TIMESTAMP:
                 skip = 8;
@@ -366,7 +372,7 @@ public class BsonBinaryReader extends AbstractBsonReader {
                 skip = 0;
                 break;
             case DB_POINTER:
-                skip = readSize() + 12;   // String followed by ObjectId
+                skip = addSkipBytes(readStringSize(), 12);   // String followed by ObjectId
                 break;
             default:
                 throw new BSONException("Unexpected BSON type: " + getCurrentBsonType());
@@ -383,6 +389,53 @@ public class BsonBinaryReader extends AbstractBsonReader {
             throw new BsonSerializationException(message);
         }
         return size;
+    }
+
+    private int readStringSize() {
+        int size = readSize();
+        if (size == 0) {
+            throw new BsonSerializationException(
+                    "While reading a BSON string found a size of 0; expected at least 1 for the null terminator.");
+        }
+        return size;
+    }
+
+    private int readContainerSize(final int minSize) {
+        int size = readSize();
+        if (size < minSize) {
+            throw new BsonSerializationException(format(
+                    "While reading a BSON container found a size of %d, which is less than the minimum of %d.",
+                    size, minSize));
+        }
+        return size;
+    }
+
+    private int readJavaScriptWithScopeSize() {
+        // int32 totalSize + minimal string (int32 size + '\x00') + minimal document (int32 size + '\x00') = 14
+        int size = readContainerSize(14);
+        int codeSize = readStringSize();
+        // 13 = 4 codeSize prefix + 4 scopeSize prefix + 5 minimum scope document
+        if (codeSize > size - 13) {
+            throw new BsonSerializationException(format(
+                    "While reading a BSON javascript_with_scope found code size %d is too large for total size %d.",
+                    codeSize, size));
+        }
+        bsonInput.skip(codeSize);
+        int scopeSize = readContainerSize(5);
+        long actualSize = 4L + 4 + codeSize + scopeSize;
+        if (actualSize != size) {
+            throw new BsonSerializationException(format("Expected size to be %d, not %d.", size, actualSize));
+        }
+        return scopeSize - 4;
+    }
+
+    private int addSkipBytes(final int size, final int trailingBytes) {
+        if (size > Integer.MAX_VALUE - trailingBytes) {
+            throw new BsonSerializationException(format(
+                    "While skipping a BSON value found a size of %d, which is too large to skip %d trailing bytes.",
+                    size, trailingBytes));
+        }
+        return size + trailingBytes;
     }
 
     protected Context getContext() {

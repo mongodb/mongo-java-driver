@@ -47,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.ReadConcernHelper.appendReadConcernToWriteCommand;
 import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.releasingCallback;
@@ -258,7 +259,7 @@ public class CreateCollectionOperation implements WriteOperation<Void> {
 
     @Override
     public Void execute(final WriteBinding binding, final OperationContext operationContext) {
-        getCommandFunctions().forEach(commandCreator -> {
+        getCommandFunctions(operationContext).forEach(commandCreator -> {
             RetryControl<SpecRetryPolicy> retryControl = createSpecRetryControl(overloadForWrite(retryWrites, maxAdaptiveRetriesSetting),
                     operationContext);
             Supplier<Void> retryingCommandExecutor = decorateWithRetries(retryControl, operationContext, () -> {
@@ -312,14 +313,14 @@ public class CreateCollectionOperation implements WriteOperation<Void> {
      * </p>
      * @return the list of commands to run to create the collection
      */
-    private List<Supplier<BsonDocument>> getCommandFunctions() {
+    private List<Supplier<BsonDocument>> getCommandFunctions(final OperationContext operationContext) {
         if (encryptedFields == null) {
-            return singletonList(this::getCreateCollectionCommand);
+            return singletonList(() -> getCreateCollectionCommand(operationContext));
         }
         return asList(
                 () -> getCreateEncryptedFieldsCollectionCommand("esc"),
                 () -> getCreateEncryptedFieldsCollectionCommand("ecoc"),
-                this::getCreateCollectionCommand,
+                () -> getCreateCollectionCommand(operationContext),
                 () -> new BsonDocument("createIndexes", new BsonString(collectionName))
                         .append("indexes", SAFE_CONTENT_ARRAY)
         );
@@ -333,7 +334,7 @@ public class CreateCollectionOperation implements WriteOperation<Void> {
                 .append("clusteredIndex", ENCRYPT_CLUSTERED_INDEX);
     }
 
-    private BsonDocument getCreateCollectionCommand() {
+    private BsonDocument getCreateCollectionCommand(final OperationContext operationContext) {
         BsonDocument document = new BsonDocument("create", new BsonString(collectionName));
         putIfFalse(document, "autoIndexId", autoIndex);
         document.put("capped", BsonBoolean.valueOf(capped));
@@ -351,6 +352,7 @@ public class CreateCollectionOperation implements WriteOperation<Void> {
             document.put("validationAction", new BsonString(validationAction.getValue()));
         }
         appendWriteConcernToCommand(writeConcern, document);
+        appendReadConcernToWriteCommand(operationContext.getSessionContext(), document);
         if (collation != null) {
             document.put("collation", collation.asDocument());
         }
@@ -427,7 +429,7 @@ public class CreateCollectionOperation implements WriteOperation<Void> {
             this.binding = binding;
             this.operationContext = operationContext;
             this.finalCallback = finalCallback;
-            this.commands = new ArrayDeque<>(getCommandFunctions());
+            this.commands = new ArrayDeque<>(getCommandFunctions(operationContext));
         }
 
         @Override

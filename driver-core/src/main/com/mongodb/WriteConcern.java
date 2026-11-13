@@ -123,6 +123,8 @@ public class WriteConcern implements Serializable {
      * Write operations that use this write concern will return as soon as the message is written to the socket. Exceptions are raised for
      * network issues, but not server errors.
      *
+     * <p>Note that if used in a causally-consistent session, the causally-consistent operations will <b>not</b> be causally-consistent.</p>
+     *
      * @since 2.10.0
      * @mongodb.driver.manual core/write-concern/#unacknowledged Unacknowledged
      */

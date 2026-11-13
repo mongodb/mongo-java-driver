@@ -39,6 +39,7 @@ import static com.mongodb.ClusterFixture.isWindows;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
+import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.FORCE_FLAKY;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.IGNORE_EXTRA_EVENTS;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.RETRY;
 import static com.mongodb.client.unified.UnifiedTestModifications.Modifier.SKIP;
@@ -431,7 +432,9 @@ public final class UnifiedTestModifications {
                 .file("gridfs", "gridfs-rename");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5689")
                 .file("gridfs", "gridfs-deleteByName")
-                .file("gridfs", "gridfs-renameByName");
+                .file("gridfs", "gridfs-renameByName")
+                .test("read-write-concern", "write-concern-errors-gridfs", "deleteByName reports a writeConcernError")
+                .test("read-write-concern", "write-concern-errors-gridfs", "renameByName reports a writeConcernError");
 
         // Skip all rawData based tests
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5830 rawData support only added to Go and Node")
@@ -567,14 +570,6 @@ public final class UnifiedTestModifications {
         def.skipNoncompliant("`MongoCluster.getWriteConcern`/`MongoCollection.getWriteConcern` are silently ignored in a transaction")
                 .test("transactions", "client bulkWrite transactions",
                         "client bulkWrite with writeConcern in a transaction causes a transaction error");
-        def.skipJira("https://jira.mongodb.org/browse/JAVA-6179")
-                .test("transactions", "retryable-writes", "increment txnNumber")
-                .test("transactions", "commit", "reset session state commit")
-                .test("transactions", "commit", "reset session state abort")
-                .test("transactions-convenient-api", "callback-commits",
-                        "withTransaction still succeeds if callback commits and runs extra op")
-                .test("transactions-convenient-api", "callback-aborts",
-                        "withTransaction still succeeds if callback aborts and runs extra op");
 
         // backpressure
 
@@ -633,6 +628,26 @@ public final class UnifiedTestModifications {
 
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5672")
                 .file("unified-test-format/tests/valid-fail", "operator-matchAsDocument");
+
+        // TODO-JAVA-6341: this test intermittently timesout in CI
+        def.modify(FORCE_FLAKY)
+                .test("client-side-encryption", "rewrapManyDataKey", "rewrap with new local KMS provider")
+                .test("client-side-encryption", "rewrapManyDataKey", "rewrap with new Azure KMS provider")
+                .test("client-side-encryption", "types", "type=symbol")
+                .test("client-side-operations-timeout", "retryability-timeoutMS",
+                    "timeoutMS applies to whole operation, not individual attempts - deleteOne on collection")
+                .test("client-side-operations-timeout", "gridfs-find",
+                        "timeoutMS behaves correctly for GridFS find operations");
+
+        // Server problems
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-6342")
+                .test("server-discovery-and-monitoring", "auth-network-timeout-error",
+                "Reset server and pool after network timeout error during authentication")
+                .test("server-discovery-and-monitoring", "hello-timeout", "Driver extends timeout while streaming")
+                .test("load-balancers",
+                        "cursors are correctly pinned to connections for load-balanced clusters",
+                        "pinned connections are returned after a network error during a killCursors request");
+
     }
 
     /**

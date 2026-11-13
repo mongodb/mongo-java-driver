@@ -23,13 +23,13 @@ import com.mongodb.internal.connection.TestCommandListener;
 
 import java.util.concurrent.TimeUnit;
 
+import com.mongodb.test.FlakyTest;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 import org.bson.Document;
-import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
@@ -64,7 +64,8 @@ public abstract class AbstractServerSelectionProseTest {
      * <a href="https://github.com/mongodb/specifications/blob/master/source/server-selection/server-selection-tests.md#prose-test">
      * {@code operationCount}-based Selection Within Latency Window</a>.
      */
-    @Test
+    // TODO-JAVA-6341: this test intermittently timesout in CI
+    @FlakyTest(maxAttempts = 3)
     @SuppressWarnings("try")
     void operationCountBasedSelectionWithinLatencyWindow() throws InterruptedException, ExecutionException {
         assumeTrue(isSharded());

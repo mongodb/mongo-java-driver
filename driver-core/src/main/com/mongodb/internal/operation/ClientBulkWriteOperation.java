@@ -123,6 +123,7 @@ import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.connection.DualMessageSequences.WritersProviderAndLimitsChecker.WriteResult.FAIL_LIMIT_EXCEEDED;
 import static com.mongodb.internal.connection.DualMessageSequences.WritersProviderAndLimitsChecker.WriteResult.OK_LIMIT_NOT_REACHED;
+import static com.mongodb.internal.connection.ReadConcernHelper.appendReadConcernToWriteCommand;
 import static com.mongodb.internal.operation.AsyncOperationHelper.cursorDocumentToAsyncBatchCursor;
 import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncSourceAndConnection;
@@ -571,6 +572,7 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                 commandDocument.append("let", let.toBsonDocument(BsonDocument.class, codecRegistry)));
         commandWriteConcern(effectiveWriteConcern, sessionContext).ifPresent(value->
                 commandDocument.append("writeConcern", value.asDocument()));
+        appendReadConcernToWriteCommand(sessionContext, commandDocument);
         return new ClientBulkWriteCommand(
                 commandDocument,
                 new ClientBulkWriteCommand.OpsAndNsInfo(
@@ -796,7 +798,8 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                     || (orderedSetting && individualOperationIndexInBatch > 0);
                             WriteError individualOperationWriteError = new WriteError(
                                     individualOperationResponse.getInt32("code").getValue(),
-                                    individualOperationResponse.getString("errmsg").getValue(),
+                                    individualOperationResponse.isString("errmsg")
+                                            ? individualOperationResponse.getString("errmsg").getValue() : "",
                                     individualOperationResponse.getDocument("errInfo", new BsonDocument()));
                             writeErrors.put(writeModelIndex, individualOperationWriteError);
                         }

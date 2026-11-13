@@ -24,6 +24,10 @@ Largest and most complex module.
 ./gradlew :driver-core:generateMongoDriverVersion   # If MongoDriverVersion is missing
 ```
 
+## Important
+
+- Async code MUST handle errors and they MUST be handled via callbacks or handlers.
+
 ## Notes
 
 - Most extensive test suite — JUnit 5 + Spock + Mockito.

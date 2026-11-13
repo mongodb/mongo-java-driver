@@ -148,24 +148,64 @@ functions:
           echo "Created archive tar file at ${ARCHIVE_FILE_PATH}"
 
   "start-mongo-orchestration":
+    # Assuming the role and passing the AWS credentials is required for
+    # `run-mongodb.sh` to download the "latest" version from the private S3 bucket.
+    - command: ec2.assume_role
+      params:
+        role_arn: ${aws_test_secrets_role}
     - command: shell.exec
       params:
+        include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
         script: |
           ${PREPARE_SHELL}
-          REQUIRE_API_VERSION=${REQUIRE_API_VERSION} LOAD_BALANCER=${LOAD_BALANCER} MONGODB_VERSION=${VERSION} TOPOLOGY=${TOPOLOGY} \
+          REQUIRE_API_VERSION=${REQUIRE_API_VERSION} LOAD_BALANCER=${LOAD_BALANCER} OTEL=${OTEL} MONGODB_VERSION=${VERSION} TOPOLOGY=${TOPOLOGY} \
           AUTH=${AUTH} SSL=${SSL} STORAGE_ENGINE=${STORAGE_ENGINE} ORCHESTRATION_FILE=${ORCHESTRATION_FILE} \
-          bash ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
-    # run-orchestration generates expansion file with the MONGODB_URI for the cluster
+          bash ${DRIVERS_TOOLS}/.evergreen/run-mongodb.sh start
+    # run-mongodb.sh generates expansion file with the MONGODB_URI for the cluster
     - command: expansions.update
       params:
         file: mo-expansion.yml
+  "run-otel-tracing-tests":
+    - command: shell.exec
+      type: "test"
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          MONGODB_URI="${MONGODB_URI}" OTEL_TRACE_DIR="${OTEL_TRACE_DIR}" JAVA_VERSION="${JAVA_VERSION}" \
+          .evergreen/run-otel-tracing-tests.sh
+
+  # Uploads the server's exported OTel trace files (DRIVERS-3605) when present. Must run after
+  # "upload-mo-artifacts" in the post block, which assumes the upload role this relies on.
+  "upload-otel-artifacts":
+    - command: shell.exec
+      params:
+        shell: "bash"
+        script: |
+          ${PREPARE_SHELL}
+          if [ -d "$DRIVERS_TOOLS/otel" ]; then
+            tar czf otel-traces.tar.gz -C $DRIVERS_TOOLS otel
+          fi
+    - command: s3.put
+      params:
+        optional: true
+        aws_key: ${AWS_ACCESS_KEY_ID}
+        aws_secret: ${AWS_SECRET_ACCESS_KEY}
+        aws_session_token: ${AWS_SESSION_TOKEN}
+        local_file: otel-traces.tar.gz
+        remote_file: ${UPLOAD_BUCKET}/${build_variant}/${revision}/${version_id}/${build_id}/otel/${task_id}-${execution}-otel-traces.tar.gz
+        bucket: mciuploads
+        permissions: public-read
+        content_type: "${content_type|application/x-gzip}"
+        display_name: "otel-traces.tar.gz"
+
   "stop-mongo-orchestration":
     - command: shell.exec
       params:
         shell: "bash"
         script: |
           ${PREPARE_SHELL}
-          bash ${DRIVERS_TOOLS}/.evergreen/stop-orchestration.sh || true
+          bash ${DRIVERS_TOOLS}/.evergreen/run-mongodb.sh stop || true
 
   "start-mongohoused":
     - command: shell.exec
@@ -243,6 +283,17 @@ functions:
         script: |
           ${PREPARE_SHELL}
           ${DRIVERS_TOOLS}/.evergreen/secrets_handling/setup-secrets.sh drivers/atlas_connect
+
+  "add-atlas-sfp-variables-to-file":
+    - command: shell.exec
+      type: "test"
+      params:
+        include_expansions_in_env: [ "AWS_ACCESS_KEY_ID", "AWS_SECRET_ACCESS_KEY", "AWS_SESSION_TOKEN" ]
+        shell: "bash"
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          ${DRIVERS_TOOLS}/.evergreen/secrets_handling/setup-secrets.sh drivers/sfp
 
   "add-atlas-qa-variables-to-file":
     - command: shell.exec
@@ -838,6 +889,7 @@ pre:
 post:
   - func: "stop-mongo-orchestration"
   - func: "upload-mo-artifacts"
+  - func: "upload-otel-artifacts"
   - func: "upload-test-results"
   - func: "assume-aws-test-secrets-role"
   - func: "stop-load-balancer"
@@ -913,6 +965,13 @@ tasks:
           VERSION: "6.0"
           TOPOLOGY: "server"
       - func: "run-reactive-streams-tck-tests"
+
+  - name: "otel-tracing-prose-test-task"
+    commands:
+      - func: "start-mongo-orchestration"
+        vars:
+          OTEL: "true"
+      - func: "run-otel-tracing-tests"
 
   - name: "load-balancer-test-task"
     commands:
@@ -1096,7 +1155,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1113,7 +1171,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1130,7 +1187,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1147,7 +1203,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1164,7 +1219,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1181,7 +1235,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1198,7 +1251,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1215,7 +1267,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1230,7 +1281,6 @@ tasks:
         vars:
           OCSP_ALGORITHM: "rsa"
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1247,7 +1297,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1264,7 +1313,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1278,7 +1326,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "rsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1295,7 +1342,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1312,7 +1358,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1329,7 +1374,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1346,7 +1390,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1360,7 +1403,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1377,7 +1419,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1394,7 +1435,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1411,7 +1451,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1428,7 +1467,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1445,7 +1483,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1462,7 +1499,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1476,7 +1512,6 @@ tasks:
       - func: "start-mongo-orchestration"
         vars:
           ORCHESTRATION_FILE: "ecdsa-basic-tls-ocsp-mustStaple-disableStapling-singleEndpoint.json"
-          VERSION: "latest"
           TOPOLOGY: "server"
       - func: "run-ocsp-test"
         vars:
@@ -1508,6 +1543,19 @@ tasks:
           script: |
             ${PREPARE_SHELL}
             .evergreen/run-atlas-connectivity-tests.sh
+
+  - name: "atlas-sfp-test-task"
+    commands:
+      - func: "assume-aws-test-secrets-role"
+      - func: "add-atlas-sfp-variables-to-file"
+      - command: shell.exec
+        type: "test"
+        params:
+          silent: true
+          working_dir: "src"
+          script: |
+            ${PREPARE_SHELL}
+            JAVA_VERSION="8" .evergreen/run-atlas-sfp-tests.sh
 
   - name: "atlas-search-index-management-task"
     commands:
@@ -2318,6 +2366,7 @@ buildvariants:
       - name: "atlas-search-task"
       - name: "atlas-connectivity-task"
       - name:  "atlas-x509-auth-test-task"
+      - name: "atlas-sfp-test-task"
 
   - name: "reactive-streams-tck-test"
     display_name: "Reactive Streams TCK tests"
@@ -2548,6 +2597,14 @@ buildvariants:
       - name: "aws-auth-test-with-aws-credentials-as-environment-variables-task"
       - name: "aws-auth-test-with-aws-credentials-and-session-token-as-environment-variables-task"
       - name: "aws-auth-test-with-web-identity-credentials-task"
+
+  - matrix_name: "otel-tracing"
+    # auth: exercises prose Test 7 (no server spans for auth/monitoring commands) as written.
+    matrix_spec: { auth: "auth", ssl: "nossl", jdk: "jdk21", version: [ "latest" ], topology: "standalone", os: "linux" }
+    display_name: "OTel Tracing ${version} ${topology} ${os}"
+    tags: [ "tests-variant" ]
+    tasks:
+      - name: "otel-tracing-prose-test-task"
 
   - matrix_name: "accept-api-version-2-test"
     matrix_spec: { ssl: "nossl", auth: "noauth", jdk: "jdk21", version: [ "5.0", "6.0", "7.0", "8.0", "9.0", "latest" ], topology: "standalone",

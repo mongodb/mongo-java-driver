@@ -176,6 +176,9 @@ public final class ClientSessionOptions {
         /**
          * Sets whether operations using the session should causally consistent with each other.
          *
+         * <p>Note that if write concern is {@link WriteConcern#UNACKNOWLEDGED}, the causally-consistent operations will <b>not</b> be
+         * causally-consistent.</p>
+         *
          * @param causallyConsistent whether operations using the session should be causally consistent
          * @return this
          * @mongodb.driver.dochub core/causal-consistency Causal Consistency

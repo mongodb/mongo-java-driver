@@ -19,16 +19,8 @@ package com.mongodb.client;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
-import com.mongodb.client.internal.Clusters;
-import com.mongodb.client.internal.MongoClientImpl;
-import com.mongodb.internal.connection.Cluster;
-import com.mongodb.internal.connection.StreamFactoryFactory;
-import com.mongodb.internal.thread.AsyncClientExecutor;
+import com.mongodb.client.internal.InternalMongoClients;
 import com.mongodb.lang.Nullable;
-
-import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.connection.ServerAddressHelper.getInetAddressResolver;
-import static com.mongodb.internal.connection.StreamFactoryHelper.getSyncStreamFactoryFactory;
 
 
 /**
@@ -111,24 +103,7 @@ public final class MongoClients {
      * @return the client
      */
     public static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
-        notNull("settings", settings);
-
-        MongoDriverInformation.Builder builder = mongoDriverInformation == null ? MongoDriverInformation.builder()
-                : MongoDriverInformation.builder(mongoDriverInformation);
-
-        MongoDriverInformation driverInfo = builder.driverName("sync").build();
-
-        StreamFactoryFactory syncStreamFactoryFactory = getSyncStreamFactoryFactory(
-                settings.getTransportSettings(),
-                getInetAddressResolver(settings));
-        AsyncClientExecutor clientExecutor = AsyncClientExecutor.NO_OP;
-        Cluster cluster = Clusters.createCluster(
-                settings,
-                driverInfo,
-                syncStreamFactoryFactory,
-                clientExecutor);
-
-        return new MongoClientImpl(cluster, driverInfo, settings, syncStreamFactoryFactory, clientExecutor);
+        return InternalMongoClients.create(settings, mongoDriverInformation);
     }
 
     private MongoClients() {

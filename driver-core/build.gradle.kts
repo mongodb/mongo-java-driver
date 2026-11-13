@@ -57,9 +57,15 @@ dependencies {
 
     optionalImplementation(platform(libs.micrometer.observation.bom))
     optionalImplementation(libs.micrometer.observation)
+    optionalImplementation(libs.micrometer.tracing)
 
     testImplementation(project(path = ":bson", configuration = "testArtifacts"))
     testImplementation(libs.reflections)
+
+    // Tracing testing
+    testImplementation(platform(libs.micrometer.tracing.integration.test.bom))
+    testImplementation(libs.micrometer.tracing.integration.test) { exclude(group = "org.junit.jupiter") }
+
     testImplementation(libs.netty.tcnative.boringssl.static)
     listOf("linux-x86_64", "linux-aarch_64", "osx-x86_64", "osx-aarch_64", "windows-x86_64").forEach { arch ->
         testImplementation("${libs.netty.tcnative.boringssl.static.get()}::$arch")
