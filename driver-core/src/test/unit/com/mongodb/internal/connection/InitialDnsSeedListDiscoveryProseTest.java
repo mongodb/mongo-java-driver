@@ -31,11 +31,13 @@ import com.mongodb.lang.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import static com.mongodb.ClusterFixture.CLIENT_METADATA;
 import static java.util.Collections.singletonList;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -109,19 +111,21 @@ class InitialDnsSeedListDiscoveryProseTest {
     }
 
     @DisplayName("6. Reject a host the default verification would accept")
+    @Test
     void testSrvValidatorRejectWhatDefaultAccepts() {
         doTest("blogs.mongodb.com",
                 "cluster.mongodb.com",
                 null,
                 h -> false,
                 null,
-                false);
+                true);
     }
 
     @DisplayName("7. The validator receives the normalized host name")
+    @Test
     void testValidatorReceivesNormalizedHostName() {
         doTest("blogs.mongodb.com",
-                "iCLUSTER.MONGODB.COM.",
+                "CLUSTER.MONGODB.COM.",
                 null,
                 "cluster.mongodb.com"::equals,
                 null,
@@ -129,6 +133,7 @@ class InitialDnsSeedListDiscoveryProseTest {
     }
 
     @DisplayName("8. Wrap an error raised by the validator")
+    @Test
     void testWrapErrorFromValidator() {
         doTest("blogs.mongodb.com",
                 "cluster.mongodb.com",
@@ -141,16 +146,19 @@ class InitialDnsSeedListDiscoveryProseTest {
     }
 
     @DisplayName("9. Throw when both `srvAllowedHostsSuffix` and `srvHostValidator` are configured")
+    @Test
     void testThrowWhenBothAreConfigured() {
-        doTest("blogs.mongodb.com",
-                "cluster.mongodb.com",
-                ".mongodb.com",
-                h -> true,
-                null,
-                true);
+        assertThrows(IllegalArgumentException.class, () ->
+                ClusterSettings.builder()
+                        .mode(ClusterConnectionMode.MULTIPLE)
+                        .requiredClusterType(ClusterType.SHARDED)
+                        .srvHost("blogs")
+                        .srvAllowedHostsSuffix(".mongodb.com")
+                        .srvHostValidator(h -> true));
     }
 
     @DisplayName("10. Accept a mixed case returned address with `srvAllowedHostsSuffix`")
+    @Test
     void testAcceptMixedCaseReturnAddress() {
         doTest("blogs.mongodb.com",
                 "CLUSTER.MONGODB.COM.",
@@ -163,6 +171,7 @@ class InitialDnsSeedListDiscoveryProseTest {
     // 11. Throw when srvHostValidator is not callable -- not possible in Java
 
     @DisplayName("12. Accept a reserved single label as srvAllowedHostsSuffix")
+    @Test
     void testSrvAllowedHostsSuffixSingleAllowed() {
         doTest("cluster.localhost",
                 "db.cluster.localhost",

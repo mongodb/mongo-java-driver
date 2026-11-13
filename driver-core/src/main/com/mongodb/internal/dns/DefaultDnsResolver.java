@@ -23,6 +23,7 @@ import com.mongodb.spi.dns.DnsClient;
 import com.mongodb.spi.dns.DnsClientProvider;
 import com.mongodb.spi.dns.DnsWithResponseCodeException;
 
+import java.net.IDN;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -80,7 +81,8 @@ public final class DefaultDnsResolver implements DnsResolver {
 
             for (String srvRecord : srvAttributeValues) {
                 String[] split = srvRecord.split(" ");
-                String resolvedHost = (split[3].endsWith(".") ? split[3].substring(0, split[3].length() - 1) : split[3]).toLowerCase(Locale.ROOT);
+                String resolvedHost =
+                        IDN.toASCII(split[3].endsWith(".") ? split[3].substring(0, split[3].length() - 1) : split[3], IDN.ALLOW_UNASSIGNED).toLowerCase(Locale.ROOT);
                 try {
                     if (!srvHostValidator.isValidHost(resolvedHost)) {
                         throw new MongoConfigurationException(
