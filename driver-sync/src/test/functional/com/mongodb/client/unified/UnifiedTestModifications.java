@@ -76,7 +76,6 @@ public final class UnifiedTestModifications {
                 .file("client-side-encryption/tests/unified", "client bulkWrite with queryable encryption");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-6257 libmongocrypt 1.21.0 removed support for the "
                         + "prefixPreview, suffixPreview and substringPreview query types")
-                .when(() -> serverVersionLessThan(9, 0))
                 .file("client-side-encryption/tests/unified", "QE-Text-prefixPreview")
                 .file("client-side-encryption/tests/unified", "QE-Text-suffixPreview")
                 .file("client-side-encryption/tests/unified", "QE-Text-substringPreview");
