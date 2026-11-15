@@ -19,12 +19,14 @@ package com.mongodb.internal.observability.micrometer;
 import com.mongodb.observability.ObservabilitySettings;
 import com.mongodb.observability.micrometer.MongodbObservation;
 import io.micrometer.observation.Observation;
+import io.micrometer.observation.ObservationHandler;
 import io.micrometer.observation.ObservationRegistry;
 import io.micrometer.observation.tck.TestObservationRegistry;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -60,7 +62,8 @@ class TransactionSpanScopeTest {
 
     @Test
     void finalizeOnAnotherThreadIsANoOpThereAndLeavesTheOpenerScopeCurrent() throws Exception {
-        ObservationRegistry registry = realObservationRegistry();
+        AtomicInteger stopCount = new AtomicInteger();
+        ObservationRegistry registry = realObservationRegistry(stopCount);
         TransactionSpan transactionSpan = new TransactionSpan(tracingManager(registry));
 
         transactionSpan.openScope();                        // thread A (this thread) opens the scope
@@ -81,8 +84,9 @@ class TransactionSpanScopeTest {
             threadB.shutdown();
         }
 
+        assertEquals(1, stopCount.get(), "finalizing on thread B must end the transaction span exactly once");
         assertSame(transactionObservation, registry.getCurrentObservation(),
-                "thread A's current observation is still the transaction span, even though it has ended");
+                "thread A's current observation is still the (ended) transaction span");
 
         // Test cleanup only, not a recommended pattern: this second call pops thread A's scope and stops the
         // already-stopped observation again.
@@ -92,7 +96,8 @@ class TransactionSpanScopeTest {
 
     @Test
     void handleTransactionSpanErrorOnAnotherThreadBehavesTheSame() throws Exception {
-        ObservationRegistry registry = realObservationRegistry();
+        AtomicInteger stopCount = new AtomicInteger();
+        ObservationRegistry registry = realObservationRegistry(stopCount);
         TransactionSpan transactionSpan = new TransactionSpan(tracingManager(registry));
 
         transactionSpan.openScope();                        // thread A (this thread) opens the scope
@@ -113,8 +118,9 @@ class TransactionSpanScopeTest {
             threadB.shutdown();
         }
 
+        assertEquals(1, stopCount.get(), "handling the error on thread B must end the transaction span exactly once");
         assertSame(transactionObservation, registry.getCurrentObservation(),
-                "thread A's current observation is still the transaction span, even though it has ended");
+                "thread A's current observation is still the (ended) transaction span");
 
         // Test cleanup only, not a recommended pattern: this second call pops thread A's scope and stops the
         // already-stopped observation again.
@@ -131,11 +137,22 @@ class TransactionSpanScopeTest {
     /**
      * A real (non-no-op) registry without the {@code TestObservationRegistry} validator. The validator rejects a
      * second {@code stop()} of the same observation, which the cleanup in the cross-thread tests deliberately
-     * performs; a real registry treats it as a no-op, as asserted here.
+     * performs; a real registry treats it as a no-op, as asserted here. The registered handler also counts
+     * {@code onStop} calls so the tests can assert that the span actually ended.
      */
-    private static ObservationRegistry realObservationRegistry() {
+    private static ObservationRegistry realObservationRegistry(final AtomicInteger stopCount) {
         ObservationRegistry registry = ObservationRegistry.create();
-        registry.observationConfig().observationHandler(context -> true);
+        registry.observationConfig().observationHandler(new ObservationHandler<Observation.Context>() {
+            @Override
+            public void onStop(final Observation.Context context) {
+                stopCount.incrementAndGet();
+            }
+
+            @Override
+            public boolean supportsContext(final Observation.Context context) {
+                return true;
+            }
+        });
         return registry;
     }
 }
