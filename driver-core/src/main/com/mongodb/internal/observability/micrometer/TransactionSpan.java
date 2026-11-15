@@ -22,7 +22,8 @@ import com.mongodb.lang.Nullable;
  * State class for transaction tracing.
  * <p>
  * The scope opened by {@link #openScope()} is bound to the thread that opened it and must be closed on that same
- * thread, via {@link #finalizeTransactionSpan}, {@link #handleTransactionSpanError} or {@link #spanFinalizing}.
+ * thread by {@link #finalizeTransactionSpan}, {@link #handleTransactionSpanError} or {@link #spanFinalizing}
+ * (for non-convenient transactions; convenient transactions close only via {@code spanFinalizing}).
  * Committing or aborting the transaction on a different thread makes the close a no-op there and leaves the
  * opening thread's current observation set to the transaction span after it has ended. A follow-up will revisit
  * the transaction scope lifetime.
@@ -124,7 +125,7 @@ public class TransactionSpan {
      * Must only be called from the sync driver where open and close happen on the same thread.
      * <p>
      * The scope is thread-bound: it must be closed on the same thread that opened it. Closing it from another
-     * thread is a no-op there and leaves this thread's current observation as the (ended) transaction span.
+     * thread is a no-op there and leaves the opening thread's current observation as the (ended) transaction span.
      * A follow-up will revisit the transaction scope lifetime.
      */
     public void openScope() {
