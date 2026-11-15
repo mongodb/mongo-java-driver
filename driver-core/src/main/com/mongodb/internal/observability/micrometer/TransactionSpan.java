@@ -21,12 +21,9 @@ import com.mongodb.lang.Nullable;
 /**
  * State class for transaction tracing.
  * <p>
- * The scope opened by {@link #openScope()} is bound to the thread that opened it and must be closed on that same
- * thread by {@link #finalizeTransactionSpan}, {@link #handleTransactionSpanError} or {@link #spanFinalizing}
- * (for non-convenient transactions; convenient transactions close only via {@code spanFinalizing}).
- * Committing or aborting the transaction on a different thread makes the close a no-op there and leaves the
- * opening thread's current observation set to the transaction span after it has ended. A follow-up will revisit
- * the transaction scope lifetime.
+ * The transaction span is never made the current observation. Operation spans run inside the transaction are
+ * parented on it explicitly through {@link #getContext()}. Because no scope is held, the span may be started,
+ * finalized and errored from any thread.
  *
  * @since 5.7
  */
@@ -61,7 +58,6 @@ public class TransactionSpan {
         }
 
         if (!isConvenientTransaction) {
-            span.closeScope();
             span.end();
         }
     }
@@ -75,7 +71,6 @@ public class TransactionSpan {
         span.event(status);
         // clear previous commit error if any
         if (!isConvenientTransaction) {
-            span.closeScope();
             span.end();
         }
         reportedError = null; // clear previous commit error if any
@@ -91,7 +86,6 @@ public class TransactionSpan {
         if (reportedError != null) {
             span.error(reportedError);
         }
-        span.closeScope();
         span.end();
         reportedError = null;
         // Don't clean up transaction context if we're still retrying (we want the retries to fold under the original transaction span)
@@ -118,17 +112,5 @@ public class TransactionSpan {
      */
     public TraceContext getContext() {
         return span.context();
-    }
-
-    /**
-     * Opens a scope for the transaction span, making it the current observation on the thread.
-     * Must only be called from the sync driver where open and close happen on the same thread.
-     * <p>
-     * The scope is thread-bound: it must be closed on the same thread that opened it. Closing it from another
-     * thread is a no-op there and leaves the opening thread's current observation as the (ended) transaction span.
-     * A follow-up will revisit the transaction scope lifetime.
-     */
-    public void openScope() {
-        span.openScope();
     }
 }
