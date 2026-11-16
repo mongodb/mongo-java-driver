@@ -16,7 +16,10 @@
 
 package com.mongodb.client;
 
+import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoCredential;
+import com.mongodb.MongoException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.internal.EnvironmentProvider;
@@ -29,6 +32,8 @@ import com.mongodb.observability.micrometer.MongodbObservation;
 import com.mongodb.observability.ObservabilitySettings;
 import com.mongodb.client.observability.SpanTree;
 import com.mongodb.client.observability.SpanTree.SpanNode;
+import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.connection.ClusterSettings;
 import com.mongodb.observability.micrometer.MicrometerObservabilitySettings;
 import io.micrometer.common.KeyValues;
 import io.micrometer.observation.Observation;
@@ -59,6 +64,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.mongodb.ClusterFixture.getConnectionString;
+import static com.mongodb.ClusterFixture.getCredential;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.getPrimary;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
@@ -447,14 +453,14 @@ public abstract class AbstractMicrometerProseTest {
     @DisplayName("Test 10: Command log messages carry their own command span")
     @Test
     void testCommandLogMessagesCarryTheirOwnCommandSpan() {
-        // the retry on error code 91 requires retryable reads, which need a replica set or a sharded cluster
+        // the fail point is scoped by appName, which requires MongoDB 4.4; on a sharded cluster the fixture URI names one mongos
         assumeTrue(serverVersionAtLeast(4, 4));
-        assumeTrue(isDiscoverableReplicaSet() || isSharded());
         String appName = "otel-log-test10";
         BsonDocument failPoint = BsonDocument.parse("{ configureFailPoint: 'failCommand', mode: { times: 1 },"
                 + " data: { failCommands: ['find'], errorCode: 91, appName: '" + appName + "' } }");
         // error code 91 marks the server Unknown; a short heartbeat lets the retry rediscover it quickly
         MongoClientSettings settings = MongoClientSettings.builder(tracedSettings(appName))
+                .retryReads(true)
                 .applyToServerSettings(b -> b.heartbeatFrequency(500, TimeUnit.MILLISECONDS))
                 .build();
         try (SpanRecordingInterceptor logs = new SpanRecordingInterceptor(appName, inMemoryOtel.getTracer());
@@ -491,19 +497,18 @@ public abstract class AbstractMicrometerProseTest {
         }
     }
 
-    @DisplayName("Test 11: Operation-path log messages carry the operation span")
+    @DisplayName("Test 11 (steps 1-3): Operation-path log messages carry the operation span")
     @Test
     void testOperationPathLogMessagesCarryTheOperationSpan() {
+        assumeFalse(isLoadBalanced());
         String operationName = "insert " + getDefaultDatabaseName() + ".test";
         String appName = "otel-log-test11";
-        String succeedingTraceId;
         try (SpanRecordingInterceptor logs = new SpanRecordingInterceptor(appName, inMemoryOtel.getTracer());
              MongoClient client = createMongoClient(tracedSettings(appName))) {
             client.getDatabase(getDefaultDatabaseName()).getCollection("test").insertOne(new Document("x", 1));
             assertNoSpanIsCurrent();
 
             FinishedSpan operation = spanNamed(inMemoryOtel.getFinishedSpans(), operationName, 0);
-            succeedingTraceId = operation.getTraceId();
             for (String messageId : asList("Server selection started", "Server selection succeeded",
                     "Connection checkout started", "Connection checked out", "Connection checked in")) {
                 List<ObservedLog> observed = logs.messages(messageId).stream()
@@ -514,28 +519,31 @@ public abstract class AbstractMicrometerProseTest {
                 }
             }
         }
+    }
 
-        // a fixed localhost host list is incompatible with an SRV fixture, and a load-balanced fixture would not time out
+    @DisplayName("Test 11 (steps 4-6): Server selection failure log messages carry the operation span")
+    @Test
+    void testServerSelectionFailureLogMessagesCarryTheOperationSpan() {
+        // a load-balanced fixture would not time out; the SRV assumption keeps the fixture's resolver settings out of the way
         assumeFalse(getConnectionString().isSrvProtocol());
         assumeFalse(isLoadBalanced());
-
-        String failingAppName = "otel-log-test11-failing";
-        MongoClientSettings failing = MongoClientSettings.builder(tracedSettings(failingAppName))
-                .applyToClusterSettings(b -> b.hosts(singletonList(new ServerAddress("localhost", 1)))
-                        .serverSelectionTimeout(500, TimeUnit.MILLISECONDS))
+        String operationName = "insert " + getDefaultDatabaseName() + ".test";
+        String appName = "otel-log-test11-failing";
+        // replace the fixture's cluster settings entirely so that the host list does not depend on the fixture URI's shape
+        MongoClientSettings failing = MongoClientSettings.builder(tracedSettings(appName))
+                .applyToClusterSettings(b -> b.applySettings(ClusterSettings.builder()
+                        .hosts(singletonList(new ServerAddress("localhost", 1)))
+                        .mode(ClusterConnectionMode.SINGLE)
+                        .serverSelectionTimeout(500, TimeUnit.MILLISECONDS)
+                        .build()))
                 .build();
-        try (SpanRecordingInterceptor logs = new SpanRecordingInterceptor(failingAppName, inMemoryOtel.getTracer());
+        try (SpanRecordingInterceptor logs = new SpanRecordingInterceptor(appName, inMemoryOtel.getTracer());
              MongoClient client = createMongoClient(failing)) {
             assertThrows(MongoTimeoutException.class,
                     () -> client.getDatabase(getDefaultDatabaseName()).getCollection("test").insertOne(new Document("x", 1)));
             assertNoSpanIsCurrent();
 
-            // the failing operation is the only one outside the trace of the succeeding operation above
-            List<FinishedSpan> failingOperations = inMemoryOtel.getFinishedSpans().stream()
-                    .filter(s -> s.getName().equals(operationName) && !s.getTraceId().equals(succeedingTraceId))
-                    .collect(Collectors.toList());
-            assertEquals(1, failingOperations.size(), "expected one failing operation span but got " + failingOperations);
-            FinishedSpan operation = failingOperations.get(0);
+            FinishedSpan operation = onlySpanNamed(inMemoryOtel.getFinishedSpans(), operationName);
             for (String messageId : asList("Waiting for suitable server to become available", "Server selection failed")) {
                 List<ObservedLog> observed = logs.messages(messageId);
                 assertFalse(observed.isEmpty(), messageId + " must be emitted");
@@ -547,7 +555,44 @@ public abstract class AbstractMicrometerProseTest {
         }
     }
 
-    @DisplayName("Test 12: Command log messages inside a transaction carry the command span and the transaction's trace")
+    @DisplayName("Test 11 (steps 7-10): Connection checkout failure log messages carry the operation span")
+    @Test
+    void testConnectionCheckoutFailureLogMessagesCarryTheOperationSpan() {
+        assumeFalse(isLoadBalanced());
+        // only SCRAM sends saslContinue as a standalone command; a null mechanism negotiates SCRAM
+        MongoCredential credential = getCredential();
+        assumeTrue(credential != null);
+        assumeTrue(credential.getAuthenticationMechanism() == null
+                || credential.getAuthenticationMechanism() == AuthenticationMechanism.SCRAM_SHA_1
+                || credential.getAuthenticationMechanism() == AuthenticationMechanism.SCRAM_SHA_256);
+        // the fail point is scoped by appName, which requires MongoDB 4.4
+        assumeTrue(serverVersionAtLeast(4, 4));
+        String appName = "otel-log-test11-checkout-failing";
+        BsonDocument failPoint = BsonDocument.parse("{ configureFailPoint: 'failCommand', mode: { times: 1 },"
+                + " data: { failCommands: ['saslContinue'], closeConnection: true, appName: '" + appName + "' } }");
+        MongoClientSettings settings = MongoClientSettings.builder(tracedSettings(appName))
+                .retryReads(false)
+                .applyToServerSettings(b -> b.heartbeatFrequency(10, TimeUnit.SECONDS))
+                .build();
+        try (FailPoint ignored = FailPoint.enable(failPoint, getPrimary());
+             SpanRecordingInterceptor logs = new SpanRecordingInterceptor(appName, inMemoryOtel.getTracer());
+             MongoClient client = createMongoClient(settings)) {
+            assertThrows(MongoException.class, () -> client.getDatabase(getDefaultDatabaseName()).getCollection("test").find().first());
+            assertNoSpanIsCurrent();
+
+            FinishedSpan operation = onlySpanNamed(inMemoryOtel.getFinishedSpans(), "find " + getDefaultDatabaseName() + ".test");
+            for (String messageId : asList("Connection checkout started", "Connection checkout failed")) {
+                List<ObservedLog> observed = logs.messages(messageId);
+                assertFalse(observed.isEmpty(), messageId + " must be emitted");
+                for (ObservedLog l : observed) {
+                    assertEquals(operation.getTraceId(), l.traceId, messageId + " must carry the operation's trace");
+                    assertEquals(operation.getSpanId(), l.spanId, messageId + " must carry the operation span");
+                }
+            }
+        }
+    }
+
+    @DisplayName("Test 12: Log messages inside a transaction")
     @Test
     void testLogMessagesInsideTransaction() {
         assumeTrue(isDiscoverableReplicaSet() || isSharded());
@@ -556,15 +601,15 @@ public abstract class AbstractMicrometerProseTest {
              MongoClient client = createMongoClient(tracedSettings(appName));
              ClientSession session = client.startSession()) {
             MongoCollection<Document> collection = client.getDatabase(getDefaultDatabaseName()).getCollection("test");
-            // explicit start/commit rather than withTransaction, which the reactive sync adapter does not support
-            session.startTransaction();
-            collection.insertOne(session, new Document("x", 1));
-            session.commitTransaction();
+            runInTransaction(session, () -> collection.insertOne(session, new Document("x", 1)));
             assertNoSpanIsCurrent();
 
             List<FinishedSpan> spans = inMemoryOtel.getFinishedSpans();
             FinishedSpan transaction = spanNamed(spans, "transaction", 0);
+            FinishedSpan insertOperation = spanNamed(spans, "insert " + getDefaultDatabaseName() + ".test", 0);
+            assertEquals(transaction.getSpanId(), insertOperation.getParentId(), "the insert operation must run under the transaction");
             FinishedSpan insertCommand = spanNamed(spans, "insert", 0);
+            assertEquals(insertOperation.getSpanId(), insertCommand.getParentId(), "the insert command must run under its operation");
             FinishedSpan commitCommand = spanNamed(spans, "commitTransaction", 0);
             for (FinishedSpan command : asList(insertCommand, commitCommand)) {
                 assertEquals(transaction.getTraceId(), command.getTraceId(), command.getName() + " must be in the transaction's trace");
@@ -588,14 +633,43 @@ public abstract class AbstractMicrometerProseTest {
                     assertTrue(commandSpanIds.contains(l.spanId), l.messageId + " must carry a command span of the transaction");
                 }
             }
+
+            // server selection and connection checkout precede any command span, so they belong to the operation span; every
+            // operation of the transaction (the insert and the commit) is a child of the transaction span
+            Set<String> operationSpanIds = spans.stream()
+                    .filter(s -> transaction.getSpanId().equals(s.getParentId()))
+                    .map(FinishedSpan::getSpanId).collect(Collectors.toSet());
+            for (String messageId : asList("Server selection started", "Server selection succeeded",
+                    "Connection checkout started", "Connection checked out", "Connection checked in")) {
+                List<ObservedLog> observed = logs.messages(messageId).stream()
+                        .filter(l -> transaction.getTraceId().equals(l.traceId)).collect(Collectors.toList());
+                assertTrue(observed.stream().anyMatch(l -> insertOperation.getSpanId().equals(l.spanId)),
+                        messageId + " must be emitted for the insert carrying the insert operation span, but got " + spanIds(observed));
+                for (ObservedLog l : observed) {
+                    assertNotEquals(transaction.getSpanId(), l.spanId, messageId + " must not carry the transaction span");
+                    assertTrue(operationSpanIds.contains(l.spanId), messageId + " must carry an operation span of the transaction");
+                }
+            }
         }
     }
 
-    // Test 14 (trace context fields in structured log messages) does not apply to Java: the driver logs through SLF4J and
-    // adds no trace fields of its own.
+    /**
+     * Runs {@code body} in a transaction on {@code session}, as the spec's {@code withTransaction} step requires.
+     */
+    protected void runInTransaction(final ClientSession session, final Runnable body) {
+        session.withTransaction(() -> {
+            body.run();
+            return null;
+        });
+    }
+
+    // Tests 14 and 15 apply only to driver-managed log output and are not applicable to Java: the driver logs through SLF4J and
+    // has no driver-managed log destinations. The reactive subclass runs Tests 10 to 13 as the asynchronous API.
     @DisplayName("Test 13: Background log messages are not attributed to an operation")
     @Test
     void testBackgroundLogMessagesAreNotAttributedToAnOperation() throws InterruptedException {
+        // load-balanced clients start no monitoring connection, so they emit no heartbeat messages
+        assumeFalse(isLoadBalanced());
         String appName = "otel-log-test13";
         MongoClientSettings settings = MongoClientSettings.builder(tracedSettings(appName))
                 .applyToServerSettings(b -> b.heartbeatFrequency(100, TimeUnit.MILLISECONDS))
@@ -603,22 +677,35 @@ public abstract class AbstractMicrometerProseTest {
         try (SpanRecordingInterceptor logs = new SpanRecordingInterceptor(appName, inMemoryOtel.getTracer());
              MongoClient client = createMongoClient(settings)) {
             client.getDatabase(getDefaultDatabaseName()).getCollection("test").insertOne(new Document("x", 1));
+            assertNoSpanIsCurrent();
             int topologyMessagesBefore = logs.component(LogMessage.Component.TOPOLOGY).size();
-            long deadline = System.currentTimeMillis() + 5_000;
-            while (logs.component(LogMessage.Component.TOPOLOGY).size() == topologyMessagesBefore
-                    && System.currentTimeMillis() < deadline) {
+
+            // a fixed delay is not sufficient: without a heartbeat message after the operation there is nothing to check
+            long deadline = System.currentTimeMillis() + 10_000;
+            while (!heartbeatSucceededSince(logs, topologyMessagesBefore) && System.currentTimeMillis() < deadline) {
                 Thread.sleep(50);
             }
-            Set<String> operationTraceIds = inMemoryOtel.getFinishedSpans().stream()
-                    .map(FinishedSpan::getTraceId).collect(Collectors.toSet());
-            assertFalse(operationTraceIds.isEmpty(), "the operation must have produced spans");
-            List<ObservedLog> background = logs.component(LogMessage.Component.TOPOLOGY);
-            assertTrue(background.size() > topologyMessagesBefore, "a heartbeat message must have been logged after the operation");
-            for (ObservedLog l : background) {
-                assertFalse(l.traceId != null && operationTraceIds.contains(l.traceId),
-                        l.messageId + " must not carry the trace of a driver operation");
+            assertTrue(heartbeatSucceededSince(logs, topologyMessagesBefore),
+                    "a \"Server heartbeat succeeded\" message must have been logged after the operation");
+
+            FinishedSpan operation = spanNamed(inMemoryOtel.getFinishedSpans(), "insert " + getDefaultDatabaseName() + ".test", 0);
+            String operationTraceId = operation.getTraceId();
+            Set<String> operationSpanIds = inMemoryOtel.getFinishedSpans().stream()
+                    .filter(s -> operationTraceId.equals(s.getTraceId()))
+                    .map(FinishedSpan::getSpanId).collect(Collectors.toSet());
+            List<ObservedLog> topology = logs.component(LogMessage.Component.TOPOLOGY);
+            for (ObservedLog l : topology.subList(topologyMessagesBefore, topology.size())) {
+                assertNotEquals(operationTraceId, l.traceId, l.messageId + " must not carry the operation's trace");
+                assertFalse(l.spanId != null && operationSpanIds.contains(l.spanId),
+                        l.messageId + " must not carry a span of the operation");
             }
         }
+    }
+
+    private static boolean heartbeatSucceededSince(final SpanRecordingInterceptor logs, final int topologyMessagesBefore) {
+        List<ObservedLog> topology = logs.component(LogMessage.Component.TOPOLOGY);
+        return topology.subList(topologyMessagesBefore, topology.size()).stream()
+                .anyMatch(l -> l.messageId.equals("Server heartbeat succeeded"));
     }
 
     private MongoClientSettings tracedSettings(final String applicationName) {
@@ -641,6 +728,16 @@ public abstract class AbstractMicrometerProseTest {
         List<FinishedSpan> matching = spans.stream().filter(s -> s.getName().equals(name)).collect(Collectors.toList());
         assertTrue(matching.size() > index, "expected at least " + (index + 1) + " spans named " + name + " but got " + matching);
         return matching.get(index);
+    }
+
+    private static FinishedSpan onlySpanNamed(final List<FinishedSpan> spans, final String name) {
+        List<FinishedSpan> matching = spans.stream().filter(s -> s.getName().equals(name)).collect(Collectors.toList());
+        assertEquals(1, matching.size(), "expected exactly one span named " + name + " but got " + matching);
+        return matching.get(0);
+    }
+
+    private static List<String> spanIds(final List<ObservedLog> logs) {
+        return logs.stream().map(l -> l.spanId).collect(Collectors.toList());
     }
 
     /** Trace id and span id that were current on the thread when a log message was emitted. */
