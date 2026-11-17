@@ -461,4 +461,8 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             retVal.add(new ServerAddress(host));
         }
     }
+
+    public boolean hasServerAddress(final ServerAddress address) {
+        return addressToServerTupleMap.containsKey(address);
+    }
 }

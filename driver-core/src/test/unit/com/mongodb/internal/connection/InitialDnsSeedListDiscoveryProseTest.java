@@ -24,17 +24,20 @@ import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerSettings;
+import com.mongodb.connection.SrvHostValidator;
 import com.mongodb.internal.dns.DefaultDnsResolver;
 import com.mongodb.internal.dns.DnsResolver;
 import com.mongodb.lang.Nullable;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
 import static com.mongodb.ClusterFixture.CLIENT_METADATA;
 import static java.util.Collections.singletonList;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -97,28 +100,93 @@ class InitialDnsSeedListDiscoveryProseTest {
         doTest(srvHost, resolvedHost, true);
     }
 
-    @ParameterizedTest(name = "mongodb+srv://{0} (suffix {2}) => {1}, throws={3}")
+    @ParameterizedTest
     @CsvSource({
-            // resolved host shares the configured suffix -> valid
-            "test12.test.build.10gen.cc, localhost.build.10gen.cc, .build.10gen.cc, false",
-            // suffix without leading dot is normalized before validation -> valid
-            "test12.test.build.10gen.cc, localhost.build.10gen.cc, build.10gen.cc, false",
-            // resolved host does not end with the configured suffix -> invalid
-            "test12.test.build.10gen.cc, localhost.build.10gen.cc, test.build.10gen.cc, true",
-            // partial-label match must fail because '.' is prepended ('uild.10gen.cc' -> '.uild.10gen.cc')
-            "test12.test.build.10gen.cc, localhost.build.10gen.cc, uild.10gen.cc, true"
+            "blogs.mongodb.com, blogs.evil.com",
+            "mongo.local, mongo.local"
     })
-    @DisplayName("5. srvAllowedHostsSuffix overrides the inferred domain for validation")
-    void testSrvAllowedHostsSuffixValidation(final String srvHost, final String resolvedHost,
-            final String srvAllowedHostsSuffix, final boolean throwException) {
-        doTest(srvHost, resolvedHost, srvAllowedHostsSuffix, throwException);
+    @DisplayName("5. srvHostValidator accepts a host the default verification would reject")
+    void testSrvHostValidAcceptsWhatDefaultReject(final String srvHost, final String resolvedHost) {
+        doTest(srvHost, resolvedHost, null, h -> true, new ServerAddress(resolvedHost), false);
+    }
+
+    @DisplayName("6. Reject a host the default verification would accept")
+    @Test
+    void testSrvValidatorRejectWhatDefaultAccepts() {
+        doTest("blogs.mongodb.com",
+                "cluster.mongodb.com",
+                null,
+                h -> false,
+                null,
+                true);
+    }
+
+    @DisplayName("7. The validator receives the normalized host name")
+    @Test
+    void testValidatorReceivesNormalizedHostName() {
+        doTest("blogs.mongodb.com",
+                "CLUSTER.MONGODB.COM.",
+                null,
+                "cluster.mongodb.com"::equals,
+                null,
+                false);
+    }
+
+    @DisplayName("8. Wrap an error raised by the validator")
+    @Test
+    void testWrapErrorFromValidator() {
+        doTest("blogs.mongodb.com",
+                "cluster.mongodb.com",
+                null,
+                h -> {
+                    throw new UnsupportedOperationException();
+                },
+                null,
+                true);
+    }
+
+    @DisplayName("9. Throw when both `srvAllowedHostsSuffix` and `srvHostValidator` are configured")
+    @Test
+    void testThrowWhenBothAreConfigured() {
+        assertThrows(IllegalArgumentException.class, () ->
+                ClusterSettings.builder()
+                        .mode(ClusterConnectionMode.MULTIPLE)
+                        .requiredClusterType(ClusterType.SHARDED)
+                        .srvHost("blogs")
+                        .srvAllowedHostsSuffix(".mongodb.com")
+                        .srvHostValidator(h -> true));
+    }
+
+    @DisplayName("10. Accept a mixed case returned address with `srvAllowedHostsSuffix`")
+    @Test
+    void testAcceptMixedCaseReturnAddress() {
+        doTest("blogs.mongodb.com",
+                "CLUSTER.MONGODB.COM.",
+                ".mongodb.com",
+                null,
+                new ServerAddress("cluster.mongodb.com"),
+                false);
+    }
+
+    // 11. Throw when srvHostValidator is not callable -- not possible in Java
+
+    @DisplayName("12. Accept a reserved single label as srvAllowedHostsSuffix")
+    @Test
+    void testSrvAllowedHostsSuffixSingleAllowed() {
+        doTest("cluster.localhost",
+                "db.cluster.localhost",
+                "localhost",
+                null,
+                new ServerAddress("db.cluster.localhost"),
+                false);
     }
 
     private void doTest(final String srvHost, final String resolvedHost, final boolean throwException) {
-        doTest(srvHost, resolvedHost, null, throwException);
+        doTest(srvHost, resolvedHost, null, null, null, throwException);
     }
 
     private void doTest(final String srvHost, final String resolvedHost, @Nullable final String srvAllowedHostsSuffix,
+            @Nullable final SrvHostValidator validator, @Nullable final ServerAddress requiredAddress,
             final boolean throwException) {
         final ClusterId clusterId = new ClusterId();
 
@@ -139,6 +207,9 @@ class InitialDnsSeedListDiscoveryProseTest {
         if (srvAllowedHostsSuffix != null) {
             settingsBuilder.srvAllowedHostsSuffix(srvAllowedHostsSuffix);
         }
+        if (validator != null) {
+            settingsBuilder.srvHostValidator(validator);
+        }
 
         final ClusterableServerFactory serverFactory = mock(ClusterableServerFactory.class);
         when(serverFactory.getSettings()).thenReturn(ServerSettings.builder().build());
@@ -156,6 +227,9 @@ class InitialDnsSeedListDiscoveryProseTest {
             Assertions.assertNotNull(mongoException);
         } else {
             Assertions.assertNull(mongoException);
+        }
+        if (requiredAddress != null) {
+            Assertions.assertTrue(cluster.hasServerAddress(requiredAddress));
         }
     }
 }

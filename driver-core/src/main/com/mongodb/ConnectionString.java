@@ -29,6 +29,7 @@ import com.mongodb.event.ConnectionCheckedInEvent;
 import com.mongodb.event.ConnectionCheckedOutEvent;
 import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionReadyEvent;
+import com.mongodb.internal.connection.DnsSuffixValidator;
 import com.mongodb.internal.connection.ServerMonitoringModeUtil;
 import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
@@ -54,7 +55,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.mongodb.MongoCredential.ALLOWED_HOSTS_KEY;
-import static com.mongodb.internal.connection.DomainNameUtils.normalizeSrvAllowedHostsSuffix;
 import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateCreateOidcCredential;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -501,10 +501,6 @@ public class ConnectionString {
             throw new IllegalArgumentException("srvAllowedHostsSuffix can only be specified with mongodb+srv protocol");
         }
 
-        if (srvAllowedHostsSuffix != null) {
-            srvAllowedHostsSuffix = normalizeSrvAllowedHostsSuffix(srvAllowedHostsSuffix);
-        }
-
         if (directConnection != null && directConnection) {
             if (isSrvProtocol) {
                 throw new IllegalArgumentException("Direct connections are not supported when using mongodb+srv protocol");
@@ -763,7 +759,7 @@ public class ConnectionString {
                     srvServiceName = value;
                     break;
                 case "srvallowedhostssuffix":
-                    srvAllowedHostsSuffix = value;
+                    srvAllowedHostsSuffix = new DnsSuffixValidator(value).getSuffix();
                     break;
                 default:
                     break;
