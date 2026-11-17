@@ -798,7 +798,8 @@ public final class ClientBulkWriteOperation implements WriteOperation<ClientBulk
                                     || (orderedSetting && individualOperationIndexInBatch > 0);
                             WriteError individualOperationWriteError = new WriteError(
                                     individualOperationResponse.getInt32("code").getValue(),
-                                    individualOperationResponse.getString("errmsg").getValue(),
+                                    individualOperationResponse.isString("errmsg")
+                                            ? individualOperationResponse.getString("errmsg").getValue() : "",
                                     individualOperationResponse.getDocument("errInfo", new BsonDocument()));
                             writeErrors.put(writeModelIndex, individualOperationWriteError);
                         }
