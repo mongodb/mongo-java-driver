@@ -82,4 +82,11 @@ package object connection {
    * @since 5.2
    */
   type AsyncTransportSettings = com.mongodb.connection.AsyncTransportSettings
+
+  /**
+   * Callback for custom SRV host validation
+   *
+   * @since 5.15
+   */
+  type SrvHostValidator = com.mongodb.connection.SrvHostValidator
 }
