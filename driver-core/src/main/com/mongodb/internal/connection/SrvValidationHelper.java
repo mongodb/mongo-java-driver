@@ -17,23 +17,33 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.SrvHostValidator;
+import com.mongodb.lang.Nullable;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
-public class SrvValidationHelper {
+public final class SrvValidationHelper {
     static SrvHostValidator getEffectiveSrvHostValidator(final ClusterSettings settings) {
-        if (settings.getSrvHostValidator() != null) {
-            return settings.getSrvHostValidator();
-        } else if (settings.getSrvAllowedHostsSuffix() != null) {
-            return new DnsSuffixValidator(settings.getSrvAllowedHostsSuffix());
-        } else if (settings.getSrvHost() != null) {
-            int firstDot = settings.getSrvHost().indexOf('.');
-            boolean hasThreeParts = firstDot >= 0 && settings.getSrvHost().indexOf('.', firstDot + 1) >= 0;
-            return new DnsSuffixValidator(hasThreeParts ? settings.getSrvHost().substring(firstDot) : settings.getSrvHost());
+        return getEffectiveSrvHostValidator(settings.getSrvHostValidator(), settings.getSrvAllowedHostsSuffix(), settings.getSrvHost());
+    }
+    static SrvHostValidator getEffectiveSrvHostValidator(
+            @Nullable final SrvHostValidator srvHostValidator,
+            @Nullable final String srvAllowedHostsSuffix,
+            @Nullable final String srvHost) {
+        if (srvHostValidator != null) {
+            return srvHostValidator;
+        } else if (srvAllowedHostsSuffix != null) {
+            return new DnsSuffixValidator(srvAllowedHostsSuffix);
+        } else if (srvHost != null) {
+            int firstDot = srvHost.indexOf('.');
+            boolean hasThreeParts = firstDot >= 0 && srvHost.indexOf('.', firstDot + 1) >= 0;
+            return new DnsSuffixValidator(hasThreeParts ? srvHost.substring(firstDot) : srvHost);
         } else {
             // This should be unreachable
             return h -> false;
         }
+    }
+
+    private SrvValidationHelper() {
     }
 }
