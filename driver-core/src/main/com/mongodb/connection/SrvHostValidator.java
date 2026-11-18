@@ -21,6 +21,8 @@ package com.mongodb.connection;
  * <p>The purpose of this interface is to allow custom validation logic for SRV records.</p>
  *
  * <p><b>WARNING:</b> Modifying the default SRV domain name validation can create vulnerabilities.</p>
+ *
+ * @since 5.15
  */
 public interface SrvHostValidator {
 

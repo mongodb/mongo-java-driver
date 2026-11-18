@@ -82,4 +82,15 @@ package object connection {
    * @since 5.2
    */
   type AsyncTransportSettings = com.mongodb.connection.AsyncTransportSettings
+
+  /**
+   * Checks that a host name in a discovered SRV record is allowed.
+   *
+   * <p>The purpose of this interface is to allow custom validation logic for SRV records.</p>
+   *
+   * <p><b>WARNING:</b> Modifying the default SRV domain name validation can create vulnerabilities.</p>
+   *
+   * @since 5.15
+   */
+  type SrvHostValidator = com.mongodb.connection.SrvHostValidator
 }
