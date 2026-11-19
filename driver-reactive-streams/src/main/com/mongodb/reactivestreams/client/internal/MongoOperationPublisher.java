@@ -442,7 +442,7 @@ public final class MongoOperationPublisher<T> {
             @Nullable final ClientSession clientSession, final List<IndexModel> indexes,
             final CreateIndexOptions options) {
         return createWriteOperationMono(
-                operations::getTimeoutSettings,
+                () -> operations.createTimeoutSettings(options),
                 () -> operations.createIndexes(notNull("indexes", indexes), notNull("options", options)), clientSession)
                 .thenMany(Flux.fromIterable(IndexHelper.getIndexNames(indexes, getCodecRegistry())));
     }
@@ -477,14 +477,14 @@ public final class MongoOperationPublisher<T> {
 
     Publisher<Void> dropIndex(@Nullable final ClientSession clientSession, final String indexName, final DropIndexOptions options) {
         return createWriteOperationMono(
-                operations::getTimeoutSettings,
+                () -> operations.createTimeoutSettings(options),
                 () -> operations.dropIndex(notNull("indexName", indexName), notNull("options", options)),
                                         clientSession);
     }
 
     Publisher<Void> dropIndex(@Nullable final ClientSession clientSession, final Bson keys, final DropIndexOptions options) {
         return createWriteOperationMono(
-                operations::getTimeoutSettings,
+                () -> operations.createTimeoutSettings(options),
                 () -> operations.dropIndex(notNull("keys", keys), notNull("options", options)),
                                         clientSession);
     }
