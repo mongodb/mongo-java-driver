@@ -201,7 +201,6 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
 
         if (tracingManager.isEnabled()) {
             transactionSpan = new TransactionSpan(tracingManager);
-            transactionSpan.openScope();
         }
         clearTransactionContext();
         setTimeoutContext(timeoutContext);

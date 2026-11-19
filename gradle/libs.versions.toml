@@ -99,6 +99,7 @@ snappy-java = { module = "org.xerial.snappy:snappy-java", version.ref = "snappy"
 zstd-jni = { module = "com.github.luben:zstd-jni", version.ref = "zstd" }
 micrometer-observation-bom = { module = "io.micrometer:micrometer-bom", version.ref = "micrometer-observation-bom" }
 micrometer-observation = { module = "io.micrometer:micrometer-observation" }
+micrometer-observation-test = { module = "io.micrometer:micrometer-observation-test" }
 
 graal-sdk = { module = "org.graalvm.sdk:graal-sdk", version.ref = "graal-sdk" }
 graal-sdk-nativeimage = { module = "org.graalvm.sdk:nativeimage", version.ref = "graal-sdk" }

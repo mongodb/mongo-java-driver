@@ -452,6 +452,9 @@ public class InternalStreamConnection implements InternalConnection {
             final OperationContext operationContext) {
         CommandEventSender commandEventSender = new NoOpCommandEventSender();
         Span tracingSpan = null;
+        // Single owner of the span and event sender until the message is handed off to the receive phase:
+        // any failure from span creation through sendCommandMessage ends the span exactly once and emits at
+        // most one failed event; closing a span scope that was never opened is a no-op.
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
             tracingSpan = operationContext
                     .getTracingManager()
@@ -471,6 +474,13 @@ public class InternalStreamConnection implements InternalConnection {
             if (isLoggingCommandNeeded || isTracingCommandPayloadNeeded) {
                 commandDocument = message.getCommandDocument(bsonOutput);
             }
+            if (isTracingCommandPayloadNeeded) {
+                tracingSpan.setQueryText(commandDocument);
+            }
+            // Open the scope before the started event so command listeners and logs observe the command span.
+            if (tracingSpan != null) {
+                tracingSpan.openScope();
+            }
             if (isLoggingCommandNeeded) {
                 commandEventSender = new LoggingCommandEventSender(
                         SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description, commandListener,
@@ -478,20 +488,18 @@ public class InternalStreamConnection implements InternalConnection {
                         COMMAND_PROTOCOL_LOGGER, loggerSettings);
                 commandEventSender.sendStartedEvent();
             }
-            if (isTracingCommandPayloadNeeded) {
-                tracingSpan.setQueryText(commandDocument);
-            }
-            if (tracingSpan != null) {
-                tracingSpan.openScope();
-            }
             sendCommandMessage(message, bsonOutput, operationContext);
         } catch (Throwable t) {
-            if (tracingSpan != null) {
-                tracingSpan.error(t);
-                tracingSpan.closeScope();
-                tracingSpan.end();
+            // Emit the failed event while the span scope is still open so the log/listener see the command span.
+            try {
+                commandEventSender.sendFailedEvent(t);
+            } finally {
+                if (tracingSpan != null) {
+                    tracingSpan.error(t);
+                    tracingSpan.closeScope();
+                    tracingSpan.end();
+                }
             }
-            commandEventSender.sendFailedEvent(t);
             throw t;
         }
 
@@ -731,6 +739,10 @@ public class InternalStreamConnection implements InternalConnection {
             }
             if (isTracingCommandPayloadNeeded) {
                 tracingSpan.setQueryText(commandDocument);
+            }
+            if (tracingSpan != null && isLoggingCommandNeeded) {
+                // The async path never holds a scope across callbacks; emit each event inside a short-lived one.
+                commandEventSender = new TracingScopedCommandEventSender(commandEventSender, tracingSpan);
             }
 
             final Span commandSpan = tracingSpan;
