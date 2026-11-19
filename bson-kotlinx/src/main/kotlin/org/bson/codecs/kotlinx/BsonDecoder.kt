@@ -72,7 +72,6 @@ internal sealed class AbstractBsonDecoder(
     companion object {
 
         val bsonValueCodec = BsonValueCodec()
-        const val UNKNOWN_INDEX = -10
         val validKeyKinds = setOf(PrimitiveKind.STRING, PrimitiveKind.CHAR, SerialKind.ENUM)
 
         fun validateCurrentBsonType(
@@ -91,43 +90,48 @@ internal sealed class AbstractBsonDecoder(
         }
     }
 
-    private data class ElementMetadata(val name: String, val nullable: Boolean, var processed: Boolean = false)
-    private var elementsMetadata: Array<ElementMetadata>? = null
-    private var currentIndex: Int = UNKNOWN_INDEX
+    private var processedElements: BooleanArray? = null
 
-    private fun initElementMetadata(descriptor: SerialDescriptor) {
-        if (this.elementsMetadata != null) return
-        val elementsMetadata =
-            Array(descriptor.elementsCount) {
-                val elementDescriptor = descriptor.getElementDescriptor(it)
-                ElementMetadata(
-                    elementDescriptor.serialName, elementDescriptor.isNullable && !descriptor.isElementOptional(it))
+    private fun initElementMetadata(descriptor: SerialDescriptor): BooleanArray {
+        val elements = BooleanArray(descriptor.elementsCount)
+        processedElements = elements
+        if (configuration.bsonNamingStrategy == BsonNamingStrategy.SNAKE_CASE) {
+            cacheElementNamesByDescriptor(descriptor, configuration)
+        }
+        return elements
+    }
+
+    private fun firstMissingNullableElement(descriptor: SerialDescriptor, processedElements: BooleanArray): Int {
+        for (index in processedElements.indices) {
+            if (!processedElements[index] &&
+                !descriptor.isElementOptional(index) &&
+                descriptor.getElementDescriptor(index).isNullable) {
+                return index
             }
-        this.elementsMetadata = elementsMetadata
-        cacheElementNamesByDescriptor(descriptor, configuration)
+        }
+        return DECODE_DONE
     }
 
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int {
-        initElementMetadata(descriptor)
-        currentIndex = decodeElementIndexImpl(descriptor)
-        elementsMetadata?.getOrNull(currentIndex)?.processed = true
-        return currentIndex
+        val processedElements = processedElements ?: initElementMetadata(descriptor)
+        val index = decodeElementIndexImpl(descriptor, processedElements)
+        if (index >= 0) processedElements[index] = true
+        return index
     }
 
     @Suppress("ReturnCount", "ComplexMethod")
-    private fun decodeElementIndexImpl(descriptor: SerialDescriptor): Int {
-        val elementMetadata = elementsMetadata ?: error("elementsMetadata may not be null.")
+    private fun decodeElementIndexImpl(descriptor: SerialDescriptor, processedElements: BooleanArray): Int {
         val name: String? =
             when (reader.state ?: error("State of reader may not be null.")) {
                 AbstractBsonReader.State.NAME -> reader.readName()
                 AbstractBsonReader.State.VALUE -> reader.currentName
                 AbstractBsonReader.State.TYPE -> {
                     reader.readBsonType()
-                    return decodeElementIndexImpl(descriptor)
+                    return decodeElementIndexImpl(descriptor, processedElements)
                 }
                 AbstractBsonReader.State.END_OF_DOCUMENT,
                 AbstractBsonReader.State.END_OF_ARRAY ->
-                    return elementMetadata.indexOfFirst { it.nullable && !it.processed }
+                    return firstMissingNullableElement(descriptor, processedElements)
                 else -> null
             }
 
@@ -141,7 +145,7 @@ internal sealed class AbstractBsonDecoder(
                 }
             return if (index == UNKNOWN_NAME) {
                 reader.skipValue()
-                decodeElementIndexImpl(descriptor)
+                decodeElementIndexImpl(descriptor, processedElements)
             } else {
                 index
             }
