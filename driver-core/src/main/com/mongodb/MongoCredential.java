@@ -40,6 +40,7 @@ import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_256;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateCreateOidcCredential;
 import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateOidcCredentialConstruction;
+import static com.mongodb.internal.connection.PlainAuthenticator.validatePlainCredentials;
 
 /**
  * Represents credentials to authenticate to a mongo server,as well as the source of the credentials and the authentication mechanism to
@@ -490,29 +491,31 @@ public final class MongoCredential {
 
     MongoCredential(@Nullable final AuthenticationMechanism mechanism, @Nullable final String userName, final String source,
                     @Nullable final char[] password, final Map<String, Object> mechanismProperties) {
-
+        char[] passwordCopy = password != null ? password.clone() : null;
         if (mechanism == MONGODB_OIDC) {
             validateOidcCredentialConstruction(source, mechanismProperties);
-            validateCreateOidcCredential(password);
+            validateCreateOidcCredential(passwordCopy);
+        } else if (mechanism == PLAIN) {
+            validatePlainCredentials(userName, passwordCopy);
         }
 
         if (userName == null && !Arrays.asList(MONGODB_X509, MONGODB_AWS, MONGODB_OIDC).contains(mechanism)) {
             throw new IllegalArgumentException("username can not be null");
         }
 
-        if (mechanism == null && password == null) {
+        if (mechanism == null && passwordCopy == null) {
             throw new IllegalArgumentException("Password can not be null when the authentication mechanism is unspecified");
         }
 
-        if (mechanismRequiresPassword(mechanism) && password == null) {
+        if (mechanismRequiresPassword(mechanism) && passwordCopy == null) {
             throw new IllegalArgumentException("Password can not be null for " + mechanism + " mechanism");
         }
 
-        if ((mechanism == GSSAPI || mechanism == MONGODB_X509) && password != null) {
+        if ((mechanism == GSSAPI || mechanism == MONGODB_X509) && passwordCopy != null) {
             throw new IllegalArgumentException("Password must be null for the " + mechanism + " mechanism");
         }
 
-        if (mechanism == MONGODB_AWS && userName != null && password == null) {
+        if (mechanism == MONGODB_AWS && userName != null && passwordCopy == null) {
             throw new IllegalArgumentException("Password can not be null when username is provided for " + mechanism + " mechanism");
         }
 
@@ -520,7 +523,7 @@ public final class MongoCredential {
         this.userName = userName;
         this.source = notNull("source", source);
 
-        this.password = password != null ? password.clone() : null;
+        this.password = passwordCopy;
         this.mechanismProperties = new HashMap<>(mechanismProperties);
     }
 
