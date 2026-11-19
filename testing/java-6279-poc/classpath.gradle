@@ -1,0 +1,12 @@
+// Gradle init script used by run.sh to discover module runtime classpaths without touching any
+// build file. Applied with -I; adds no behaviour to a normal build.
+allprojects {
+    tasks.register("printRuntimeCp") {
+        doLast {
+            def cp = project.configurations.findByName("runtimeClasspath")
+            if (cp != null) {
+                println "CP:" + cp.files.join(File.pathSeparator)
+            }
+        }
+    }
+}
