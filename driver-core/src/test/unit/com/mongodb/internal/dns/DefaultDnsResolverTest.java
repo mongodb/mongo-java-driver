@@ -21,6 +21,8 @@ import com.mongodb.internal.connection.DnsSuffixValidator;
 import com.mongodb.spi.dns.DnsClient;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import javax.naming.Context;
 import java.util.ArrayList;
@@ -113,5 +115,22 @@ public class DefaultDnsResolverTest {
         assertThrows(MongoConfigurationException.class,
                 () -> resolver.resolveHostFromSrvRecords(TEST_HOST, "mongodb",
                         new DnsSuffixValidator(".build.10gen.cc")));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"[fe80::1]", "not@host.name", "with space"})
+    public void shouldIgnoreInvalidHostname(final String badHostname) {
+        DefaultDnsResolver resolver = resolverReturning("valid.build.10gen.cc", badHostname);
+        MongoConfigurationException e = assertThrows(MongoConfigurationException.class, () ->
+                resolver.resolveHostFromSrvRecords(TEST_HOST, "mongodb", h -> true));
+        assertTrue(e.getMessage().contains(badHostname));
+        assertTrue(e.getMessage().contains("malformed"));
+    }
+
+    @Test
+    public void shouldAcceptUnderscoresInResolvedHostLabels() {
+        DefaultDnsResolver resolver = resolverReturning("test_1.cluster_1.build.10gen.cc.");
+        assertEquals(singletonList("test_1.cluster_1.build.10gen.cc:27017"),
+                resolver.resolveHostFromSrvRecords(TEST_HOST, "mongodb", new DnsSuffixValidator(".build.10gen.cc")));
     }
 }
