@@ -17,10 +17,14 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.internal.annotations.AsyncLeaf;
+import com.mongodb.internal.annotations.SyncLeaf;
 
 interface ConnectionFactory {
+    @SyncLeaf(asyncMethod = "createAsync")
     Connection create(InternalConnection internalConnection, ProtocolExecutor executor, ClusterConnectionMode clusterConnectionMode);
 
+    @AsyncLeaf(syncMethod = "create")
     AsyncConnection createAsync(InternalConnection internalConnection, ProtocolExecutor executor,
                                 ClusterConnectionMode clusterConnectionMode);
 }

@@ -29,8 +29,6 @@ import com.mongodb.event.ServerOpeningEvent;
 import com.mongodb.internal.VisibleForTesting;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.SdamServerDescriptionManager.SdamIssue;
-import com.mongodb.internal.diagnostics.logging.Logger;
-import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -43,11 +41,9 @@ import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.ServerDescriptionHelper.unknownConnectingServerDescription;
 
 class DefaultServer implements ClusterableServer {
-    private static final Logger LOGGER = Loggers.getLogger("connection");
     private final ServerId serverId;
     private final ConnectionPool connectionPool;
     private final ClusterConnectionMode clusterConnectionMode;
@@ -227,7 +223,7 @@ class DefaultServer implements ClusterableServer {
         public <T> void executeAsync(final CommandProtocol<T> protocol, final InternalConnection connection,
                                      final SessionContext sessionContext, final SingleResultCallback<T> callback) {
             protocol.withSessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock))
-                    .executeAsync(connection, errorHandlingCallback((result, t) -> {
+                    .executeAsync(connection, (result, t) -> {
                 if (t != null) {
                     try {
                         sdam.handleExceptionAfterHandshake(SdamIssue.of(t, sdam.context(connection)));
@@ -246,7 +242,7 @@ class DefaultServer implements ClusterableServer {
                 } else {
                     callback.onResult(result, null);
                 }
-            }, LOGGER));
+            });
         }
     }
 

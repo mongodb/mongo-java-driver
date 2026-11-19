@@ -38,11 +38,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.AsyncOperationHelper.withAsyncReadConnectionSource;
 import static com.mongodb.internal.operation.ChangeStreamBatchCursor.convertAndProduceLastId;
 import static com.mongodb.internal.operation.ChangeStreamBatchCursorHelper.isResumableError;
-import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static java.lang.String.format;
 
 final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
@@ -194,9 +192,8 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
                                      final SingleResultCallback<List<T>> callback,
                                      final OperationContext operationContext,
                                      final boolean tryNext) {
-        SingleResultCallback<List<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         if (isClosed()) {
-            errHandlingCallback.onResult(null, new MongoException(format("%s called after the cursor was closed.",
+            callback.onResult(null, new MongoException(format("%s called after the cursor was closed.",
                     tryNext ? "tryNext()" : "next()")));
             return;
         }
@@ -211,17 +208,17 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
                     } finally {
                         cachePostBatchResumeToken(wrappedCursor);
                     }
-                    errHandlingCallback.onResult(convertedResults, null);
+                    callback.onResult(convertedResults, null);
                 } catch (Exception e) {
-                    errHandlingCallback.onResult(null, e);
+                    callback.onResult(null, e);
                 }
             } else {
                 cachePostBatchResumeToken(wrappedCursor);
                 if (isResumableError(t, maxWireVersion)) {
                     nullifyAndCloseWrapped(operationContext);
-                    retryOperation(asyncBlock, errHandlingCallback, operationContext, tryNext);
+                    retryOperation(asyncBlock, callback, operationContext, tryNext);
                 } else {
-                    errHandlingCallback.onResult(null, t);
+                    callback.onResult(null, t);
                 }
             }
         });
