@@ -74,6 +74,11 @@ public final class UnifiedTestModifications {
         // Client side encryption (QE)
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5675 Support QE with Client.bulkWrite")
                 .file("client-side-encryption/tests/unified", "client bulkWrite with queryable encryption");
+        def.skipJira("https://jira.mongodb.org/browse/JAVA-6257 libmongocrypt 1.21.0 removed support for the "
+                        + "prefixPreview, suffixPreview and substringPreview query types")
+                .file("client-side-encryption/tests/unified", "QE-Text-prefixPreview")
+                .file("client-side-encryption/tests/unified", "QE-Text-suffixPreview")
+                .file("client-side-encryption/tests/unified", "QE-Text-substringPreview");
 
         // client-side-operation-timeout (CSOT)
         // The expected change stream timeout-refresh behaviour is unspecified on server 9.0+ (DRIVERS-3006), so the
@@ -432,7 +437,9 @@ public final class UnifiedTestModifications {
                 .file("gridfs", "gridfs-rename");
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5689")
                 .file("gridfs", "gridfs-deleteByName")
-                .file("gridfs", "gridfs-renameByName");
+                .file("gridfs", "gridfs-renameByName")
+                .test("read-write-concern", "write-concern-errors-gridfs", "deleteByName reports a writeConcernError")
+                .test("read-write-concern", "write-concern-errors-gridfs", "renameByName reports a writeConcernError");
 
         // Skip all rawData based tests
         def.skipJira("https://jira.mongodb.org/browse/JAVA-5830 rawData support only added to Go and Node")

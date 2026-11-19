@@ -832,6 +832,40 @@ public class BsonBinaryWriterTest {
         }
     }
 
+    @Test
+    public void testPipeOfRawBytesWithSizePrefixSmallerThanLength() {
+        // declared size 5 (empty document) followed by smuggled trailing bytes
+        byte[] bytes = {5, 0, 0, 0, 0, 0x08, 'a', 0, 1, 0};
+
+        BasicOutputBuffer newBuffer = new BasicOutputBuffer();
+        try (BsonBinaryWriter newWriter = new BsonBinaryWriter(newBuffer)) {
+            assertThrows(BsonSerializationException.class, () -> newWriter.pipe(bytes, 0, bytes.length));
+        }
+        assertEquals(0, newBuffer.getPosition());
+    }
+
+    @Test
+    public void testPipeOfRawBytesWithSizePrefixLargerThanLength() {
+        byte[] bytes = {15, 0, 0, 0, 0};
+
+        BasicOutputBuffer newBuffer = new BasicOutputBuffer();
+        try (BsonBinaryWriter newWriter = new BsonBinaryWriter(newBuffer)) {
+            assertThrows(BsonSerializationException.class, () -> newWriter.pipe(bytes, 0, bytes.length));
+        }
+        assertEquals(0, newBuffer.getPosition());
+    }
+
+    @Test
+    public void testPipeOfRawBytesWithOffset() {
+        byte[] bytes = {42, 42, 5, 0, 0, 0, 0, 42};
+
+        BasicOutputBuffer newBuffer = new BasicOutputBuffer();
+        try (BsonBinaryWriter newWriter = new BsonBinaryWriter(newBuffer)) {
+            newWriter.pipe(bytes, 2, 5);
+        }
+        assertArrayEquals(new byte[]{5, 0, 0, 0, 0}, newBuffer.toByteArray());
+    }
+
     // CHECKSTYLE:OFF
     @Test
     public void testMarkAndReset() throws IOException {

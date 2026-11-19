@@ -16,14 +16,20 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.MongoWriteConcernException;
+import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
+import com.mongodb.bulk.WriteConcernError;
+import org.bson.BsonDocument;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class WriteConcernHelperTest {
 
@@ -57,5 +63,37 @@ class WriteConcernHelperTest {
         assertEquals(writeConcern.getWObject(), clonedWithoutTimeout.getWObject());
         assertEquals(writeConcern.getJournal(), clonedWithoutTimeout.getJournal());
         assertNull(clonedWithoutTimeout.getWTimeout(TimeUnit.MILLISECONDS));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{code: 79, codeName: 'UnknownReplWriteConcern'}",
+            "{code: 79, codeName: 'UnknownReplWriteConcern', errmsg: null}"})
+    void shouldCreateWriteConcernErrorWhenErrmsgIsMissingOrNull(final String writeConcernErrorJson) {
+        BsonDocument writeConcernErrorDocument = BsonDocument.parse(writeConcernErrorJson);
+
+        WriteConcernError writeConcernError = WriteConcernHelper.createWriteConcernError(writeConcernErrorDocument);
+
+        assertEquals(79, writeConcernError.getCode());
+        assertEquals("UnknownReplWriteConcern", writeConcernError.getCodeName());
+        assertEquals("", writeConcernError.getMessage());
+        assertTrue(writeConcernError.getDetails().isEmpty());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+            "{ok: 1, n: 1, writeConcernError: {code: 79, codeName: 'UnknownReplWriteConcern'}}",
+            "{ok: 1, n: 1, writeConcernError: {code: 79, codeName: 'UnknownReplWriteConcern', errmsg: null}}"})
+    void shouldCreateWriteConcernExceptionWhenErrmsgIsMissingOrNull(final String resultJson) {
+        BsonDocument result = BsonDocument.parse(resultJson);
+
+        MongoWriteConcernException exception = WriteConcernHelper.createWriteConcernException(result, new ServerAddress());
+
+        assertEquals(79, exception.getCode());
+        assertEquals(79, exception.getWriteConcernError().getCode());
+        assertEquals("UnknownReplWriteConcern", exception.getWriteConcernError().getCodeName());
+        assertEquals("", exception.getWriteConcernError().getMessage());
+        assertTrue(exception.getWriteConcernError().getDetails().isEmpty());
+        assertTrue(exception.getErrorLabels().isEmpty());
     }
 }
