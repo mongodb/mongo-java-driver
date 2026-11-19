@@ -24,6 +24,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -295,5 +296,25 @@ final class ConnectionStringUnitTest {
                 "." + suffix,
                 new ConnectionString("mongodb+srv://test12.www.ck/?srvAllowedHostsSuffix=" + suffix)
                         .getSrvAllowedHostsSuffix());
+    }
+
+    @Test
+    void shouldParseOptionNamesIndependentlyOfDefaultLocale() {
+        Locale defaultLocale = Locale.getDefault();
+        Locale.setDefault(Locale.forLanguageTag("tr-TR"));
+        try {
+            ConnectionString connectionString = new ConnectionString(
+                    "mongodb://db1.example.com/?maxIdleTimeMS=60000&tls=true&tlsAllowInvalidHostnames=true");
+            MongoCredential credential = Assertions.assertNotNull(new ConnectionString(
+                    "mongodb://foo:bar@example.com/?authMechanism=GSSAPI&authMechanismProperties=CANONICALIZE_HOST_NAME:true")
+                    .getCredential());
+            assertAll(
+                    () -> assertEquals(60000, connectionString.getMaxConnectionIdleTime()),
+                    () -> assertEquals(true, connectionString.getSslInvalidHostnameAllowed()),
+                    () -> assertEquals(true, credential.getMechanismProperty("canonicalize_host_name", null))
+            );
+        } finally {
+            Locale.setDefault(defaultLocale);
+        }
     }
 }

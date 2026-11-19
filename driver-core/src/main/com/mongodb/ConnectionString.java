@@ -47,6 +47,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -308,7 +309,7 @@ public class ConnectionString {
             new HashSet<>(asList("authsource", "replicaset", "loadbalanced"));
     private static final Logger LOGGER = Loggers.getLogger("uri");
     private static final List<String> MECHANISM_KEYS_DISALLOWED_IN_CONNECTION_STRING = Stream.of(ALLOWED_HOSTS_KEY)
-            .map(k -> k.toLowerCase())
+            .map(k -> k.toLowerCase(Locale.ROOT))
             .collect(Collectors.toList());
 
     private final MongoCredential credential;
@@ -1008,7 +1009,7 @@ public class ConnectionString {
                     throw new IllegalArgumentException("The connection string contains invalid authentication properties. "
                             + "An authentication property is not a key value pair");
                 }
-                String key = mechanismPropertyKeyValue[0].trim().toLowerCase();
+                String key = mechanismPropertyKeyValue[0].trim().toLowerCase(Locale.ROOT);
                 String value = mechanismPropertyKeyValue[1].trim();
                 if (MECHANISM_KEYS_DISALLOWED_IN_CONNECTION_STRING.contains(key)) {
                     throw new IllegalArgumentException(format("The connection string contains disallowed mechanism properties. "
@@ -1115,7 +1116,7 @@ public class ConnectionString {
             }
             int idx = part.indexOf("=");
             if (idx >= 0) {
-                String key = part.substring(0, idx).toLowerCase();
+                String key = part.substring(0, idx).toLowerCase(Locale.ROOT);
                 String value = part.substring(idx + 1);
                 List<String> valueList = optionsMap.get(key);
                 if (valueList == null) {
