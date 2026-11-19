@@ -112,11 +112,11 @@ public final class CryptConnection implements Connection {
 
         getEncoder(command).encode(writer, command, EncoderContext.builder().build());
 
-        Timeout timeout = operationContext.getTimeoutContext().getTimeout();
+        Timeout timeout = null;
         RawBsonDocument encryptedCommand = crypt.encrypt(
                 database,
-                new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()),
-                timeout);
+                new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize())
+        );
 
         RawBsonDocument encryptedResponse = wrapped.command(database, encryptedCommand, commandFieldNameValidator, readPreference,
                 new RawBsonDocumentCodec(), operationContext, responseExpected, EmptyMessageSequences.INSTANCE);
@@ -125,7 +125,7 @@ public final class CryptConnection implements Connection {
             return null;
         }
 
-        RawBsonDocument decryptedResponse = crypt.decrypt(encryptedResponse, timeout);
+        RawBsonDocument decryptedResponse = crypt.decrypt(encryptedResponse);
 
         BsonBinaryReader reader = new BsonBinaryReader(decryptedResponse.getByteBuffer().asNIO());
 

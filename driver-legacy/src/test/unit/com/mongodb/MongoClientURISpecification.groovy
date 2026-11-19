@@ -134,8 +134,7 @@ class MongoClientURISpecification extends Specification {
                 + 'maxAdaptiveRetries=42&'
                 + 'enableOverloadRetargeting=true&'
                 + 'uuidRepresentation=csharpLegacy&'
-                + 'appName=app1&'
-                + 'timeoutMS=10000')
+                + 'appName=app1')
 
         when:
         def options = uri.getOptions()
@@ -149,7 +148,6 @@ class MongoClientURISpecification extends Specification {
         options.getMaxConnectionIdleTime() == 200
         options.getMaxConnectionLifeTime() == 300
         options.getMaxConnecting() == 1
-        options.getTimeout() == 10_000
         options.getSocketTimeout() == 5500
         options.getConnectTimeout() == 2500
         options.getRequiredReplicaSetName() == 'test'
@@ -173,7 +171,6 @@ class MongoClientURISpecification extends Specification {
         then:
         options.getConnectionsPerHost() == 100
         options.getMaxConnecting() == 2
-        options.getTimeout() == null
         options.getMaxWaitTime() == 120000
         options.getConnectTimeout() == 10000
         options.getSocketTimeout() == 0
@@ -199,7 +196,6 @@ class MongoClientURISpecification extends Specification {
                 .writeConcern(WriteConcern.JOURNALED)
                 .minConnectionsPerHost(30)
                 .connectionsPerHost(500)
-                .timeout(10_000)
                 .connectTimeout(100)
                 .socketTimeout(700)
                 .serverSelectionTimeout(150)
@@ -230,7 +226,6 @@ class MongoClientURISpecification extends Specification {
         options.getRetryReads()
         options.getMaxAdaptiveRetries() == 42
         options.getEnableOverloadRetargeting()
-        options.getTimeout() == 10_000
         options.getServerSelectionTimeout() == 150
         options.getMaxWaitTime() == 200
         options.getMaxConnectionIdleTime() == 300

@@ -220,12 +220,7 @@ final class UnifiedGridFSHelper extends UnifiedHelper{
     }
 
     private GridFSBucket getGridFsBucket(final BsonDocument operation) {
-        GridFSBucket bucket = entities.getBucket(operation.getString("object").getValue());
-        Long timeoutMS = getAndRemoveTimeoutMS(operation.getDocument("arguments", new BsonDocument()));
-        if (timeoutMS != null) {
-            bucket = bucket.withTimeout(timeoutMS, TimeUnit.MILLISECONDS);
-        }
-        return bucket;
+        return entities.getBucket(operation.getString("object").getValue());
     }
 
     private GridFSFindIterable createGridFSFindIterable(final BsonDocument operation) {

@@ -22,7 +22,6 @@ import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ReadOperationCursor;
@@ -32,7 +31,6 @@ import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -46,7 +44,6 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
     private final boolean retryReads;
     private final TimeoutSettings timeoutSettings;
     private Integer batchSize;
-    private TimeoutMode timeoutMode;
 
     public MongoIterableImpl(@Nullable final ClientSession clientSession, final OperationExecutor executor, final ReadConcern readConcern,
                              final ReadPreference readPreference, final boolean retryReads, final TimeoutSettings timeoutSettings) {
@@ -98,19 +95,6 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
         return this;
     }
 
-    @Nullable
-    public TimeoutMode getTimeoutMode() {
-        return timeoutMode;
-    }
-
-    public MongoIterable<TResult> timeoutMode(final TimeoutMode timeoutMode) {
-        if (timeoutSettings.getTimeoutMS() == null) {
-            throw new IllegalArgumentException("TimeoutMode requires timeoutMS to be set.");
-        }
-        this.timeoutMode = timeoutMode;
-        return this;
-    }
-
     @Override
     public MongoCursor<TResult> iterator() {
         return new MongoBatchCursorAdapter<>(execute());
@@ -159,12 +143,6 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
 
     protected long validateMaxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
-        Long timeoutMS = timeoutSettings.getTimeoutMS();
-        long maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
-
-        isTrueArgument("maxAwaitTimeMS must be less than timeoutMS", timeoutMS == null || timeoutMS == 0
-                || timeoutMS > maxAwaitTimeMS);
-
-        return maxAwaitTimeMS;
+        return TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
     }
 }

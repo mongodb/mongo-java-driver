@@ -21,7 +21,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ListSearchIndexesIterable;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.Operations;
@@ -79,11 +78,6 @@ final class ListSearchIndexesIterableImpl<TResult> extends MongoIterableImpl<TRe
         return this;
     }
 
-    @Override
-    public ListSearchIndexesIterable<TResult> timeoutMode(final TimeoutMode timeoutMode) {
-        super.timeoutMode(timeoutMode);
-        return this;
-    }
 
     @Override
     public ListSearchIndexesIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {

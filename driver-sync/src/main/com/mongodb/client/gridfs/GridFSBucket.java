@@ -19,21 +19,16 @@ package com.mongodb.client.gridfs;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
-import com.mongodb.annotations.Alpha;
-import com.mongodb.annotations.Reason;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.ClientSession;
-import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
-import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Represents a GridFS Bucket
@@ -82,40 +77,6 @@ public interface GridFSBucket {
     ReadConcern getReadConcern();
 
     /**
-     * The time limit for the full execution of an operation.
-     *
-     * <p>If not null the following deprecated options will be ignored:
-     * {@code waitQueueTimeoutMS}, {@code socketTimeoutMS}, {@code wTimeoutMS}, {@code maxTimeMS} and {@code maxCommitTimeMS}</p>
-     *
-     * <ul>
-     *   <li>{@code null} means that the timeout mechanism for operations will defer to using:
-     *    <ul>
-     *        <li>{@code waitQueueTimeoutMS}: The maximum wait time in milliseconds that a thread may wait for a connection to become
-     *        available</li>
-     *        <li>{@code socketTimeoutMS}: How long a send or receive on a socket can take before timing out.</li>
-     *        <li>{@code wTimeoutMS}: How long the server will wait for the write concern to be fulfilled before timing out.</li>
-     *        <li>{@code maxTimeMS}: The cumulative time limit for processing operations on a cursor.
-     *        See: <a href="https://docs.mongodb.com/manual/reference/method/cursor.maxTimeMS">cursor.maxTimeMS</a>.</li>
-     *        <li>{@code maxCommitTimeMS}: The maximum amount of time to allow a single {@code commitTransaction} command to execute.
-     *        See: {@link com.mongodb.TransactionOptions#getMaxCommitTime}.</li>
-     *   </ul>
-     *   </li>
-     *   <li>{@code 0} means infinite timeout.</li>
-     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
-     * </ul>
-     *
-     *  <p>Note: This timeout does not limit socket writes, therefore there is a possibility that the
-     *  operation might not be timed out when expected.
-     *
-     * @param timeUnit the time unit
-     * @return the timeout in the given time unit
-     * @since 5.2
-     */
-    @Alpha(Reason.CLIENT)
-    @Nullable
-    Long getTimeout(TimeUnit timeUnit);
-
-    /**
      *  Create a new GridFSBucket instance with a new chunk size in bytes.
      *
      * @param chunkSizeBytes the new chunk size in bytes.
@@ -149,26 +110,6 @@ public interface GridFSBucket {
      * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     GridFSBucket withReadConcern(ReadConcern readConcern);
-
-    /**
-     * Create a new GridFSBucket instance with the set time limit for the full execution of an operation.
-     *
-     * <ul>
-     *   <li>{@code 0} means infinite timeout.</li>
-     *    <li>{@code > 0} The time limit to use for the full execution of an operation.</li>
-     * </ul>
-     *
-     *  <p>Note: This timeout does not limit socket writes, therefore there is a possibility that the
-     *  operation might not be timed out when expected.
-     *
-     * @param timeout the timeout, which must be greater than or equal to 0
-     * @param timeUnit the time unit
-     * @return a new GridFSBucket instance with the set time limit for the full execution of an operation
-     * @since 5.2
-     * @see #getTimeout
-     */
-    @Alpha(Reason.CLIENT)
-    GridFSBucket withTimeout(long timeout, TimeUnit timeUnit);
 
     /**
      * Opens a Stream that the application can write the contents of the file to.
@@ -355,10 +296,6 @@ public interface GridFSBucket {
      * chunks have been uploaded, it creates a files collection document for {@code filename} in the files collection.
      *</p>
      *
-     <p> Note: When this {@link GridFSBucket} is set with a operation timeout (via timeout inherited from {@link MongoDatabase}
-     * settings or {@link #withTimeout(long, TimeUnit)}), timeout breaches may occur due to the {@link InputStream}
-     * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.</p>
-     *
      * @param id the custom id value of the file
      * @param filename the filename for the stream
      * @param source the Stream providing the file data
@@ -372,10 +309,6 @@ public interface GridFSBucket {
      * Reads the contents of the user file from the {@code Stream} and uploads it as chunks in the chunks collection. After all the
      * chunks have been uploaded, it creates a files collection document for {@code filename} in the files collection.
      * </p>
-     *
-     <p> Note: When this {@link GridFSBucket} is set with a operation timeout (via timeout inherited from {@link MongoDatabase}
-     * settings or {@link #withTimeout(long, TimeUnit)}), timeout breaches may occur due to the {@link InputStream}
-     * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.</p>
      *
      * @param id the custom id value of the file
      * @param filename the filename for the stream
@@ -392,10 +325,6 @@ public interface GridFSBucket {
      * chunks have been uploaded, it creates a files collection document for {@code filename} in the files collection.
      *</p>
      *
-     <p> Note: When this {@link GridFSBucket} is set with a operation timeout (via timeout inherited from {@link MongoDatabase}
-     * settings or {@link #withTimeout(long, TimeUnit)}), timeout breaches may occur due to the {@link InputStream}
-     * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.</p>
-     *
      * @param clientSession the client session with which to associate this operation
      * @param filename the filename for the stream
      * @param source the Stream providing the file data
@@ -411,10 +340,6 @@ public interface GridFSBucket {
      * Reads the contents of the user file from the {@code Stream} and uploads it as chunks in the chunks collection. After all the
      * chunks have been uploaded, it creates a files collection document for {@code filename} in the files collection.
      * </p>
-     *
-     <p> Note: When this {@link GridFSBucket} is set with a operation timeout (via timeout inherited from {@link MongoDatabase}
-     * settings or {@link #withTimeout(long, TimeUnit)}), timeout breaches may occur due to the {@link InputStream}
-     * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.</p>
      *
      * @param clientSession the client session with which to associate this operation
      * @param filename the filename for the stream
@@ -433,10 +358,6 @@ public interface GridFSBucket {
      * chunks have been uploaded, it creates a files collection document for {@code filename} in the files collection.
      *</p>
      *
-     <p> Note: When this {@link GridFSBucket} is set with a operation timeout (via timeout inherited from {@link MongoDatabase}
-     * settings or {@link #withTimeout(long, TimeUnit)}), timeout breaches may occur due to the {@link InputStream}
-     * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.</p>
-     *
      * @param clientSession the client session with which to associate this operation
      * @param id the custom id value of the file
      * @param filename the filename for the stream
@@ -452,10 +373,6 @@ public interface GridFSBucket {
      * Reads the contents of the user file from the {@code Stream} and uploads it as chunks in the chunks collection. After all the
      * chunks have been uploaded, it creates a files collection document for {@code filename} in the files collection.
      * </p>
-     *
-     <p> Note: When this {@link GridFSBucket} is set with a operation timeout (via timeout inherited from {@link MongoDatabase}
-     * settings or {@link #withTimeout(long, TimeUnit)}), timeout breaches may occur due to the {@link InputStream}
-     * lacking inherent read timeout support, which might extend the operation beyond the specified timeout limit.</p>
      *
      * @param clientSession the client session with which to associate this operation
      * @param id the custom id value of the file

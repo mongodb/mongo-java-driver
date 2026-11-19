@@ -161,7 +161,7 @@ public class CreateViewOperation implements WriteOperation<Void> {
             retryControl.getPolicy().onCommand(this::getCommandName);
             return withConnection(binding, operationContext, (connection, operationContextWithMinRtt) -> {
                 executeCommand(binding, operationContextWithMinRtt,  databaseName, getCommand(), new BsonDocumentCodec(),
-                        writeConcernErrorTransformer(operationContextWithMinRtt.getTimeoutContext()));
+                        writeConcernErrorTransformer());
                 return null;
             });
         });
@@ -181,7 +181,7 @@ public class CreateViewOperation implements WriteOperation<Void> {
                     } else {
                         SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
                         executeCommandAsync(binding, operationContextWithMinRtt,  databaseName, getCommand(), connection,
-                                writeConcernErrorTransformerAsync(operationContextWithMinRtt.getTimeoutContext()),
+                                writeConcernErrorTransformerAsync(),
                                 wrappedCallback);
                     }
                 }));

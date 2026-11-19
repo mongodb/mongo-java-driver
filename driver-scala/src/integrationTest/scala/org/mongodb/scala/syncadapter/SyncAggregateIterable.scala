@@ -21,7 +21,7 @@ import com.mongodb.client.model.Collation
 import org.bson.conversions.Bson
 import org.bson.{ BsonValue, Document }
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
-import org.mongodb.scala.{ documentToUntypedDocument, AggregateObservable, SingleObservableFuture, TimeoutMode }
+import org.mongodb.scala.{ documentToUntypedDocument, AggregateObservable, SingleObservableFuture }
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
@@ -39,11 +39,6 @@ case class SyncAggregateIterable[T](wrapped: AggregateObservable[T])
 
   override def batchSize(batchSize: Int): AggregateIterable[T] = {
     wrapped.batchSize(batchSize)
-    this
-  }
-
-  override def timeoutMode(timeoutMode: TimeoutMode): AggregateIterable[T] = {
-    wrapped.timeoutMode(timeoutMode)
     this
   }
 

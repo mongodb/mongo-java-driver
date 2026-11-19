@@ -867,10 +867,9 @@ public class MongoClient implements Closeable {
 
                 ReadWriteBinding binding = new SingleServerBinding(delegate.getCluster(), cur.serverCursor.getAddress());
                 try {
-                    OperationContext serverSelectionOperationContext = operationContext.withOverride(TimeoutContext::withComputedServerSelectionTimeout);
-                    ConnectionSource source = binding.getReadConnectionSource(serverSelectionOperationContext);
+                    ConnectionSource source = binding.getReadConnectionSource(operationContext);
                     try {
-                        Connection connection = source.getConnection(serverSelectionOperationContext);
+                        Connection connection = source.getConnection(operationContext);
                         try {
                             BsonDocument killCursorsCommand = new BsonDocument("killCursors", new BsonString(cur.namespace.getCollectionName()))
                                     .append("cursors", new BsonArray(singletonList(new BsonInt64(cur.serverCursor.getId()))));

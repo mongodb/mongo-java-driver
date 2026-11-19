@@ -21,7 +21,6 @@ import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListCollectionNamesIterable;
 import com.mongodb.client.ListCollectionsIterable;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.Operations;
 import com.mongodb.internal.operation.ReadOperationCursor;
@@ -79,12 +78,6 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
     }
 
     @Override
-    public ListCollectionsIterable<TResult> timeoutMode(final TimeoutMode timeoutMode) {
-        super.timeoutMode(timeoutMode);
-        return this;
-    }
-
-    @Override
     public ListCollectionsIterable<TResult> comment(@Nullable final String comment) {
         this.comment = comment != null ? new BsonString(comment) : null;
         return this;
@@ -107,7 +100,7 @@ class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> im
     @Override
     public ReadOperationCursor<TResult> asReadOperation() {
         return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, authorizedCollections,
-                getBatchSize(), comment, getTimeoutMode());
+                getBatchSize(), comment);
     }
 
 

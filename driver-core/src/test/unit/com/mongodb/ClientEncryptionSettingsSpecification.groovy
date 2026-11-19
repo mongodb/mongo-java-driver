@@ -19,7 +19,6 @@ package com.mongodb
 import spock.lang.Specification
 
 import javax.net.ssl.SSLContext
-import java.util.concurrent.TimeUnit
 import java.util.function.Supplier
 
 class ClientEncryptionSettingsSpecification extends Specification {
@@ -45,7 +44,6 @@ class ClientEncryptionSettingsSpecification extends Specification {
         options.getKmsProviders() == kmsProvider
         options.getKmsProviderPropertySuppliers() == [:]
         options.getKmsProviderSslContextMap() == [:]
-        options.getTimeout(TimeUnit.MILLISECONDS) == null
 
         when:
         options = ClientEncryptionSettings.builder()
@@ -54,7 +52,6 @@ class ClientEncryptionSettingsSpecification extends Specification {
                 .kmsProviders(kmsProvider)
                 .kmsProviderPropertySuppliers(kmsProviderSupplier)
                 .kmsProviderSslContextMap(kmsProviderSslContextMap)
-                .timeout(1_000, TimeUnit.MILLISECONDS)
                 .build()
 
         then:
@@ -63,24 +60,5 @@ class ClientEncryptionSettingsSpecification extends Specification {
         options.getKmsProviders() == kmsProvider
         options.getKmsProviderPropertySuppliers() == kmsProviderSupplier
         options.getKmsProviderSslContextMap() == kmsProviderSslContextMap
-        options.getTimeout(TimeUnit.MILLISECONDS) == 1_000
     }
-
-    def 'should throw an exception if the defaultTimeout is set and negative'() {
-        given:
-        def builder = ClientEncryptionSettings.builder()
-
-        when:
-        builder.timeout(500, TimeUnit.NANOSECONDS)
-
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        builder.timeout(-1, TimeUnit.SECONDS)
-
-        then:
-        thrown(IllegalArgumentException)
-    }
-
 }
