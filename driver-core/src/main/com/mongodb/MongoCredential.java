@@ -663,7 +663,7 @@ public final class MongoCredential {
     public String toString() {
         return "MongoCredential{"
                 + "mechanism=" + mechanism
-                + ", userName='" + userName + '\''
+                + ", userName=<hidden>"
                 + ", source='" + source + '\''
                 + ", password=<hidden>"
                 + ", mechanismProperties=<hidden>"

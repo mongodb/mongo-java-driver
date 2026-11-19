@@ -16,12 +16,21 @@
 
 package com.mongodb;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.LoggerContext;
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.core.read.ListAppender;
 import org.bson.BsonDocument;
 import org.junit.Test;
 import org.junit.runners.Parameterized;
+import org.slf4j.LoggerFactory;
 import util.JsonPoweredTestHelper;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Locale;
+import java.util.stream.Collectors;
 
 import static org.junit.Assume.assumeFalse;
 
@@ -57,11 +66,48 @@ public class ConnectionStringTest extends AbstractConnectionStringTest {
             if (!getDefinition().get("options").isNull()) {
                 testValidOptions();
             }
+        } else if (getFilename().equals("credential-disclosure.json")) {
+            testCredentialDisclosure();
         } else {
             throw new IllegalArgumentException("Unsupported file: " + getFilename());
         }
     }
 
+    // The sentinel credential must not appear, in plain or fully percent-encoded form, in the error message or in any message logged
+    // while parsing, whether or not the URI is accepted. See credential-disclosure.json in the connection string specification tests.
+    private void testCredentialDisclosure() {
+        String uri = getDefinition().getString("uri").getValue();
+        Logger logger = (Logger) LoggerFactory.getLogger("org.mongodb.driver.uri");
+        ListAppender<ILoggingEvent> appender = new ListAppender<>();
+        appender.setContext((LoggerContext) LoggerFactory.getILoggerFactory());
+        logger.setLevel(Level.DEBUG);
+        logger.addAppender(appender);
+        appender.start();
+        try {
+            try {
+                // an SRV connection string resolves TXT records while it is parsed, so use a DNS client that returns no records
+                new ConnectionString(uri, (name, type) -> Collections.emptyList());
+            } catch (Throwable t) {
+                assertFalse("The error message discloses the sentinel: " + t.getMessage(), containsSentinel(String.valueOf(t.getMessage())));
+                for (Throwable cause = t.getCause(); cause != null; cause = cause.getCause()) {
+                    assertFalse("The error cause discloses the sentinel: " + cause, containsSentinel(String.valueOf(cause)));
+                }
+            }
+            for (ILoggingEvent event : appender.list) {
+                assertFalse("A log message discloses the sentinel: " + event.getFormattedMessage(),
+                        containsSentinel(event.getFormattedMessage()));
+            }
+        } finally {
+            logger.detachAppender(appender);
+        }
+    }
+
+    private static boolean containsSentinel(final String text) {
+        String sentinel = "SENTINELpassword1234";
+        String encodedSentinel = sentinel.chars().mapToObj(c -> String.format("%%%02X", c)).collect(Collectors.joining());
+        String lowerCased = text.toLowerCase(Locale.ROOT);
+        return lowerCased.contains(sentinel.toLowerCase(Locale.ROOT)) || lowerCased.contains(encodedSentinel.toLowerCase(Locale.ROOT));
+    }
 
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() {
