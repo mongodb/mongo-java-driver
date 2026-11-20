@@ -33,7 +33,8 @@ import java.util.function.Function;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-final class ListDatabasesPublisherImpl<T> extends BatchCursorPublisher<T> implements ListDatabasesPublisher<T> {
+final class ListDatabasesPublisherImpl<T> extends BatchCursorPublisher<T>
+        implements InternalCommonBatchCursorPublisher<T>, ListDatabasesPublisher<T> {
 
     private long maxTimeMS;
     private Bson filter;

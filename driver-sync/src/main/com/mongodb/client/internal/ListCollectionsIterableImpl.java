@@ -37,7 +37,8 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListCollectionsIterable<TResult> {
+class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResult>
+        implements InternalCommonIterable<TResult>, ListCollectionsIterable<TResult> {
     private final Operations<BsonDocument> operations;
     private final String databaseName;
     private final Class<TResult> resultClass;

@@ -44,7 +44,8 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements AggregateIterable<TResult> {
+class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult>
+        implements InternalCommonIterable<TResult>, AggregateIterable<TResult> {
     private final Operations<TDocument> operations;
     private final MongoNamespace namespace;
     private final Class<TDocument> documentClass;
@@ -93,6 +94,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         this.aggregationLevel = notNull("aggregationLevel", aggregationLevel);
     }
 
+    // VAKOTODO use commandOption
     @Override
     public void toCollection() {
         BsonDocument lastPipelineStage = getLastPipelineStage();
@@ -199,6 +201,13 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         return executeExplain(explainResultClass, notNull("verbosity", verbosity));
     }
 
+    @Override
+    public AggregateIterable<TResult> commandOption(final String name, final Object value) {
+        setOverridingCommandOption(notNull("name", name), notNull("value", value));
+        return this;
+    }
+
+    // VAKOTODO use commandOption
     private <E> E executeExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
         notNull("explainDocumentClass", explainResultClass);
         return getExecutor().execute(
@@ -206,6 +215,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
                 getReadConcern(), getClientSession());
     }
 
+    // VAKOTODO use commandOption
     @Override
     public ReadOperationCursor<TResult> asReadOperation() {
         MongoNamespace outNamespace = getOutNamespace();

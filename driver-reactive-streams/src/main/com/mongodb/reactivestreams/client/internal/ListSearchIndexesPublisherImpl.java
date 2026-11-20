@@ -34,7 +34,8 @@ import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-final class ListSearchIndexesPublisherImpl<T> extends BatchCursorPublisher<T> implements ListSearchIndexesPublisher<T> {
+final class ListSearchIndexesPublisherImpl<T> extends BatchCursorPublisher<T>
+        implements InternalCommonBatchCursorPublisher<T>, ListSearchIndexesPublisher<T> {
     @Nullable
     private Boolean allowDiskUse;
     private long maxTimeMS;

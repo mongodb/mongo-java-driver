@@ -17,8 +17,10 @@
 package com.mongodb.client;
 
 import com.mongodb.MongoChangeStreamException;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.MongoNamespace;
 import com.mongodb.MongoQueryException;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.client.internal.MongoChangeStreamCursorImpl;
@@ -27,23 +29,41 @@ import com.mongodb.client.model.ChangeStreamPreAndPostImagesOptions;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
+import com.mongodb.client.model.changestream.OperationType;
 import com.mongodb.client.model.changestream.SplitEvent;
+import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.internal.operation.AggregateResponseBatchCursor;
+import com.mongodb.internal.operation.ChangeStreamOperationProseTestSpecification;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
+import org.bson.BsonTimestamp;
 import org.bson.Document;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
+import java.time.Instant;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.CrudTestHelper.repeat;
+import static com.mongodb.client.Fixture.getMongoClientSettings;
+import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static com.mongodb.client.Fixture.getPrimary;
 import static com.mongodb.client.model.Updates.set;
-import static java.util.Arrays.asList;
+import static java.lang.Math.toIntExact;
+import static java.lang.String.format;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.toList;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -52,17 +72,36 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
+/**
+ * See <a href="https://github.com/mongodb/specifications/tree/master/source/change-streams/tests/README.md#prose-tests">Prose Tests</a>.
+ * <p>
+ * See also {@link ChangeStreamOperationProseTestSpecification}.
+ */
+public class ChangeStreamProseTest {
+    private static final MongoNamespace NAMESPACE = new MongoNamespace(ChangeStreamProseTest.class.getSimpleName(), "test");
 
-// See https://github.com/mongodb/specifications/tree/master/source/change-streams/tests/README.md#prose-tests
-public class ChangeStreamProseTest extends DatabaseTestCase {
-    private BsonDocument failPointDocument;
+    private MongoClient client;
+    private MongoDatabase database;
+    private MongoCollection<Document> collection;
 
     @BeforeEach
-    @Override
-    public void setUp() {
+    void beforeEach() {
         assumeTrue(canRunTests());
-        super.setUp();
-        collection.insertOne(Document.parse("{ _id : 0 }"));
+        client = createClient(getMongoClientSettings());
+        database = client.getDatabase(NAMESPACE.getDatabaseName());
+        database.drop();
+        collection = database.getCollection(NAMESPACE.getCollectionName());
+    }
+
+    @AfterEach
+    void afterEach() {
+        if (client != null) {
+            client.close();
+        }
+    }
+
+    protected MongoClient createClient(final MongoClientSettings settings) {
+        return MongoClients.create(settings);
     }
 
     static class ChangeStreamWatcher implements Runnable {
@@ -84,7 +123,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
             }
         }
 
-        public boolean getInterruptedExceptionOccurred() {
+        boolean getInterruptedExceptionOccurred() {
             return interruptedExceptionOccurred;
         }
     }
@@ -93,7 +132,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     // Test that MongoInterruptedException is not retryable so that a thread can be interrupted.
     //
     @Test
-    public void testThreadInterrupted() throws InterruptedException {
+    void testThreadInterrupted() throws InterruptedException {
         ChangeStreamWatcher watcher = new ChangeStreamWatcher(collection.watch().cursor());
         Thread t = new Thread(watcher);
         t.start();
@@ -106,7 +145,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     // Test that the ChangeStream continuously tracks the last seen resumeToken.
     //
     @Test
-    public void test01ChangeStreamTracksResumeToken() {
+    void test01ChangeStreamTracksResumeToken() {
 
         try (MongoCursor<ChangeStreamDocument<Document>> cursor = collection.watch().iterator()) {
             collection.insertOne(Document.parse("{x: 1}"));
@@ -124,8 +163,8 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     // Test that the ChangeStream will throw an exception if the server response is missing the resume token (if wire version is < 8).
     //
     @Test
-    public void test02MissingResumeTokenThrowsException() {
-        try (MongoCursor<ChangeStreamDocument<Document>> cursor = collection.watch(asList(Aggregates.project(Document.parse("{ _id : 0 }"))))
+    void test02MissingResumeTokenThrowsException() {
+        try (MongoCursor<ChangeStreamDocument<Document>> cursor = collection.watch(singletonList(Aggregates.project(Document.parse("{ _id : 0 }"))))
                 .iterator()) {
             collection.insertOne(Document.parse("{ x: 1 }"));
             cursor.next();
@@ -139,13 +178,16 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     // with the initial pipeline and options, except for the addition/update of a resumeToken.
     //
     @Test
-    public void test03ResumeOneTimeOnError() {
-        try (MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().cursor()) {
+    void test03ResumeOneTimeOnError() throws Exception {
+        BsonDocument configureFailPoint = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
+                .append("mode", new BsonDocument("times", new BsonInt32(1)))
+                .append("data", new BsonDocument("failCommands", new BsonArray(singletonList(new BsonString("getMore"))))
+                        .append("errorCode", new BsonInt32(10107))
+                        .append("errorLabels", new BsonArray(singletonList(new BsonString("ResumableChangeStreamError")))));
+        try (FailPoint ignored = FailPoint.enable(configureFailPoint, getPrimary());
+             MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().cursor()) {
             collection.insertOne(Document.parse("{ x: 1 }"));
-            setFailPoint("getMore", 10107);
             assertNotNull(cursor.next());
-        } finally {
-            disableFailPoint();
         }
     }
 
@@ -153,13 +195,13 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     // Test that ChangeStream will not attempt to resume on any error encountered while executing an aggregate command.
     //
     @Test
-    public void test04NoResumeForAggregateErrors() {
+    protected void test04NoResumeForAggregateErrors() {
         boolean exceptionFound = false;
         MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = null;
 
         //noinspection TryFinallyCanBeTryWithResources
         try {
-            cursor = collection.watch(asList(Document.parse("{ $unsupportedStage: { _id : 0 } }"))).cursor();
+            cursor = collection.watch(singletonList(Document.parse("{ $unsupportedStage: { _id : 0 } }"))).cursor();
         } catch (MongoCommandException e) {
             exceptionFound = true;
         } finally {
@@ -175,7 +217,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     // is not closed on the driver side.
     //
     @Test
-    public void test07CursorNotClosed() {
+    protected void test07CursorNotClosed() {
         MongoCursor<ChangeStreamDocument<Document>> cursor = collection.watch().iterator();
         assertNotNull(cursor.getServerCursor());
         cursor.close();
@@ -189,7 +231,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     //   getResumeToken must return the postBatchResumeToken from the current command response.
     //
     @Test
-    public void test11GetResumeTokenReturnsPostBatchResumeToken() throws NoSuchFieldException, IllegalAccessException {
+    protected void test11GetResumeTokenReturnsPostBatchResumeToken() throws NoSuchFieldException, IllegalAccessException {
         MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().cursor();
         assertNull(cursor.getResumeToken());
         collection.insertOne(Document.parse("{ _id: 42, x: 1 }"));
@@ -212,7 +254,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     //   getResumeToken must return the _id of the previous document returned.
     //
     @Test
-    public void test13GetResumeTokenEqualsIdOfPreviousDocument() {
+    protected void test13GetResumeTokenEqualsIdOfPreviousDocument() {
         try (MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().batchSize(3).cursor()) {
             collection.insertOne(Document.parse("{ _id: 42, x: 1 }"));
             collection.insertOne(Document.parse("{ _id: 43, x: 1 }"));
@@ -232,7 +274,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     //   If startAfter is not specified, the getResumeToken result must be empty.
     //
     @Test
-    public void test14GetResumeTokenReturnsStartAfter() {
+    protected void test14GetResumeTokenReturnsStartAfter() {
         BsonDocument resumeToken;
         MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().cursor();
         collection.insertOne(Document.parse("{ _id: 42, x: 1 }"));
@@ -268,7 +310,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     //   If resumeAfter is not specified, the getResumeToken result must be empty.
     //
     @Test
-    public void test14GetResumeTokenReturnsResumeAfter() {
+    protected void test14GetResumeTokenReturnsResumeAfter() {
         BsonDocument resumeAfterResumeToken;
         MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().cursor();
         collection.insertOne(Document.parse("{ _id: 42, x: 1 }"));
@@ -304,7 +346,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     //   getResumeToken must return the postBatchResumeToken from the previous command response.
     //
     @Test
-    public void test15GetResumeTokenReturnsPostBatchResumeTokenAfterGetMore()
+    protected void test15GetResumeTokenReturnsPostBatchResumeTokenAfterGetMore()
             throws NoSuchFieldException, IllegalAccessException {
         try (MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().cursor()) {
             collection.insertOne(Document.parse("{ _id: 42, x: 1 }"));
@@ -322,11 +364,11 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     }
 
     @Test
-    public void test19SplitChangeStreamEvents() {
+    protected void test19SplitChangeStreamEvents() {
         assumeTrue(serverVersionAtLeast(6, 0));
         collection.drop();
         database.createCollection(
-                getClass().getName(),
+                collection.getNamespace().getCollectionName(),
                 new CreateCollectionOptions().changeStreamPreAndPostImagesOptions(
                         new ChangeStreamPreAndPostImagesOptions(true)));
 
@@ -337,7 +379,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
         // #. Create a change stream _S_ by calling ``watch`` on _C_ with
         //    pipeline ``[{ "$changeStreamSplitLargeEvent": {} }]`` and ``fullDocumentBeforeChange=required``.
         ChangeStreamIterable<Document> changeStream = collection
-                .watch(asList(Document.parse("{ $changeStreamSplitLargeEvent: {} }")))
+                .watch(singletonList(Document.parse("{ $changeStreamSplitLargeEvent: {} }")))
                 .fullDocumentBeforeChange(FullDocumentBeforeChange.REQUIRED);
 
         try (MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = changeStream.cursor()) {
@@ -350,8 +392,8 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
             ChangeStreamDocument<Document> e2 = Assertions.assertNotNull(cursor.tryNext());
 
             // #. Assert that the events collected have ``splitEvent`` fields ..., in that order.
-            assertEquals(e1.getSplitEvent(), new SplitEvent(1, 2));
-            assertEquals(e2.getSplitEvent(), new SplitEvent(2, 2));
+            assertEquals(new SplitEvent(1, 2), e1.getSplitEvent());
+            assertEquals(new SplitEvent(2, 2), e2.getSplitEvent());
         }
     }
 
@@ -359,7 +401,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
      * Not a prose spec test. However, it is additional test case for better coverage.
      */
     @Test
-    public void testNameSpaceTypeAbsentChangeStreamEvents() {
+    protected void testNameSpaceTypeAbsentChangeStreamEvents() {
         assumeTrue(serverVersionAtLeast(8, 1));
         collection.drop();
 
@@ -378,17 +420,108 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
         }
     }
 
-    private void setFailPoint(final String command, final int errCode) {
-        failPointDocument = new BsonDocument("configureFailPoint", new BsonString("failCommand"))
-                .append("mode", new BsonDocument("times", new BsonInt32(1)))
-                .append("data", new BsonDocument("failCommands", new BsonArray(asList(new BsonString(command))))
-                        .append("errorCode", new BsonInt32(errCode))
-                        .append("errorLabels", new BsonArray(asList(new BsonString("ResumableChangeStreamError")))));
-        getCollectionHelper().runAdminCommand(failPointDocument);
+    /**
+     * Not a prose spec test.
+     */
+    @Test
+    void shouldDoOneServerSelectionForResumeAttempt() throws Exception {
+        //given
+        AtomicInteger serverSelectionCounter = new AtomicInteger();
+        BsonTimestamp startTime = new BsonTimestamp(toIntExact(Instant.now().getEpochSecond()), 0);
+        try (MongoClient mongoClient = createClient(getMongoClientSettingsBuilder()
+                .applyToClusterSettings(builder -> builder.serverSelector(clusterDescription -> {
+                    serverSelectionCounter.incrementAndGet();
+                    return clusterDescription.getServerDescriptions();
+                })).build())) {
+
+            MongoCollection<Document> collection = mongoClient
+                    .getDatabase(NAMESPACE.getDatabaseName())
+                    .getCollection(NAMESPACE.getCollectionName());
+
+            BsonDocument configureFailPoint = BsonDocument.parse("{"
+                    + "    configureFailPoint: 'failCommand',"
+                    + "    mode: {"
+                    + "        times: 1"
+                    + "    },"
+                    + "    data: {"
+                    + "        failCommands: ['getMore'],"
+                    + "        errorCode: 9001,"
+                    + "        errorLabels: ['ResumableChangeStreamError']"
+                    + "    }"
+                    + "}");
+            // We insert document here, because async cursor performs aggregate and getMore right after we call cursor()
+            collection.insertOne(Document.parse("{ x: 1 }"));
+            serverSelectionCounter.set(0);
+
+            try (FailPoint ignored = FailPoint.enable(configureFailPoint, getPrimary());
+                 MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch()
+                         .batchSize(0)
+                         .startAtOperationTime(startTime)
+                         .cursor()) {
+
+                //when
+                ChangeStreamDocument<Document> changeStreamDocument = cursor.next();
+                //then
+                assertNotNull(changeStreamDocument);
+                int actualCountOfServerSelections = serverSelectionCounter.get();
+                assertEquals(2, actualCountOfServerSelections,
+                        format("Expected 2 server selections (initial aggregate command  + resume attempt aggregate command), but there were %s",
+                                actualCountOfServerSelections));
+            }
+        }
     }
 
-    private void disableFailPoint() {
-        getCollectionHelper().runAdminCommand(failPointDocument.append("mode", new BsonString("off")));
+    /**
+     * Not a prose spec test.
+     * <p>
+     * {@link ChangeStreamIterable#withDocumentClass(Class)} returns a new {@link MongoIterable},
+     * which must handle batch size correctly.
+     */
+    @Test
+    protected void batchSizeWorksForWithDocumentClass() {
+        assertAll(
+                () -> assertBatchSizeWorksForWithDocumentClass(true, true),
+                () -> assertBatchSizeWorksForWithDocumentClass(true, false),
+                () -> assertBatchSizeWorksForWithDocumentClass(false, true),
+                () -> assertBatchSizeWorksForWithDocumentClass(false, false));
+    }
+
+    private void assertBatchSizeWorksForWithDocumentClass(final boolean chaining, final boolean batchSizeBeforeWithDocumentClass) {
+        TestCommandListener commandListener = new TestCommandListener(singletonList("commandStartedEvent"), emptyList());
+        try (MongoClient client = createClient(getMongoClientSettingsBuilder().addCommandListener(commandListener).build())) {
+            MongoCollection<Document> collection = client
+                    .getDatabase(NAMESPACE.getDatabaseName())
+                    .getCollection(NAMESPACE.getCollectionName());
+            int batchSize = 3;
+            int batchCount = 2;
+            ChangeStreamIterable<Document> changeStreamIterable = collection.watch();
+            MongoIterable<Document> configuredChangeStreamIterable;
+            if (chaining) {
+                if (batchSizeBeforeWithDocumentClass) {
+                    configuredChangeStreamIterable = changeStreamIterable.batchSize(batchSize).withDocumentClass(Document.class);
+                } else {
+                    configuredChangeStreamIterable = changeStreamIterable.withDocumentClass(Document.class).batchSize(batchSize);
+                }
+            } else {
+                if (batchSizeBeforeWithDocumentClass) {
+                    changeStreamIterable.batchSize(batchSize);
+                    configuredChangeStreamIterable = changeStreamIterable.withDocumentClass(Document.class);
+                } else {
+                    configuredChangeStreamIterable = changeStreamIterable.withDocumentClass(Document.class);
+                    changeStreamIterable.batchSize(batchSize);
+                }
+            }
+            try (MongoCursor<Document> changeStreamCursor = configuredChangeStreamIterable.cursor()) {
+                List<Document> insertedDocuments = Stream.generate(Document::new).limit(batchSize * batchCount).collect(toList());
+                collection.insertMany(insertedDocuments);
+                for (int i = 0; i < insertedDocuments.size(); i++) {
+                    assertEquals(OperationType.INSERT.getValue(), changeStreamCursor.next().get("operationType"));
+                }
+                commandListener.getCommandStartedEvents("getMore").stream()
+                        .map(CommandStartedEvent::getCommand)
+                        .forEach(command -> assertEquals(batchSize, command.getInt32("batchSize").intValue()));
+            }
+        }
     }
 
     private boolean canRunTests() {

@@ -1186,7 +1186,6 @@ class KotlinSerializerCodecTest {
     }
 
     @Test
-    @Suppress("LongMethod")
     fun testDataClassWithJsonElementBsonSupport() {
         val dataClassWithAllSupportedJsonTypes =
             DataClassWithJsonElement(

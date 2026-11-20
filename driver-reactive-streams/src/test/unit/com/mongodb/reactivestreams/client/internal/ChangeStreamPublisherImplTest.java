@@ -44,6 +44,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+// VAKOTODO what, if anything, should be added here?
 public class ChangeStreamPublisherImplTest extends TestHelper {
 
     @DisplayName("Should build the expected ChangeStreamOperation")

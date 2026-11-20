@@ -33,7 +33,8 @@ import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-final class DistinctPublisherImpl<T> extends BatchCursorPublisher<T> implements DistinctPublisher<T> {
+final class DistinctPublisherImpl<T> extends BatchCursorPublisher<T>
+        implements InternalCommonBatchCursorPublisher<T>, DistinctPublisher<T> {
 
     private final String fieldName;
     private Bson filter;

@@ -36,7 +36,8 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListIndexesIterable<TResult> {
+class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult>
+        implements InternalCommonIterable<TResult>, ListIndexesIterable<TResult> {
     private final Operations<BsonDocument> operations;
     private final Class<TResult> resultClass;
     private long maxTimeMS;
