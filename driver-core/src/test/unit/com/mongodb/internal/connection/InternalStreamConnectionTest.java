@@ -1197,6 +1197,60 @@ class InternalStreamConnectionTest {
         assertFalse(stream.hadUnexpectedCall());
     }
 
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void decodesASnappyReplyIntoBson(final boolean async) throws IOException {
+        BsonDocument expected = new BsonDocument("ok", new BsonInt32(1)).append("value", new BsonString("compressed reply"));
+        ByteBuf reply = createResponseBody(expected);
+        byte[] plain = new byte[reply.remaining()];
+        try {
+            reply.get(plain);
+        } finally {
+            reply.release();
+        }
+        byte[] compressed = Snappy.compress(plain);
+        ByteBuffer wire = ByteBuffer.allocate(CompressedHeader.COMPRESSED_HEADER_LENGTH + compressed.length).order(ByteOrder.LITTLE_ENDIAN);
+        wire.putInt(OpCode.OP_REPLY.getValue()).putInt(plain.length).put((byte) 1).put(compressed);
+        ((Buffer) wire).flip();
+        ByteBuf body = new ByteBufNIO(wire);
+        TestStream stream = new TestStream() {
+            private boolean sentHeader;
+
+            @Override
+            public ByteBuf read(final int numBytes, final OperationContext operationContext) {
+                if (sentHeader) {
+                    return body;
+                }
+                sentHeader = true;
+                return createCompressedResponseHeader(getCommandMessageId(), body.remaining());
+            }
+
+            @Override
+            public void readAsync(final int numBytes, final OperationContext operationContext,
+                    final AsyncCompletionHandler<ByteBuf> handler) {
+                handler.completed(read(numBytes, operationContext));
+            }
+        };
+        InternalStreamConnection connection = createOpenConnection(stream, null,
+                Collections.singletonList(MongoCompressor.createSnappyCompressor()));
+        try {
+            CommandMessage message = createPingCommand();
+            stream.setCommandMessageId(message.getId());
+            BsonDocument actual;
+            if (async) {
+                FutureResultCallback<BsonDocument> callback = new FutureResultCallback<>();
+                connection.sendAndReceiveAsync(message, new BsonDocumentCodec(), createOperationContext(), callback);
+                actual = callback.get(5, TimeUnit.SECONDS);
+            } else {
+                actual = connection.sendAndReceive(message, new BsonDocumentCodec(), createOperationContext());
+            }
+            assertEquals(expected, actual);
+            assertEquals(0, body.getReferenceCount());
+        } finally {
+            connection.close();
+        }
+    }
+
     /**
      * Verifies that in the synchronous path, the uncompressed buffer allocated for an OP_COMPRESSED
      * response is released when reply header parsing fails after decompression.
