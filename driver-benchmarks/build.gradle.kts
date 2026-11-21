@@ -42,6 +42,7 @@ dependencies {
     implementation(libs.bundles.netty)
 
     implementation(libs.logback.classic)
+    implementation(libs.snappy.java)
     implementation(libs.jmh.core)
     annotationProcessor(libs.jmh.generator.annprocess)
 

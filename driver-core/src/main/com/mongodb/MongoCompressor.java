@@ -42,7 +42,8 @@ public final class MongoCompressor {
 
 
     /**
-     * Create an instance for snappy compression.
+     * Create an instance for snappy compression. Applications using this compressor should provide
+     * {@code org.xerial.snappy:snappy-java} version 1.1.10.12 or later at runtime.
      *
      * @return A compressor based on the snappy compression algorithm
      * @mongodb.server.release 3.4
