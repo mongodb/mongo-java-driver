@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 import org.bson.io.BasicOutputBuffer;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.xerial.snappy.Snappy;
@@ -26,14 +27,45 @@ import org.xerial.snappy.Snappy;
 import java.io.IOException;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
+import static com.mongodb.internal.connection.InternalStreamConnectionTestHelper.createOperationContext;
+import static com.mongodb.internal.connection.InternalStreamConnectionTestHelper.createPingCommand;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class SnappyCompressionTest {
+    @Test
+    void wrapsOnlyTheCommandBodyInOneRawSnappyBlock() throws IOException {
+        try (ByteBufferBsonOutput source = new ByteBufferBsonOutput(PowerOfTwoBufferPool.DEFAULT);
+             ByteBufferBsonOutput target = new ByteBufferBsonOutput(PowerOfTwoBufferPool.DEFAULT)) {
+            CommandMessage ping = createPingCommand();
+            ping.encode(source, createOperationContext());
+            List<ByteBuf> buffers = source.getByteBuffers();
+            try {
+                CompressedMessage compressed = new CompressedMessage(OpCode.OP_MSG, buffers, new SnappyCompressor(),
+                        MessageSettings.builder().build());
+                compressed.encode(target, createOperationContext());
+            } finally {
+                buffers.forEach(ByteBuf::release);
+            }
+            byte[] wire = target.toByteArray();
+            ByteBuffer header = ByteBuffer.wrap(wire).order(ByteOrder.LITTLE_ENDIAN);
+            assertEquals(wire.length, header.getInt());
+            assertEquals(ping.getId(), header.getInt());
+            assertEquals(0, header.getInt());
+            assertEquals(OpCode.OP_COMPRESSED.getValue(), header.getInt());
+            assertEquals(OpCode.OP_MSG.getValue(), header.getInt());
+            assertEquals(source.getPosition() - MessageHeader.MESSAGE_HEADER_LENGTH, header.getInt());
+            assertEquals(1, header.get());
+            assertArrayEquals(Arrays.copyOfRange(source.toByteArray(), MessageHeader.MESSAGE_HEADER_LENGTH, source.getPosition()),
+                    Snappy.uncompress(Arrays.copyOfRange(wire, header.position(), wire.length)));
+        }
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"empty", "slice", "two", "direct", "readOnly"})
     void emitsOneRawBlockAndConsumesTheInput(final String layout) throws IOException {
