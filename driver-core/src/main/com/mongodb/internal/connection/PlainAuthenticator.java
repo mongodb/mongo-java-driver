@@ -32,9 +32,20 @@ import javax.security.sasl.SaslException;
 
 import static com.mongodb.AuthenticationMechanism.PLAIN;
 import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 
-class PlainAuthenticator extends SaslAuthenticator {
+public class PlainAuthenticator extends SaslAuthenticator {
     private static final String DEFAULT_PROTOCOL = "mongodb";
+
+    public static void validatePlainCredentials(@Nullable final String username, @Nullable final char[] password) {
+        if (username != null) {
+            isTrueArgument("username cannot contain NUL characters", !username.contains("\0"));
+
+        }
+        if (password != null) {
+            isTrueArgument("password cannot contain NUL characters", !String.valueOf(password).contains("\0"));
+        }
+    }
 
     PlainAuthenticator(final MongoCredentialWithCache credential, final ClusterConnectionMode clusterConnectionMode,
                        @Nullable final ServerApi serverApi) {

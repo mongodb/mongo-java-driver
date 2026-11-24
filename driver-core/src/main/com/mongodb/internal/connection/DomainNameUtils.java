@@ -28,4 +28,18 @@ public class DomainNameUtils {
     static boolean isDomainName(final String domainName) {
         return DOMAIN_PATTERN.matcher(domainName).matches();
     }
+
+    /**
+     * Deliberately looser than {@link #isDomainName(String)} (RFC 1123): it applies no length limits and no hyphen-position
+     * rules, and allows underscore, so that host names that resolve and are in use today are not rejected. It only
+     * guarantees that the name cannot be re-parsed as anything but a single host (no brackets, commas, colons, slashes, ...).
+     */
+    private static final Pattern SRV_HOST_NAME_PATTERN = Pattern.compile("[a-z0-9_-]+(\\.[a-z0-9_-]+)*");
+
+    /**
+     * @param hostName a host name already normalized (A-label form, lower case, single trailing dot stripped)
+     */
+    public static boolean isValidSrvHostName(final String hostName) {
+        return SRV_HOST_NAME_PATTERN.matcher(hostName).matches();
+    }
 }

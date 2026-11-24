@@ -50,7 +50,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -301,6 +303,7 @@ public class ConnectionString {
 
     private static final String MONGODB_PREFIX = "mongodb://";
     private static final String MONGODB_SRV_PREFIX = "mongodb+srv://";
+    private static final String REDACTED = "<hidden>";
     private static final Set<String> ALLOWED_OPTIONS_IN_TXT_RECORD =
             new HashSet<>(asList("authsource", "replicaset", "loadbalanced"));
     private static final Logger LOGGER = Loggers.getLogger("uri");
@@ -314,6 +317,7 @@ public class ConnectionString {
     private final String database;
     private final String collection;
     private final String connectionString;
+    private final String redactedConnectionString;
 
     private Integer srvMaxHosts;
     private String srvServiceName;
@@ -427,7 +431,7 @@ public class ConnectionString {
                     throw new IllegalArgumentException("No username is provided in the connection string");
                 }
                 userName = urldecode(userInfo.substring(0, idx));
-                password = urldecode(userInfo.substring(idx + 1), true).toCharArray();
+                password = urldecode(userInfo.substring(idx + 1)).toCharArray();
             }
         } else if (idx == 0) {
             throw new IllegalArgumentException("The connection string contains an at-sign (@) without a user name");
@@ -532,6 +536,42 @@ public class ConnectionString {
 
         credential = createCredentials(combinedOptionsMaps, userName, password);
         warnOnUnsupportedOptions(combinedOptionsMaps);
+        redactedConnectionString = createRedactedConnectionString(userName, password != null, connectionStringOptionsMap);
+    }
+
+    /**
+     * Creates the string returned by {@link #toString()} from the parsed components, not from the original connection string.
+     *
+     * <p>The user information and all option values are hidden, and unsupported options are omitted, because a password that
+     * contains an unescaped '?' is parsed as an option, so any option key or value may be part of a credential.</p>
+     */
+    private String createRedactedConnectionString(@Nullable final String userName, final boolean hasPassword,
+                                                  final Map<String, List<String>> optionsMap) {
+        StringBuilder builder = new StringBuilder(isSrvProtocol ? MONGODB_SRV_PREFIX : MONGODB_PREFIX);
+        if (userName != null) {
+            builder.append(REDACTED);
+            if (hasPassword) {
+                builder.append(':').append(REDACTED);
+            }
+            builder.append('@');
+        }
+        builder.append(String.join(",", hosts));
+        if (database != null) {
+            builder.append('/').append(database);
+            if (collection != null) {
+                builder.append('.').append(collection);
+            }
+        }
+        List<String> options = new ArrayList<>();
+        for (String key : new TreeMap<>(optionsMap).keySet()) {
+            if (ALL_KEYS.contains(key)) {
+                options.add(key + "=" + REDACTED);
+            }
+        }
+        if (!options.isEmpty()) {
+            builder.append(database == null ? "/?" : "?").append(String.join("&", options));
+        }
+        return builder.toString();
     }
 
     private static final Set<String> GENERAL_OPTIONS_KEYS = new LinkedHashSet<>();
@@ -630,10 +670,11 @@ public class ConnectionString {
 
     private void warnOnUnsupportedOptions(final Map<String, List<String>> optionsMap) {
         if (LOGGER.isWarnEnabled()) {
-            optionsMap.keySet()
-                    .stream()
-                    .filter(k -> !ALL_KEYS.contains(k))
-                    .forEach(k -> LOGGER.warn(format("Connection string contains unsupported option '%s'.", k)));
+            // The key of an unsupported option is deliberately not logged: it may contain text that was intended as part of a credential
+            long unsupportedOptionsCount = optionsMap.keySet().stream().filter(k -> !ALL_KEYS.contains(k)).count();
+            if (unsupportedOptionsCount > 0) {
+                LOGGER.warn(format("Connection string contains %d unsupported option(s).", unsupportedOptionsCount));
+            }
         }
     }
 
@@ -708,7 +749,7 @@ public class ConnectionString {
                     requiredReplicaSetName = value;
                     break;
                 case "readconcernlevel":
-                    readConcern = new ReadConcern(ReadConcernLevel.fromString(value));
+                    readConcern = new ReadConcern(parseKnownValue("readconcernlevel", () -> ReadConcernLevel.fromString(value)));
                     break;
                 case "serverselectiontimeoutms":
                     serverSelectionTimeout = parseInteger(value, "serverselectiontimeoutms");
@@ -720,7 +761,7 @@ public class ConnectionString {
                     heartbeatFrequency = parseInteger(value, "heartbeatfrequencyms");
                     break;
                 case "servermonitoringmode":
-                    serverMonitoringMode = ServerMonitoringModeUtil.fromString(value);
+                    serverMonitoringMode = parseKnownValue("servermonitoringmode", () -> ServerMonitoringModeUtil.fromString(value));
                     break;
                 case "appname":
                     applicationName = value;
@@ -797,7 +838,7 @@ public class ConnectionString {
             if (key.equals("compressors")) {
                 compressors = value;
             } else if (key.equals("zlibcompressionlevel")) {
-                zlibCompressionLevel = Integer.parseInt(value);
+                zlibCompressionLevel = parseInteger(value, "zlibcompressionlevel");
             }
         }
         return buildCompressors(compressors, zlibCompressionLevel);
@@ -818,7 +859,7 @@ public class ConnectionString {
             } else if (cur.equals("zstd")) {
                 compressorsList.add(MongoCompressor.createZstdCompressor());
             } else if (!cur.isEmpty()) {
-                throw new IllegalArgumentException("Unsupported compressor '" + cur + "'");
+                throw new IllegalArgumentException("Unsupported compressor");
             }
         }
 
@@ -846,7 +887,7 @@ public class ConnectionString {
                     w = value;
                     break;
                 case "wtimeoutms":
-                    wTimeout = Integer.parseInt(value);
+                    wTimeout = parseInteger(value, "wtimeoutms");
                     break;
                 case "journal":
                     journal = parseBoolean(value, "journal");
@@ -906,7 +947,7 @@ public class ConnectionString {
         if (value.equalsIgnoreCase("standard")) {
             return UuidRepresentation.STANDARD;
         }
-        throw new IllegalArgumentException("Unknown uuid representation: " + value);
+        throw new IllegalArgumentException("Unknown uuid representation");
     }
 
     @Nullable
@@ -932,7 +973,7 @@ public class ConnectionString {
                         }
                         LOGGER.warn("Deprecated MONGDOB-CR authentication mechanism used in connection string");
                     } else {
-                        mechanism = AuthenticationMechanism.fromMechanismName(value);
+                        mechanism = parseKnownValue("authmechanism", () -> AuthenticationMechanism.fromMechanismName(value));
                     }
                     break;
                 case "authsource":
@@ -964,8 +1005,8 @@ public class ConnectionString {
             for (String part : authMechanismProperties.split(",")) {
                 String[] mechanismPropertyKeyValue = part.split(":", 2);
                 if (mechanismPropertyKeyValue.length != 2) {
-                    throw new IllegalArgumentException(format("The connection string contains invalid authentication properties. "
-                            + "'%s' is not a key value pair", part));
+                    throw new IllegalArgumentException("The connection string contains invalid authentication properties. "
+                            + "An authentication property is not a key value pair");
                 }
                 String key = mechanismPropertyKeyValue[0].trim().toLowerCase();
                 String value = mechanismPropertyKeyValue[1].trim();
@@ -1083,8 +1124,8 @@ public class ConnectionString {
                 valueList.add(urldecode(value));
                 optionsMap.put(key, valueList);
             } else {
-                throw new IllegalArgumentException(format("The connection string contains an invalid option '%s'. "
-                        + "'%s' is missing the value delimiter eg '%s=value'", optionsPart, part, part));
+                throw new IllegalArgumentException("The connection string contains an invalid option. "
+                        + "An option is missing the value delimiter, eg 'key=value'");
             }
         }
 
@@ -1110,6 +1151,8 @@ public class ConnectionString {
     private ReadPreference buildReadPreference(@Nullable final String readPreferenceType,
                                                final List<TagSet> tagSetList, final long maxStalenessSeconds) {
         if (readPreferenceType != null) {
+            // validates the mode up front so that the failure does not contain the value
+            parseKnownValue("readpreference", () -> ReadPreference.valueOf(readPreferenceType));
             if (tagSetList.isEmpty() && maxStalenessSeconds == -1) {
                 return ReadPreference.valueOf(readPreferenceType);
             } else if (maxStalenessSeconds == -1) {
@@ -1162,8 +1205,8 @@ public class ConnectionString {
             for (final String tag : tagSetString.split(",")) {
                 String[] tagKeyValuePair = tag.split(":");
                 if (tagKeyValuePair.length != 2) {
-                    throw new IllegalArgumentException(format("The connection string contains an invalid read preference tag. "
-                            + "'%s' is not a key value pair", tagSetString));
+                    throw new IllegalArgumentException("The connection string contains an invalid read preference tag. "
+                            + "A tag is not a key value pair");
                 }
                 tagList.add(new Tag(tagKeyValuePair[0].trim(), tagKeyValuePair[1].trim()));
             }
@@ -1180,19 +1223,17 @@ public class ConnectionString {
 
         if (TRUE_VALUES.contains(trimmedInput)) {
             if (!trimmedInput.equals("true")) {
-                LOGGER.warn(format("Deprecated boolean value '%s' in the connection string for '%s'. Replace with 'true'",
-                        trimmedInput, key));
+                LOGGER.warn(format("Deprecated boolean value in the connection string for '%s'. Replace with 'true'", key));
             }
             return true;
         } else if (FALSE_VALUES.contains(trimmedInput)) {
             if (!trimmedInput.equals("false")) {
-                LOGGER.warn(format("Deprecated boolean value '%s' in the connection string for '%s'. Replace with'false'",
-                        trimmedInput, key));
+                LOGGER.warn(format("Deprecated boolean value in the connection string for '%s'. Replace with 'false'", key));
             }
             return false;
         } else {
-            LOGGER.warn(format("Ignoring unrecognized boolean value '%s' in the connection string for '%s'. "
-                    + "Replace with either 'true' or 'false'", trimmedInput, key));
+            LOGGER.warn(format("Ignoring unrecognized boolean value in the connection string for '%s'. "
+                    + "Replace with either 'true' or 'false'", key));
             return null;
         }
     }
@@ -1202,7 +1243,7 @@ public class ConnectionString {
             return Integer.parseInt(input);
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException(format("The connection string contains an invalid value for '%s'. "
-                    + "'%s' is not a valid integer", key, input));
+                    + "The value is not a valid integer", key));
         }
     }
 
@@ -1211,7 +1252,7 @@ public class ConnectionString {
             return Long.parseLong(input);
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException(format("The connection string contains an invalid value for '%s'. "
-                    + "'%s' is not a valid long", key, input));
+                    + "The value is not a valid long", key));
         }
     }
 
@@ -1222,13 +1263,13 @@ public class ConnectionString {
         List<String> hosts = new ArrayList<>();
         for (String host : rawHosts) {
             if (host.length() == 0) {
-                throw new IllegalArgumentException(format("The connection string contains an empty host '%s'. ", rawHosts));
+                throw new IllegalArgumentException("The connection string contains an empty host");
             } else if (host.endsWith(".sock")) {
                 host = urldecode(host);
             } else if (host.startsWith("[")) {
                 if (!host.contains("]")) {
-                    throw new IllegalArgumentException(format("The connection string contains an invalid host '%s'. "
-                            + "IPv6 address literals must be enclosed in '[' and ']' according to RFC 2732", host));
+                    throw new IllegalArgumentException("The connection string contains an invalid host. "
+                            + "IPv6 address literals must be enclosed in '[' and ']' according to RFC 2732");
                 }
                 int idx = host.indexOf("]:");
                 if (idx != -1) {
@@ -1237,9 +1278,9 @@ public class ConnectionString {
             } else {
                 int colonCount = countOccurrences(host, ":");
                 if (colonCount > 1) {
-                    throw new IllegalArgumentException(format("The connection string contains an invalid host '%s'. "
+                    throw new IllegalArgumentException("The connection string contains an invalid host. "
                             + "Reserved characters such as ':' must be escaped according RFC 2396. "
-                            + "Any IPv6 address literal must be enclosed in '[' and ']' according to RFC 2732.", host));
+                            + "Any IPv6 address literal must be enclosed in '[' and ']' according to RFC 2732.");
                 } else if (colonCount == 1) {
                     validatePort(host.substring(host.indexOf(":") + 1));
                 }
@@ -1299,16 +1340,16 @@ public class ConnectionString {
         }
 
         if (containsDuplicatedOptions("proxyhost", optionsMap)) {
-            throw new IllegalArgumentException("Duplicated values for proxyHost: " + optionsMap.get("proxyhost"));
+            throw new IllegalArgumentException("Duplicated values for proxyHost");
         }
         if (containsDuplicatedOptions("proxyport", optionsMap)) {
-            throw new IllegalArgumentException("Duplicated values for proxyPort: " + optionsMap.get("proxyport"));
+            throw new IllegalArgumentException("Duplicated values for proxyPort");
         }
         if (containsDuplicatedOptions("proxypassword", optionsMap)) {
-            throw new IllegalArgumentException("Duplicated values for proxyPassword: " + optionsMap.get("proxypassword"));
+            throw new IllegalArgumentException("Duplicated values for proxyPassword");
         }
         if (containsDuplicatedOptions("proxyusername", optionsMap)) {
-            throw new IllegalArgumentException("Duplicated values for proxyUsername: " + optionsMap.get("proxyusername"));
+            throw new IllegalArgumentException("Duplicated values for proxyUsername");
         }
     }
 
@@ -1321,19 +1362,22 @@ public class ConnectionString {
     }
 
     private String urldecode(final String input) {
-        return urldecode(input, false);
-    }
-
-    private String urldecode(final String input, final boolean password) {
         try {
             return URLDecoder.decode(input, StandardCharsets.UTF_8.name());
-        } catch (UnsupportedEncodingException e) {
-            if (password) {
-                throw new IllegalArgumentException("The connection string contained unsupported characters in the password.");
-            } else {
-                throw new IllegalArgumentException(format("The connection string contained unsupported characters: '%s'."
-                        + "Decoding produced the following error: %s", input, e.getMessage()));
-            }
+        } catch (UnsupportedEncodingException | IllegalArgumentException e) {
+            // neither the input nor the cause is included, as either may contain part of the connection string
+            throw new IllegalArgumentException("The connection string contains characters that can not be URL decoded");
+        }
+    }
+
+    /**
+     * Parses a value that is a restricted set of strings, converting a failure into an exception that does not contain the value.
+     */
+    private static <T> T parseKnownValue(final String key, final Supplier<T> parser) {
+        try {
+            return parser.get();
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException(format("The connection string contains an invalid value for '%s'", key));
         }
     }
 
@@ -1461,6 +1505,9 @@ public class ConnectionString {
 
     /**
      * Get the unparsed connection string.
+     *
+     * <p>Take care when using the returned value: it is exactly the string that was provided and therefore contains any credentials
+     * in plain text. It should not be logged or included in an error message. {@link #toString()} returns a redacted form instead.</p>
      *
      * @return the connection string
      * @since 3.1
@@ -1857,9 +1904,16 @@ public class ConnectionString {
         return uuidRepresentation;
     }
 
+    /**
+     * Returns a representation of this connection string in which the user name, the password and the values of all options are
+     * replaced by {@code <hidden>}, and in which options that are not supported are omitted. Use
+     * {@link #getConnectionString()} to get the original string, including any credentials.
+     *
+     * @return the redacted representation
+     */
     @Override
     public String toString() {
-        return connectionString;
+        return redactedConnectionString;
     }
 
     @Override

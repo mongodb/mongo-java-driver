@@ -86,10 +86,10 @@ public final class DnsSuffixValidator implements SrvHostValidator {
         try {
             labels = IDN.toASCII(labels, IDN.ALLOW_UNASSIGNED).toLowerCase(Locale.ROOT);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("srvAllowedHostsSuffix is not a valid domain: " + suffix, e);
+            throw new IllegalArgumentException("srvAllowedHostsSuffix is not a valid domain");
         }
         if (!isDomainName(labels)) {
-            throw new IllegalArgumentException("srvAllowedHostsSuffix is not a valid domain: " + suffix);
+            throw new IllegalArgumentException("srvAllowedHostsSuffix is not a valid domain");
         }
         isAllowedSingleLabel = VALID_SINGLE_LABEL_SUFFIXES.contains(labels);
         if (!isAllowedSingleLabel && !labels.contains(".")) {
