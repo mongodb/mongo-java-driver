@@ -71,9 +71,6 @@ public abstract class AbstractAutoEmbeddingVectorSearchFunctionalTest {
 
     @BeforeAll
     void setUpOnce() throws InterruptedException {
-        //TODO-JAVA-6059 remove this assumption when Atlas Vector Search with automated embedding is generally available
-        Assumptions.assumeTrue(false);
-
         mongoClient = getMongoClient(getMongoClientSettingsBuilder()
                 .codecRegistry(CODEC_REGISTRY)
                 .build());
