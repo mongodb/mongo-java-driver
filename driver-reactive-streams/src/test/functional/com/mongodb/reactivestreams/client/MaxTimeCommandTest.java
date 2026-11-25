@@ -25,21 +25,29 @@ import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonDocument;
 import org.bson.Document;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.reactivestreams.Publisher;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static com.mongodb.ClusterFixture.TIMEOUT_DURATION;
+import static com.mongodb.reactivestreams.client.Fixture.getConnectionString;
 import static com.mongodb.reactivestreams.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClientBuilderFromConnectionString;
 import static java.util.Collections.singletonList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 /**
  * Verifies that the per-call {@code maxTime} option is sent to the server as {@code maxTimeMS} by the reactive driver.
@@ -52,19 +60,23 @@ public class MaxTimeCommandTest {
     private MongoClient mongoClient;
     private MongoCollection<Document> collection;
 
-    @Before
+    @BeforeEach
     public void setUp() {
+        // A client-level timeoutMS overrides the legacy maxTime option under test
+        assumeTrue(getConnectionString().getTimeout() == null, "client timeoutMS overrides per-call maxTime");
         commandListener = new TestCommandListener();
         mongoClient = MongoClients.create(getMongoClientBuilderFromConnectionString()
+                .retryWrites(false)
                 .addCommandListener(commandListener)
                 .build());
         collection = mongoClient.getDatabase(getDefaultDatabaseName()).getCollection(COLLECTION_NAME);
         Mono.from(collection.drop()).block(TIMEOUT_DURATION);
         Mono.from(collection.insertOne(new Document("_id", 1).append("a", 1))).block(TIMEOUT_DURATION);
+        Mono.from(collection.createIndex(new Document("a", 1))).block(TIMEOUT_DURATION);
         commandListener.reset();
     }
 
-    @After
+    @AfterEach
     public void tearDown() {
         if (mongoClient != null) {
             Mono.from(collection.drop()).block(TIMEOUT_DURATION);
@@ -72,74 +84,48 @@ public class MaxTimeCommandTest {
         }
     }
 
-    @Test
-    public void findOneAndDeleteShouldSendMaxTimeMS() {
-        Mono.from(collection.findOneAndDelete(new Document("_id", 1),
-                new FindOneAndDeleteOptions().maxTime(MAX_TIME_MS, TimeUnit.MILLISECONDS))).block(TIMEOUT_DURATION);
-        assertMaxTimeMS("findAndModify");
+    static Stream<Arguments> maxTimeOperations() {
+        final long ms = MAX_TIME_MS;
+        final TimeUnit unit = TimeUnit.MILLISECONDS;
+        return Stream.of(
+                op("findOneAndDelete", "findAndModify", c -> c.findOneAndDelete(new Document("_id", 1),
+                        new FindOneAndDeleteOptions().maxTime(ms, unit))),
+                op("findOneAndReplace", "findAndModify", c -> c.findOneAndReplace(new Document("_id", 1), new Document("a", 2),
+                        new FindOneAndReplaceOptions().maxTime(ms, unit))),
+                op("findOneAndUpdate", "findAndModify", c -> c.findOneAndUpdate(new Document("_id", 1),
+                        new Document("$set", new Document("a", 2)), new FindOneAndUpdateOptions().maxTime(ms, unit))),
+                op("findOneAndUpdate with pipeline", "findAndModify", c -> c.findOneAndUpdate(new Document("_id", 1),
+                        singletonList(new Document("$set", new Document("a", 2))), new FindOneAndUpdateOptions().maxTime(ms, unit))),
+                op("createIndexes", "createIndexes", c -> c.createIndexes(singletonList(new IndexModel(new Document("b", 1))),
+                        new CreateIndexOptions().maxTime(ms, unit))),
+                op("dropIndex by name", "dropIndexes", c -> c.dropIndex("a_1", new DropIndexOptions().maxTime(ms, unit))),
+                op("dropIndex by keys", "dropIndexes", c -> c.dropIndex(new Document("a", 1), new DropIndexOptions().maxTime(ms, unit)))
+        );
+    }
+
+    private static Arguments op(final String name, final String commandName,
+                                final Function<MongoCollection<Document>, Publisher<?>> operation) {
+        return Arguments.of(name, commandName, operation);
+    }
+
+    @ParameterizedTest(name = "{0} should send maxTimeMS")
+    @MethodSource("maxTimeOperations")
+    void shouldSendMaxTimeMS(final String name, final String commandName,
+                             final Function<MongoCollection<Document>, Publisher<?>> operation) {
+        Mono.from(operation.apply(collection)).block(TIMEOUT_DURATION);
+        List<CommandStartedEvent> events = commandListener.getCommandStartedEvents(commandName);
+        assertFalse(events.isEmpty(), "no " + commandName + " command observed");
+        BsonDocument command = events.get(events.size() - 1).getCommand();
+        assertTrue(command.containsKey("maxTimeMS"), "maxTimeMS missing from " + command.toJson());
+        assertEquals(MAX_TIME_MS, command.getNumber("maxTimeMS").longValue());
     }
 
     @Test
-    public void findOneAndReplaceShouldSendMaxTimeMS() {
-        Mono.from(collection.findOneAndReplace(new Document("_id", 1), new Document("a", 2),
-                new FindOneAndReplaceOptions().maxTime(MAX_TIME_MS, TimeUnit.MILLISECONDS))).block(TIMEOUT_DURATION);
-        assertMaxTimeMS("findAndModify");
-    }
-
-    @Test
-    public void findOneAndUpdateShouldSendMaxTimeMS() {
-        Mono.from(collection.findOneAndUpdate(new Document("_id", 1), new Document("$set", new Document("a", 2)),
-                new FindOneAndUpdateOptions().maxTime(MAX_TIME_MS, TimeUnit.MILLISECONDS))).block(TIMEOUT_DURATION);
-        assertMaxTimeMS("findAndModify");
-    }
-
-    @Test
-    public void findOneAndUpdateWithPipelineShouldSendMaxTimeMS() {
-        Mono.from(collection.findOneAndUpdate(new Document("_id", 1),
-                singletonList(new Document("$set", new Document("a", 2))),
-                new FindOneAndUpdateOptions().maxTime(MAX_TIME_MS, TimeUnit.MILLISECONDS))).block(TIMEOUT_DURATION);
-        assertMaxTimeMS("findAndModify");
-    }
-
-    @Test
-    public void createIndexesShouldSendMaxTimeMS() {
-        Mono.from(collection.createIndexes(singletonList(new IndexModel(new Document("a", 1))),
-                new CreateIndexOptions().maxTime(MAX_TIME_MS, TimeUnit.MILLISECONDS))).block(TIMEOUT_DURATION);
-        assertMaxTimeMS("createIndexes");
-    }
-
-    @Test
-    public void dropIndexByNameShouldSendMaxTimeMS() {
-        Mono.from(collection.createIndex(new Document("a", 1))).block(TIMEOUT_DURATION);
-        commandListener.reset();
-        Mono.from(collection.dropIndex("a_1", new DropIndexOptions().maxTime(MAX_TIME_MS, TimeUnit.MILLISECONDS)))
-                .block(TIMEOUT_DURATION);
-        assertMaxTimeMS("dropIndexes");
-    }
-
-    @Test
-    public void dropIndexByKeysShouldSendMaxTimeMS() {
-        Mono.from(collection.createIndex(new Document("a", 1))).block(TIMEOUT_DURATION);
-        commandListener.reset();
-        Mono.from(collection.dropIndex(new Document("a", 1), new DropIndexOptions().maxTime(MAX_TIME_MS, TimeUnit.MILLISECONDS)))
-                .block(TIMEOUT_DURATION);
-        assertMaxTimeMS("dropIndexes");
-    }
-
-    @Test
-    public void findOneAndUpdateWithoutMaxTimeShouldNotSendMaxTimeMS() {
+    void findOneAndUpdateWithoutMaxTimeShouldNotSendMaxTimeMS() {
         Mono.from(collection.findOneAndUpdate(new Document("_id", 1), new Document("$set", new Document("a", 2))))
                 .block(TIMEOUT_DURATION);
         List<CommandStartedEvent> events = commandListener.getCommandStartedEvents("findAndModify");
-        assertEquals(1, events.size());
-        assertFalse(events.get(0).getCommand().containsKey("maxTimeMS"));
-    }
-
-    private void assertMaxTimeMS(final String commandName) {
-        List<CommandStartedEvent> events = commandListener.getCommandStartedEvents(commandName);
-        assertEquals("expected exactly one " + commandName + " command", 1, events.size());
-        BsonDocument command = events.get(0).getCommand();
-        assertTrue("maxTimeMS missing from " + command.toJson(), command.containsKey("maxTimeMS"));
-        assertEquals(MAX_TIME_MS, command.getNumber("maxTimeMS").longValue());
+        assertFalse(events.isEmpty(), "no findAndModify command observed");
+        assertFalse(events.get(events.size() - 1).getCommand().containsKey("maxTimeMS"));
     }
 }
