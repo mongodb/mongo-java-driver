@@ -238,7 +238,6 @@ public class MicrometerTracer implements Tracer {
     /**
      * Represents a Micrometer-based span.
      */
-    // visible for testing
     static class MicrometerSpan implements Span {
         private final Observation observation;
         @Nullable

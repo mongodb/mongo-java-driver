@@ -452,9 +452,7 @@ public class InternalStreamConnection implements InternalConnection {
             final OperationContext operationContext) {
         CommandEventSender commandEventSender = new NoOpCommandEventSender();
         Span tracingSpan = null;
-        // Single owner of the span and event sender until the message is handed off to the receive phase:
-        // any failure from span creation through sendCommandMessage ends the span exactly once and emits at
-        // most one failed event; closing a span scope that was never opened is a no-op.
+
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
             tracingSpan = operationContext
                     .getTracingManager()
@@ -490,7 +488,6 @@ public class InternalStreamConnection implements InternalConnection {
             }
             sendCommandMessage(message, bsonOutput, operationContext);
         } catch (Throwable t) {
-            // Emit the failed event while the span scope is still open so the log/listener see the command span.
             try {
                 commandEventSender.sendFailedEvent(t);
             } finally {
@@ -741,7 +738,6 @@ public class InternalStreamConnection implements InternalConnection {
                 tracingSpan.setQueryText(commandDocument);
             }
             if (tracingSpan != null && isLoggingCommandNeeded) {
-                // The async path never holds a scope across callbacks; emit each event inside a short-lived one.
                 commandEventSender = new TracingScopedCommandEventSender(commandEventSender, tracingSpan);
             }
 
