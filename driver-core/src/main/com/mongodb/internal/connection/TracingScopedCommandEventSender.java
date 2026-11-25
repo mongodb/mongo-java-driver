@@ -19,9 +19,8 @@ package com.mongodb.internal.connection;
 import com.mongodb.internal.observability.micrometer.Span;
 
 /**
- * Emits command events while the command span's scope is open on the emitting thread, so that command
- * listeners and log appenders observe the command span (for example as {@code traceId}/{@code spanId} in
- * the MDC). The scope is opened and closed around each event; {@link Span#closeScope()} is idempotent.
+ * A {@link CommandEventSender} for the asynchronous path that opens the command span's scope around each event,
+ * so command listeners and log appenders observe the command span on whichever thread emits the event.
  *
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
