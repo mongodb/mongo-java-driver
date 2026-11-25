@@ -51,6 +51,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -649,7 +650,7 @@ public final class OidcAuthenticator extends SaslAuthenticator {
                 throw new IllegalArgumentException("source must be '$external'");
             }
 
-            Object environmentName = mechanismProperties.get(ENVIRONMENT_KEY.toLowerCase());
+            Object environmentName = mechanismProperties.get(ENVIRONMENT_KEY.toLowerCase(Locale.ROOT));
             if (environmentName != null) {
                 if (!(environmentName instanceof String) || !IMPLEMENTED_ENVIRONMENTS.contains(environmentName)) {
                     throw new IllegalArgumentException(ENVIRONMENT_KEY + " must be one of: " + USER_SUPPORTED_ENVIRONMENTS);

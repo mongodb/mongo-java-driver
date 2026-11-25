@@ -29,6 +29,7 @@ import org.bson.BsonString;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -579,21 +580,21 @@ public abstract class ReadPreference {
     public static ReadPreference valueOf(final String name) {
         notNull("name", name);
 
-        String nameToCheck = name.toLowerCase();
+        String nameToCheck = name.toLowerCase(Locale.ROOT);
 
-        if (nameToCheck.equals(PRIMARY.getName().toLowerCase())) {
+        if (nameToCheck.equals(PRIMARY.getName().toLowerCase(Locale.ROOT))) {
             return PRIMARY;
         }
-        if (nameToCheck.equals(SECONDARY.getName().toLowerCase())) {
+        if (nameToCheck.equals(SECONDARY.getName().toLowerCase(Locale.ROOT))) {
             return SECONDARY;
         }
-        if (nameToCheck.equals(SECONDARY_PREFERRED.getName().toLowerCase())) {
+        if (nameToCheck.equals(SECONDARY_PREFERRED.getName().toLowerCase(Locale.ROOT))) {
             return SECONDARY_PREFERRED;
         }
-        if (nameToCheck.equals(PRIMARY_PREFERRED.getName().toLowerCase())) {
+        if (nameToCheck.equals(PRIMARY_PREFERRED.getName().toLowerCase(Locale.ROOT))) {
             return PRIMARY_PREFERRED;
         }
-        if (nameToCheck.equals(NEAREST.getName().toLowerCase())) {
+        if (nameToCheck.equals(NEAREST.getName().toLowerCase(Locale.ROOT))) {
             return NEAREST;
         }
 
@@ -640,22 +641,22 @@ public abstract class ReadPreference {
         notNull("tagSetList", tagSetList);
         notNull("timeUnit", timeUnit);
 
-        String nameToCheck = name.toLowerCase();
+        String nameToCheck = name.toLowerCase(Locale.ROOT);
 
-        if (nameToCheck.equals(PRIMARY.getName().toLowerCase())) {
+        if (nameToCheck.equals(PRIMARY.getName().toLowerCase(Locale.ROOT))) {
             throw new IllegalArgumentException("Primary read preference can not also specify tag sets, max staleness or hedge");
         }
 
-        if (nameToCheck.equals(SECONDARY.getName().toLowerCase())) {
+        if (nameToCheck.equals(SECONDARY.getName().toLowerCase(Locale.ROOT))) {
             return new SecondaryReadPreference(tagSetList, maxStaleness, timeUnit);
         }
-        if (nameToCheck.equals(SECONDARY_PREFERRED.getName().toLowerCase())) {
+        if (nameToCheck.equals(SECONDARY_PREFERRED.getName().toLowerCase(Locale.ROOT))) {
             return new SecondaryPreferredReadPreference(tagSetList, maxStaleness, timeUnit);
         }
-        if (nameToCheck.equals(PRIMARY_PREFERRED.getName().toLowerCase())) {
+        if (nameToCheck.equals(PRIMARY_PREFERRED.getName().toLowerCase(Locale.ROOT))) {
             return new PrimaryPreferredReadPreference(tagSetList, maxStaleness, timeUnit);
         }
-        if (nameToCheck.equals(NEAREST.getName().toLowerCase())) {
+        if (nameToCheck.equals(NEAREST.getName().toLowerCase(Locale.ROOT))) {
             return new NearestReadPreference(tagSetList, maxStaleness, timeUnit);
         }
 

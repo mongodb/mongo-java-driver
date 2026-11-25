@@ -22,6 +22,7 @@ import com.mongodb.lang.Nullable;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.util.Locale;
 
 /**
  * Represents the location of a Mongo server - i.e. server name and port number
@@ -130,7 +131,7 @@ public class ServerAddress implements Serializable {
                 hostToUse = hostToUse.substring(0, idx).trim();
             }
         }
-        this.host = hostToUse.toLowerCase();
+        this.host = hostToUse.toLowerCase(Locale.ROOT);
         this.port = portToUse;
     }
 

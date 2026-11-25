@@ -41,6 +41,7 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.spi.dns.DnsClient;
 
 import java.util.List;
+import java.util.Locale;
 
 import static com.mongodb.internal.connection.DefaultClusterFactory.ClusterEnvironment.detectCluster;
 import static com.mongodb.internal.event.EventListenerHelper.NO_OP_CLUSTER_LISTENER;
@@ -214,7 +215,7 @@ public final class DefaultClusterFactory {
 
         private boolean isExternalClusterProvider(final String host) {
             for (String hostSuffix : hostSuffixes) {
-                String lowerCaseHost = host.toLowerCase();
+                String lowerCaseHost = host.toLowerCase(Locale.ROOT);
                 if (lowerCaseHost.endsWith(hostSuffix)) {
                     return true;
                 }

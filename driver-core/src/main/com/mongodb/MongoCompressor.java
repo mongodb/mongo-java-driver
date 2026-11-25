@@ -20,6 +20,7 @@ import com.mongodb.lang.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -93,7 +94,7 @@ public final class MongoCompressor {
     public <T> T getProperty(final String key, final T defaultValue) {
         notNull("key", key);
 
-        T value = (T) properties.get(key.toLowerCase());
+        T value = (T) properties.get(key.toLowerCase(Locale.ROOT));
         return (value == null && !properties.containsKey(key)) ? defaultValue : value;
     }
 
@@ -138,7 +139,7 @@ public final class MongoCompressor {
 
         this.name = from.name;
         this.properties = new HashMap<>(from.properties);
-        this.properties.put(propertyKey.toLowerCase(), propertyValue);
+        this.properties.put(propertyKey.toLowerCase(Locale.ROOT), propertyValue);
     }
 
     @Override
