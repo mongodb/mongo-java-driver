@@ -29,6 +29,7 @@ import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bson.conversions.Bson;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -72,6 +73,7 @@ public abstract class AbstractAutoEmbeddingVectorSearchFunctionalTest {
 
     @BeforeAll
     void setUpOnce() throws InterruptedException {
+        Assumptions.assumeTrue(ClusterFixture.isAtlasSearchTest(), "Atlas Search Index tests are disabled");
         assumeFalse(isStandalone(), "Vector search functional tests are not support on standalone instances");
         mongoClient = getMongoClient(getMongoClientSettingsBuilder()
                 .codecRegistry(CODEC_REGISTRY)
