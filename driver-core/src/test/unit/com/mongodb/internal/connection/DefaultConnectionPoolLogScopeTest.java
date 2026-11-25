@@ -45,6 +45,12 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
+/**
+ * Verifies that the connection checkout log messages are emitted while the operation span's scope is open, so an
+ * MDC bridge reading the current span at log time attributes them to the operation. A real pool with a test
+ * connection factory is driven through checkout and check-in with a fake span that counts scope opens and closes.
+ * The second test covers connection reuse: "Connection checked in" must use the span of the most recent checkout.
+ */
 final class DefaultConnectionPoolLogScopeTest {
 
     @Test
