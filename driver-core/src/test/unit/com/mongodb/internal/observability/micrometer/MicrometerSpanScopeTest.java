@@ -26,76 +26,51 @@ import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Verifies the scope contract of {@link MicrometerTracer.MicrometerSpan} against a real Micrometer registry:
- * scopes nest on one thread and each close restores the previous one (both the observation and the tracing
- * context); scopes opened on different threads do not interfere, so a close only affects the closing thread;
- * balanced use leaves no per-thread state behind; and the error-path conveniences hold (a close with nothing
- * open is a no-op, an open after {@code end()} does not throw). These properties are what let log sites in
- * both the sync and the async driver re-enter a span's scope safely.
+ * nested scopes on one thread restore the previous observation and tracing context, and balanced use leaves no
+ * per-thread state behind; a close only affects the closing thread; the error-path conveniences hold (a close
+ * with nothing open is a no-op, an open after {@code end()} does not throw); and {@link Span#runInScope} closes
+ * the scope even when the action throws. These properties are what let log sites in both the sync and the async
+ * driver re-enter a span's scope safely.
  */
 class MicrometerSpanScopeTest {
 
     @Test
-    void nestedOpenAndCloseRestoreTheOuterScope() {
-        TestObservationRegistry registry = TestObservationRegistry.create();
+    void nestedScopesRestoreTheOuterScope() {
+        ObservationRegistry registry = ObservationRegistry.create();
+        SimpleTracer tracer = new SimpleTracer();
+        registry.observationConfig().observationHandler(new DefaultTracingObservationHandler(tracer));
         Observation observation = Observation.start("op", registry);
-        Span span = new MicrometerTracer.MicrometerSpan(observation, null, Integer.MAX_VALUE);
+        TracingObservationHandler.TracingContext tracingContext =
+                observation.getContextView().get(TracingObservationHandler.TracingContext.class);
+        io.micrometer.tracing.Span observationSpan = tracingContext.getSpan();
+        MicrometerTracer.MicrometerSpan span = new MicrometerTracer.MicrometerSpan(observation, null, Integer.MAX_VALUE);
+        assertTrue(span.isThreadLocalEmpty(), "no thread-local entry may exist before the first open");
 
         span.openScope();                      // outer, e.g. MongoClusterImpl
         assertSame(observation, registry.getCurrentObservation());
+        assertFalse(span.isThreadLocalEmpty(), "an open scope must be tracked");
         Observation.Scope outerScope = registry.getCurrentObservationScope();
         span.openScope();                      // inner, e.g. DefaultConnectionPool at log time
         assertSame(observation, registry.getCurrentObservation());
         span.closeScope();                     // inner close
-        assertSame(observation, registry.getCurrentObservation(), "outer scope must still be current");
+        assertSame(observation, registry.getCurrentObservation(), "the observation must still be current after the inner close");
         assertSame(outerScope, registry.getCurrentObservationScope(), "the outer scope itself must be current");
+        assertSame(observationSpan, tracer.currentSpan(), "the observation's span must still be current after the inner close");
         span.closeScope();                     // outer close
-        assertNull(registry.getCurrentObservation(), "no scope may remain after balanced closes");
-        observation.stop();
-    }
-
-    @Test
-    void openScopeAfterEndDoesNotThrow() {
-        ObservationRegistry registry = TestObservationRegistry.create();
-        Observation observation = Observation.start("op", registry);
-        Span span = new MicrometerTracer.MicrometerSpan(observation, null, Integer.MAX_VALUE);
-        span.end();
-        assertDoesNotThrow(span::openScope);
-        assertDoesNotThrow(span::closeScope);
-    }
-
-    @Test
-    void scopesOpenedOnDifferentThreadsAreIndependent() throws Exception {
-        TestObservationRegistry registry = TestObservationRegistry.create();
-        Observation observation = Observation.start("op", registry);
-        Span span = new MicrometerTracer.MicrometerSpan(observation, null, Integer.MAX_VALUE);
-
-        span.openScope();                      // thread A (this thread) opens the scope
-        assertSame(observation, registry.getCurrentObservation());
-
-        ExecutorService threadB = Executors.newSingleThreadExecutor();
-        try {
-            threadB.submit(() -> {
-                span.openScope();              // thread B opens its own scope on the same span
-                span.closeScope();             // and closes it again
-                assertNull(registry.getCurrentObservation(), "thread B leaves no scope open on its thread");
-            }).get();                          // surface thread B's failures on this thread
-        } finally {
-            threadB.shutdown();
-        }
-
-        assertSame(observation, registry.getCurrentObservation(),
-                "thread A's scope must survive thread B's open/close");
-        span.closeScope();                     // thread A closes its scope
-        assertNull(registry.getCurrentObservation(), "no scope may remain after balanced closes");
+        assertNull(registry.getCurrentObservation(), "no observation may remain current after balanced closes");
+        assertNull(tracer.currentSpan(), "no span may remain current after balanced closes");
+        assertTrue(span.isThreadLocalEmpty(), "a balanced open/close must clear the thread-local");
         observation.stop();
     }
 
@@ -134,52 +109,39 @@ class MicrometerSpanScopeTest {
     }
 
     @Test
-    void balancedOpenAndCloseLeaveNoThreadLocalEntry() {
+    void closeWithoutOpenAndOpenAfterEndAreSafe() {
         ObservationRegistry registry = TestObservationRegistry.create();
         Observation observation = Observation.start("op", registry);
         MicrometerTracer.MicrometerSpan span = new MicrometerTracer.MicrometerSpan(observation, null, Integer.MAX_VALUE);
 
-        assertTrue(span.isThreadLocalEmpty(), "no thread-local entry may exist before the first open");
-        span.closeScope();
+        span.closeScope();                     // nothing open: must be a no-op
+        assertNull(registry.getCurrentObservation(), "an unmatched close must not change the current observation");
         assertTrue(span.isThreadLocalEmpty(), "an unmatched close must not create a thread-local entry");
-        span.openScope();
-        assertFalse(span.isThreadLocalEmpty(), "an open scope must be tracked");
-        span.closeScope();
-        assertTrue(span.isThreadLocalEmpty(), "a balanced open/close must clear the thread-local");
-        observation.stop();
+
+        span.end();
+        assertDoesNotThrow(span::openScope);
+        assertDoesNotThrow(span::closeScope);
+        assertTrue(span.isThreadLocalEmpty(), "a balanced open/close after end must clear the thread-local");
     }
 
     @Test
-    void nestedScopesRestoreTheOuterTracingContext() {
-        ObservationRegistry registry = ObservationRegistry.create();
-        SimpleTracer tracer = new SimpleTracer();
-        registry.observationConfig().observationHandler(new DefaultTracingObservationHandler(tracer));
-        Observation observation = Observation.start("op", registry);
-        TracingObservationHandler.TracingContext tracingContext =
-                observation.getContextView().get(TracingObservationHandler.TracingContext.class);
-        io.micrometer.tracing.Span observationSpan = tracingContext.getSpan();
-        Span span = new MicrometerTracer.MicrometerSpan(observation, null, Integer.MAX_VALUE);
-
-        span.openScope();
-        span.openScope();
-        span.closeScope();
-        assertSame(observationSpan, tracer.currentSpan(), "the observation's span must still be current after the inner close");
-        assertSame(observation, registry.getCurrentObservation(), "the observation itself must still be current");
-        span.closeScope();
-        assertNull(tracer.currentSpan(), "no span may remain current after balanced closes");
-        assertNull(registry.getCurrentObservation(), "no observation may remain current after balanced closes");
-        observation.stop();
-    }
-
-    @Test
-    void extraCloseIsNoOp() {
+    void runInScopeClosesTheScopeWhenTheActionThrows() {
         ObservationRegistry registry = TestObservationRegistry.create();
         Observation observation = Observation.start("op", registry);
-        Span span = new MicrometerTracer.MicrometerSpan(observation, null, Integer.MAX_VALUE);
-        span.closeScope();
-        span.openScope();
-        span.closeScope();
-        assertDoesNotThrow(span::closeScope);
+        MicrometerTracer.MicrometerSpan span = new MicrometerTracer.MicrometerSpan(observation, null, Integer.MAX_VALUE);
+        RuntimeException failure = new RuntimeException("appender failed");
+
+        RuntimeException thrown = assertThrows(RuntimeException.class, () -> Span.runInScope(span, () -> {
+            throw failure;
+        }));
+
+        assertSame(failure, thrown, "the action's exception must propagate unchanged");
+        assertNull(registry.getCurrentObservation(), "the scope must be closed when the action throws");
+        assertTrue(span.isThreadLocalEmpty(), "the failed action must not leave a thread-local entry");
+
+        AtomicBoolean ran = new AtomicBoolean();
+        Span.runInScope(null, () -> ran.set(true));
+        assertTrue(ran.get(), "a null span must run the action without opening a scope");
         observation.stop();
     }
 }

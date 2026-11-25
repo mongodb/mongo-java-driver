@@ -46,37 +46,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 /**
- * Verifies that the connection checkout log messages are emitted while the operation span's scope is open, so an
- * MDC bridge reading the current span at log time attributes them to the operation. A real pool with a test
- * connection factory is driven through checkout and check-in with a fake span that counts scope opens and closes.
- * The second test covers connection reuse: "Connection checked in" must use the span of the most recent checkout.
+ * Verifies that the "Connection checked in" log message is emitted while the span of the most recent checkout is
+ * open, so an MDC bridge reading the current span at log time attributes it to the right operation. A real pool
+ * with a test connection factory is driven through two checkouts of the same connection, with fake spans that
+ * count scope opens and closes. This covers connection reuse, which the end-to-end prose tests do not.
  */
 final class DefaultConnectionPoolLogScopeTest {
-
-    @Test
-    void checkoutMessagesAreEmittedInsideTheOperationSpanScope() {
-        String applicationName = "DefaultConnectionPoolLogScopeTest";
-        ServerId serverId = new ServerId(new ClusterId(applicationName), new ServerAddress());
-        ScopeCountingSpan span = new ScopeCountingSpan();
-        OperationContext operationContext = createOperationContext();
-        operationContext.setTracingSpan(span);
-        DefaultConnectionPool pool = new DefaultConnectionPool(serverId, new TestInternalConnectionFactory(),
-                ConnectionPoolSettings.builder().maxSize(1).build(),
-                SameObjectProvider.initialized(mock(SdamServerDescriptionManager.class)), OPERATION_CONTEXT_FACTORY);
-        pool.ready();
-
-        try (ScopeRecordingInterceptor interceptor = new ScopeRecordingInterceptor(applicationName, span)) {
-            InternalConnection connection = pool.get(operationContext);
-            connection.close();
-
-            interceptor.assertEmittedInsideScope("Connection checkout started");
-            interceptor.assertEmittedInsideScope("Connection checked out");
-            interceptor.assertEmittedInsideScope("Connection checked in");
-            assertEquals(span.openCount.get(), span.closeCount.get(), "scopes must be balanced");
-        } finally {
-            pool.close();
-        }
-    }
 
     @Test
     void checkedInMessageUsesTheSpanOfTheMostRecentCheckout() {
