@@ -75,6 +75,7 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
     private BsonDocument variables;
     private TimeoutMode timeoutMode;
     private CursorType cursorType;
+    private BsonDocument overridingCommandOptions;
 
     AggregateOperationImpl(final MongoNamespace namespace,
             final List<BsonDocument> pipeline, final Decoder<T> decoder, final AggregationLevel aggregationLevel,
@@ -95,6 +96,7 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
         this.aggregateTarget = notNull("aggregateTarget", aggregateTarget);
         this.pipelineCreator = notNull("pipelineCreator", pipelineCreator);
         this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
+        overridingCommandOptions = new BsonDocument();
     }
 
     List<BsonDocument> getPipeline() {
@@ -187,6 +189,10 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
         return this;
     }
 
+    void overridingCommandOptions(final BsonDocument overridingCommandOptions) {
+        this.overridingCommandOptions = overridingCommandOptions;
+    }
+
     @Override
     public String getCommandName() {
         return COMMAND_NAME;
@@ -242,7 +248,8 @@ class AggregateOperationImpl<T> implements ReadOperationCursor<T> {
         if (variables != null) {
             commandDocument.put("let", variables);
         }
-
+        // `overridingCommandOptions` must be applied after other options
+        commandDocument.putAll(overridingCommandOptions);
         return commandDocument;
     }
 

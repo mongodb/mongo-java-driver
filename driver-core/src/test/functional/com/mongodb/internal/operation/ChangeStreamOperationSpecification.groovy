@@ -21,6 +21,7 @@ import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
+import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.changestream.ChangeStreamDocument
 import com.mongodb.client.model.changestream.FullDocument
@@ -114,7 +115,8 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def operation = new ChangeStreamOperation<Document>(namespace, FullDocument.DEFAULT,
                 FullDocumentBeforeChange.DEFAULT, pipeline, new DocumentCodec(), changeStreamLevel as ChangeStreamLevel, null)
                 .batchSize(5)
-                .collation(defaultCollation)
+                .overridingCommandOptions(new BsonDocument('collation', defaultCollation.asDocument()))
+                .collation(Collation.builder().locale('overridden').build())
                 .startAtOperationTime(new BsonTimestamp())
 
         def expectedCommand = new BsonDocument('aggregate', aggregate)

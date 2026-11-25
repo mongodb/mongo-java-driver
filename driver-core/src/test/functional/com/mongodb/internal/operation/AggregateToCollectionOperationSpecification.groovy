@@ -243,15 +243,26 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
             operation.hint(new BsonString('x_1'))
             expectedCommand.append('hint', new BsonString('x_1'))
         }
+        if (useOverridingCommandOptions) {
+            operation.overridingCommandOptions(new BsonDocument('let', new BsonDocument('overriding', new BsonInt32(2))))
+                    .let(new BsonDocument('overridden', new BsonInt32(1)))
+            expectedCommand.append('let', new BsonDocument('overriding', new BsonInt32(2)))
+        }
 
         then:
         testOperation(operation, serverVersion, expectedCommand, async, BsonDocument.parse('{ok: 1}'),
                 true, false, ReadPreference.primary(), false)
 
         where:
-        serverVersion | includeBypassValidation | includeReadConcern | includeWriteConcern | includeCollation | async  | useCursor | useHint
-        [3, 6, 0]     | true                    | true               | true                | true             | true   | true      | true
-        [3, 6, 0]     | true                    | true               | true                | true             | false  | true      | false
+        serverVersion               << [[3, 6, 0], [3, 6, 0]]
+        includeBypassValidation     << [true,      true]
+        includeReadConcern          << [true,      true]
+        includeWriteConcern         << [true,      true]
+        includeCollation            << [true,      true]
+        async                       << [true,      false]
+        useCursor                   << [true,      true]
+        useHint                     << [true,      false]
+        useOverridingCommandOptions << [true,      true]
     }
 
     def 'should support collation'() {

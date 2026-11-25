@@ -27,12 +27,12 @@ import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.lang.Nullable;
+import org.bson.Document;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -51,6 +51,7 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
     private Integer batchSize;
     @Nullable
     private TimeoutMode timeoutMode;
+    private final Document overridingCommandOptions;
 
     public MongoIterableImpl(@Nullable final ClientSession clientSession, final OperationExecutor executor, final ReadConcern readConcern,
                              final ReadPreference readPreference, final boolean retryReads, final TimeoutSettings timeoutSettings) {
@@ -60,6 +61,7 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
         this.readPreference = notNull("readPreference", readPreference);
         this.retryReads = retryReads;
         this.timeoutSettings = timeoutSettings;
+        overridingCommandOptions = new Document();
     }
 
     public abstract ReadOperationCursor<TResult> asReadOperation();
@@ -115,9 +117,20 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
         return this;
     }
 
-    // VAKOTODO document that a subclass must actually support it for it to work
-    MongoIterable<TResult> setOverridingCommandOption(final String name, final Object value) {
-        throw fail("VAKOTODO");
+    /**
+     * @see InternalCommonIterable#commandOption(String, Object)
+     * @see #getOverridingCommandOptions()
+     */
+    MongoIterable<TResult> overridingCommandOption(final String name, final Object value) {
+        overridingCommandOptions.put(name, value);
+        return this;
+    }
+
+    /**
+     * @see #overridingCommandOption(String, Object)
+     */
+    Document getOverridingCommandOptions() {
+        return overridingCommandOptions;
     }
 
     @Override

@@ -39,7 +39,10 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.operation.ChangeStreamOperation.FORBIDDEN_COMMAND_OPTIONS;
+import static java.lang.String.format;
 
 
 final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStreamDocument<T>>
@@ -177,7 +180,9 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
 
     @Override
     public ChangeStreamPublisher<T> commandOption(final String name, final Object value) {
-        setOverridingCommandOption(notNull("name", name), notNull("value", value));
+        notNull("name", name);
+        isTrueArgument(format("name must not be '%s'", name), !FORBIDDEN_COMMAND_OPTIONS.contains(name));
+        overridingCommandOption(name, notNull("value", value));
         return this;
     }
 
@@ -194,6 +199,7 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
 
     private <S> ReadOperationCursor<S> createChangeStreamOperation(final Codec<S> codec, final int initialBatchSize) {
         return getOperations().changeStream(fullDocument, fullDocumentBeforeChange, pipeline, codec, changeStreamLevel, initialBatchSize,
-                collation, comment, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);
+                collation, comment, resumeToken, startAtOperationTime, startAfter, showExpandedEvents,
+                getOverridingCommandOptions());
     }
 }

@@ -27,6 +27,7 @@ import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
+import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -37,7 +38,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
-import static com.mongodb.assertions.Assertions.fail;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -50,10 +50,12 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
     private Integer batchSize;
     @Nullable
     private TimeoutMode timeoutMode;
+    private final Document overridingCommandOptions;
 
     BatchCursorPublisher(@Nullable final ClientSession clientSession, final MongoOperationPublisher<T> mongoOperationPublisher) {
         this.clientSession = clientSession;
         this.mongoOperationPublisher = notNull("mongoOperationPublisher", mongoOperationPublisher);
+        overridingCommandOptions = new Document();
     }
 
     abstract ReadOperationCursor<T> asReadOperation(int initialBatchSize);
@@ -131,9 +133,23 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
                 });
     }
 
-    // VAKOTODO document that a subclass must actually support it for it to work
-    Publisher<T> setOverridingCommandOption(final String name, final Object value) {
-        throw fail("VAKOTODO");
+    /**
+     * @see InternalCommonBatchCursorPublisher#commandOption(String, Object)
+     * @see #getOverridingCommandOptions()
+     */
+    Publisher<T> overridingCommandOption(final String name, final Object value) {
+        overridingCommandOptions.put(name, value);
+        return this;
+    }
+
+    /**
+     * @see #overridingCommandOption(String, Object)
+     */
+    Document getOverridingCommandOptions() {
+        // An application may mutate `overridingCommandOptions` via the `overridingCommandOption` method after subscribing to a `Publisher`.
+        // Such a mutation must not conflict with `overridingCommandOptions` being read while publishing.
+        // That is why we must return a shallow copy of `overridingCommandOptions`.
+        return new Document(overridingCommandOptions);
     }
 
     @Override

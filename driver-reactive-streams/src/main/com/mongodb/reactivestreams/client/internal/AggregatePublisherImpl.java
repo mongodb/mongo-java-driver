@@ -41,7 +41,10 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.operation.AggregateOperation.FORBIDDEN_COMMAND_OPTIONS;
+import static java.lang.String.format;
 
 final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T>
         implements InternalCommonBatchCursorPublisher<T>, AggregatePublisher<T> {
@@ -173,7 +176,9 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T>
 
     @Override
     public AggregatePublisher<T> commandOption(final String name, final Object value) {
-        setOverridingCommandOption(notNull("name", name), notNull("value", value));
+        notNull("name", name);
+        isTrueArgument(format("name must not be '%s'", name), !FORBIDDEN_COMMAND_OPTIONS.contains(name));
+        overridingCommandOption(name, notNull("value", value));
         return this;
     }
 
@@ -211,12 +216,14 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T>
     private ReadOperationExplainable<T> asAggregateOperation(final int initialBatchSize) {
         return getOperations()
                 .aggregate(pipeline, getDocumentClass(), getTimeoutMode(),
-                           initialBatchSize, collation, hint, hintString, comment, variables, allowDiskUse, aggregationLevel);
+                           initialBatchSize, collation, hint, hintString, comment, variables, allowDiskUse, aggregationLevel,
+                        getOverridingCommandOptions());
     }
 
     private ReadOperationSimple<Void> getAggregateToCollectionOperation() {
         return getOperations().aggregateToCollection(pipeline, getTimeoutMode(), allowDiskUse, bypassDocumentValidation,
-                collation, hint, hintString, comment, variables, aggregationLevel);
+                collation, hint, hintString, comment, variables, aggregationLevel,
+                getOverridingCommandOptions());
     }
 
     @Nullable

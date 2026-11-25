@@ -146,12 +146,15 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
                 .allowDiskUse(true)
                 .batchSize(10)
                 .collation(defaultCollation)
+                .overridingCommandOptions(new BsonDocument('let', new BsonDocument('overriding', new BsonInt32(2))))
+                .let(new BsonDocument('overridden', new BsonInt32(1)))
 
         expectedCommand = new BsonDocument('aggregate', new BsonString(helper.namespace.getCollectionName()))
                 .append('pipeline', new BsonArray(pipeline))
                 .append('allowDiskUse', new BsonBoolean(true))
                 .append('collation', defaultCollation.asDocument())
                 .append('cursor', new BsonDocument('batchSize', new BsonInt32(10)))
+                .append('let', new BsonDocument('overriding', new BsonInt32(2)))
 
         then:
         testOperation(operation, [3, 4, 0], expectedCommand, async, helper.cursorResult)

@@ -48,7 +48,10 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.fail;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.operation.ChangeStreamOperation.FORBIDDEN_COMMAND_OPTIONS;
+import static java.lang.String.format;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -138,7 +141,6 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
                 return cursor();
             }
 
-            // VAKOTODO use commandOption
             @Override
             public MongoChangeStreamCursor<TDocument> cursor() {
                 return new MongoChangeStreamCursorImpl<>(execute(getBatchSize()), codecRegistry.get(clazz), initialResumeToken());
@@ -199,7 +201,9 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
 
     @Override
     public ChangeStreamIterable<TResult> commandOption(final String name, final Object value) {
-        setOverridingCommandOption(notNull("name", name), notNull("value", value));
+        notNull("name", name);
+        isTrueArgument(format("name must not be '%s'", name), !FORBIDDEN_COMMAND_OPTIONS.contains(name));
+        overridingCommandOption(name, notNull("value", value));
         return this;
     }
 
@@ -208,7 +212,6 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
         return cursor();
     }
 
-    // VAKOTODO use commandOption
     @Override
     public MongoChangeStreamCursor<ChangeStreamDocument<TResult>> cursor() {
         return new MongoChangeStreamCursorImpl<>(execute(getBatchSize()), codec, initialResumeToken());
@@ -235,10 +238,10 @@ public class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeS
         return getExecutor(operations.createTimeoutSettings(0, maxAwaitTimeMS));
     }
 
-    // VAKOTODO use commandOption
     private ReadOperationCursor<RawBsonDocument> createChangeStreamOperation(@Nullable final Integer batchSize) {
         return operations.changeStream(fullDocument, fullDocumentBeforeChange, pipeline, new RawBsonDocumentCodec(), changeStreamLevel,
-                batchSize, collation, comment, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);
+                batchSize, collation, comment, resumeToken, startAtOperationTime, startAfter, showExpandedEvents,
+                getOverridingCommandOptions());
     }
 
     /**
