@@ -29,6 +29,14 @@ import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+/**
+ * Verifies the contract of {@link Span#runInScope}, the helper every log site uses to make a span current for
+ * the duration of a log call: a null span runs the action with no scope at all; otherwise the scope is opened
+ * before the action and closed after it, also when the action throws (the action's exception propagates
+ * unchanged); and nested calls on the same span open and close in LIFO order. A recording fake stands in for
+ * the span, so only the call sequence is checked here; Micrometer behaviour is covered by
+ * {@link MicrometerSpanScopeTest}.
+ */
 class SpanRunInScopeTest {
 
     @Test
