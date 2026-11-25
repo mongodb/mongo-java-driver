@@ -452,7 +452,6 @@ public class InternalStreamConnection implements InternalConnection {
             final OperationContext operationContext) {
         CommandEventSender commandEventSender = new NoOpCommandEventSender();
         Span tracingSpan = null;
-
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
             tracingSpan = operationContext
                     .getTracingManager()
