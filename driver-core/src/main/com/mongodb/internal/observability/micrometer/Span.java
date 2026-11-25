@@ -90,9 +90,9 @@ public interface Span {
 
     /**
      * Opens a scope for this span, making it the current observation on the calling thread.
-     * A successful {@code openScope()} must be followed by a {@link #closeScope()} on the same thread.
-     * Scopes nest per thread: each {@code openScope()} may be paired with a {@link #closeScope()}
-     * on the same thread, and calling {@code openScope()} after {@link #end()} does not throw.
+     * Every successful {@code openScope()} must be matched by a {@link #closeScope()} on the same thread;
+     * scopes nest per thread, so a thread may open the scope again before closing it.
+     * Calling {@code openScope()} after {@link #end()} does not throw.
      */
     void openScope();
 
