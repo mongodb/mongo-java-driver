@@ -67,7 +67,7 @@ final class DefaultConnectionPoolLogScopeTest {
 
         try (ScopeRecordingInterceptor interceptor = new ScopeRecordingInterceptor(applicationName, span)) {
             InternalConnection connection = pool.get(operationContext);
-            connection.close(); // check in
+            connection.close();
 
             interceptor.assertEmittedInsideScope("Connection checkout started");
             interceptor.assertEmittedInsideScope("Connection checked out");
@@ -96,9 +96,12 @@ final class DefaultConnectionPoolLogScopeTest {
         try (ScopeRecordingInterceptor interceptor = new ScopeRecordingInterceptor(applicationName, secondSpan)) {
             pool.get(first).close();
             interceptor.scopeOpenAtMessage.clear();
+            int firstSpanOpensBeforeSecondCheckout = firstSpan.openCount.get();
             pool.get(second).close();
 
             interceptor.assertEmittedInsideScope("Connection checked in"); // must use the second checkout's span
+            assertEquals(firstSpanOpensBeforeSecondCheckout, firstSpan.openCount.get(),
+                    "the first checkout's span must not be re-entered by the second checkout");
             assertEquals(0, firstSpan.openCount.get() - firstSpan.closeCount.get());
         } finally {
             pool.close();
