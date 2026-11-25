@@ -33,6 +33,14 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Verifies the scope contract of {@link MicrometerTracer.MicrometerSpan} against a real Micrometer registry:
+ * scopes nest on one thread and each close restores the previous one (both the observation and the tracing
+ * context); scopes opened on different threads do not interfere, so a close only affects the closing thread;
+ * balanced use leaves no per-thread state behind; and the error-path conveniences hold (a close with nothing
+ * open is a no-op, an open after {@code end()} does not throw). These properties are what let log sites in
+ * both the sync and the async driver re-enter a span's scope safely.
+ */
 class MicrometerSpanScopeTest {
 
     @Test
