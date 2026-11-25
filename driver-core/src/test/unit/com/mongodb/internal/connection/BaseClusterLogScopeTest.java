@@ -44,6 +44,8 @@ import static com.mongodb.connection.ClusterType.STANDALONE;
 import static com.mongodb.internal.logging.LogMessage.Component.SERVER_SELECTION;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 final class BaseClusterLogScopeTest {
 
@@ -61,6 +63,12 @@ final class BaseClusterLogScopeTest {
         public synchronized void intercept(final LogMessage message) {
             super.intercept(message);
             scopeOpenAtMessage.put(message.getMessageId(), span.isScopeOpen());
+        }
+
+        void assertEmittedInsideScope(final String messageId) {
+            Boolean scopeOpen = scopeOpenAtMessage.get(messageId);
+            assertNotNull(scopeOpen, messageId + " was not emitted");
+            assertTrue(scopeOpen, messageId + " must be emitted inside the span scope");
         }
     }
 
@@ -83,10 +91,10 @@ final class BaseClusterLogScopeTest {
             BaseCluster.logServerSelectionFailed(operationContext, clusterId, new MongoTimeoutException("test"), selector, description);
             BaseCluster.logServerSelectionSucceeded(operationContext, clusterId, address, selector, description);
 
-            assertEquals(Boolean.TRUE, interceptor.scopeOpenAtMessage.get("Server selection started"));
-            assertEquals(Boolean.TRUE, interceptor.scopeOpenAtMessage.get("Waiting for suitable server to become available"));
-            assertEquals(Boolean.TRUE, interceptor.scopeOpenAtMessage.get("Server selection failed"));
-            assertEquals(Boolean.TRUE, interceptor.scopeOpenAtMessage.get("Server selection succeeded"));
+            interceptor.assertEmittedInsideScope("Server selection started");
+            interceptor.assertEmittedInsideScope("Waiting for suitable server to become available");
+            interceptor.assertEmittedInsideScope("Server selection failed");
+            interceptor.assertEmittedInsideScope("Server selection succeeded");
             assertEquals(span.openCount.get(), span.closeCount.get(), "scopes must be balanced");
         }
     }

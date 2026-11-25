@@ -41,6 +41,8 @@ import static com.mongodb.ClusterFixture.createOperationContext;
 import static com.mongodb.internal.logging.LogMessage.Component.CONNECTION;
 import static com.mongodb.internal.logging.LogMessage.Level.DEBUG;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 final class DefaultConnectionPoolLogScopeTest {
@@ -61,9 +63,9 @@ final class DefaultConnectionPoolLogScopeTest {
             InternalConnection connection = pool.get(operationContext);
             connection.close(); // check in
 
-            assertEquals(Boolean.TRUE, interceptor.scopeOpenAtMessage.get("Connection checkout started"));
-            assertEquals(Boolean.TRUE, interceptor.scopeOpenAtMessage.get("Connection checked out"));
-            assertEquals(Boolean.TRUE, interceptor.scopeOpenAtMessage.get("Connection checked in"));
+            interceptor.assertEmittedInsideScope("Connection checkout started");
+            interceptor.assertEmittedInsideScope("Connection checked out");
+            interceptor.assertEmittedInsideScope("Connection checked in");
             assertEquals(span.openCount.get(), span.closeCount.get(), "scopes must be balanced");
         } finally {
             pool.close();
@@ -90,8 +92,7 @@ final class DefaultConnectionPoolLogScopeTest {
             interceptor.scopeOpenAtMessage.clear();
             pool.get(second).close();
 
-            assertEquals(Boolean.TRUE, interceptor.scopeOpenAtMessage.get("Connection checked in"),
-                    "checked in must use the span of the second checkout, not the first");
+            interceptor.assertEmittedInsideScope("Connection checked in"); // must use the second checkout's span
             assertEquals(0, firstSpan.openCount.get() - firstSpan.closeCount.get());
         } finally {
             pool.close();
@@ -111,6 +112,12 @@ final class DefaultConnectionPoolLogScopeTest {
         public synchronized void intercept(final LogMessage message) {
             super.intercept(message);
             scopeOpenAtMessage.put(message.getMessageId(), span.isScopeOpen());
+        }
+
+        void assertEmittedInsideScope(final String messageId) {
+            Boolean scopeOpen = scopeOpenAtMessage.get(messageId);
+            assertNotNull(scopeOpen, messageId + " was not emitted");
+            assertTrue(scopeOpen, messageId + " must be emitted inside the span scope");
         }
     }
 
