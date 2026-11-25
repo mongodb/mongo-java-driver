@@ -47,6 +47,12 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+/**
+ * Verifies that the four server selection log messages are emitted while the operation span's scope is open,
+ * so an MDC bridge reading the current span at log time attributes them to the operation. The log helpers are
+ * called directly with a fake span that counts scope opens and closes; the cluster description and selector
+ * passed to them are only rendered into the message text, so any valid values will do.
+ */
 final class BaseClusterLogScopeTest {
 
     /** Records, per log message id, whether the span scope was open on the thread that emitted it. */
