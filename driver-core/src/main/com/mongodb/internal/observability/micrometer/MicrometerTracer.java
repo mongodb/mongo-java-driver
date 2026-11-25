@@ -244,6 +244,10 @@ public class MicrometerTracer implements Tracer {
         @Nullable
         private final MongoNamespace namespace;
         private final int queryTextLength;
+        // Open scopes of this span, per thread. A Micrometer scope is thread-local state, and in the async driver
+        // the same span is made current from several threads (e.g. the operation span from the caller thread, a
+        // Netty thread and the cluster thread as each one logs). Each thread must close only the scopes it opened,
+        // and a thread may hold more than one at a time when a log site re-enters a scope that is already open.
         private final ThreadLocal<Deque<Observation.Scope>> scopes = new ThreadLocal<>();
 
         /**
@@ -284,7 +288,6 @@ public class MicrometerTracer implements Tracer {
             }
         }
 
-        // visible for testing
         boolean isThreadLocalEmpty() {
             return scopes.get() == null;
         }
