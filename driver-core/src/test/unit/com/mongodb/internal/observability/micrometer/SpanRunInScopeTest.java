@@ -29,19 +29,19 @@ import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class SpanScopesTest {
+class SpanRunInScopeTest {
 
     @Test
     void runsActionDirectlyWhenSpanIsNull() {
         List<String> calls = new ArrayList<>();
-        SpanScopes.runInScope(null, () -> calls.add("action"));
+        Span.runInScope(null, () -> calls.add("action"));
         assertEquals(asList("action"), calls);
     }
 
     @Test
     void opensScopeBeforeActionAndClosesAfter() {
         List<String> calls = new ArrayList<>();
-        SpanScopes.runInScope(new RecordingSpan(calls), () -> calls.add("action"));
+        Span.runInScope(new RecordingSpan(calls), () -> calls.add("action"));
         assertEquals(asList("open", "action", "close"), calls);
     }
 
@@ -49,7 +49,7 @@ class SpanScopesTest {
     void closesScopeWhenActionThrows() {
         List<String> calls = new ArrayList<>();
         RuntimeException failure = new RuntimeException("appender failed");
-        RuntimeException thrown = assertThrows(RuntimeException.class, () -> SpanScopes.runInScope(new RecordingSpan(calls), () -> {
+        RuntimeException thrown = assertThrows(RuntimeException.class, () -> Span.runInScope(new RecordingSpan(calls), () -> {
             throw failure;
         }));
         assertEquals(failure, thrown);
@@ -60,7 +60,7 @@ class SpanScopesTest {
     void nestsScopes() {
         List<String> calls = new ArrayList<>();
         RecordingSpan span = new RecordingSpan(calls);
-        SpanScopes.runInScope(span, () -> SpanScopes.runInScope(span, () -> calls.add("action")));
+        Span.runInScope(span, () -> Span.runInScope(span, () -> calls.add("action")));
         assertEquals(asList("open", "open", "action", "close", "close"), calls);
     }
 

@@ -41,7 +41,7 @@ import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.internal.logging.LogMessage.Entry;
 import com.mongodb.internal.logging.StructuredLogger;
-import com.mongodb.internal.observability.micrometer.SpanScopes;
+import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.selector.AtMostTwoRandomServerSelector;
 import com.mongodb.internal.selector.LatencyMinimizingServerSelector;
 import com.mongodb.internal.selector.MinimumOperationCountServerSelector;
@@ -564,7 +564,7 @@ abstract class BaseCluster implements Cluster {
                             new Entry(SELECTOR, serverSelector.toString()),
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
                     "Server selection started for operation[ {}] with ID {}. Selector: {}, topology description: {}");
-            SpanScopes.runInScope(operationContext.getTracingSpan(), () -> STRUCTURED_LOGGER.log(logMessage));
+            Span.runInScope(operationContext.getTracingSpan(), () -> STRUCTURED_LOGGER.log(logMessage));
         }
     }
 
@@ -588,7 +588,7 @@ abstract class BaseCluster implements Cluster {
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
                     "Waiting for server to become available for operation[ {}] with ID {}.[ Remaining time: {} ms.]"
                             + " Selector: {}, topology description: {}.");
-            SpanScopes.runInScope(operationContext.getTracingSpan(), () -> STRUCTURED_LOGGER.log(logMessage));
+            Span.runInScope(operationContext.getTracingSpan(), () -> STRUCTURED_LOGGER.log(logMessage));
         }
     }
 
@@ -614,7 +614,7 @@ abstract class BaseCluster implements Cluster {
                             new Entry(SELECTOR, serverSelector.toString()),
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
                     "Server selection failed for operation[ {}] with ID {}. Failure: {}. Selector: {}, topology description: {}");
-            SpanScopes.runInScope(operationContext.getTracingSpan(), () -> STRUCTURED_LOGGER.log(logMessage));
+            Span.runInScope(operationContext.getTracingSpan(), () -> STRUCTURED_LOGGER.log(logMessage));
         }
     }
 
@@ -636,7 +636,7 @@ abstract class BaseCluster implements Cluster {
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
                     "Server selection succeeded for operation[ {}] with ID {}. Selected server: {}[:{}]."
                             + " Selector: {}, topology description: {}");
-            SpanScopes.runInScope(operationContext.getTracingSpan(), () -> STRUCTURED_LOGGER.log(logMessage));
+            Span.runInScope(operationContext.getTracingSpan(), () -> STRUCTURED_LOGGER.log(logMessage));
         }
     }
 

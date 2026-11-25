@@ -156,4 +156,25 @@ public interface Span {
      */
     @Nullable
     MongoNamespace getNamespace();
+
+    /**
+     * Runs an action while the span's scope is open on the calling thread, so that anything that reads the current
+     * tracing context during the action (log appenders, MDC bridges, listeners) observes that span. The scope is
+     * closed even if the action throws.
+     *
+     * @param span   the span to make current, or {@code null} to run the action without touching any scope
+     * @param action the action to run
+     */
+    static void runInScope(@Nullable final Span span, final Runnable action) {
+        if (span == null) {
+            action.run();
+            return;
+        }
+        span.openScope();
+        try {
+            action.run();
+        } finally {
+            span.closeScope();
+        }
+    }
 }
