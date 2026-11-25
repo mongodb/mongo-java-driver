@@ -622,7 +622,7 @@ final class DefaultConnectionPool implements ConnectionPool {
         private Connection.PinningMode pinningMode;
         private long operationId;
         @Nullable
-        private volatile Span operationSpan;
+        private Span operationSpan;
 
         PooledConnection(final UsageTrackingInternalConnection wrapped) {
             this.wrapped = notNull("wrapped", wrapped);
