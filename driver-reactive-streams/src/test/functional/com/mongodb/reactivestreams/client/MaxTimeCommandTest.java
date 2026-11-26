@@ -78,8 +78,10 @@ public class MaxTimeCommandTest {
 
     @AfterEach
     public void tearDown() {
-        if (mongoClient != null) {
+        if (collection != null) {
             Mono.from(collection.drop()).block(TIMEOUT_DURATION);
+        }
+        if (mongoClient != null) {
             mongoClient.close();
         }
     }
