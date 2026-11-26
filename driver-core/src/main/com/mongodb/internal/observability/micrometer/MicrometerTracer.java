@@ -32,8 +32,6 @@ import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
 
 import java.io.StringWriter;
-import java.util.ArrayDeque;
-import java.util.Deque;
 
 import static com.mongodb.internal.VisibleForTesting.AccessModifier.PRIVATE;
 import static com.mongodb.internal.observability.micrometer.TracingManager.ENV_OBSERVABILITY_QUERY_TEXT_MAX_LENGTH;
@@ -243,11 +241,6 @@ public class MicrometerTracer implements Tracer {
         @Nullable
         private final MongoNamespace namespace;
         private final int queryTextLength;
-        // Open scopes of this span, per thread. A Micrometer scope is thread-local state, and in the async driver
-        // the same span is made current from several threads (e.g. the operation span from the caller thread, a
-        // Netty thread and the cluster thread as each one logs). Each thread must close only the scopes it opened,
-        // and a thread may hold more than one at a time when a log site re-enters a scope that is already open.
-        private final ThreadLocal<Deque<Observation.Scope>> scopes = new ThreadLocal<>();
 
         /**
          * Constructs a new {@link MicrometerSpan} instance with an associated Observation and MongoDB namespace.
@@ -263,32 +256,9 @@ public class MicrometerTracer implements Tracer {
         }
 
         @Override
-        public void openScope() {
-            Deque<Observation.Scope> deque = scopes.get();
-            if (deque == null) {
-                deque = new ArrayDeque<>();
-                scopes.set(deque);
-            }
-            deque.push(observation.openScope());
-        }
-
-        @Override
-        public void closeScope() {
-            Deque<Observation.Scope> deque = scopes.get();
-            if (deque == null) {
-                return;
-            }
-            Observation.Scope scope = deque.poll();
-            if (scope != null) {
-                scope.close();
-            }
-            if (deque.isEmpty()) {
-                scopes.remove();
-            }
-        }
-
-        boolean isThreadLocalEmpty() {
-            return scopes.get() == null;
+        public SpanScope openScope() {
+            Observation.Scope scope = observation.openScope();
+            return scope::close;
         }
 
         @Override

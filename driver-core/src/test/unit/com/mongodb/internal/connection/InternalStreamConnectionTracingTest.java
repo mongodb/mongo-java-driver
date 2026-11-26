@@ -29,6 +29,7 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
 import com.mongodb.internal.observability.micrometer.Span;
+import com.mongodb.internal.observability.micrometer.SpanScope;
 import com.mongodb.internal.observability.micrometer.TraceContext;
 import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.thread.AsyncClientExecutor;
@@ -121,7 +122,7 @@ class InternalStreamConnectionTracingTest {
 
     /**
      * Verifies exactly-once span termination when the sync send fails: the widened {@code catch (Throwable)}
-     * must fire {@code error()}/{@code closeScope()}/{@code end()} once each, with no double-firing from the
+     * must fire {@code error()}/scope close/{@code end()} once each, with no double-firing from the
      * receive path (which is never reached).
      */
     @Test
@@ -268,7 +269,7 @@ class InternalStreamConnectionTracingTest {
         }
 
         private void record(final String event) {
-            scopeOpenAtEvent.put(event, span.openScopeCount.get() > span.closeScopeCount.get());
+            scopeOpenAtEvent.put(event, span.openScopeCount.get() > span.scopeCloseCount.get());
         }
 
         @Override
@@ -324,7 +325,7 @@ class InternalStreamConnectionTracingTest {
         }
         assertEquals(Boolean.TRUE, listener.scopeOpenAtEvent.get("started"), "started event must see the span scope");
         assertEquals(Boolean.TRUE, listener.scopeOpenAtEvent.get("succeeded"), "succeeded event must see the span scope");
-        assertEquals(span.openScopeCount.get(), span.closeScopeCount.get(), "scopes must be balanced");
+        assertEquals(span.openScopeCount.get(), span.scopeCloseCount.get(), "scopes must be balanced");
         assertEquals(1, span.endCount.get());
         connection.close();
     }
@@ -417,13 +418,9 @@ class InternalStreamConnectionTracingTest {
         private final AtomicInteger endCount = new AtomicInteger();
 
         @Override
-        public void openScope() {
+        public SpanScope openScope() {
             openScopeCount.incrementAndGet();
-        }
-
-        @Override
-        public void closeScope() {
-            closeScopeCount.incrementAndGet();
+            return closeScopeCount::incrementAndGet;
         }
 
         @Override

@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.internal.observability.micrometer.Span;
+import com.mongodb.internal.observability.micrometer.SpanScope;
 
 /**
  * A {@link CommandEventSender} for the asynchronous path that opens the command span's scope around each event,
@@ -35,41 +36,29 @@ final class TracingScopedCommandEventSender implements CommandEventSender {
 
     @Override
     public void sendStartedEvent() {
-        span.openScope();
-        try {
+        try (SpanScope ignored = span.openScope()) {
             delegate.sendStartedEvent();
-        } finally {
-            span.closeScope();
         }
     }
 
     @Override
     public void sendFailedEvent(final Throwable t) {
-        span.openScope();
-        try {
+        try (SpanScope ignored = span.openScope()) {
             delegate.sendFailedEvent(t);
-        } finally {
-            span.closeScope();
         }
     }
 
     @Override
     public void sendSucceededEvent(final ResponseBuffers responseBuffers) {
-        span.openScope();
-        try {
+        try (SpanScope ignored = span.openScope()) {
             delegate.sendSucceededEvent(responseBuffers);
-        } finally {
-            span.closeScope();
         }
     }
 
     @Override
     public void sendSucceededEventForOneWayCommand() {
-        span.openScope();
-        try {
+        try (SpanScope ignored = span.openScope()) {
             delegate.sendSucceededEventForOneWayCommand();
-        } finally {
-            span.closeScope();
         }
     }
 }

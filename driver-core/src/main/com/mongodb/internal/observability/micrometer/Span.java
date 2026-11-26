@@ -47,11 +47,8 @@ public interface Span {
      */
     Span EMPTY = new Span() {
         @Override
-        public void openScope() {
-        }
-
-        @Override
-        public void closeScope() {
+        public SpanScope openScope() {
+            return SpanScope.NO_OP;
         }
 
         @Override
@@ -89,22 +86,13 @@ public interface Span {
     };
 
     /**
-     * Opens a scope for this span, making it the current observation on the calling thread.
-     * Every successful {@code openScope()} must be matched by a {@link #closeScope()} on the same thread;
-     * scopes nest per thread, so a thread may open the scope again before closing it.
-     * Calling {@code openScope()} after {@link #end()} does not throw.
+     * Makes this span the current span on the calling thread until the returned scope is closed. Close it on the
+     * same thread, normally with try-with-resources. Scopes nest: closing the inner one restores the outer.
+     * Opening a scope after {@link #end()} is allowed.
+     *
+     * @return the scope, which must be closed on the calling thread
      */
-    void openScope();
-
-    /**
-     * Closes the most recently opened scope for this span on the calling thread, restoring the
-     * previous observation. Each {@code closeScope()} must be called on the same thread as its
-     * matching {@code openScope()}; scopes nest per thread, and an equal number of
-     * {@code openScope()} and {@code closeScope()} calls on a thread leaves no scope open on it.
-     * Calling this with no open scope on the calling thread is a no-op — error-handling paths may
-     * therefore call it unconditionally.
-     */
-    void closeScope();
+    SpanScope openScope();
 
     /**
      * Sets the query text on the observation context from the given command document.
@@ -170,11 +158,8 @@ public interface Span {
             action.run();
             return;
         }
-        span.openScope();
-        try {
+        try (SpanScope ignored = span.openScope()) {
             action.run();
-        } finally {
-            span.closeScope();
         }
     }
 }

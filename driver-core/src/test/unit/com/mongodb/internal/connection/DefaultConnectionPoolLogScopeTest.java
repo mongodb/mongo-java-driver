@@ -24,6 +24,7 @@ import com.mongodb.connection.ServerId;
 import com.mongodb.internal.inject.SameObjectProvider;
 import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.internal.observability.micrometer.Span;
+import com.mongodb.internal.observability.micrometer.SpanScope;
 import com.mongodb.internal.observability.micrometer.TraceContext;
 import com.mongodb.lang.Nullable;
 import com.mongodb.logging.TestLoggingInterceptor;
@@ -114,13 +115,9 @@ final class DefaultConnectionPoolLogScopeTest {
         }
 
         @Override
-        public void openScope() {
+        public SpanScope openScope() {
             openCount.incrementAndGet();
-        }
-
-        @Override
-        public void closeScope() {
-            closeCount.incrementAndGet();
+            return closeCount::incrementAndGet;
         }
 
         @Override

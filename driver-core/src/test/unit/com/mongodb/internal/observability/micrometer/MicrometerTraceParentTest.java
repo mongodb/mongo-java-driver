@@ -136,7 +136,7 @@ class MicrometerTraceParentTest {
 
             Class<?> spanInterface = Class.forName(
                     "com.mongodb.internal.observability.micrometer.Span", true, isolatedLoader);
-            spanInterface.getMethod("openScope").invoke(span);
+            Object scope = spanInterface.getMethod("openScope").invoke(span);
 
             Object traceContext = assertDoesNotThrow(() -> spanInterface.getMethod("context").invoke(span),
                     "obtaining the trace context must not throw when micrometer-tracing is absent");
@@ -149,7 +149,8 @@ class MicrometerTraceParentTest {
 
             assertNull(traceParent);
 
-            spanInterface.getMethod("closeScope").invoke(span);
+            Class.forName("com.mongodb.internal.observability.micrometer.SpanScope", true, isolatedLoader)
+                    .getMethod("close").invoke(scope);
             spanInterface.getMethod("end").invoke(span);
         }
     }
@@ -161,15 +162,13 @@ class MicrometerTraceParentTest {
 
         MicrometerTracer micrometerTracer = new MicrometerTracer(registry, false, 1000, null);
         Span span = micrometerTracer.nextSpan(MongodbObservation.MONGODB_COMMAND, "find", null, null);
-        span.openScope();
-        try {
+        try (SpanScope ignored = span.openScope()) {
             SimpleTraceContext context = (SimpleTraceContext) tracer.lastSpan().context();
             context.setTraceId(traceId);
             context.setSpanId(spanId);
             context.setSampled(sampled);
             return span.context().traceParent();
         } finally {
-            span.closeScope();
             span.end();
         }
     }
