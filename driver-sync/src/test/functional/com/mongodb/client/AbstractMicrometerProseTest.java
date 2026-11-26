@@ -63,7 +63,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getCredential;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.getPrimary;
@@ -457,7 +456,6 @@ public abstract class AbstractMicrometerProseTest {
         String appName = "otel-log-test10";
         BsonDocument failPoint = BsonDocument.parse("{ configureFailPoint: 'failCommand', mode: { times: 1 },"
                 + " data: { failCommands: ['find'], errorCode: 91, appName: '" + appName + "' } }");
-        // error code 91 marks the server Unknown; a short heartbeat lets the retry rediscover it quickly
         MongoClientSettings settings = MongoClientSettings.builder(tracedSettings(appName))
                 .retryReads(true)
                 .applyToServerSettings(b -> b.heartbeatFrequency(500, TimeUnit.MILLISECONDS))
@@ -523,12 +521,11 @@ public abstract class AbstractMicrometerProseTest {
     @DisplayName("Test 11 (steps 4-6): Server selection failure log messages carry the operation span")
     @Test
     void testServerSelectionFailureLogMessagesCarryTheOperationSpan() {
-        // a load-balanced fixture would not time out; the SRV assumption keeps the fixture's resolver settings out of the way
-        assumeFalse(getConnectionString().isSrvProtocol());
+        // a load-balanced fixture would not time out
         assumeFalse(isLoadBalanced());
         String operationName = "insert " + getDefaultDatabaseName() + ".test";
         String appName = "otel-log-test11-failing";
-        // replace the fixture's cluster settings entirely so that the host list does not depend on the fixture URI's shape
+        // replace the fixture's cluster settings entirely (hosts and any srvHost) with a single unreachable host
         MongoClientSettings failing = MongoClientSettings.builder(tracedSettings(appName))
                 .applyToClusterSettings(b -> b.applySettings(ClusterSettings.builder()
                         .hosts(singletonList(new ServerAddress("localhost", 1)))
