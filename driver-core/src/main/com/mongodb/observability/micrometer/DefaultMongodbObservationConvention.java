@@ -40,6 +40,12 @@ import java.util.Arrays;
  */
 public class DefaultMongodbObservationConvention implements ObservationConvention<MongodbObservationContext> {
 
+    // Upper bounds for the key-value arrays below: each builder writes at most one value per key name and trims
+    // the array to the values actually present.
+    private static final int OPERATION_LOW_CARDINALITY_MAX = MongodbObservation.OperationLowCardinalityKeyNames.values().length;
+    private static final int COMMAND_LOW_CARDINALITY_MAX = MongodbObservation.CommandLowCardinalityKeyNames.values().length;
+    private static final int COMMAND_HIGH_CARDINALITY_MAX = MongodbObservation.HighCardinalityKeyNames.values().length;
+
     @Override
     public boolean supportsContext(final Observation.Context context) {
         return context instanceof MongodbObservationContext;
@@ -76,7 +82,7 @@ public class DefaultMongodbObservationConvention implements ObservationConventio
         String collectionName = context.getCollectionName();
 
         // Built as one array: each KeyValues.and() merges and re-sorts, which dominated the per-span cost.
-        KeyValue[] values = new KeyValue[5];
+        KeyValue[] values = new KeyValue[OPERATION_LOW_CARDINALITY_MAX];
         int n = 0;
         values[n++] = MongodbObservation.OperationLowCardinalityKeyNames.SYSTEM.withValue("mongodb");
         if (databaseName != null) {
@@ -100,7 +106,7 @@ public class DefaultMongodbObservationConvention implements ObservationConventio
         String cmdName = commandName != null ? commandName : "";
         String dbName = databaseName != null ? databaseName : "";
 
-        KeyValue[] values = new KeyValue[9];
+        KeyValue[] values = new KeyValue[COMMAND_LOW_CARDINALITY_MAX];
         int n = 0;
         values[n++] = MongodbObservation.CommandLowCardinalityKeyNames.SYSTEM.withValue("mongodb");
         values[n++] = MongodbObservation.CommandLowCardinalityKeyNames.NAMESPACE.withValue(dbName);
@@ -134,7 +140,7 @@ public class DefaultMongodbObservationConvention implements ObservationConventio
     }
 
     private KeyValues getCommandHighCardinalityKeyValues(final MongodbObservationContext context) {
-        KeyValue[] values = new KeyValue[9];
+        KeyValue[] values = new KeyValue[COMMAND_HIGH_CARDINALITY_MAX];
         int n = 0;
         String queryText = context.getQueryText();
         if (queryText != null) {
