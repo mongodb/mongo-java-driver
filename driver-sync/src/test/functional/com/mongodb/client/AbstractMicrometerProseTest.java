@@ -458,6 +458,7 @@ public abstract class AbstractMicrometerProseTest {
                 + " data: { failCommands: ['find'], errorCode: 91, appName: '" + appName + "' } }");
         MongoClientSettings settings = MongoClientSettings.builder(tracedSettings(appName))
                 .retryReads(true)
+                // error 91 marks the server Unknown; without a fast heartbeat the retry waits ~10 s for rediscovery
                 .applyToServerSettings(b -> b.heartbeatFrequency(500, TimeUnit.MILLISECONDS))
                 .build();
         try (SpanRecordingInterceptor logs = new SpanRecordingInterceptor(appName, inMemoryOtel.getTracer());
@@ -467,30 +468,14 @@ public abstract class AbstractMicrometerProseTest {
             assertNoSpanIsCurrent();
 
             List<FinishedSpan> spans = inMemoryOtel.getFinishedSpans();
-            FinishedSpan firstAttempt = spanNamed(spans, "find", 0);
-            FinishedSpan secondAttempt = spanNamed(spans, "find", 1);
-            FinishedSpan operation = spanNamed(spans, "find " + getDefaultDatabaseName() + ".test", 0);
-
-            List<ObservedLog> started = logs.messages("Command started").stream()
-                    .filter(l -> operation.getTraceId().equals(l.traceId)).collect(Collectors.toList());
-            assertEquals(2, started.size(), "one started message per attempt");
-            assertEquals(firstAttempt.getSpanId(), started.get(0).spanId);
-            assertEquals(secondAttempt.getSpanId(), started.get(1).spanId);
-
-            List<ObservedLog> failed = logs.messages("Command failed");
-            assertEquals(1, failed.size());
-            assertEquals(firstAttempt.getSpanId(), failed.get(0).spanId);
-            assertEquals(firstAttempt.getTraceId(), failed.get(0).traceId);
-
-            List<ObservedLog> succeeded = logs.messages("Command succeeded").stream()
-                    .filter(l -> secondAttempt.getTraceId().equals(l.traceId)).collect(Collectors.toList());
-            assertEquals(1, succeeded.size());
-            assertEquals(secondAttempt.getSpanId(), succeeded.get(0).spanId);
-            assertEquals(secondAttempt.getTraceId(), succeeded.get(0).traceId);
-
-            for (ObservedLog l : logs.component(LogMessage.Component.COMMAND)) {
-                assertNotEquals(operation.getSpanId(), l.spanId, "command messages must not carry the operation span");
-            }
+            FinishedSpan operation = onlySpanNamed(spans, operationSpanName("find"));
+            // command spans finish in attempt order
+            List<FinishedSpan> attempts = childSpans(spans, operation, "find");
+            assertEquals(2, attempts.size(), "two find attempts expected under " + operation);
+            // exact equality to a command span also means that none of these messages carries the operation span
+            assertCarry(logs.messages("Command started"), attempts.get(0), attempts.get(1));
+            assertCarry(logs.messages("Command failed"), attempts.get(0));
+            assertCarry(logs.messages("Command succeeded"), attempts.get(1));
         }
     }
 
@@ -498,32 +483,23 @@ public abstract class AbstractMicrometerProseTest {
     @Test
     void testOperationPathLogMessagesCarryTheOperationSpan() {
         assumeFalse(isLoadBalanced());
-        String operationName = "insert " + getDefaultDatabaseName() + ".test";
         String appName = "otel-log-test11";
         try (SpanRecordingInterceptor logs = new SpanRecordingInterceptor(appName, inMemoryOtel.getTracer());
              MongoClient client = createMongoClient(tracedSettings(appName))) {
             client.getDatabase(getDefaultDatabaseName()).getCollection("test").insertOne(new Document("x", 1));
             assertNoSpanIsCurrent();
 
-            FinishedSpan operation = spanNamed(inMemoryOtel.getFinishedSpans(), operationName, 0);
-            for (String messageId : asList("Server selection started", "Server selection succeeded",
-                    "Connection checkout started", "Connection checked out", "Connection checked in")) {
-                List<ObservedLog> observed = logs.messages(messageId).stream()
-                        .filter(l -> operation.getTraceId().equals(l.traceId)).collect(Collectors.toList());
-                assertFalse(observed.isEmpty(), messageId + " must be emitted inside the operation's trace");
-                for (ObservedLog l : observed) {
-                    assertEquals(operation.getSpanId(), l.spanId, messageId + " must carry the operation span");
-                }
-            }
+            FinishedSpan operation = onlySpanNamed(inMemoryOtel.getFinishedSpans(), operationSpanName("insert"));
+            assertEachCarries(logs, operation, "Server selection started", "Server selection succeeded",
+                    "Connection checkout started", "Connection checked out", "Connection checked in");
         }
     }
 
     @DisplayName("Test 11 (steps 4-6): Server selection failure log messages carry the operation span")
     @Test
     void testServerSelectionFailureLogMessagesCarryTheOperationSpan() {
-        // a load-balanced fixture would not time out
+        // not on load balanced (per spec): a load-balanced client never waits for server selection, so the waiting message is never logged
         assumeFalse(isLoadBalanced());
-        String operationName = "insert " + getDefaultDatabaseName() + ".test";
         String appName = "otel-log-test11-failing";
         // replace the fixture's cluster settings entirely (hosts and any srvHost) with a single unreachable host
         MongoClientSettings failing = MongoClientSettings.builder(tracedSettings(appName))
@@ -539,23 +515,17 @@ public abstract class AbstractMicrometerProseTest {
                     () -> client.getDatabase(getDefaultDatabaseName()).getCollection("test").insertOne(new Document("x", 1)));
             assertNoSpanIsCurrent();
 
-            FinishedSpan operation = onlySpanNamed(inMemoryOtel.getFinishedSpans(), operationName);
-            for (String messageId : asList("Waiting for suitable server to become available", "Server selection failed")) {
-                List<ObservedLog> observed = logs.messages(messageId);
-                assertFalse(observed.isEmpty(), messageId + " must be emitted");
-                for (ObservedLog l : observed) {
-                    assertEquals(operation.getTraceId(), l.traceId, messageId + " must carry the operation's trace");
-                    assertEquals(operation.getSpanId(), l.spanId, messageId + " must carry the operation span");
-                }
-            }
+            FinishedSpan operation = onlySpanNamed(inMemoryOtel.getFinishedSpans(), operationSpanName("insert"));
+            assertEachCarries(logs, operation, "Waiting for suitable server to become available", "Server selection failed");
         }
     }
 
     @DisplayName("Test 11 (steps 7-10): Connection checkout failure log messages carry the operation span")
     @Test
     void testConnectionCheckoutFailureLogMessagesCarryTheOperationSpan() {
+        // not on load balanced (per spec): the fail point is set on one mongos, but the load balancer may route the client to another
         assumeFalse(isLoadBalanced());
-        // only SCRAM sends saslContinue as a standalone command; a null mechanism negotiates SCRAM
+        // only SCRAM (default) sends saslContinue as a standalone command
         MongoCredential credential = getCredential();
         assumeTrue(credential != null);
         assumeTrue(credential.getAuthenticationMechanism() == null
@@ -576,15 +546,8 @@ public abstract class AbstractMicrometerProseTest {
             assertThrows(MongoException.class, () -> client.getDatabase(getDefaultDatabaseName()).getCollection("test").find().first());
             assertNoSpanIsCurrent();
 
-            FinishedSpan operation = onlySpanNamed(inMemoryOtel.getFinishedSpans(), "find " + getDefaultDatabaseName() + ".test");
-            for (String messageId : asList("Connection checkout started", "Connection checkout failed")) {
-                List<ObservedLog> observed = logs.messages(messageId);
-                assertFalse(observed.isEmpty(), messageId + " must be emitted");
-                for (ObservedLog l : observed) {
-                    assertEquals(operation.getTraceId(), l.traceId, messageId + " must carry the operation's trace");
-                    assertEquals(operation.getSpanId(), l.spanId, messageId + " must carry the operation span");
-                }
-            }
+            FinishedSpan operation = onlySpanNamed(inMemoryOtel.getFinishedSpans(), operationSpanName("find"));
+            assertEachCarries(logs, operation, "Connection checkout started", "Connection checkout failed");
         }
     }
 
@@ -601,74 +564,37 @@ public abstract class AbstractMicrometerProseTest {
             assertNoSpanIsCurrent();
 
             List<FinishedSpan> spans = inMemoryOtel.getFinishedSpans();
-            FinishedSpan transaction = spanNamed(spans, "transaction", 0);
-            FinishedSpan insertOperation = spanNamed(spans, "insert " + getDefaultDatabaseName() + ".test", 0);
-            assertEquals(transaction.getSpanId(), insertOperation.getParentId(), "the insert operation must run under the transaction");
-            FinishedSpan insertCommand = spanNamed(spans, "insert", 0);
-            assertEquals(insertOperation.getSpanId(), insertCommand.getParentId(), "the insert command must run under its operation");
-            FinishedSpan commitCommand = spanNamed(spans, "commitTransaction", 0);
-            for (FinishedSpan command : asList(insertCommand, commitCommand)) {
-                assertEquals(transaction.getTraceId(), command.getTraceId(), command.getName() + " must be in the transaction's trace");
-                for (String messageId : asList("Command started", "Command succeeded")) {
-                    List<ObservedLog> observed = logs.messages(messageId).stream()
-                            .filter(l -> command.getSpanId().equals(l.spanId)).collect(Collectors.toList());
-                    assertEquals(1, observed.size(), messageId + " must carry the " + command.getName() + " command span");
-                    assertEquals(transaction.getTraceId(), observed.get(0).traceId,
-                            messageId + " for " + command.getName() + " must carry the transaction's trace");
-                }
-            }
+            FinishedSpan transaction = onlySpanNamed(spans, "transaction");
+            FinishedSpan insertOperation = childSpan(spans, transaction, operationSpanName("insert"));
+            FinishedSpan insertCommand = childSpan(spans, insertOperation, "insert");
+            // admin commands have no collection in the operation span name
+            FinishedSpan commitOperation = childSpan(spans, transaction, "commitTransaction admin");
+            FinishedSpan commitCommand = childSpan(spans, commitOperation, "commitTransaction");
+            assertCarry(logs.messages("Command started"), insertCommand, commitCommand);
+            assertCarry(logs.messages("Command succeeded"), insertCommand, commitCommand);
 
-            // command spans are named after the command alone; operation spans add the namespace
-            Set<String> commandSpanIds = spans.stream()
-                    .filter(s -> transaction.getTraceId().equals(s.getTraceId()))
-                    .filter(s -> !s.getName().equals("transaction") && !s.getName().contains(" "))
-                    .map(FinishedSpan::getSpanId).collect(Collectors.toSet());
-            for (ObservedLog l : logs.component(LogMessage.Component.COMMAND)) {
-                if (transaction.getTraceId().equals(l.traceId)) {
-                    assertNotEquals(transaction.getSpanId(), l.spanId, l.messageId + " must not carry the transaction span");
-                    assertTrue(commandSpanIds.contains(l.spanId), l.messageId + " must carry a command span of the transaction");
-                }
-            }
-
-            // server selection and connection checkout precede any command span, so they belong to the operation span; every
-            // operation of the transaction (the insert and the commit) is a child of the transaction span
-            Set<String> operationSpanIds = spans.stream()
-                    .filter(s -> transaction.getSpanId().equals(s.getParentId()))
-                    .map(FinishedSpan::getSpanId).collect(Collectors.toSet());
+            // server selection and connection checkout precede any command span, so they belong to the operation span of the
+            // insert or of the commit; neither is the transaction span
+            Set<String> operationSpanIds = new HashSet<>(asList(insertOperation.getSpanId(), commitOperation.getSpanId()));
             for (String messageId : asList("Server selection started", "Server selection succeeded",
                     "Connection checkout started", "Connection checked out", "Connection checked in")) {
-                List<ObservedLog> observed = logs.messages(messageId).stream()
-                        .filter(l -> transaction.getTraceId().equals(l.traceId)).collect(Collectors.toList());
+                List<ObservedLog> observed = logs.messages(messageId);
                 assertTrue(observed.stream().anyMatch(l -> insertOperation.getSpanId().equals(l.spanId)),
-                        messageId + " must be emitted for the insert carrying the insert operation span, but got " + spanIds(observed));
+                        messageId + " must be emitted for the insert carrying its operation span, got " + observed);
                 for (ObservedLog l : observed) {
-                    assertNotEquals(transaction.getSpanId(), l.spanId, messageId + " must not carry the transaction span");
-                    assertTrue(operationSpanIds.contains(l.spanId), messageId + " must carry an operation span of the transaction");
+                    assertEquals(transaction.getTraceId(), l.traceId, messageId + " must carry the transaction's trace, got " + l);
+                    assertTrue(operationSpanIds.contains(l.spanId),
+                            messageId + " must carry an operation span of the transaction, got " + l);
                 }
             }
 
             // the commit reuses the pooled connection the insert checked in, so its "Connection checked in" must carry the
             // commit's operation span, not the span captured when the insert checked the connection out
-            FinishedSpan commitOperation = spans.stream()
-                    .filter(s -> transaction.getSpanId().equals(s.getParentId()) && s.getName().startsWith("commitTransaction"))
-                    .findFirst().orElseThrow(() -> new AssertionError("commitTransaction operation span not found in " + spans));
             assertTrue(logs.messages("Connection checked in").stream().anyMatch(l -> commitOperation.getSpanId().equals(l.spanId)),
                     "Connection checked in for the commit must carry the commit operation span");
         }
     }
 
-    /**
-     * Runs {@code body} in a transaction on {@code session}, as the spec's {@code withTransaction} step requires.
-     */
-    protected void runInTransaction(final ClientSession session, final Runnable body) {
-        session.withTransaction(() -> {
-            body.run();
-            return null;
-        });
-    }
-
-    // Tests 14 and 15 apply only to driver-managed log output and are not applicable to Java: the driver logs through SLF4J and
-    // has no driver-managed log destinations. The reactive subclass runs Tests 10 to 13 as the asynchronous API.
     @DisplayName("Test 13: Background log messages are not attributed to an operation")
     @Test
     void testBackgroundLogMessagesAreNotAttributedToAnOperation() throws InterruptedException {
@@ -685,31 +611,29 @@ public abstract class AbstractMicrometerProseTest {
             int topologyMessagesBefore = logs.component(LogMessage.Component.TOPOLOGY).size();
 
             // a fixed delay is not sufficient: without a heartbeat message after the operation there is nothing to check
-            long deadline = System.currentTimeMillis() + 10_000;
-            while (!heartbeatSucceededSince(logs, topologyMessagesBefore) && System.currentTimeMillis() < deadline) {
-                Thread.sleep(50);
-            }
-            assertTrue(heartbeatSucceededSince(logs, topologyMessagesBefore),
+            assertTrue(awaitTopologyMessage(logs, topologyMessagesBefore, "Server heartbeat succeeded"),
                     "a \"Server heartbeat succeeded\" message must have been logged after the operation");
 
-            FinishedSpan operation = spanNamed(inMemoryOtel.getFinishedSpans(), "insert " + getDefaultDatabaseName() + ".test", 0);
-            String operationTraceId = operation.getTraceId();
-            Set<String> operationSpanIds = inMemoryOtel.getFinishedSpans().stream()
-                    .filter(s -> operationTraceId.equals(s.getTraceId()))
-                    .map(FinishedSpan::getSpanId).collect(Collectors.toSet());
+            String operationTraceId = onlySpanNamed(inMemoryOtel.getFinishedSpans(), operationSpanName("insert")).getTraceId();
             List<ObservedLog> topology = logs.component(LogMessage.Component.TOPOLOGY);
             for (ObservedLog l : topology.subList(topologyMessagesBefore, topology.size())) {
+                // trace id and span id come from the same current-span context, so this covers both spec clauses
                 assertNotEquals(operationTraceId, l.traceId, l.messageId + " must not carry the operation's trace");
-                assertFalse(l.spanId != null && operationSpanIds.contains(l.spanId),
-                        l.messageId + " must not carry a span of the operation");
             }
         }
     }
 
-    private static boolean heartbeatSucceededSince(final SpanRecordingInterceptor logs, final int topologyMessagesBefore) {
-        List<ObservedLog> topology = logs.component(LogMessage.Component.TOPOLOGY);
-        return topology.subList(topologyMessagesBefore, topology.size()).stream()
-                .anyMatch(l -> l.messageId.equals("Server heartbeat succeeded"));
+    // Tests 14 and 15 apply only to driver-managed log output and are not applicable to Java: the driver logs through SLF4J and
+    // has no driver-managed log destinations. The reactive subclass runs Tests 10 to 13 as the asynchronous API.
+
+    /**
+     * Runs {@code body} in a transaction on {@code session}, as the spec's {@code withTransaction} step requires.
+     */
+    protected void runInTransaction(final ClientSession session, final Runnable body) {
+        session.withTransaction(() -> {
+            body.run();
+            return null;
+        });
     }
 
     private MongoClientSettings tracedSettings(final String applicationName) {
@@ -728,10 +652,8 @@ public abstract class AbstractMicrometerProseTest {
         assertNull(observationRegistry.getCurrentObservation(), "no observation may be current after the operation");
     }
 
-    private static FinishedSpan spanNamed(final List<FinishedSpan> spans, final String name, final int index) {
-        List<FinishedSpan> matching = spans.stream().filter(s -> s.getName().equals(name)).collect(Collectors.toList());
-        assertTrue(matching.size() > index, "expected at least " + (index + 1) + " spans named " + name + " but got " + matching);
-        return matching.get(index);
+    private String operationSpanName(final String command) {
+        return command + " " + getDefaultDatabaseName() + ".test";
     }
 
     private static FinishedSpan onlySpanNamed(final List<FinishedSpan> spans, final String name) {
@@ -740,8 +662,53 @@ public abstract class AbstractMicrometerProseTest {
         return matching.get(0);
     }
 
-    private static List<String> spanIds(final List<ObservedLog> logs) {
-        return logs.stream().map(l -> l.spanId).collect(Collectors.toList());
+    private static List<FinishedSpan> childSpans(final List<FinishedSpan> spans, final FinishedSpan parent, final String name) {
+        return spans.stream()
+                .filter(s -> parent.getSpanId().equals(s.getParentId()) && s.getName().equals(name))
+                .collect(Collectors.toList());
+    }
+
+    private static FinishedSpan childSpan(final List<FinishedSpan> spans, final FinishedSpan parent, final String name) {
+        List<FinishedSpan> matching = childSpans(spans, parent, name);
+        assertEquals(1, matching.size(), "expected exactly one span named " + name + " under " + parent + " but got " + matching);
+        return matching.get(0);
+    }
+
+    /** Exactly these messages, in emission order, each carrying the trace id and span id of the matching span. */
+    private static void assertCarry(final List<ObservedLog> observed, final FinishedSpan... expected) {
+        assertTrue(expected.length > 0, "assertCarry needs at least one expected span");
+        assertEquals(expected.length, observed.size(), "expected one message per span of " + asList(expected) + " but got " + observed);
+        for (int i = 0; i < expected.length; i++) {
+            assertEquals(expected[i].getTraceId(), observed.get(i).traceId, "trace id of message " + i + " in " + observed);
+            assertEquals(expected[i].getSpanId(), observed.get(i).spanId, "span id of message " + i + " in " + observed);
+        }
+    }
+
+    /** Each message id is emitted at least once, and every emission carries {@code span}. */
+    private static void assertEachCarries(final SpanRecordingInterceptor logs, final FinishedSpan span, final String... messageIds) {
+        for (String messageId : messageIds) {
+            List<ObservedLog> observed = logs.messages(messageId);
+            assertFalse(observed.isEmpty(), messageId + " must be emitted");
+            for (ObservedLog l : observed) {
+                assertEquals(span.getTraceId(), l.traceId, messageId + " must carry the trace of " + span + ", got " + l);
+                assertEquals(span.getSpanId(), l.spanId, messageId + " must carry the span of " + span + ", got " + l);
+            }
+        }
+    }
+
+    private static boolean awaitTopologyMessage(final SpanRecordingInterceptor logs, final int from, final String messageId)
+            throws InterruptedException {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10);
+        while (true) {
+            List<ObservedLog> topology = logs.component(LogMessage.Component.TOPOLOGY);
+            if (topology.subList(from, topology.size()).stream().anyMatch(l -> l.messageId.equals(messageId))) {
+                return true;
+            }
+            if (System.nanoTime() - deadline >= 0) {
+                return false;
+            }
+            Thread.sleep(50);
+        }
     }
 
     /** Trace id and span id that were current on the thread when a log message was emitted. */
@@ -758,6 +725,11 @@ public abstract class AbstractMicrometerProseTest {
             this.component = message.getComponent();
             this.traceId = current == null ? null : current.context().traceId();
             this.spanId = current == null ? null : current.context().spanId();
+        }
+
+        @Override
+        public String toString() {
+            return messageId + "{traceId=" + traceId + ", spanId=" + spanId + "}";
         }
     }
 
