@@ -453,7 +453,6 @@ public abstract class AbstractMicrometerProseTest {
     @DisplayName("Test 10: Command log messages carry their own command span")
     @Test
     void testCommandLogMessagesCarryTheirOwnCommandSpan() {
-        // the fail point is scoped by appName, which requires MongoDB 4.4; on a sharded cluster the fixture URI names one mongos
         assumeTrue(serverVersionAtLeast(4, 4));
         String appName = "otel-log-test10";
         BsonDocument failPoint = BsonDocument.parse("{ configureFailPoint: 'failCommand', mode: { times: 1 },"
@@ -650,6 +649,14 @@ public abstract class AbstractMicrometerProseTest {
                     assertTrue(operationSpanIds.contains(l.spanId), messageId + " must carry an operation span of the transaction");
                 }
             }
+
+            // the commit reuses the pooled connection the insert checked in, so its "Connection checked in" must carry the
+            // commit's operation span, not the span captured when the insert checked the connection out
+            FinishedSpan commitOperation = spans.stream()
+                    .filter(s -> transaction.getSpanId().equals(s.getParentId()) && s.getName().startsWith("commitTransaction"))
+                    .findFirst().orElseThrow(() -> new AssertionError("commitTransaction operation span not found in " + spans));
+            assertTrue(logs.messages("Connection checked in").stream().anyMatch(l -> commitOperation.getSpanId().equals(l.spanId)),
+                    "Connection checked in for the commit must carry the commit operation span");
         }
     }
 

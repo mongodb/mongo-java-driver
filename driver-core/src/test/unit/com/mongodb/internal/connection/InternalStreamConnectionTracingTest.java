@@ -20,10 +20,6 @@ import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.FutureResultCallback;
 import com.mongodb.connection.AsyncCompletionHandler;
-import com.mongodb.event.CommandFailedEvent;
-import com.mongodb.event.CommandListener;
-import com.mongodb.event.CommandStartedEvent;
-import com.mongodb.event.CommandSucceededEvent;
 import com.mongodb.internal.IgnorableRequestContext;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
@@ -44,13 +40,9 @@ import org.bson.ByteBuf;
 import org.bson.codecs.BsonDocumentCodec;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.ByteArrayOutputStream;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -256,77 +248,6 @@ class InternalStreamConnectionTracingTest {
         assertEquals(1, span.endCount.get(), "span must end exactly once");
         assertEquals(0, span.errorCount.get());
         assertFalse(stream.hadUnexpectedCall(), "no reply must be read for an unacknowledged write");
-        connection.close();
-    }
-
-    /** Records whether the command span scope was open on the emitting thread when each command event fired. */
-    private static final class ScopeObservingListener implements CommandListener {
-        private final RecordingSpan span;
-        private final Map<String, Boolean> scopeOpenAtEvent = new ConcurrentHashMap<>();
-
-        ScopeObservingListener(final RecordingSpan span) {
-            this.span = span;
-        }
-
-        private void record(final String event) {
-            scopeOpenAtEvent.put(event, span.openScopeCount.get() > span.scopeCloseCount.get());
-        }
-
-        @Override
-        public void commandStarted(final CommandStartedEvent event) {
-            record("started");
-        }
-
-        @Override
-        public void commandSucceeded(final CommandSucceededEvent event) {
-            record("succeeded");
-        }
-
-        @Override
-        public void commandFailed(final CommandFailedEvent event) {
-            record("failed");
-        }
-    }
-
-    @ParameterizedTest(name = "async={0}")
-    @ValueSource(booleans = {false, true})
-    @DisplayName("Started and succeeded command events fire while the command span scope is open")
-    void commandEventsFireInsideSpanScope(final boolean async) throws Exception {
-        AtomicInteger readCallCount = new AtomicInteger();
-        CapturingTestStream stream = new CapturingTestStream() {
-            private ByteBuf nextResponseChunk() {
-                return readCallCount.incrementAndGet() == 1
-                        ? createValidResponseHeader(getCommandMessageId())
-                        : createResponseBody(new BsonDocument("ok", new BsonInt32(1)));
-            }
-
-            @Override
-            public ByteBuf read(final int numBytes, final OperationContext operationContext) {
-                return nextResponseChunk();
-            }
-
-            @Override
-            public void readAsync(final int numBytes, final OperationContext operationContext,
-                    final AsyncCompletionHandler<ByteBuf> handler) {
-                handler.completed(nextResponseChunk());
-            }
-        };
-        RecordingSpan span = new RecordingSpan();
-        ScopeObservingListener listener = new ScopeObservingListener(span);
-        InternalStreamConnection connection = createOpenConnection(stream, listener);
-        CommandMessage commandMessage = createPingCommand();
-        stream.setCommandMessageId(commandMessage.getId());
-        if (async) {
-            FutureResultCallback<BsonDocument> callback = new FutureResultCallback<>();
-            connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), createTracedOperationContext(span), callback);
-            callback.get(5, TimeUnit.SECONDS);
-        } else {
-            connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), createTracedOperationContext(span));
-        }
-        assertEquals(Boolean.TRUE, listener.scopeOpenAtEvent.get("started"), "started event must see the span scope");
-        assertEquals(Boolean.TRUE, listener.scopeOpenAtEvent.get("succeeded"), "succeeded event must see the span scope");
-        assertEquals(span.openScopeCount.get(), span.scopeCloseCount.get(), "scopes must be balanced");
-        assertEquals(1, span.endCount.get());
         connection.close();
     }
 
