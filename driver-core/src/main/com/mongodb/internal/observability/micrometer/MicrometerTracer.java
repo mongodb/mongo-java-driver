@@ -102,7 +102,16 @@ public class MicrometerTracer implements Tracer {
             }
         }
 
-        return new MicrometerSpan(observation.start(), namespace, textMaxLength);
+        Observation started = observation.start();
+        // The tracing handler attaches the span during start(); its recording state is only knowable afterwards.
+        // Without micrometer-tracing on the classpath there is no span to ask, and every span counts as recording.
+        if (MICROMETER_TRACING_ON_CLASSPATH && !MicrometerTracingSupport.isRecording(started)) {
+            Observation.Context context = started.getContext();
+            if (context instanceof MongodbObservationContext) {
+                ((MongodbObservationContext) context).setRecording(false);
+            }
+        }
+        return new MicrometerSpan(started, namespace, textMaxLength);
     }
 
     @Override
@@ -179,6 +188,23 @@ public class MicrometerTracer implements Tracer {
      * when {@code micrometer-tracing} is absent from the classpath.
      */
     private static final class MicrometerTracingSupport {
+        /**
+         * Reports whether the tracing SDK is recording the span that Micrometer Tracing attached to
+         * {@code observation}.
+         *
+         * @param observation a started observation
+         * @return {@code false} only when a span is attached and the SDK reports it as no-op (not recording);
+         *         {@code true} when no span is attached, so that setups without a tracing handler behave as before
+         */
+        static boolean isRecording(final Observation observation) {
+            io.micrometer.tracing.handler.TracingObservationHandler.TracingContext tracingContext =
+                    observation.getContextView().get(io.micrometer.tracing.handler.TracingObservationHandler.TracingContext.class);
+            if (tracingContext == null || tracingContext.getSpan() == null) {
+                return true;
+            }
+            return !tracingContext.getSpan().isNoop();
+        }
+
         /**
          * Computes the W3C {@code traceparent} for {@code observation}'s active span.
          *
