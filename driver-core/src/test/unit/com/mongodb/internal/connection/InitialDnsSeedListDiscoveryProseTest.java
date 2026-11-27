@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.ClusterFixture;
+import com.mongodb.ConnectionString;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -179,6 +180,26 @@ class InitialDnsSeedListDiscoveryProseTest {
                 null,
                 new ServerAddress("db.cluster.localhost"),
                 false);
+    }
+
+    @DisplayName("13. Throw when srvHostValidator is used with a non-SRV URI")
+    void testThrowWhenSrvValidatorIsUsedWithNonSrvURI() {
+        final ClusterSettings.Builder settingsBuilder = ClusterSettings.builder()
+                .applyConnectionString(new ConnectionString("mongodb://localhost:27017"));
+        assertThrows(IllegalArgumentException.class, () -> settingsBuilder.srvHostValidator(h -> true));
+    }
+
+    // 14. Throw when srvHostValidator returns a non-boolean value -- not possible in Java
+
+    @DisplayName("15. Accept an underscore in srvAllowedHostsSuffix")
+    void testAllowUnderscoreInSrvAllowedHostsSuffix() {
+        doTest("blogs.my_domain.net",
+                "cluster.my_domain.net",
+                ".my_domain.net",
+                null,
+                new ServerAddress("cluster.my_domain.net"),
+                false
+                );
     }
 
     private void doTest(final String srvHost, final String resolvedHost, final boolean throwException) {

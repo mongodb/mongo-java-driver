@@ -171,10 +171,13 @@ public final class ClusterSettings {
          * @since 5.14
          */
         public Builder srvHostValidator(final SrvHostValidator srvHostValidator) {
+            if (this.srvHost == null) {
+                throw new IllegalArgumentException("Cannot set both srvHostValidator without srvHost");
+            }
             if (this.srvAllowedHostsSuffix != null) {
                 throw new IllegalArgumentException("Cannot set both srvHostValidator and srvAllowedHostsSuffix");
             }
-            this.srvHostValidator = srvHostValidator;
+            this.srvHostValidator = notNull("srvHostValidator", srvHostValidator);
             return this;
         }
 

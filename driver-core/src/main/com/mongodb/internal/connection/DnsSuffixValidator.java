@@ -26,7 +26,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.connection.DomainNameUtils.isDomainName;
+import static com.mongodb.internal.connection.DomainNameUtils.isValidSrvHostName;
 
 /**
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
@@ -88,7 +88,7 @@ public final class DnsSuffixValidator implements SrvHostValidator {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("srvAllowedHostsSuffix is not a valid domain");
         }
-        if (!isDomainName(labels)) {
+        if (!isValidSrvHostName(labels)) {
             throw new IllegalArgumentException("srvAllowedHostsSuffix is not a valid domain");
         }
         isAllowedSingleLabel = VALID_SINGLE_LABEL_SUFFIXES.contains(labels);
