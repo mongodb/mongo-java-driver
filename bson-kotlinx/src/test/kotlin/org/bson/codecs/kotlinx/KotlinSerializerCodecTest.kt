@@ -100,11 +100,13 @@ import org.bson.codecs.kotlinx.samples.DataClassWithEncodeDefault
 import org.bson.codecs.kotlinx.samples.DataClassWithEnum
 import org.bson.codecs.kotlinx.samples.DataClassWithEnumMapKey
 import org.bson.codecs.kotlinx.samples.DataClassWithFailingInit
+import org.bson.codecs.kotlinx.samples.DataClassWithJsonConfigurationValue
 import org.bson.codecs.kotlinx.samples.DataClassWithJsonElement
 import org.bson.codecs.kotlinx.samples.DataClassWithJsonElements
 import org.bson.codecs.kotlinx.samples.DataClassWithJsonElementsNullable
 import org.bson.codecs.kotlinx.samples.DataClassWithKotlinAllowedName
 import org.bson.codecs.kotlinx.samples.DataClassWithListThatLastItemDefaultsToNull
+import org.bson.codecs.kotlinx.samples.DataClassWithMissingNullables
 import org.bson.codecs.kotlinx.samples.DataClassWithMutableList
 import org.bson.codecs.kotlinx.samples.DataClassWithMutableMap
 import org.bson.codecs.kotlinx.samples.DataClassWithMutableSet
@@ -119,6 +121,7 @@ import org.bson.codecs.kotlinx.samples.DataClassWithSameSnakeCaseName
 import org.bson.codecs.kotlinx.samples.DataClassWithSequence
 import org.bson.codecs.kotlinx.samples.DataClassWithSimpleValues
 import org.bson.codecs.kotlinx.samples.DataClassWithTriple
+import org.bson.codecs.kotlinx.samples.JsonConfigurationValue
 import org.bson.codecs.kotlinx.samples.Key
 import org.bson.codecs.kotlinx.samples.SealedInterface
 import org.bson.codecs.kotlinx.samples.ValueClass
@@ -1091,6 +1094,23 @@ class KotlinSerializerCodecTest {
                     Pair("nestedLong", buildJsonObject { put("long", 3000000000L) })))
 
         assertRoundTrips(expected, dataClass)
+    }
+
+    @Test
+    fun testDataClassWithMissingNullableFields() {
+        assertDecodesTo(BsonDocument.parse("{}"), DataClassWithMissingNullables(null, null))
+        assertDecodesTo(BsonDocument.parse("""{"second": "b"}"""), DataClassWithMissingNullables(null, "b"))
+        assertDecodesTo(
+            BsonDocument.parse("""{"first": "a", "third": "c"}"""), DataClassWithMissingNullables("a", null, "c"))
+    }
+
+    @Test
+    fun testJsonInstanceIsAvailableToCustomSerializers() {
+        val configuration = BsonConfiguration(classDiscriminator = "customDiscriminator")
+        assertRoundTrips(
+            """{"value": "customDiscriminator"}""",
+            DataClassWithJsonConfigurationValue(JsonConfigurationValue("customDiscriminator")),
+            configuration)
     }
 
     @Test

@@ -22,11 +22,19 @@ import kotlinx.datetime.LocalTime
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.EncodeDefault
 import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Required
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonDecoder
 import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonEncoder
 import org.bson.BsonArray
 import org.bson.BsonBinary
 import org.bson.BsonBoolean
@@ -359,6 +367,27 @@ data class DataClassWithFailingInit(val id: String) {
 @Serializable data class Box<T>(val boxed: T)
 
 @Serializable data class DataClassWithNullableGeneric(val box: Box<String?>)
+
+@Serializable
+data class DataClassWithMissingNullables(val first: String?, val second: String?, val third: String? = "c")
+
+@Serializable(with = JsonConfigurationValueSerializer::class) data class JsonConfigurationValue(val value: String)
+
+object JsonConfigurationValueSerializer : KSerializer<JsonConfigurationValue> {
+    override val descriptor: SerialDescriptor =
+        PrimitiveSerialDescriptor("JsonConfigurationValue", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: JsonConfigurationValue) {
+        encoder.encodeString((encoder as JsonEncoder).json.configuration.classDiscriminator)
+    }
+
+    override fun deserialize(decoder: Decoder): JsonConfigurationValue {
+        decoder.decodeString()
+        return JsonConfigurationValue((decoder as JsonDecoder).json.configuration.classDiscriminator)
+    }
+}
+
+@Serializable data class DataClassWithJsonConfigurationValue(val value: JsonConfigurationValue)
 
 @Serializable data class DataClassWithJsonElement(val value: JsonElement)
 
