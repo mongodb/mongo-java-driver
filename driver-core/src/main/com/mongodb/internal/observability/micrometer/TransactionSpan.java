@@ -20,6 +20,9 @@ import com.mongodb.lang.Nullable;
 
 /**
  * State class for transaction tracing.
+ * <p>
+ * Unlike operation and command spans, this span never opens a scope: operation spans started inside the
+ * transaction are parented on it through {@link #getContext()} instead, so it can be ended from any thread.
  *
  * @since 5.7
  */
@@ -54,7 +57,6 @@ public class TransactionSpan {
         }
 
         if (!isConvenientTransaction) {
-            span.closeScope();
             span.end();
         }
     }
@@ -68,7 +70,6 @@ public class TransactionSpan {
         span.event(status);
         // clear previous commit error if any
         if (!isConvenientTransaction) {
-            span.closeScope();
             span.end();
         }
         reportedError = null; // clear previous commit error if any
@@ -84,7 +85,6 @@ public class TransactionSpan {
         if (reportedError != null) {
             span.error(reportedError);
         }
-        span.closeScope();
         span.end();
         reportedError = null;
         // Don't clean up transaction context if we're still retrying (we want the retries to fold under the original transaction span)
@@ -111,13 +111,5 @@ public class TransactionSpan {
      */
     public TraceContext getContext() {
         return span.context();
-    }
-
-    /**
-     * Opens a scope for the transaction span, making it the current observation on the thread.
-     * Must only be called from the sync driver where open and close happen on the same thread.
-     */
-    public void openScope() {
-        span.openScope();
     }
 }

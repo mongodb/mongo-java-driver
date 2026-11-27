@@ -47,11 +47,8 @@ public interface Span {
      */
     Span EMPTY = new Span() {
         @Override
-        public void openScope() {
-        }
-
-        @Override
-        public void closeScope() {
+        public SpanScope openScope() {
+            return SpanScope.NO_OP;
         }
 
         @Override
@@ -89,17 +86,13 @@ public interface Span {
     };
 
     /**
-     * Opens a scope for this span, making it the current observation on the thread.
-     * A successful {@code openScope()} must be followed by {@link #closeScope()}.
+     * Makes this span the current span on the calling thread until the returned scope is closed. Close it on the
+     * same thread, normally with try-with-resources. Scopes nest: closing the inner one restores the outer.
+     * Opening a scope after {@link #end()} is allowed.
+     *
+     * @return the scope, which must be closed on the calling thread
      */
-    void openScope();
-
-    /**
-     * Closes the scope previously opened by {@link #openScope()}, restoring the previous observation.
-     * Calling this without a prior {@code openScope()}, or more than once, is a no-op — error-handling
-     * paths may therefore call it unconditionally.
-     */
-    void closeScope();
+    SpanScope openScope();
 
     /**
      * Sets the query text on the observation context from the given command document.
@@ -151,4 +144,22 @@ public interface Span {
      */
     @Nullable
     MongoNamespace getNamespace();
+
+    /**
+     * Runs an action while the span's scope is open on the calling thread, so that anything that reads the current
+     * tracing context during the action (log appenders, MDC bridges, listeners) observes that span. The scope is
+     * closed even if the action throws.
+     *
+     * @param span   the span to make current, or {@code null} to run the action without touching any scope
+     * @param action the action to run
+     */
+    static void runInScope(@Nullable final Span span, final Runnable action) {
+        if (span == null) {
+            action.run();
+            return;
+        }
+        try (SpanScope ignored = span.openScope()) {
+            action.run();
+        }
+    }
 }

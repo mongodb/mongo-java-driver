@@ -41,6 +41,7 @@ import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.LogMessage;
 import com.mongodb.internal.logging.LogMessage.Entry;
 import com.mongodb.internal.logging.StructuredLogger;
+import com.mongodb.internal.observability.micrometer.Span;
 import com.mongodb.internal.selector.AtMostTwoRandomServerSelector;
 import com.mongodb.internal.selector.LatencyMinimizingServerSelector;
 import com.mongodb.internal.selector.MinimumOperationCountServerSelector;
@@ -555,25 +556,26 @@ abstract class BaseCluster implements Cluster {
             final ServerSelector serverSelector,
             final ClusterDescription clusterDescription) {
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
-            STRUCTURED_LOGGER.log(new LogMessage(
+            LogMessage logMessage = new LogMessage(
                     SERVER_SELECTION, DEBUG, "Server selection started", clusterId,
                     asList(
                             new Entry(OPERATION, operationContext.getOperationName()),
                             new Entry(OPERATION_ID, operationContext.getId()),
                             new Entry(SELECTOR, serverSelector.toString()),
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
-                    "Server selection started for operation[ {}] with ID {}. Selector: {}, topology description: {}"));
+                    "Server selection started for operation[ {}] with ID {}. Selector: {}, topology description: {}");
+            Span.runInScope(operationContext.getTracingSpan(), () -> STRUCTURED_LOGGER.log(logMessage));
         }
     }
 
-    private static void logServerSelectionWaiting(
+    static void logServerSelectionWaiting(
             final OperationContext operationContext,
             final ClusterId clusterId,
             final Timeout timeout,
             final ServerSelector serverSelector,
             final ClusterDescription clusterDescription) {
         if (STRUCTURED_LOGGER.isRequired(INFO, clusterId)) {
-            STRUCTURED_LOGGER.log(new LogMessage(
+            LogMessage logMessage = new LogMessage(
                     SERVER_SELECTION, INFO, "Waiting for suitable server to become available", clusterId,
                     asList(
                             new Entry(OPERATION, operationContext.getOperationName()),
@@ -585,11 +587,12 @@ abstract class BaseCluster implements Cluster {
                             new Entry(SELECTOR, serverSelector.toString()),
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
                     "Waiting for server to become available for operation[ {}] with ID {}.[ Remaining time: {} ms.]"
-                            + " Selector: {}, topology description: {}."));
+                            + " Selector: {}, topology description: {}.");
+            Span.runInScope(operationContext.getTracingSpan(), () -> STRUCTURED_LOGGER.log(logMessage));
         }
     }
 
-    private static void logServerSelectionFailed(
+    static void logServerSelectionFailed(
             final OperationContext operationContext,
             final ClusterId clusterId,
             final MongoException failure,
@@ -602,7 +605,7 @@ abstract class BaseCluster implements Cluster {
                     // The logging spec requires us to avoid such duplication of information.
                     ? MongoTimeoutException.class.getName() + ": Timed out while waiting for a suitable server"
                     : failure.toString();
-            STRUCTURED_LOGGER.log(new LogMessage(
+            LogMessage logMessage = new LogMessage(
                     SERVER_SELECTION, DEBUG, "Server selection failed", clusterId,
                     asList(
                             new Entry(OPERATION, operationContext.getOperationName()),
@@ -610,7 +613,8 @@ abstract class BaseCluster implements Cluster {
                             new Entry(FAILURE, failureDescription),
                             new Entry(SELECTOR, serverSelector.toString()),
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
-                    "Server selection failed for operation[ {}] with ID {}. Failure: {}. Selector: {}, topology description: {}"));
+                    "Server selection failed for operation[ {}] with ID {}. Failure: {}. Selector: {}, topology description: {}");
+            Span.runInScope(operationContext.getTracingSpan(), () -> STRUCTURED_LOGGER.log(logMessage));
         }
     }
 
@@ -621,7 +625,7 @@ abstract class BaseCluster implements Cluster {
             final ServerSelector serverSelector,
             final ClusterDescription clusterDescription) {
         if (STRUCTURED_LOGGER.isRequired(DEBUG, clusterId)) {
-            STRUCTURED_LOGGER.log(new LogMessage(
+            LogMessage logMessage = new LogMessage(
                     SERVER_SELECTION, DEBUG, "Server selection succeeded", clusterId,
                     asList(
                             new Entry(OPERATION, operationContext.getOperationName()),
@@ -631,7 +635,8 @@ abstract class BaseCluster implements Cluster {
                             new Entry(SELECTOR, serverSelector.toString()),
                             new Entry(TOPOLOGY_DESCRIPTION, clusterDescription.getShortDescription())),
                     "Server selection succeeded for operation[ {}] with ID {}. Selected server: {}[:{}]."
-                            + " Selector: {}, topology description: {}"));
+                            + " Selector: {}, topology description: {}");
+            Span.runInScope(operationContext.getTracingSpan(), () -> STRUCTURED_LOGGER.log(logMessage));
         }
     }
 

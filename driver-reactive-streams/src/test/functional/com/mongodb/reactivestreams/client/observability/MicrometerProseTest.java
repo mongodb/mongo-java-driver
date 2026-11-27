@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client.observability;
 
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.AbstractMicrometerProseTest;
+import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoClient;
 import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 
@@ -28,5 +29,13 @@ public class MicrometerProseTest extends AbstractMicrometerProseTest {
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
         return new SyncMongoClient(settings);
+    }
+
+    @Override
+    protected void runInTransaction(final ClientSession session, final Runnable body) {
+        // the reactive driver has no withTransaction, so start and commit the transaction explicitly
+        session.startTransaction();
+        body.run();
+        session.commitTransaction();
     }
 }

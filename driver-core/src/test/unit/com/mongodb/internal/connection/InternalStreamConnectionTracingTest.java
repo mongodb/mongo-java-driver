@@ -25,6 +25,7 @@ import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
 import com.mongodb.internal.observability.micrometer.Span;
+import com.mongodb.internal.observability.micrometer.SpanScope;
 import com.mongodb.internal.observability.micrometer.TraceContext;
 import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.thread.AsyncClientExecutor;
@@ -113,7 +114,7 @@ class InternalStreamConnectionTracingTest {
 
     /**
      * Verifies exactly-once span termination when the sync send fails: the widened {@code catch (Throwable)}
-     * must fire {@code error()}/{@code closeScope()}/{@code end()} once each, with no double-firing from the
+     * must fire {@code error()}/scope close/{@code end()} once each, with no double-firing from the
      * receive path (which is never reached).
      */
     @Test
@@ -338,13 +339,9 @@ class InternalStreamConnectionTracingTest {
         private final AtomicInteger endCount = new AtomicInteger();
 
         @Override
-        public void openScope() {
+        public SpanScope openScope() {
             openScopeCount.incrementAndGet();
-        }
-
-        @Override
-        public void closeScope() {
-            closeScopeCount.incrementAndGet();
+            return closeScopeCount::incrementAndGet;
         }
 
         @Override

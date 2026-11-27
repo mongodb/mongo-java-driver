@@ -236,13 +236,11 @@ public class MicrometerTracer implements Tracer {
     /**
      * Represents a Micrometer-based span.
      */
-    private static class MicrometerSpan implements Span {
+    static class MicrometerSpan implements Span {
         private final Observation observation;
         @Nullable
         private final MongoNamespace namespace;
         private final int queryTextLength;
-        @Nullable
-        private Observation.Scope scope;
 
         /**
          * Constructs a new {@link MicrometerSpan} instance with an associated Observation and MongoDB namespace.
@@ -258,16 +256,9 @@ public class MicrometerTracer implements Tracer {
         }
 
         @Override
-        public void openScope() {
-            this.scope = observation.openScope();
-        }
-
-        @Override
-        public void closeScope() {
-            if (scope != null) {
-                scope.close();
-                scope = null;
-            }
+        public SpanScope openScope() {
+            Observation.Scope scope = observation.openScope();
+            return scope::close;
         }
 
         @Override

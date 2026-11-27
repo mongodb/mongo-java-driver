@@ -53,6 +53,7 @@ import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.OperationContext;
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.internal.observability.micrometer.Span;
+import com.mongodb.internal.observability.micrometer.SpanScope;
 import com.mongodb.internal.observability.micrometer.TracingManager;
 import com.mongodb.internal.operation.OperationHelper;
 import com.mongodb.internal.operation.Operations;
@@ -441,9 +442,10 @@ final class MongoClusterImpl implements MongoCluster {
             ReadBinding binding = getReadBinding(readPreference, actualClientSession, implicitSession);
             Span span = operationContext.getTracingManager().createOperationSpan(
                     actualClientSession.getTransactionSpan(), operationContext, operation.getCommandName(), operation.getNamespace());
+            SpanScope scope = SpanScope.NO_OP;
             try {
                 if (span != null) {
-                    span.openScope();
+                    scope = span.openScope();
                 }
                 if (actualClientSession.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
                     throw new MongoClientException("Read preference in a transaction must be primary");
@@ -459,8 +461,8 @@ final class MongoClusterImpl implements MongoCluster {
                 throw e;
             } finally {
                 binding.release();
+                scope.close();
                 if (span != null) {
-                    span.closeScope();
                     span.end();
                 }
             }
@@ -479,9 +481,10 @@ final class MongoClusterImpl implements MongoCluster {
             WriteBinding binding = getWriteBinding(actualClientSession, isImplicitSession(session));
             Span span = operationContext.getTracingManager().createOperationSpan(
                     actualClientSession.getTransactionSpan(), operationContext, operation.getCommandName(), operation.getNamespace());
+            SpanScope scope = SpanScope.NO_OP;
             try {
                 if (span != null) {
-                    span.openScope();
+                    scope = span.openScope();
                 }
                 return operation.execute(binding, operationContext);
             } catch (MongoException e) {
@@ -494,8 +497,8 @@ final class MongoClusterImpl implements MongoCluster {
                 throw e;
             } finally {
                 binding.release();
+                scope.close();
                 if (span != null) {
-                    span.closeScope();
                     span.end();
                 }
             }

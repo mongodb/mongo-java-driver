@@ -51,6 +51,7 @@ import com.mongodb.internal.diagnostics.logging.Logger;
 import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.logging.StructuredLogger;
 import com.mongodb.internal.observability.micrometer.Span;
+import com.mongodb.internal.observability.micrometer.SpanScope;
 import com.mongodb.internal.session.SessionContext;
 import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
@@ -452,6 +453,7 @@ public class InternalStreamConnection implements InternalConnection {
             final OperationContext operationContext) {
         CommandEventSender commandEventSender = new NoOpCommandEventSender();
         Span tracingSpan = null;
+        SpanScope tracingScope = SpanScope.NO_OP;
         try (ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this)) {
             tracingSpan = operationContext
                     .getTracingManager()
@@ -471,6 +473,13 @@ public class InternalStreamConnection implements InternalConnection {
             if (isLoggingCommandNeeded || isTracingCommandPayloadNeeded) {
                 commandDocument = message.getCommandDocument(bsonOutput);
             }
+            if (isTracingCommandPayloadNeeded) {
+                tracingSpan.setQueryText(commandDocument);
+            }
+            // Open the scope before the started event so command listeners and logs observe the command span.
+            if (tracingSpan != null) {
+                tracingScope = tracingSpan.openScope();
+            }
             if (isLoggingCommandNeeded) {
                 commandEventSender = new LoggingCommandEventSender(
                         SECURITY_SENSITIVE_COMMANDS, SECURITY_SENSITIVE_HELLO_COMMANDS, description, commandListener,
@@ -478,29 +487,26 @@ public class InternalStreamConnection implements InternalConnection {
                         COMMAND_PROTOCOL_LOGGER, loggerSettings);
                 commandEventSender.sendStartedEvent();
             }
-            if (isTracingCommandPayloadNeeded) {
-                tracingSpan.setQueryText(commandDocument);
-            }
-            if (tracingSpan != null) {
-                tracingSpan.openScope();
-            }
             sendCommandMessage(message, bsonOutput, operationContext);
         } catch (Throwable t) {
-            if (tracingSpan != null) {
-                tracingSpan.error(t);
-                tracingSpan.closeScope();
-                tracingSpan.end();
+            try {
+                commandEventSender.sendFailedEvent(t);
+            } finally {
+                if (tracingSpan != null) {
+                    tracingSpan.error(t);
+                    tracingScope.close();
+                    tracingSpan.end();
+                }
             }
-            commandEventSender.sendFailedEvent(t);
             throw t;
         }
 
         if (message.isResponseExpected()) {
-            return receiveCommandMessageResponse(decoder, commandEventSender, operationContext, tracingSpan);
+            return receiveCommandMessageResponse(decoder, commandEventSender, operationContext, tracingSpan, tracingScope);
         } else {
             commandEventSender.sendSucceededEventForOneWayCommand();
             if (tracingSpan != null) {
-                tracingSpan.closeScope();
+                tracingScope.close();
                 tracingSpan.end();
             }
             return null;
@@ -522,7 +528,7 @@ public class InternalStreamConnection implements InternalConnection {
     @Override
     public <T> T receive(final Decoder<T> decoder, final OperationContext operationContext) {
         isTrue("Response is expected", hasMoreToCome);
-        return receiveCommandMessageResponse(decoder, new NoOpCommandEventSender(), operationContext, null);
+        return receiveCommandMessageResponse(decoder, new NoOpCommandEventSender(), operationContext, null, SpanScope.NO_OP);
     }
 
     @Override
@@ -568,13 +574,13 @@ public class InternalStreamConnection implements InternalConnection {
     }
 
     private <T> T receiveCommandMessageResponse(final Decoder<T> decoder, final CommandEventSender commandEventSender,
-            final OperationContext operationContext, @Nullable final Span tracingSpan) {
+            final OperationContext operationContext, @Nullable final Span tracingSpan, final SpanScope tracingScope) {
         try {
             ResponseBuffers responseBuffers = receiveCommandResponseBuffers(commandEventSender, operationContext, tracingSpan);
             return processCommandResponse(decoder, responseBuffers, commandEventSender, operationContext, tracingSpan);
         } finally {
             if (tracingSpan != null) {
-                tracingSpan.closeScope();
+                tracingScope.close();
                 tracingSpan.end();
             }
         }
@@ -731,6 +737,9 @@ public class InternalStreamConnection implements InternalConnection {
             }
             if (isTracingCommandPayloadNeeded) {
                 tracingSpan.setQueryText(commandDocument);
+            }
+            if (tracingSpan != null && isLoggingCommandNeeded) {
+                commandEventSender = new TracingScopedCommandEventSender(commandEventSender, tracingSpan);
             }
 
             final Span commandSpan = tracingSpan;

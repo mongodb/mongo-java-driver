@@ -63,6 +63,7 @@ dependencies {
     testImplementation(libs.reflections)
 
     // Tracing testing
+    testImplementation(libs.micrometer.observation.test)
     testImplementation(platform(libs.micrometer.tracing.integration.test.bom))
     testImplementation(libs.micrometer.tracing.integration.test) { exclude(group = "org.junit.jupiter") }
 

@@ -78,7 +78,7 @@ class MicrometerTracerRecordingTest {
         ObservationRegistry registry = registryWithSampler(Sampler.alwaysOff());
         MicrometerTracer tracer = new MicrometerTracer(registry, false, 1000, null);
         Span span = tracer.nextSpan(MongodbObservation.MONGODB_COMMAND, "find", null, null);
-        span.openScope();
+        SpanScope scope = span.openScope();
         try {
             String traceParent = span.context().traceParent();
             assertNotNull(traceParent, "an unsampled span still has a valid context to propagate");
@@ -87,7 +87,7 @@ class MicrometerTracerRecordingTest {
             assertTrue(traceParent.endsWith("-00"), "trace-flags must be 00 for an unsampled span");
             assertFalse(traceParent.substring(3, 35).matches("0+"), "trace id must not be all zeroes");
         } finally {
-            span.closeScope();
+            scope.close();
             span.end();
         }
     }
@@ -128,8 +128,7 @@ class MicrometerTracerRecordingTest {
         context.setServerAddress(new ServerAddress("localhost", 27017));
         context.setConnectionId(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress()), 3, 42L));
         context.setQueryText("{find: 'coll'}");
-        span.openScope();
-        span.closeScope();
+        span.openScope().close();
         span.end();
         return context;
     }
