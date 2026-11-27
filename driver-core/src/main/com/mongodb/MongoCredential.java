@@ -27,6 +27,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
@@ -541,7 +542,7 @@ public final class MongoCredential {
      */
     <T> MongoCredential(final MongoCredential from, final String mechanismPropertyKey, final T mechanismPropertyValue) {
         this(from.mechanism, from.userName, from.source, from.password, mapWith(from.mechanismProperties, notNull(
-                "mechanismPropertyKey", mechanismPropertyKey).toLowerCase(), mechanismPropertyValue));
+                "mechanismPropertyKey", mechanismPropertyKey).toLowerCase(Locale.ROOT), mechanismPropertyValue));
     }
 
     private static <T> Map<String, Object> mapWith(final Map<String, Object> map, final String key, final T value) {
@@ -617,7 +618,7 @@ public final class MongoCredential {
     public <T> T getMechanismProperty(final String key, @Nullable final T defaultValue) {
         notNull("key", key);
 
-        T value = (T) mechanismProperties.get(key.toLowerCase());
+        T value = (T) mechanismProperties.get(key.toLowerCase(Locale.ROOT));
         return (value == null) ? defaultValue : value;
 
     }

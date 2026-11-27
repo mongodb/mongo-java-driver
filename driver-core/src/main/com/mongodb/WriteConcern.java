@@ -29,6 +29,7 @@ import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -298,7 +299,7 @@ public class WriteConcern implements Serializable {
      * @return the {@code WriteConcern instance}
      */
     public static WriteConcern valueOf(final String name) {
-        return NAMED_CONCERNS.get(name.toLowerCase());
+        return NAMED_CONCERNS.get(name.toLowerCase(Locale.ROOT));
     }
 
 
@@ -419,7 +420,7 @@ public class WriteConcern implements Serializable {
         NAMED_CONCERNS = new HashMap<>();
         for (final Field f : WriteConcern.class.getFields()) {
             if (Modifier.isStatic(f.getModifiers()) && f.getType().equals(WriteConcern.class)) {
-                String key = f.getName().toLowerCase();
+                String key = f.getName().toLowerCase(Locale.ROOT);
                 try {
                     NAMED_CONCERNS.put(key, (WriteConcern) f.get(null));
                 } catch (IllegalAccessException e) {
