@@ -1,0 +1,55 @@
+name: "CodeQL"
+
+on:
+  push:
+    # Release commits live on an A.B.x branch and are tagged there. The tag trigger is what
+    # gets the released commit analysed: bump-and-tag.sh tags between two version-bump
+    # commits, so the branch head is one commit past the tag.
+    branches: ["main", "*.x"]
+    tags: ["r*"]
+  pull_request:
+  schedule:
+    - cron: "17 10 * * 2"
+
+concurrency:
+  group: codeql-${{ github.ref }}-${{ github.sha }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      security-events: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # `classes` compiles the main sources of every module and leaves test sources out of the analysis.
+          - language: java-kotlin
+            build-mode: manual
+            manual-build-command: ./gradlew classes
+          - language: actions
+            build-mode: none
+
+    steps:
+      # ubuntu-latest defaults to a JDK that Gradle 8.12 cannot run on, so the JDK is pinned
+      # instead of depending on the runner image. The Gradle toolchain is pinned to 17 and
+      # settings.gradle.kts registers no toolchain resolver, so the JDK has to be on the runner already.
+      - if: matrix.language == 'java-kotlin'
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: mongodb-labs/drivers-github-tools/codeql@2515c763d88282c570b47c895aa50e9e6f7ed32c # v3
+        with:
+          language: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          manual-build-command: ${{ matrix.manual-build-command }}
+          queries: security-extended
