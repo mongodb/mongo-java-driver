@@ -390,7 +390,7 @@ public final class MongoOperationPublisher<T> {
 
     Publisher<T> findOneAndDelete(@Nullable final ClientSession clientSession, final Bson filter, final FindOneAndDeleteOptions options) {
         return createWriteOperationMono(
-                operations::getTimeoutSettings,
+                operations -> operations.createTimeoutSettings(options),
                 () -> operations.findOneAndDelete(notNull("filter", filter), notNull("options", options)), clientSession);
     }
 
@@ -398,7 +398,7 @@ public final class MongoOperationPublisher<T> {
             @Nullable final ClientSession clientSession, final Bson filter, final T replacement,
             final FindOneAndReplaceOptions options) {
         return createWriteOperationMono(
-                operations::getTimeoutSettings,
+                operations -> operations.createTimeoutSettings(options),
                 () -> operations.findOneAndReplace(notNull("filter", filter),
                                                                            notNull("replacement", replacement),
                                                                            notNull("options", options)),
@@ -409,7 +409,7 @@ public final class MongoOperationPublisher<T> {
             @Nullable final ClientSession clientSession, final Bson filter, final Bson update,
             final FindOneAndUpdateOptions options) {
         return createWriteOperationMono(
-                operations::getTimeoutSettings,
+                operations -> operations.createTimeoutSettings(options),
                 () -> operations.findOneAndUpdate(notNull("filter", filter),
                                                                           notNull("update", update),
                                                                           notNull("options", options)),
@@ -420,7 +420,7 @@ public final class MongoOperationPublisher<T> {
             @Nullable final ClientSession clientSession, final Bson filter,
             final List<? extends Bson> update, final FindOneAndUpdateOptions options) {
         return createWriteOperationMono(
-                operations::getTimeoutSettings,
+                operations -> operations.createTimeoutSettings(options),
                 () -> operations.findOneAndUpdate(notNull("filter", filter),
                                                                           notNull("update", update),
                                                                           notNull("options", options)),
@@ -442,7 +442,7 @@ public final class MongoOperationPublisher<T> {
             @Nullable final ClientSession clientSession, final List<IndexModel> indexes,
             final CreateIndexOptions options) {
         return createWriteOperationMono(
-                operations::getTimeoutSettings,
+                operations -> operations.createTimeoutSettings(options),
                 () -> operations.createIndexes(notNull("indexes", indexes), notNull("options", options)), clientSession)
                 .thenMany(Flux.fromIterable(IndexHelper.getIndexNames(indexes, getCodecRegistry())));
     }
@@ -477,14 +477,14 @@ public final class MongoOperationPublisher<T> {
 
     Publisher<Void> dropIndex(@Nullable final ClientSession clientSession, final String indexName, final DropIndexOptions options) {
         return createWriteOperationMono(
-                operations::getTimeoutSettings,
+                operations -> operations.createTimeoutSettings(options),
                 () -> operations.dropIndex(notNull("indexName", indexName), notNull("options", options)),
                                         clientSession);
     }
 
     Publisher<Void> dropIndex(@Nullable final ClientSession clientSession, final Bson keys, final DropIndexOptions options) {
         return createWriteOperationMono(
-                operations::getTimeoutSettings,
+                operations -> operations.createTimeoutSettings(options),
                 () -> operations.dropIndex(notNull("keys", keys), notNull("options", options)),
                                         clientSession);
     }
