@@ -48,6 +48,27 @@ import org.bson.codecs.pojo.annotations.BsonRepresentation
  * The Kotlin serializer codec which utilizes the kotlinx serialization module.
  *
  * Use the [create] method to create the codec
+ *
+ * ## Using JsonElement properties
+ *
+ * A `kotlinx.serialization.json.JsonElement` may be used as a property of a `@Serializable` class, which is convenient
+ * for schemaless data. Such a property is written as plain JSON rather than as Extended JSON, so BSON types are not
+ * preserved through it:
+ * - JSON defines a single number type, so a numeric literal's type is inferred from its text. A literal containing a
+ *   fraction or an exponent is encoded as a BSON double; anything else becomes an int, a long, or, when it exceeds
+ *   those, a `Decimal128`. A `BigDecimal` placed in a `JsonObject` is stored as its `toString()` and cannot be
+ *   distinguished from a hand-written literal, so `BigDecimal("1E+19")` is encoded as a BSON double.
+ * - Extended JSON is not interpreted. A nested object such as `{"$oid": "..."}` is written literally, as a sub-document
+ *   with a `$`-prefixed field name, rather than as the BSON type it denotes.
+ * - Decoding flattens each BSON type into a plain JSON primitive: an `ObjectId` becomes its hexadecimal string, a
+ *   date-time a number of milliseconds, a binary value a Base64 or UUID string. Re-encoding a decoded `JsonElement` can
+ *   therefore produce a different BSON type from the one originally read.
+ *
+ * Declare a property with the type you need instead - `Decimal128`, `ObjectId`, `BsonValue` or one of its subtypes are
+ * all supported by [defaultSerializersModule] - when a BSON type has to be preserved exactly:
+ * ```
+ * @Serializable data class Money(val metadata: JsonObject, val amount: @Contextual BsonDecimal128)
+ * ```
  */
 @OptIn(ExperimentalSerializationApi::class, InternalSerializationApi::class)
 public class KotlinSerializerCodec<T : Any>
