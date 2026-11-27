@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 import static com.mongodb.client.model.Aggregates.vectorSearch;
 import static com.mongodb.client.model.search.SearchPath.fieldPath;
@@ -49,6 +50,7 @@ import static com.mongodb.client.model.search.VectorSearchQuery.textQuery;
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+import static org.junit.jupiter.api.Assumptions.assumeFalse;
 
 /**
  * Tests for auto-embedding vector search queries.
@@ -71,9 +73,8 @@ public abstract class AbstractAutoEmbeddingVectorSearchFunctionalTest {
 
     @BeforeAll
     void setUpOnce() throws InterruptedException {
-        //TODO-JAVA-6059 remove this assumption when Atlas Vector Search with automated embedding is generally available
-        Assumptions.assumeTrue(false);
-
+        Assumptions.assumeTrue(ClusterFixture.isAtlasSearchTest(), "Atlas Search Index tests are disabled");
+        assumeFalse(isStandalone(), "Vector search functional tests are not support on standalone instances");
         mongoClient = getMongoClient(getMongoClientSettingsBuilder()
                 .codecRegistry(CODEC_REGISTRY)
                 .build());

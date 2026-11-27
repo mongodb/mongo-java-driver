@@ -289,9 +289,6 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
     @Test
     @DisplayName("should fail when invalid model name was used for auto embedding index")
     void shouldFailWhenInvalidModelNameWasUsed() {
-        //TODO-JAVA-6059 remove this assumption when auto embedding is generally available
-        Assumptions.assumeTrue(false);
-
         assertThrows(
                 MongoCommandException.class,
                 () -> createAutoEmbeddingIndex("test"),
@@ -302,9 +299,6 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
     @Test
     @DisplayName("should fail to create auto embedding index without model")
     void shouldFailToCreateAutoEmbeddingIndexWithoutModel() {
-        //TODO-JAVA-6059 remove this assumption when auto embedding is generally available
-        Assumptions.assumeTrue(false);
-
         SearchIndexModel indexModel = new SearchIndexModel(
                 AUTO_EMBED_INDEX_NAME,
                 new Document(
@@ -326,9 +320,6 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
     @ParameterizedTest(name = "should create auto embedding index with {0} quantization")
     @ValueSource(strings = {"float", "scalar", "binary", "binaryNoRescore"})
     void shouldCreateAutoEmbeddingIndexWithQuantization(final String quantization) {
-        //TODO-JAVA-6059 remove this assumption when auto embedding is generally available
-        Assumptions.assumeTrue(false);
-
         final String indexName = AUTO_EMBED_INDEX_NAME + "_" + quantization;
         SearchIndexModel indexModel = new SearchIndexModel(
                 indexName,
@@ -352,9 +343,6 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
     @Disabled("Currently numDimensions can't be used, it fails with server error:"
             + " 'Invalid numDimensions value for autoEmbed field. Expected an integer.'")
     void shouldCreateAutoEmbeddingIndexWithCustomNumDimensions() {
-        //TODO-JAVA-6059 remove this assumption when auto embedding is generally available
-        Assumptions.assumeTrue(false);
-
         SearchIndexModel indexModel = new SearchIndexModel(
                 AUTO_EMBED_INDEX_NAME,
                 new Document(
@@ -375,9 +363,6 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
     @Test
     @DisplayName("should create auto embedding index with filter field")
     void shouldCreateAutoEmbeddingIndexWithFilterField() {
-        //TODO-JAVA-6059 remove this assumption when auto embedding is generally available
-        Assumptions.assumeTrue(false);
-
         SearchIndexModel indexModel = new SearchIndexModel(
                 AUTO_EMBED_INDEX_NAME,
                 new Document(
@@ -399,9 +384,6 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
     @Test
     @DisplayName("should fail when mixing vector and autoEmbed types in the same index")
     void shouldFailWhenMixingVectorAndAutoEmbedTypes() {
-        //TODO-JAVA-6059 remove this assumption when auto embedding is generally available
-        Assumptions.assumeTrue(false);
-
         SearchIndexModel indexModel = new SearchIndexModel(
                 AUTO_EMBED_INDEX_NAME,
                 new Document(
@@ -428,9 +410,6 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
     @Test
     @DisplayName("should fail when duplicate paths are used in auto embedding index")
     void shouldFailWhenDuplicatePathsAreUsed() {
-        //TODO-JAVA-6059 remove this assumption when auto embedding is generally available
-        Assumptions.assumeTrue(false);
-
         SearchIndexModel indexModel = new SearchIndexModel(
                 AUTO_EMBED_INDEX_NAME,
                 new Document(
@@ -457,9 +436,6 @@ public abstract class AbstractAtlasSearchIndexManagementProseTest {
     @Test
     @DisplayName("should fail when autoEmbed field is used as filter field")
     void shouldFailWhenAutoEmbedFieldUsedAsFilterField() {
-        //TODO-JAVA-6059 remove this assumption when auto embedding is generally available
-        Assumptions.assumeTrue(false);
-
         SearchIndexModel indexModel = new SearchIndexModel(
                 AUTO_EMBED_INDEX_NAME,
                 new Document(
