@@ -118,11 +118,30 @@ public abstract class AsyncFunctionsTestBase {
         affected(i);
     }
 
+    /**
+     * A plain (non-async) resource for try-with-resources tests. close() records
+     * an event (verifying it runs on all paths, in order) but never throws,
+     * matching driver resources like ByteBufferBsonOutput: the generator's
+     * TWR desugaring deliberately maps to try/finally, whose semantics differ
+     * from TWR only when close itself throws (suppression priority).
+     */
+    final class Resource implements AutoCloseable {
+        private final int id;
+
+        Resource(final int id) {
+            this.id = id;
+        }
+
+        @Override
+        public void close() {
+            listener.add("close-" + id);
+        }
+    }
+
     Integer syncReturns(final int i) {
         assertFalse(invocationTracker.isAsyncStep);
         return affectedReturns(i);
     }
-
 
     public void submit(final Runnable task) {
         asyncExecutor.execute(task);

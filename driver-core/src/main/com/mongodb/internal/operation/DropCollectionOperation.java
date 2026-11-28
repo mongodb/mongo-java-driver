@@ -39,7 +39,6 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.ReadConcernHelper.appendReadConcernToWriteCommand;
 import static com.mongodb.internal.operation.AsyncOperationHelper.decorateWithRetriesAsync;
 import static com.mongodb.internal.operation.AsyncOperationHelper.executeCommandAsync;
@@ -49,7 +48,6 @@ import static com.mongodb.internal.operation.AsyncOperationHelper.writeConcernEr
 import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRetryControl;
 import static com.mongodb.internal.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.internal.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
-import static com.mongodb.internal.operation.OperationHelper.LOGGER;
 import static com.mongodb.internal.operation.SpecRetryPolicy.IndividualPolicies.overloadForWrite;
 import static com.mongodb.internal.operation.SyncOperationHelper.decorateWithRetries;
 import static com.mongodb.internal.operation.SyncOperationHelper.executeCommand;
@@ -140,7 +138,7 @@ public class DropCollectionOperation implements WriteOperation<Void> {
                              final SingleResultCallback<Void> callback) {
         getEncryptedFields((AsyncReadWriteBinding) binding, operationContext, (localEncryptedFields, t) -> {
             if (t != null) {
-                errorHandlingCallback(callback, LOGGER).onResult(null, t);
+                callback.onResult(null, t);
                 return;
             }
             new ProcessCommandsCallback(binding, operationContext, getCommands(operationContext, localEncryptedFields), callback).onResult(null, null);

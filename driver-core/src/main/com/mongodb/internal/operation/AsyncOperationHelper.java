@@ -24,6 +24,7 @@ import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.TimeoutContext;
+import com.mongodb.internal.annotations.AsyncLeaf;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.MutableValue;
 import com.mongodb.internal.async.SingleResultCallback;
@@ -53,7 +54,6 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.internal.operation.CommandOperationHelper.createSpecRetryControl;
 import static com.mongodb.internal.operation.CommandOperationHelper.transformWriteException;
@@ -85,41 +85,40 @@ final class AsyncOperationHelper {
     }
 
 
+    @AsyncLeaf(syncMethod = "withReadConnectionSource")
     static void withAsyncReadConnectionSource(final AsyncReadBinding binding, final OperationContext operationContext,
                                               final AsyncCallableWithSource callable) {
         binding.getReadConnectionSource(operationContext,
-                errorHandlingCallback(new AsyncCallableWithSourceCallback(callable), OperationHelper.LOGGER));
+                new AsyncCallableWithSourceCallback(callable));
     }
 
+    @AsyncLeaf(syncMethod = "withConnection")
     static void withAsyncConnection(final AsyncWriteBinding binding,
                                     final OperationContext originalOperationContext,
                                     final AsyncCallableWithConnection callable) {
         OperationContext serverSelectionOperationContext = originalOperationContext.withOverride(TimeoutContext::withComputedServerSelectionTimeout);
         binding.getWriteConnectionSource(
                 serverSelectionOperationContext,
-                errorHandlingCallback(
-                        new AsyncCallableWithConnectionCallback(callable, serverSelectionOperationContext, originalOperationContext),
-                        OperationHelper.LOGGER));
+                new AsyncCallableWithConnectionCallback(callable, serverSelectionOperationContext, originalOperationContext));
     }
 
     /**
      * @see #withAsyncSuppliedResource(AsyncCallbackFunction, boolean, OperationContext, SingleResultCallback, AsyncCallbackFunction)
      */
+    @AsyncLeaf(syncMethod = "withSourceAndConnection")
     static <R> void withAsyncSourceAndConnection(
             final AsyncCallbackFunction<OperationContext, AsyncConnectionSource> sourceAsyncFunction,
             final boolean wrapConnectionSourceException,
             final OperationContext operationContext,
             final SingleResultCallback<R> callback,
             final AsyncCallbackTriFunction<AsyncConnectionSource, AsyncConnection, OperationContext, R> asyncFunction) {
-        SingleResultCallback<R> errorHandlingCallback = errorHandlingCallback(callback, OperationHelper.LOGGER);
-
         OperationContext serverSelectionOperationContext =
                 operationContext.withOverride(TimeoutContext::withComputedServerSelectionTimeout);
         withAsyncSuppliedResource(
                 sourceAsyncFunction,
                 wrapConnectionSourceException,
                 serverSelectionOperationContext,
-                errorHandlingCallback,
+                callback,
                 (source, sourceReleasingCallback) ->
                         withAsyncSuppliedResource(
                                 source::getConnection,
@@ -135,28 +134,28 @@ final class AsyncOperationHelper {
     }
 
 
+    @AsyncLeaf(syncMethod = "withSuppliedResource")
     static <R, T extends ReferenceCounted> void withAsyncSuppliedResource(final AsyncCallbackFunction<OperationContext, T> resourceSupplier,
                                                                           final boolean wrapSourceConnectionException,
                                                                           final OperationContext operationContext,
                                                                           final SingleResultCallback<R> callback,
                                                                           final AsyncCallbackFunction<T, R> function) {
-        SingleResultCallback<R> errorHandlingCallback = errorHandlingCallback(callback, OperationHelper.LOGGER);
         resourceSupplier.apply(operationContext, (resource, supplierException) -> {
             if (supplierException != null) {
                 if (wrapSourceConnectionException) {
                     supplierException = new OperationHelper.ResourceSupplierInternalException(supplierException);
                 }
-                errorHandlingCallback.onResult(null, supplierException);
+                callback.onResult(null, supplierException);
             } else {
                 Assertions.assertNotNull(resource);
                 try {
                     AsyncCallbackSupplier<R> curriedFunction = c -> function.apply(resource, c);
-                    curriedFunction.whenComplete(resource::release).get(errorHandlingCallback);
+                    curriedFunction.whenComplete(resource::release).get(callback);
                 } catch (Exception e) {
                     if (resource.getCount() > 0) {
                         resource.release();
                     }
-                    errorHandlingCallback.onResult(null, e);
+                    callback.onResult(null, e);
                 }
             }
         });
@@ -232,7 +231,7 @@ final class AsyncOperationHelper {
                                                                      commandCreator, decoder, transformer, connection, releasingCallback);
                                 })
         ).whenComplete(binding::release);
-        asyncRead.get(errorHandlingCallback(callback, OperationHelper.LOGGER));
+        asyncRead.get(callback);
     }
 
     static <T> void executeCommandAsync(
@@ -353,6 +352,7 @@ final class AsyncOperationHelper {
                 operationContext, transformingReadCallback(transformer, source, connection, operationContext, callback));
     }
 
+    @AsyncLeaf(syncMethod = "decorateWithRetries")
     static <R> AsyncCallbackSupplier<R> decorateWithRetriesAsync(
             final RetryControl<SpecRetryPolicy> retryControl,
             final OperationContext operationContext,

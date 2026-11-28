@@ -17,6 +17,8 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.ServerAddress;
+import com.mongodb.internal.annotations.AsyncLeaf;
+import com.mongodb.internal.annotations.SyncLeaf;
 import com.mongodb.connection.AsyncCompletionHandler;
 import org.bson.ByteBuf;
 
@@ -34,6 +36,7 @@ public interface Stream extends BufferProvider {
      * @param operationContext the operation context
      * @throws IOException if an I/O error occurs
      */
+    @SyncLeaf(asyncMethod = "openAsync")
     void open(OperationContext operationContext) throws IOException;
 
     /**
@@ -42,6 +45,7 @@ public interface Stream extends BufferProvider {
      * @param operationContext the operation context
      * @param handler          the completion handler for opening the stream
      */
+    @AsyncLeaf(syncMethod = "open")
     void openAsync(OperationContext operationContext, AsyncCompletionHandler<Void> handler);
 
     /**
@@ -52,6 +56,7 @@ public interface Stream extends BufferProvider {
      * @param operationContext the operation context
      * @throws IOException if there are problems writing to the stream
      */
+    @SyncLeaf(asyncMethod = "writeAsync")
     void write(List<ByteBuf> buffers, OperationContext operationContext) throws IOException;
 
     /**
@@ -62,6 +67,7 @@ public interface Stream extends BufferProvider {
      * @return a byte buffer filled with number of bytes requested
      * @throws IOException if there are problems reading from the stream
      */
+    @SyncLeaf(asyncMethod = "readAsync")
     ByteBuf read(int numBytes, OperationContext operationContext) throws IOException;
 
     /**
@@ -73,6 +79,7 @@ public interface Stream extends BufferProvider {
      * @param operationContext the operation context
      * @param handler invoked when the write operation has completed
      */
+    @AsyncLeaf(syncMethod = "write")
     void writeAsync(List<ByteBuf> buffers, OperationContext operationContext, AsyncCompletionHandler<Void> handler);
 
     /**
@@ -83,6 +90,7 @@ public interface Stream extends BufferProvider {
      * @param operationContext the operation context
      * @param handler invoked when the read operation has completed
      */
+    @AsyncLeaf(syncMethod = "read")
     void readAsync(int numBytes, OperationContext operationContext, AsyncCompletionHandler<ByteBuf> handler);
 
     /**

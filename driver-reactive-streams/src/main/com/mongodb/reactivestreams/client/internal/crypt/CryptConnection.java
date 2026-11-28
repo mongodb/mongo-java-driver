@@ -17,9 +17,12 @@
 package com.mongodb.reactivestreams.client.internal.crypt;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.internal.annotations.CallbackBoundary;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.AsyncConnection;
+import com.mongodb.internal.diagnostics.logging.Logger;
+import com.mongodb.internal.diagnostics.logging.Loggers;
 import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.MessageSequences;
 import com.mongodb.internal.connection.MessageSequences.EmptyMessageSequences;
@@ -53,10 +56,12 @@ import java.util.Map;
 import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.fail;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.reactivestreams.client.internal.MongoOperationPublisher.sinkToCallback;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 class CryptConnection implements AsyncConnection {
+    private static final Logger LOGGER = Loggers.getLogger("client");
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
     private static final int MAX_SPLITTABLE_DOCUMENT_SIZE = 2097152;
 
@@ -98,6 +103,7 @@ class CryptConnection implements AsyncConnection {
     }
 
     @Override
+    @CallbackBoundary("auto-encryption command path: sinkToCallback crossing")
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                                  @Nullable final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
                                  final OperationContext operationContext, final boolean responseExpected, final MessageSequences sequences,
@@ -127,7 +133,8 @@ class CryptConnection implements AsyncConnection {
             crypt.encrypt(database, new RawBsonDocument(bsonOutput.getInternalBuffer(), 0, bsonOutput.getSize()), timeout)
                     .flatMap((Function<RawBsonDocument, Mono<RawBsonDocument>>) encryptedCommand ->
                             Mono.create(sink -> wrapped.commandAsync(database, encryptedCommand, commandFieldNameValidator, readPreference,
-                                    new RawBsonDocumentCodec(), operationContext, responseExpected, EmptyMessageSequences.INSTANCE, sinkToCallback(sink))))
+                                    new RawBsonDocumentCodec(), operationContext, responseExpected, EmptyMessageSequences.INSTANCE,
+                                    errorHandlingCallback(sinkToCallback(sink), LOGGER))))
                     .flatMap(rawBsonDocument -> crypt.decrypt(rawBsonDocument, timeout))
                     .map(decryptedResponse ->
                         commandResultDecoder.decode(new BsonBinaryReader(decryptedResponse.getByteBuffer().asNIO()),

@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.internal.annotations.SyncLeaf;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.binding.ReferenceCounted;
@@ -45,10 +46,12 @@ public interface Connection extends ReferenceCounted {
     ConnectionDescription getDescription();
 
     @Nullable
+    @SyncLeaf(asyncMethod = "commandAsync")
     <T> T command(String database, BsonDocument command, FieldNameValidator fieldNameValidator, @Nullable ReadPreference readPreference,
             Decoder<T> commandResultDecoder, OperationContext operationContext);
 
     @Nullable
+    @SyncLeaf(asyncMethod = "commandAsync")
     <T> T command(String database, BsonDocument command, FieldNameValidator commandFieldNameValidator,
             @Nullable ReadPreference readPreference, Decoder<T> commandResultDecoder, OperationContext operationContext,
             boolean responseExpected, MessageSequences sequences);

@@ -19,6 +19,7 @@ package com.mongodb;
 import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.WriteConcernError;
+import com.mongodb.internal.annotations.NoAsync;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -118,6 +119,7 @@ final class LegacyMixedBulkWriteOperation implements WriteOperation<WriteConcern
         return wrappedOperation.getNamespace();
     }
 
+    @NoAsync
     @Override
     public WriteConcernResult execute(final WriteBinding binding, final OperationContext operationContext) {
         try {
