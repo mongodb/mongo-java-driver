@@ -324,7 +324,7 @@ final class LoadBalancedCluster implements Cluster {
                 + "to multiple hosts");
     }
 
-    private MongoTimeoutException createTimeoutException(final TimeoutContext timeoutContext) {
+    private MongoClientException createTimeoutException(final TimeoutContext timeoutContext) {
         MongoException localSrvResolutionException = srvResolutionException;
         String message;
         if (localSrvResolutionException == null) {
@@ -336,7 +336,7 @@ final class LoadBalancedCluster implements Cluster {
         return createTimeoutException(timeoutContext, message);
     }
 
-    private static MongoTimeoutException createTimeoutException(final TimeoutContext timeoutContext, final String message) {
+    private static MongoClientException createTimeoutException(final TimeoutContext timeoutContext, final String message) {
         return timeoutContext.hasTimeoutMS() ? new MongoOperationTimeoutException(message) : new MongoTimeoutException(message);
     }
 
