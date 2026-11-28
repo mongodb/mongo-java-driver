@@ -40,7 +40,6 @@ import org.mockito.Mock;
 import org.reactivestreams.Publisher;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -74,11 +73,6 @@ public class MongoDatabaseImplTest extends TestHelper {
     public void withReadPreference() {
         assertEquals(ReadPreference.secondaryPreferred(), database.withReadPreference(ReadPreference.secondaryPreferred())
                 .getReadPreference());
-    }
-
-    @Test
-    public void withTimeout() {
-        assertEquals(1000, database.withTimeout(1000, TimeUnit.MILLISECONDS).getTimeout(TimeUnit.MILLISECONDS));
     }
 
     @Test

@@ -18,7 +18,7 @@ package org.mongodb.scala.syncadapter
 import com.mongodb.client.ListCollectionsIterable
 import org.bson.conversions.Bson
 import org.mongodb.scala.bson.BsonValue
-import org.mongodb.scala.{ ListCollectionsObservable, TimeoutMode }
+import org.mongodb.scala.ListCollectionsObservable
 
 import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
@@ -38,11 +38,6 @@ case class SyncListCollectionsIterable[T](wrapped: ListCollectionsObservable[T])
 
   override def batchSize(batchSize: Int): ListCollectionsIterable[T] = {
     wrapped.batchSize(batchSize)
-    this
-  }
-
-  override def timeoutMode(timeoutMode: TimeoutMode): ListCollectionsIterable[T] = {
-    wrapped.timeoutMode(timeoutMode)
     this
   }
 

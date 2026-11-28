@@ -16,7 +16,6 @@
 package com.mongodb.kotlin.client
 
 import com.mongodb.client.ListIndexesIterable as JListIndexesIterable
-import com.mongodb.client.cursor.TimeoutMode
 import java.util.concurrent.TimeUnit
 import kotlin.reflect.full.declaredFunctions
 import kotlin.test.assertEquals
@@ -51,14 +50,12 @@ class ListIndexesIterableTest {
         iterable.comment(comment)
         iterable.maxTime(1)
         iterable.maxTime(1, TimeUnit.SECONDS)
-        iterable.timeoutMode(TimeoutMode.ITERATION)
 
         verify(wrapped).batchSize(batchSize)
         verify(wrapped).comment(bsonComment)
         verify(wrapped).comment(comment)
         verify(wrapped).maxTime(1, TimeUnit.MILLISECONDS)
         verify(wrapped).maxTime(1, TimeUnit.SECONDS)
-        verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
 
         verifyNoMoreInteractions(wrapped)
     }

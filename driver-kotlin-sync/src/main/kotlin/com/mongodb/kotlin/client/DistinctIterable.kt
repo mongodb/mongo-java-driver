@@ -15,10 +15,7 @@
  */
 package com.mongodb.kotlin.client
 
-import com.mongodb.annotations.Alpha
-import com.mongodb.annotations.Reason
 import com.mongodb.client.DistinctIterable as JDistinctIterable
-import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.lang.Nullable
 import java.util.concurrent.TimeUnit
@@ -41,19 +38,6 @@ public class DistinctIterable<T : Any?>(private val wrapped: JDistinctIterable<T
      * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
      */
     public override fun batchSize(batchSize: Int): DistinctIterable<T> = apply { wrapped.batchSize(batchSize) }
-
-    /**
-     * Sets the timeoutMode for the cursor.
-     *
-     * Requires the `timeout` to be set, either in the [com.mongodb.MongoClientSettings], via [MongoDatabase] or via
-     * [MongoCollection]
-     *
-     * @param timeoutMode the timeout mode
-     * @return this
-     * @since 5.2
-     */
-    @Alpha(Reason.CLIENT)
-    public fun timeoutMode(timeoutMode: TimeoutMode): DistinctIterable<T> = apply { wrapped.timeoutMode(timeoutMode) }
 
     /**
      * Sets the query filter to apply to the query.

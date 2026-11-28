@@ -47,13 +47,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.mongodb.AuthenticationMechanism.MONGODB_OIDC;
@@ -69,7 +67,6 @@ import static com.mongodb.MongoCredential.TOKEN_RESOURCE_KEY;
 import static com.mongodb.assertions.Assertions.assertFalse;
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.assertTrue;
-import static com.mongodb.internal.TimeoutContext.throwMongoTimeoutException;
 import static com.mongodb.internal.async.AsyncRunnable.beginAsync;
 import static com.mongodb.internal.connection.OidcAuthenticator.OidcValidator.validateBeforeUse;
 import static java.lang.String.format;
@@ -129,16 +126,6 @@ public final class OidcAuthenticator extends SaslAuthenticator {
     private Duration getCallbackTimeout(final TimeoutContext timeoutContext) {
         if (isHumanCallback()) {
             return HUMAN_CALLBACK_TIMEOUT;
-        }
-
-        if (timeoutContext.hasTimeoutMS()) {
-            return assertNotNull(timeoutContext.getTimeout()).call(TimeUnit.MILLISECONDS,
-                    () ->
-                          // we can get here if server selection timeout was set to infinite.
-                          ChronoUnit.FOREVER.getDuration(),
-                    (remainingMs) -> Duration.ofMillis(remainingMs),
-                    () -> throwMongoTimeoutException());
-
         }
         return CALLBACK_TIMEOUT;
     }

@@ -21,7 +21,6 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
-import com.mongodb.WriteConcern;
 import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.async.function.RetryControl;
@@ -33,7 +32,6 @@ import com.mongodb.session.ServerSession;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
@@ -65,14 +63,6 @@ public class BaseClientSessionImpl implements ClientSession {
     private ReferenceCounted transactionContext;
     @Nullable
     private TimeoutContext timeoutContext;
-
-    protected static boolean hasTimeoutMS(@Nullable final TimeoutContext timeoutContext) {
-        return timeoutContext != null && timeoutContext.hasTimeoutMS();
-    }
-
-    protected static boolean hasWTimeoutMS(@Nullable final WriteConcern writeConcern) {
-        return writeConcern != null && writeConcern.getWTimeout(TimeUnit.MILLISECONDS) != null;
-    }
 
     public BaseClientSessionImpl(final ServerSessionPool serverSessionPool, final Object originator, final ClientSessionOptions options) {
         this.serverSessionPool = serverSessionPool;
@@ -236,16 +226,8 @@ public class BaseClientSessionImpl implements ClientSession {
     }
 
     protected TimeoutSettings getTimeoutSettings(final TransactionOptions transactionOptions, final TimeoutSettings timeoutSettings) {
-        Long transactionTimeoutMS = transactionOptions.getTimeout(MILLISECONDS);
-        Long defaultTimeoutMS = getOptions().getDefaultTimeout(MILLISECONDS);
-        Long clientTimeoutMS =  timeoutSettings.getTimeoutMS();
-
-        Long timeoutMS = transactionTimeoutMS != null ? transactionTimeoutMS
-                : defaultTimeoutMS != null ? defaultTimeoutMS : clientTimeoutMS;
-
         return timeoutSettings
-                .withMaxCommitMS(transactionOptions.getMaxCommitTime(MILLISECONDS))
-                .withTimeout(timeoutMS, MILLISECONDS);
+                .withMaxCommitMS(transactionOptions.getMaxCommitTime(MILLISECONDS));
     }
 
     @Override

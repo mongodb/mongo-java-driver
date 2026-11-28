@@ -55,7 +55,6 @@ import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -303,12 +302,6 @@ public final class MongoClientImpl implements MongoClient {
     }
 
     @Override
-    @Nullable
-    public Long getTimeout(final TimeUnit timeUnit) {
-        return delegate.getTimeout(timeUnit);
-    }
-
-    @Override
     public MongoCluster withCodecRegistry(final CodecRegistry codecRegistry) {
         return delegate.withCodecRegistry(codecRegistry);
     }
@@ -326,11 +319,6 @@ public final class MongoClientImpl implements MongoClient {
     @Override
     public MongoCluster withReadConcern(final ReadConcern readConcern) {
         return delegate.withReadConcern(readConcern);
-    }
-
-    @Override
-    public MongoCluster withTimeout(final long timeout, final TimeUnit timeUnit) {
-        return delegate.withTimeout(timeout, timeUnit);
     }
 
     @Override

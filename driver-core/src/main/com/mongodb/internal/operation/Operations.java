@@ -22,7 +22,6 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.bulk.BulkWriteResult;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.ClusteredIndexOptions;
 import com.mongodb.client.model.Collation;
@@ -135,9 +134,6 @@ public final class Operations<T> {
         this.timeoutSettings = timeoutSettings;
 
         WriteConcern writeConcernToUse = writeConcern;
-        if (timeoutSettings.getTimeoutMS() != null) {
-            writeConcernToUse = assertNotNull(WriteConcernHelper.cloneWithoutTimeout(writeConcern));
-        }
         this.writeConcern = writeConcernToUse;
     }
 
@@ -288,8 +284,7 @@ public final class Operations<T> {
                 .max(toBsonDocument(options.getMax()))
                 .returnKey(options.isReturnKey())
                 .showRecordId(options.isShowRecordId())
-                .allowDiskUse(options.isAllowDiskUse())
-                .timeoutMode(options.getTimeoutMode());
+                .allowDiskUse(options.isAllowDiskUse());
 
         if (options.getHint() != null) {
             operation.hint(toBsonDocument(options.getHint()));
@@ -317,7 +312,7 @@ public final class Operations<T> {
     }
 
     public <R> ReadOperationExplainable<R> aggregate(final List<? extends Bson> pipeline, final Class<R> resultClass,
-            @Nullable final TimeoutMode timeoutMode, @Nullable final Integer batchSize,
+            @Nullable final Integer batchSize,
             final Collation collation, @Nullable final Bson hint, @Nullable final String hintString,
             final BsonValue comment, final Bson variables, final Boolean allowDiskUse, final AggregationLevel aggregationLevel) {
         return new AggregateOperation<>(assertNotNull(namespace),
@@ -329,11 +324,10 @@ public final class Operations<T> {
                 .collation(collation)
                 .hint(hint != null ? toBsonDocument(hint) : (hintString != null ? new BsonString(hintString) : null))
                 .comment(comment)
-                .let(toBsonDocument(variables))
-                .timeoutMode(timeoutMode);
+                .let(toBsonDocument(variables));
     }
 
-    public ReadOperationSimple<Void>  aggregateToCollection(final List<? extends Bson> pipeline, @Nullable final TimeoutMode timeoutMode,
+    public ReadOperationSimple<Void>  aggregateToCollection(final List<? extends Bson> pipeline,
             final Boolean allowDiskUse, final Boolean bypassDocumentValidation, final Collation collation, @Nullable final Bson hint,
             @Nullable final String hintString, final BsonValue comment, final Bson variables, final AggregationLevel aggregationLevel) {
         return new AggregateToCollectionOperation(assertNotNull(namespace),
@@ -344,8 +338,7 @@ public final class Operations<T> {
                 .collation(collation)
                 .hint(hint != null ? toBsonDocument(hint) : (hintString != null ? new BsonString(hintString) : null))
                 .comment(comment)
-                .let(toBsonDocument(variables))
-                .timeoutMode(timeoutMode);
+                .let(toBsonDocument(variables));
     }
 
     @SuppressWarnings("deprecation")
@@ -766,15 +759,14 @@ public final class Operations<T> {
 
     public <R> ReadOperationCursor<R> listCollections(final String databaseName, final Class<R> resultClass,
             final Bson filter, final boolean collectionNamesOnly, final boolean authorizedCollections, @Nullable final Integer batchSize,
-            final BsonValue comment, @Nullable final TimeoutMode timeoutMode) {
+            final BsonValue comment) {
         return new ListCollectionsOperation<>(databaseName, codecRegistry.get(resultClass), maxAdaptiveRetriesSetting)
                 .retryReads(retryReads)
                 .filter(toBsonDocument(filter))
                 .nameOnly(collectionNamesOnly)
                 .authorizedCollections(authorizedCollections)
                 .batchSize(batchSize == null ? 0 : batchSize)
-                .comment(comment)
-                .timeoutMode(timeoutMode);
+                .comment(comment);
     }
 
     public <R> ReadOperationCursor<R> listDatabases(final Class<R> resultClass, final Bson filter,
@@ -789,14 +781,13 @@ public final class Operations<T> {
     }
 
     public <R> ReadOperationCursor<R> listIndexes(final Class<R> resultClass, @Nullable final Integer batchSize,
-            final BsonValue comment, @Nullable final TimeoutMode timeoutMode) {
+            final BsonValue comment) {
         return new ListIndexesOperation<>(assertNotNull(namespace),
                 codecRegistry.get(resultClass),
                 maxAdaptiveRetriesSetting)
                 .retryReads(retryReads)
                 .batchSize(batchSize == null ? 0 : batchSize)
-                .comment(comment)
-                .timeoutMode(timeoutMode);
+                .comment(comment);
     }
 
     public <R> ReadOperationCursor<R> changeStream(final FullDocument fullDocument,

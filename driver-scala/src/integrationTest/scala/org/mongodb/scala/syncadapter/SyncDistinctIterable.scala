@@ -43,11 +43,6 @@ case class SyncDistinctIterable[T](wrapped: DistinctObservable[T])
     this
   }
 
-  override def timeoutMode(timeoutMode: TimeoutMode): DistinctIterable[T] = {
-    wrapped.timeoutMode(timeoutMode)
-    this
-  }
-
   override def collation(collation: Collation): DistinctIterable[T] = {
     wrapped.collation(collation)
     this

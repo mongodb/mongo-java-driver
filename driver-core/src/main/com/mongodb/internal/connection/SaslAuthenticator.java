@@ -20,7 +20,6 @@ import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerApi;
@@ -285,8 +284,6 @@ abstract class SaslAuthenticator extends Authenticator implements SpeculativeAut
     protected MongoException wrapException(final Throwable t) {
         if (t instanceof MongoInterruptedException) {
             return (MongoInterruptedException) t;
-        } else if (t instanceof MongoOperationTimeoutException) {
-            return (MongoOperationTimeoutException) t;
         } else if (t instanceof MongoSecurityException) {
             return (MongoSecurityException) t;
         } else {

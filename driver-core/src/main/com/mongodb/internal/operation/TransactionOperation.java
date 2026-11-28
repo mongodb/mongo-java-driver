@@ -18,7 +18,6 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.Function;
 import com.mongodb.WriteConcern;
-import com.mongodb.internal.TimeoutContext;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
@@ -61,19 +60,17 @@ public abstract class TransactionOperation implements WriteOperation<Void> {
     @Override
     public Void execute(final WriteBinding binding, final OperationContext operationContext) {
         isTrue("in transaction", operationContext.getSessionContext().hasActiveTransaction());
-        TimeoutContext timeoutContext = operationContext.getTimeoutContext();
         return executeRetryableWrite(binding, operationContext,  "admin", null, NoOpFieldNameValidator.INSTANCE,
                                      new BsonDocumentCodec(), getCommandCreator(),
-                writeConcernErrorTransformer(timeoutContext), getRetryCommandModifier(operationContext), true, maxAdaptiveRetriesSetting);
+                writeConcernErrorTransformer(), getRetryCommandModifier(operationContext), true, maxAdaptiveRetriesSetting);
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final OperationContext operationContext, final SingleResultCallback<Void> callback) {
         isTrue("in transaction", operationContext.getSessionContext().hasActiveTransaction());
-        TimeoutContext timeoutContext = operationContext.getTimeoutContext();
         executeRetryableWriteAsync(binding, operationContext, "admin", null, NoOpFieldNameValidator.INSTANCE,
                                    new BsonDocumentCodec(), getCommandCreator(),
-                writeConcernErrorTransformerAsync(timeoutContext), getRetryCommandModifier(operationContext),
+                writeConcernErrorTransformerAsync(), getRetryCommandModifier(operationContext),
                                    true, maxAdaptiveRetriesSetting,
                                    errorHandlingCallback(callback, LOGGER));
     }

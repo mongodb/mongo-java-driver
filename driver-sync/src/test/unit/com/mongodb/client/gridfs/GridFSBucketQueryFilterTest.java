@@ -36,7 +36,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -66,10 +65,6 @@ final class GridFSBucketQueryFilterTest {
 
     @BeforeEach
     void setUp() {
-        // Mockito answers 0L rather than null for the Long-returning getTimeout, which would make the bucket apply a 0ms timeout.
-        when(filesCollection.getTimeout(any(TimeUnit.class))).thenReturn(null);
-        when(chunksCollection.getTimeout(any(TimeUnit.class))).thenReturn(null);
-
         when(filesCollection.deleteOne(any(Bson.class))).thenReturn(DeleteResult.acknowledged(1));
         when(filesCollection.deleteOne(any(ClientSession.class), any(Bson.class))).thenReturn(DeleteResult.acknowledged(1));
     }
@@ -121,7 +116,7 @@ final class GridFSBucketQueryFilterTest {
     @MethodSource("ids")
     void abortUsesEqualityFilter(final BsonValue id) {
         GridFSUploadStream uploadStream = new GridFSUploadStreamImpl(null, filesCollection, chunksCollection, id, "filename", 255,
-                null, null);
+                null);
 
         uploadStream.abort();
 

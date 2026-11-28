@@ -16,7 +16,6 @@
 package com.mongodb.kotlin.client.coroutine.syncadapter
 
 import com.mongodb.client.DistinctIterable as JDistinctIterable
-import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.kotlin.client.coroutine.DistinctFlow
 import java.util.concurrent.TimeUnit
@@ -35,7 +34,4 @@ data class SyncDistinctIterable<T : Any>(val wrapped: DistinctFlow<T>) :
     override fun comment(comment: BsonValue?): SyncDistinctIterable<T> = apply { wrapped.comment(comment) }
     override fun hint(hint: Bson?): SyncDistinctIterable<T> = apply { wrapped.hint(hint) }
     override fun hintString(hint: String?): SyncDistinctIterable<T> = apply { wrapped.hintString(hint) }
-    override fun timeoutMode(timeoutMode: TimeoutMode): SyncDistinctIterable<T> = apply {
-        wrapped.timeoutMode(timeoutMode)
-    }
 }

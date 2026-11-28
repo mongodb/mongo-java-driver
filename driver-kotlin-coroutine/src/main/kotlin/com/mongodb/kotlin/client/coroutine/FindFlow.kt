@@ -17,9 +17,6 @@ package com.mongodb.kotlin.client.coroutine
 
 import com.mongodb.CursorType
 import com.mongodb.ExplainVerbosity
-import com.mongodb.annotations.Alpha
-import com.mongodb.annotations.Reason
-import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.client.model.Collation
 import com.mongodb.reactivestreams.client.FindPublisher
 import java.util.concurrent.TimeUnit
@@ -47,24 +44,6 @@ public class FindFlow<T : Any>(private val wrapped: FindPublisher<T>) : Flow<T> 
      * @see [Batch Size](https://www.mongodb.com/docs/manual/reference/method/cursor.batchSize/#cursor.batchSize)
      */
     public fun batchSize(batchSize: Int): FindFlow<T> = apply { wrapped.batchSize(batchSize) }
-
-    /**
-     * Sets the timeoutMode for the cursor.
-     *
-     * Requires the `timeout` to be set, either in the [com.mongodb.MongoClientSettings], via [MongoDatabase] or via
-     * [MongoCollection]
-     *
-     * If the `timeout` is set then:
-     * * For non-tailable cursors, the default value of timeoutMode is [TimeoutMode.CURSOR_LIFETIME]
-     * * For tailable cursors, the default value of timeoutMode is [TimeoutMode.ITERATION] and its an error to configure
-     *   it as: [TimeoutMode.CURSOR_LIFETIME]
-     *
-     * @param timeoutMode the timeout mode
-     * @return this
-     * @since 5.2
-     */
-    @Alpha(Reason.CLIENT)
-    public fun timeoutMode(timeoutMode: TimeoutMode): FindFlow<T> = apply { wrapped.timeoutMode(timeoutMode) }
 
     /**
      * Sets the query filter to apply to the query.

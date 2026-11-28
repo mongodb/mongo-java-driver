@@ -15,7 +15,6 @@
  */
 package com.mongodb.kotlin.client.coroutine
 
-import com.mongodb.ClientSessionOptions
 import com.mongodb.ConnectionString
 import com.mongodb.MongoClientSettings
 import com.mongodb.MongoDriverInformation
@@ -24,7 +23,6 @@ import com.mongodb.lang.Nullable
 import com.mongodb.reactivestreams.client.MongoClient as JMongoClient
 import com.mongodb.reactivestreams.client.MongoClients as JMongoClients
 import java.io.Closeable
-import java.util.concurrent.TimeUnit
 
 /**
  * A client-side representation of a MongoDB cluster.
@@ -126,12 +124,3 @@ public class MongoClient(private val wrapped: JMongoClient) : MongoCluster(wrapp
     public fun appendMetadata(mongoDriverInformation: MongoDriverInformation): Unit =
         wrapped.appendMetadata(mongoDriverInformation)
 }
-
-/**
- * ClientSessionOptions.Builder.defaultTimeout extension function
- *
- * @param defaultTimeout time in milliseconds
- * @return the options
- */
-public fun ClientSessionOptions.Builder.defaultTimeout(defaultTimeout: Long): ClientSessionOptions.Builder =
-    this.apply { defaultTimeout(defaultTimeout, TimeUnit.MILLISECONDS) }

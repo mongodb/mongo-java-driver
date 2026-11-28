@@ -18,8 +18,6 @@ package com.mongodb.reactivestreams.client.internal.crypt;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
-import com.mongodb.internal.time.Timeout;
-import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import org.bson.BsonDocument;
@@ -29,7 +27,6 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.reactivestreams.client.internal.TimeoutHelper.collectionWithTimeout;
 
 class KeyRetriever {
     private static final String TIMEOUT_ERROR_MESSAGE = "Key retrieval exceeded the timeout limit.";
@@ -41,12 +38,12 @@ class KeyRetriever {
         this.namespace = notNull("namespace", namespace);
     }
 
-    public Mono<List<BsonDocument>> find(final BsonDocument keyFilter, @Nullable final Timeout operationTimeout) {
+    public Mono<List<BsonDocument>> find(final BsonDocument keyFilter) {
         return Flux.defer(() -> {
             MongoCollection<BsonDocument> collection = client.getDatabase(namespace.getDatabaseName())
                     .getCollection(namespace.getCollectionName(), BsonDocument.class);
 
-          return collectionWithTimeout(collection, operationTimeout, TIMEOUT_ERROR_MESSAGE)
+            return collection
                     .withReadConcern(ReadConcern.MAJORITY)
                     .find(keyFilter);
         }).collectList();

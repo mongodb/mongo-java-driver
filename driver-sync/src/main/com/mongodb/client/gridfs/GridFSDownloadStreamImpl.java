@@ -21,10 +21,7 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
-import com.mongodb.client.cursor.TimeoutMode;
 import com.mongodb.client.gridfs.model.GridFSFile;
-import com.mongodb.client.internal.TimeoutHelper;
-import com.mongodb.internal.time.Timeout;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
@@ -36,7 +33,6 @@ import java.util.concurrent.locks.ReentrantLock;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.Locks.withInterruptibleLock;
-import static com.mongodb.internal.TimeoutContext.createMongoTimeoutException;
 import static java.lang.String.format;
 
 class GridFSDownloadStreamImpl extends GridFSDownloadStream {
@@ -61,14 +57,12 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     private long currentPosition;
     private byte[] buffer = null;
     private long markPosition;
-    @Nullable
-    private final Timeout timeout;
     private final ReentrantLock closeLock = new ReentrantLock();
     private final ReentrantLock cursorLock = new ReentrantLock();
     private boolean closed = false;
 
     GridFSDownloadStreamImpl(@Nullable final ClientSession clientSession, final GridFSFile fileInfo,
-                             final MongoCollection<BsonDocument> chunksCollection, @Nullable final Timeout timeout) {
+                             final MongoCollection<BsonDocument> chunksCollection) {
         this.clientSession = clientSession;
         this.fileInfo = notNull("file information", fileInfo);
         this.chunksCollection = notNull("chunks collection",  chunksCollection);
@@ -77,7 +71,6 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
         length = fileInfo.getLength();
         chunkSizeInBytes = fileInfo.getChunkSize();
         numberOfChunks = (int) Math.ceil((double) length / chunkSizeInBytes);
-        this.timeout = timeout;
     }
 
     @Override
@@ -111,7 +104,6 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     @Override
     public int read(final byte[] b, final int off, final int len) {
         checkClosed();
-        checkTimeout();
 
         if (currentPosition == length) {
             return -1;
@@ -133,7 +125,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     @Override
     public long skip(final long bytesToSkip) {
         checkClosed();
-        checkTimeout();
+
         if (bytesToSkip <= 0) {
             return 0;
         }
@@ -162,7 +154,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     @Override
     public int available() {
         checkClosed();
-        checkTimeout();
+
         if (buffer == null) {
             return 0;
         } else {
@@ -183,7 +175,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     @Override
     public void reset() {
         checkClosed();
-        checkTimeout();
+
         if (currentPosition == markPosition) {
             return;
         }
@@ -213,11 +205,6 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
         });
     }
 
-    private void checkTimeout() {
-        Timeout.onExistsAndExpired(timeout, () -> {
-            throw createMongoTimeoutException(TIMEOUT_MESSAGE);
-        });
-    }
     private void checkClosed() {
         withInterruptibleLock(closeLock, () -> {
             if (closed) {
@@ -260,12 +247,9 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
         BsonDocument filter = GridFSFilters.eq("files_id", fileId)
                 .append("n", new BsonDocument("$gte", new BsonInt32(startChunkIndex)));
         if (clientSession != null) {
-            findIterable = withNullableTimeout(chunksCollection, timeout).find(clientSession, filter);
+            findIterable = chunksCollection.find(clientSession, filter);
         } else {
-            findIterable =  withNullableTimeout(chunksCollection, timeout).find(filter);
-        }
-        if (timeout != null){
-             findIterable.timeoutMode(TimeoutMode.CURSOR_LIFETIME);
+            findIterable =  chunksCollection.find(filter);
         }
         return findIterable.batchSize(batchSize)
                 .sort(new BsonDocument("n", new BsonInt32(1))).iterator();
@@ -308,8 +292,4 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
         return getBufferFromChunk(getChunk(chunkIndexToFetch), chunkIndexToFetch);
     }
 
-    private <T> MongoCollection<T> withNullableTimeout(final MongoCollection<T> chunksCollection,
-                                                       @Nullable final Timeout timeout) {
-        return TimeoutHelper.collectionWithTimeout(chunksCollection, TIMEOUT_MESSAGE, timeout);
-    }
 }

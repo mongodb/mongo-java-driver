@@ -20,7 +20,6 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoIncompatibleDriverException;
 import com.mongodb.MongoInterruptedException;
-import com.mongodb.MongoOperationTimeoutException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.UnixServerAddress;
@@ -432,8 +431,7 @@ abstract class BaseCluster implements Cluster {
                 "Timed out while waiting for a server that matches %s. Client view of cluster state is %s",
                 serverSelector, clusterDescription.getShortDescription());
 
-        MongoTimeoutException exception = operationContext.getTimeoutContext().hasTimeoutMS()
-                ? new MongoOperationTimeoutException(message) : new MongoTimeoutException(message);
+        MongoTimeoutException exception = new MongoTimeoutException(message);
 
         logServerSelectionFailed(operationContext, clusterId, exception, serverSelector, clusterDescription);
         throw exception;

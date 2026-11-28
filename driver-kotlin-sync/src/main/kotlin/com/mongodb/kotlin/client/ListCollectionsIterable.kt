@@ -15,10 +15,7 @@
  */
 package com.mongodb.kotlin.client
 
-import com.mongodb.annotations.Alpha
-import com.mongodb.annotations.Reason
 import com.mongodb.client.ListCollectionsIterable as JListCollectionsIterable
-import com.mongodb.client.cursor.TimeoutMode
 import java.util.concurrent.TimeUnit
 import org.bson.BsonValue
 import org.bson.conversions.Bson
@@ -34,22 +31,6 @@ public class ListCollectionsIterable<T : Any>(private val wrapped: JListCollecti
 
     public override fun batchSize(batchSize: Int): ListCollectionsIterable<T> {
         super.batchSize(batchSize)
-        return this
-    }
-
-    /**
-     * Sets the timeoutMode for the cursor.
-     *
-     * Requires the `timeout` to be set, either in the [com.mongodb.MongoClientSettings], via [MongoDatabase] or via
-     * [MongoCollection]
-     *
-     * @param timeoutMode the timeout mode
-     * @return this
-     * @since 5.2
-     */
-    @Alpha(Reason.CLIENT)
-    public fun timeoutMode(timeoutMode: TimeoutMode): ListCollectionsIterable<T> {
-        wrapped.timeoutMode(timeoutMode)
         return this
     }
 
