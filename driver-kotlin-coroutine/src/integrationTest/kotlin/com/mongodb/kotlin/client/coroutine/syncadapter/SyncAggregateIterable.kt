@@ -74,4 +74,8 @@ data class SyncAggregateIterable<T : Any>(val wrapped: AggregateFlow<T>) :
     override fun <E : Any> explain(explainResultClass: Class<E>, verbosity: ExplainVerbosity): E = runBlocking {
         wrapped.explain(explainResultClass, verbosity)
     }
+
+    override fun commandOption(name: String, value: Any): SyncAggregateIterable<T> = apply {
+        wrapped.commandOption(name, value)
+    }
 }

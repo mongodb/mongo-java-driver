@@ -39,11 +39,14 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.operation.ChangeStreamOperation.FORBIDDEN_COMMAND_OPTIONS;
+import static java.lang.String.format;
 
 
 final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStreamDocument<T>>
-        implements ChangeStreamPublisher<T> {
+        implements InternalCommonBatchCursorPublisher<ChangeStreamDocument<T>>, ChangeStreamPublisher<T> {
 
     private final List<? extends Bson> pipeline;
     private final Codec<ChangeStreamDocument<T>> codec;
@@ -134,8 +137,7 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
 
     @Override
     public <TDocument> Publisher<TDocument> withDocumentClass(final Class<TDocument> clazz) {
-        return new BatchCursorPublisher<TDocument>(getClientSession(), getMongoOperationPublisher().withDocumentClass(clazz),
-                getBatchSize()) {
+        return new BatchCursorPublisher<TDocument>(getClientSession(), getMongoOperationPublisher().withDocumentClass(clazz)) {
             @Override
             ReadOperationCursor<TDocument> asReadOperation(final int initialBatchSize) {
                 return createChangeStreamOperation(getMongoOperationPublisher().getCodecRegistry().get(clazz), initialBatchSize);
@@ -144,6 +146,16 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
             @Override
             Function<Operations<?>, TimeoutSettings> getTimeoutSettings() {
                 return (operations -> operations.createTimeoutSettings(0, maxAwaitTimeMS));
+            }
+
+            @Nullable
+            @Override
+            public Integer getBatchSize() {
+                Integer batchSize = super.getBatchSize();
+                if (batchSize == null) {
+                    batchSize = ChangeStreamPublisherImpl.this.getBatchSize();
+                }
+                return batchSize;
             }
         };
     }
@@ -167,6 +179,14 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
     }
 
     @Override
+    public ChangeStreamPublisher<T> commandOption(final String name, final Object value) {
+        notNull("name", name);
+        isTrueArgument(format("name must not be '%s'", name), !FORBIDDEN_COMMAND_OPTIONS.contains(name));
+        overridingCommandOption(name, notNull("value", value));
+        return this;
+    }
+
+    @Override
     ReadOperationCursor<ChangeStreamDocument<T>> asReadOperation(final int initialBatchSize) {
         return createChangeStreamOperation(codec, initialBatchSize);
     }
@@ -179,6 +199,7 @@ final class ChangeStreamPublisherImpl<T> extends BatchCursorPublisher<ChangeStre
 
     private <S> ReadOperationCursor<S> createChangeStreamOperation(final Codec<S> codec, final int initialBatchSize) {
         return getOperations().changeStream(fullDocument, fullDocumentBeforeChange, pipeline, codec, changeStreamLevel, initialBatchSize,
-                collation, comment, resumeToken, startAtOperationTime, startAfter, showExpandedEvents);
+                collation, comment, resumeToken, startAtOperationTime, startAfter, showExpandedEvents,
+                getOverridingCommandOptions());
     }
 }

@@ -75,6 +75,7 @@ public class AggregateToCollectionOperation implements ReadOperationSimple<Void>
     private BsonValue comment;
     private BsonValue hint;
     private BsonDocument variables;
+    private BsonDocument overridingCommandOptions;
 
     public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final ReadConcern readConcern,
             final WriteConcern writeConcern) {
@@ -96,7 +97,7 @@ public class AggregateToCollectionOperation implements ReadOperationSimple<Void>
         this.aggregationLevel = notNull("aggregationLevel", aggregationLevel);
         this.retryWrites = retryWrites;
         this.maxAdaptiveRetriesSetting = maxAdaptiveRetriesSetting;
-
+        overridingCommandOptions = new BsonDocument();
         isTrueArgument("pipeline is not empty", !pipeline.isEmpty());
     }
 
@@ -164,6 +165,11 @@ public class AggregateToCollectionOperation implements ReadOperationSimple<Void>
 
     public AggregateToCollectionOperation timeoutMode(@Nullable final TimeoutMode timeoutMode) {
         isTrueArgument("timeoutMode cannot be ITERATION.", timeoutMode == null || timeoutMode.equals(TimeoutMode.CURSOR_LIFETIME));
+        return this;
+    }
+
+    AggregateToCollectionOperation overridingCommandOptions(final BsonDocument overridingCommandOptions) {
+        this.overridingCommandOptions = overridingCommandOptions;
         return this;
     }
 
@@ -242,6 +248,8 @@ public class AggregateToCollectionOperation implements ReadOperationSimple<Void>
             if (variables != null) {
                 commandDocument.put("let", variables);
             }
+            // `overridingCommandOptions` must be applied after other options
+            commandDocument.putAll(overridingCommandOptions);
             return commandDocument;
         };
     }

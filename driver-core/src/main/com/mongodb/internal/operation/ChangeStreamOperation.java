@@ -42,11 +42,15 @@ import org.bson.codecs.Decoder;
 import org.bson.codecs.RawBsonDocumentCodec;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static com.mongodb.assertions.Assertions.assertNotNull;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.cursor.TimeoutMode.CURSOR_LIFETIME;
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableSet;
 
 /**
  * An operation that executes an {@code $changeStream} aggregation.
@@ -54,6 +58,18 @@ import static com.mongodb.client.cursor.TimeoutMode.CURSOR_LIFETIME;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class ChangeStreamOperation<T> implements ReadOperationCursor<T> {
+    /**
+     * The names of the fields that must not be passed to {@link #overridingCommandOptions(BsonDocument)}.
+     * These fields are either unconditionally required, or have client logic associated with them.
+     * For example, the {@code comment} field is also passed to {@code getMore} commands.
+     *
+     * @see AggregateOperation#FORBIDDEN_COMMAND_OPTIONS
+     */
+    // When changing this set, take into account that it affects `AggregateOperation.FORBIDDEN_COMMAND_OPTIONS`,
+    // and remember to update the documentation of the affected API.
+    public static final Set<String> FORBIDDEN_COMMAND_OPTIONS = unmodifiableSet(new HashSet<>(asList(
+            "aggregate", "pipeline", "maxTimeMS", "cursor", "explain", "comment")));
+
     private static final RawBsonDocumentCodec RAW_BSON_DOCUMENT_CODEC = new RawBsonDocumentCodec();
     private final AggregateOperationImpl<RawBsonDocument> wrapped;
     private final FullDocument fullDocument;
@@ -161,6 +177,11 @@ public class ChangeStreamOperation<T> implements ReadOperationCursor<T> {
 
     public ChangeStreamOperation<T> comment(final BsonValue comment) {
         wrapped.comment(comment);
+        return this;
+    }
+
+    ChangeStreamOperation<T> overridingCommandOptions(final BsonDocument overridingCommandOptions) {
+        wrapped.overridingCommandOptions(overridingCommandOptions);
         return this;
     }
 

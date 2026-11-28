@@ -233,7 +233,6 @@ class AggregatesTest {
     }
 
     @Test
-    @Suppress("LongMethod")
     fun accumulators() {
         assertEquals(com.mongodb.client.model.Accumulators.sum("age", 1), sum(Person::age, 1))
 

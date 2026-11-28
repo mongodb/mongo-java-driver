@@ -47,7 +47,8 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 
 @SuppressWarnings("deprecation")
-class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements com.mongodb.client.MapReduceIterable<TResult> {
+class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult>
+        implements InternalCommonIterable<TResult>, com.mongodb.client.MapReduceIterable<TResult> {
     private final Operations<TDocument> operations;
     private final MongoNamespace namespace;
     private final Class<TResult> resultClass;

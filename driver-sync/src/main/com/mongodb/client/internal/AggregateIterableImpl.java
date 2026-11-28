@@ -42,9 +42,13 @@ import org.bson.conversions.Bson;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.operation.AggregateOperation.FORBIDDEN_COMMAND_OPTIONS;
+import static java.lang.String.format;
 
-class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements AggregateIterable<TResult> {
+class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult>
+        implements InternalCommonIterable<TResult>, AggregateIterable<TResult> {
     private final Operations<TDocument> operations;
     private final MongoNamespace namespace;
     private final Class<TDocument> documentClass;
@@ -102,7 +106,8 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
         getExecutor().execute(
                 operations.aggregateToCollection(pipeline, getTimeoutMode(), allowDiskUse,
-                        bypassDocumentValidation, collation, hint, hintString, comment, variables, aggregationLevel),
+                        bypassDocumentValidation, collation, hint, hintString, comment, variables, aggregationLevel,
+                        getOverridingCommandOptions()),
                 getReadPreference(), getReadConcern(), getClientSession());
     }
 
@@ -199,6 +204,14 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         return executeExplain(explainResultClass, notNull("verbosity", verbosity));
     }
 
+    @Override
+    public AggregateIterable<TResult> commandOption(final String name, final Object value) {
+        notNull("name", name);
+        isTrueArgument(format("name must not be '%s'", name), !FORBIDDEN_COMMAND_OPTIONS.contains(name));
+        overridingCommandOption(name, notNull("value", value));
+        return this;
+    }
+
     private <E> E executeExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
         notNull("explainDocumentClass", explainResultClass);
         return getExecutor().execute(
@@ -213,7 +226,8 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             validateTimeoutMode();
             getExecutor().execute(
                     operations.aggregateToCollection(pipeline, getTimeoutMode(), allowDiskUse,
-                            bypassDocumentValidation, collation, hint, hintString, comment, variables, aggregationLevel),
+                            bypassDocumentValidation, collation, hint, hintString, comment, variables, aggregationLevel,
+                            getOverridingCommandOptions()),
                     getReadPreference(), getReadConcern(), getClientSession());
 
             FindOptions findOptions = new FindOptions().collation(collation);
@@ -233,7 +247,8 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     private ReadOperationExplainable<TResult> asAggregateOperation() {
         return operations.aggregate(pipeline, resultClass, getTimeoutMode(), getBatchSize(), collation, hint, hintString, comment,
-                variables, allowDiskUse, aggregationLevel);
+                variables, allowDiskUse, aggregationLevel,
+                getOverridingCommandOptions());
     }
 
     @Nullable

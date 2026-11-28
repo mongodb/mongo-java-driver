@@ -48,7 +48,8 @@ import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 
 @SuppressWarnings("deprecation")
-final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T> implements com.mongodb.reactivestreams.client.MapReducePublisher<T> {
+final class MapReducePublisherImpl<T> extends BatchCursorPublisher<T>
+        implements InternalCommonBatchCursorPublisher<T>, com.mongodb.reactivestreams.client.MapReducePublisher<T> {
 
     private final String mapFunction;
     private final String reduceFunction;

@@ -19,7 +19,9 @@ package com.mongodb.internal.operation;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.cursor.TimeoutMode;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.MergeOptions;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncReadBinding;
@@ -30,12 +32,17 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.codecs.Decoder;
+import org.bson.conversions.Bson;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Stream;
 
 import static com.mongodb.internal.connection.CommandHelper.applyMaxTimeMS;
 import static com.mongodb.internal.operation.ExplainHelper.asExplainCommand;
 import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VERSION;
+import static java.util.Collections.unmodifiableSet;
+import static java.util.stream.Collectors.toSet;
 
 /**
  * An operation that executes an aggregation query.
@@ -43,6 +50,18 @@ import static com.mongodb.internal.operation.ServerVersionHelper.UNKNOWN_WIRE_VE
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public class AggregateOperation<T> implements ReadOperationExplainable<T> {
+    /**
+     * The names of the fields that must not be passed to {@link #overridingCommandOptions(BsonDocument)}.
+     * These fields are either unconditionally required, or have client logic associated with them.
+     * For example, the {@code collation} field is also passed to the {@code find} command when {@link Aggregates#out(Bson) $out} or
+     * {@link Aggregates#merge(MongoNamespace, MergeOptions) $merge} is used.
+     *
+     * @see ChangeStreamOperation#FORBIDDEN_COMMAND_OPTIONS
+     */
+    // When changing this set, remember to update the documentation of the affected API.
+    public static final Set<String> FORBIDDEN_COMMAND_OPTIONS = unmodifiableSet(
+            Stream.concat(ChangeStreamOperation.FORBIDDEN_COMMAND_OPTIONS.stream(), Stream.of("collation")).collect(toSet()));
+
     private final AggregateOperationImpl<T> wrapped;
 
     public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder,
@@ -134,6 +153,11 @@ public class AggregateOperation<T> implements ReadOperationExplainable<T> {
 
     public AggregateOperation<T> timeoutMode(@Nullable final TimeoutMode timeoutMode) {
         wrapped.timeoutMode(timeoutMode);
+        return this;
+    }
+
+    AggregateOperation<T> overridingCommandOptions(final BsonDocument overridingCommandOptions) {
+        wrapped.overridingCommandOptions(overridingCommandOptions);
         return this;
     }
 

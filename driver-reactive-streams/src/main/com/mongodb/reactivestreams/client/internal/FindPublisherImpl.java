@@ -38,7 +38,8 @@ import java.util.function.Function;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-final class FindPublisherImpl<T> extends BatchCursorPublisher<T> implements FindPublisher<T> {
+final class FindPublisherImpl<T> extends BatchCursorPublisher<T>
+        implements InternalCommonBatchCursorPublisher<T>, FindPublisher<T> {
     private final FindOptions findOptions;
 
     private Bson filter;

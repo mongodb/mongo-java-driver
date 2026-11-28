@@ -205,5 +205,18 @@ case class ChangeStreamObservable[TResult](private val wrapped: ChangeStreamPubl
    */
   def first(): SingleObservable[ChangeStreamDocument[TResult]] = wrapped.first()
 
+  /**
+   * VAKOTODO
+   *
+   * @param name VAKOTODO.
+   * @param value VAKOTODO.
+   * @return VAKOTODO.
+   * @since 5.15
+   */
+  def commandOption(name: String, value: Any): ChangeStreamObservable[TResult] = {
+    wrapped.commandOption(name, value)
+    this
+  }
+
   override def subscribe(observer: Observer[_ >: ChangeStreamDocument[TResult]]): Unit = wrapped.subscribe(observer)
 }

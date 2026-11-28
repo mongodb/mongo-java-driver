@@ -59,6 +59,10 @@ class AggregateFlowTest {
         val hint = Document("h", 1)
         val hintString = "hintString"
         val verbosity = ExplainVerbosity.QUERY_PLANNER
+        val stringCommandOptionName = "stringCommandOptionName"
+        val stringCommandOptionValue = "stringCommandOptionValue"
+        val intCommandOptionName = "intCommandOptionName"
+        val intCommandOptionValue = 1
 
         flow.allowDiskUse(true)
         flow.batchSize(batchSize)
@@ -74,6 +78,8 @@ class AggregateFlowTest {
         flow.maxTime(1)
         flow.maxTime(1, TimeUnit.SECONDS)
         flow.timeoutMode(TimeoutMode.ITERATION)
+        flow.commandOption(stringCommandOptionName, stringCommandOptionValue)
+        flow.commandOption(intCommandOptionName, intCommandOptionValue)
 
         verify(wrapped).allowDiskUse(true)
         verify(wrapped).batchSize(batchSize)
@@ -89,6 +95,8 @@ class AggregateFlowTest {
         verify(wrapped).maxTime(1, TimeUnit.SECONDS)
         verify(wrapped).let(bson)
         verify(wrapped).timeoutMode(TimeoutMode.ITERATION)
+        verify(wrapped).commandOption(stringCommandOptionName, stringCommandOptionValue)
+        verify(wrapped).commandOption(intCommandOptionName, intCommandOptionValue)
 
         whenever(wrapped.explain(Document::class.java)).doReturn(Mono.fromCallable { Document() })
         whenever(wrapped.explain(Document::class.java, verbosity)).doReturn(Mono.fromCallable { Document() })

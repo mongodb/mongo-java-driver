@@ -217,6 +217,16 @@ public class AggregateFlow<T : Any>(private val wrapped: AggregatePublisher<T>) 
         explain(R::class.java, verbosity)
 
     /**
+     * VAKOTODO
+     *
+     * @param name VAKOTODO.
+     * @param value VAKOTODO.
+     * @return VAKOTODO.
+     * @since 5.15
+     */
+    public fun commandOption(name: String, value: Any): AggregateFlow<T> = apply { wrapped.commandOption(name, value) }
+
+    /**
      * Requests [AggregateFlow] to start streaming data according to the specified aggregation pipeline.
      * - If the aggregation pipeline ends with an `$out` or `$merge` stage, then finds all documents in the affected
      *   namespace and emits them. You may want to use [toCollection] instead.

@@ -54,6 +54,10 @@ class ChangeStreamIterableTest {
         val comment = "comment"
         val operationTime = BsonTimestamp(1)
         val resumeToken = BsonDocument()
+        val stringCommandOptionName = "stringCommandOptionName"
+        val stringCommandOptionValue = "stringCommandOptionValue"
+        val intCommandOptionName = "intCommandOptionName"
+        val intCommandOptionValue = 1
 
         whenever(wrapped.withDocumentClass(BsonDocument::class.java)).doReturn(mock())
         whenever(wrapped.cursor()).doReturn(mock())
@@ -72,6 +76,8 @@ class ChangeStreamIterableTest {
         iterable.startAfter(resumeToken)
         iterable.startAtOperationTime(operationTime)
         iterable.withDocumentClass<BsonDocument>()
+        iterable.commandOption(stringCommandOptionName, stringCommandOptionValue)
+        iterable.commandOption(intCommandOptionName, intCommandOptionValue)
 
         verify(wrapped).batchSize(batchSize)
         verify(wrapped).collation(collation)
@@ -87,6 +93,8 @@ class ChangeStreamIterableTest {
         verify(wrapped).startAfter(resumeToken)
         verify(wrapped).startAtOperationTime(operationTime)
         verify(wrapped).withDocumentClass(BsonDocument::class.java)
+        verify(wrapped).commandOption(stringCommandOptionName, stringCommandOptionValue)
+        verify(wrapped).commandOption(intCommandOptionName, intCommandOptionValue)
 
         verifyNoMoreInteractions(wrapped)
     }

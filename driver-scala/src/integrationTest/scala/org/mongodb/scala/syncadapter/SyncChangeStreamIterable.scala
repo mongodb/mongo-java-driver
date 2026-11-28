@@ -100,4 +100,9 @@ case class SyncChangeStreamIterable[T](wrapped: ChangeStreamObservable[T])
     wrapped.showExpandedEvents(showExpandedEvents)
     this
   }
+
+  override def commandOption(name: String, value: Object): ChangeStreamIterable[T] = {
+    wrapped.commandOption(name, value)
+    this
+  }
 }

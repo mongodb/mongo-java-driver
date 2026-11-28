@@ -41,9 +41,13 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.operation.AggregateOperation.FORBIDDEN_COMMAND_OPTIONS;
+import static java.lang.String.format;
 
-final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements AggregatePublisher<T> {
+final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T>
+        implements InternalCommonBatchCursorPublisher<T>, AggregatePublisher<T> {
     private final List<? extends Bson> pipeline;
     private final AggregationLevel aggregationLevel;
     private Boolean allowDiskUse;
@@ -170,6 +174,14 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
         return publishExplain(explainResultClass, notNull("verbosity", verbosity));
     }
 
+    @Override
+    public AggregatePublisher<T> commandOption(final String name, final Object value) {
+        notNull("name", name);
+        isTrueArgument(format("name must not be '%s'", name), !FORBIDDEN_COMMAND_OPTIONS.contains(name));
+        overridingCommandOption(name, notNull("value", value));
+        return this;
+    }
+
     private <E> Publisher<E> publishExplain(final Class<E> explainResultClass, @Nullable final ExplainVerbosity verbosity) {
         notNull("explainDocumentClass", explainResultClass);
         return getMongoOperationPublisher().createReadOperationMono(
@@ -204,12 +216,14 @@ final class AggregatePublisherImpl<T> extends BatchCursorPublisher<T> implements
     private ReadOperationExplainable<T> asAggregateOperation(final int initialBatchSize) {
         return getOperations()
                 .aggregate(pipeline, getDocumentClass(), getTimeoutMode(),
-                           initialBatchSize, collation, hint, hintString, comment, variables, allowDiskUse, aggregationLevel);
+                           initialBatchSize, collation, hint, hintString, comment, variables, allowDiskUse, aggregationLevel,
+                        getOverridingCommandOptions());
     }
 
     private ReadOperationSimple<Void> getAggregateToCollectionOperation() {
         return getOperations().aggregateToCollection(pipeline, getTimeoutMode(), allowDiskUse, bypassDocumentValidation,
-                collation, hint, hintString, comment, variables, aggregationLevel);
+                collation, hint, hintString, comment, variables, aggregationLevel,
+                getOverridingCommandOptions());
     }
 
     @Nullable

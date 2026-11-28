@@ -35,7 +35,8 @@ import java.util.function.Function;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-final class ListCollectionsPublisherImpl<T> extends BatchCursorPublisher<T> implements ListCollectionsPublisher<T> {
+final class ListCollectionsPublisherImpl<T> extends BatchCursorPublisher<T>
+        implements InternalCommonBatchCursorPublisher<T>, ListCollectionsPublisher<T> {
 
     private final boolean collectionNamesOnly;
     private boolean authorizedCollections;

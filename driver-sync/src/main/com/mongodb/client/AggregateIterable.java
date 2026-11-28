@@ -27,6 +27,7 @@ import com.mongodb.client.model.MergeOptions;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 import org.bson.Document;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -279,4 +280,29 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * @mongodb.server.release 3.6
      */
     <E> E explain(Class<E> explainResultClass, ExplainVerbosity verbosity);
+
+    /**
+     * Sets an optional field of the {@code aggregate} command in situations when there is no method that better satisfies your needs.
+     * The behavior of this method is undefined if it is used to set any of the following:
+     * <ul>
+     *     <li>
+     *     an unconditionally required field;</li>
+     *     <li>
+     *     a field from the following set:
+     *     {@link #maxTime(long, TimeUnit) maxTimeMS}, {@code cursor}, {@link #explain(Class, ExplainVerbosity) explain},
+     *     {@link #comment(BsonValue) comment}, {@link #collation(Collation) collation};</li>
+     *     <li>
+     *     a field that is configurable via means other than {@link AggregateIterable} methods;</li>
+     *     <li>
+     *     a field that is also set via a different {@link AggregateIterable} method.</li>
+     * </ul>
+     *
+     * @param name The name of the optional command field.
+     * @param value The value of the field specified by {@code name}.
+     * It is encoded via the configured {@link CodecRegistry},
+     * which must have a codec for {@link Document} regardless of the type of {@code value}.
+     * @return {@code this}.
+     * @since 5.15
+     */
+    AggregateIterable<TResult> commandOption(String name, Object value);
 }

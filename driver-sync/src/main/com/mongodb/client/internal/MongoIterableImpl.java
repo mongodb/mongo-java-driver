@@ -27,6 +27,7 @@ import com.mongodb.internal.TimeoutSettings;
 import com.mongodb.internal.operation.BatchCursor;
 import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.lang.Nullable;
+import org.bson.Document;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
@@ -39,14 +40,18 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <p>This class is not part of the public API and may be removed or changed at any time</p>
  */
 public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResult> {
+    @Nullable
     private final ClientSession clientSession;
     private final ReadConcern readConcern;
     private final OperationExecutor executor;
     private final ReadPreference readPreference;
     private final boolean retryReads;
     private final TimeoutSettings timeoutSettings;
+    @Nullable
     private Integer batchSize;
+    @Nullable
     private TimeoutMode timeoutMode;
+    private final Document overridingCommandOptions;
 
     public MongoIterableImpl(@Nullable final ClientSession clientSession, final OperationExecutor executor, final ReadConcern readConcern,
                              final ReadPreference readPreference, final boolean retryReads, final TimeoutSettings timeoutSettings) {
@@ -56,6 +61,7 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
         this.readPreference = notNull("readPreference", readPreference);
         this.retryReads = retryReads;
         this.timeoutSettings = timeoutSettings;
+        overridingCommandOptions = new Document();
     }
 
     public abstract ReadOperationCursor<TResult> asReadOperation();
@@ -109,6 +115,22 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
         }
         this.timeoutMode = timeoutMode;
         return this;
+    }
+
+    /**
+     * @see InternalCommonIterable#commandOption(String, Object)
+     * @see #getOverridingCommandOptions()
+     */
+    MongoIterable<TResult> overridingCommandOption(final String name, final Object value) {
+        overridingCommandOptions.put(name, value);
+        return this;
+    }
+
+    /**
+     * @see #overridingCommandOption(String, Object)
+     */
+    Document getOverridingCommandOptions() {
+        return overridingCommandOptions;
     }
 
     @Override

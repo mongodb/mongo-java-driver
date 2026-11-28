@@ -16,7 +16,6 @@
 
 package org.mongodb.scala
 
-import com.mongodb.client.cursor.TimeoutMode
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher
 import org.mockito.Mockito.{ verify, verifyNoMoreInteractions }
 import org.mongodb.scala.bson.BsonTimestamp
@@ -54,6 +53,10 @@ class ChangeStreamObservableSpec extends BaseSpec with MockitoSugar {
     val startAtTime = BsonTimestamp()
     val collation = Collation.builder().locale("en").build()
     val batchSize = 10
+    val stringCommandOptionName = "stringCommandOptionName"
+    val stringCommandOptionValue = "stringCommandOptionValue"
+    val intCommandOptionName = "intCommandOptionName"
+    val intCommandOptionValue = 1
 
     observable.batchSize(batchSize)
     observable.fullDocument(fullDocument)
@@ -63,6 +66,8 @@ class ChangeStreamObservableSpec extends BaseSpec with MockitoSugar {
     observable.maxAwaitTime(duration)
     observable.collation(collation)
     observable.withDocumentClass(classOf[Int])
+    observable.commandOption(stringCommandOptionName, stringCommandOptionValue)
+    observable.commandOption(intCommandOptionName, intCommandOptionValue)
 
     verify(wrapper).batchSize(batchSize)
     verify(wrapper).fullDocument(fullDocument)
@@ -72,6 +77,8 @@ class ChangeStreamObservableSpec extends BaseSpec with MockitoSugar {
     verify(wrapper).maxAwaitTime(duration.toMillis, TimeUnit.MILLISECONDS)
     verify(wrapper).collation(collation)
     verify(wrapper).withDocumentClass(classOf[Int])
+    verify(wrapper).commandOption(stringCommandOptionName, stringCommandOptionValue)
+    verify(wrapper).commandOption(intCommandOptionName, intCommandOptionValue)
 
     verifyNoMoreInteractions(wrapper)
   }

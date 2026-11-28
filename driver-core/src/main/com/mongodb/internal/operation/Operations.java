@@ -77,6 +77,7 @@ import org.bson.BsonJavaScript;
 import org.bson.BsonString;
 import org.bson.BsonTimestamp;
 import org.bson.BsonValue;
+import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.Decoder;
@@ -319,7 +320,8 @@ public final class Operations<T> {
     public <R> ReadOperationExplainable<R> aggregate(final List<? extends Bson> pipeline, final Class<R> resultClass,
             @Nullable final TimeoutMode timeoutMode, @Nullable final Integer batchSize,
             final Collation collation, @Nullable final Bson hint, @Nullable final String hintString,
-            final BsonValue comment, final Bson variables, final Boolean allowDiskUse, final AggregationLevel aggregationLevel) {
+            final BsonValue comment, final Bson variables, final Boolean allowDiskUse, final AggregationLevel aggregationLevel,
+            final Document overridingCommandOptions) {
         return new AggregateOperation<>(assertNotNull(namespace),
                 assertNotNull(toBsonDocumentList(pipeline)), codecRegistry.get(resultClass), aggregationLevel,
                 maxAdaptiveRetriesSetting)
@@ -330,12 +332,14 @@ public final class Operations<T> {
                 .hint(hint != null ? toBsonDocument(hint) : (hintString != null ? new BsonString(hintString) : null))
                 .comment(comment)
                 .let(toBsonDocument(variables))
-                .timeoutMode(timeoutMode);
+                .timeoutMode(timeoutMode)
+                .overridingCommandOptions(encodeOverridingCommandOptions(overridingCommandOptions));
     }
 
     public ReadOperationSimple<Void>  aggregateToCollection(final List<? extends Bson> pipeline, @Nullable final TimeoutMode timeoutMode,
             final Boolean allowDiskUse, final Boolean bypassDocumentValidation, final Collation collation, @Nullable final Bson hint,
-            @Nullable final String hintString, final BsonValue comment, final Bson variables, final AggregationLevel aggregationLevel) {
+            @Nullable final String hintString, final BsonValue comment, final Bson variables, final AggregationLevel aggregationLevel,
+            final Document overridingCommandOptions) {
         return new AggregateToCollectionOperation(assertNotNull(namespace),
                 assertNotNull(toBsonDocumentList(pipeline)), readConcern, writeConcern, aggregationLevel,
                 isRetryWrites(), maxAdaptiveRetriesSetting)
@@ -345,7 +349,8 @@ public final class Operations<T> {
                 .hint(hint != null ? toBsonDocument(hint) : (hintString != null ? new BsonString(hintString) : null))
                 .comment(comment)
                 .let(toBsonDocument(variables))
-                .timeoutMode(timeoutMode);
+                .timeoutMode(timeoutMode)
+                .overridingCommandOptions(encodeOverridingCommandOptions(overridingCommandOptions));
     }
 
     @SuppressWarnings("deprecation")
@@ -803,7 +808,8 @@ public final class Operations<T> {
             final FullDocumentBeforeChange fullDocumentBeforeChange, final List<? extends Bson> pipeline,
             final Decoder<R> decoder, final ChangeStreamLevel changeStreamLevel, @Nullable final Integer batchSize,
             final Collation collation, final BsonValue comment, final BsonDocument resumeToken,
-            final BsonTimestamp startAtOperationTime, final BsonDocument startAfter, final boolean showExpandedEvents) {
+            final BsonTimestamp startAtOperationTime, final BsonDocument startAfter, final boolean showExpandedEvents,
+            final Document overridingCommandOptions) {
         return new ChangeStreamOperation<>(
                 assertNotNull(namespace),
                 fullDocument,
@@ -817,7 +823,8 @@ public final class Operations<T> {
                 .startAtOperationTime(startAtOperationTime)
                 .startAfter(startAfter)
                 .showExpandedEvents(showExpandedEvents)
-                .retryReads(retryReads);
+                .retryReads(retryReads)
+                .overridingCommandOptions(encodeOverridingCommandOptions(overridingCommandOptions));
     }
 
     public WriteOperation<ClientBulkWriteResult> clientBulkWriteOperation(
@@ -865,5 +872,15 @@ public final class Operations<T> {
         SearchIndexType searchIndexType = model.getType();
 
         return new SearchIndexRequest(definition, indexName, searchIndexType);
+    }
+
+    /**
+     * Encodes {@code overridingCommandOptions} in a way that does not require {@link #codecRegistry} to have a {@link Codec}
+     * for {@link Document}, if {@code overridingCommandOptions} is {@linkplain Document#isEmpty() empty}.
+     */
+    private BsonDocument encodeOverridingCommandOptions(final Document overridingCommandOptions) {
+        return overridingCommandOptions.isEmpty()
+                ? new BsonDocument()
+                : overridingCommandOptions.toBsonDocument(BsonDocument.class, codecRegistry);
     }
 }

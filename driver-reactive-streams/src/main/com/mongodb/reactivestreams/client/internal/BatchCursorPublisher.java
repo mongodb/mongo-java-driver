@@ -27,6 +27,7 @@ import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.ReadOperationCursor;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.ClientSession;
+import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -42,20 +43,19 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 @VisibleForTesting(otherwise = VisibleForTesting.AccessModifier.PROTECTED)
 public abstract class BatchCursorPublisher<T> implements Publisher<T> {
+    @Nullable
     private final ClientSession clientSession;
     private final MongoOperationPublisher<T> mongoOperationPublisher;
+    @Nullable
     private Integer batchSize;
+    @Nullable
     private TimeoutMode timeoutMode;
+    private final Document overridingCommandOptions;
 
     BatchCursorPublisher(@Nullable final ClientSession clientSession, final MongoOperationPublisher<T> mongoOperationPublisher) {
-        this(clientSession, mongoOperationPublisher, null);
-    }
-
-    BatchCursorPublisher(@Nullable final ClientSession clientSession, final MongoOperationPublisher<T> mongoOperationPublisher,
-                         @Nullable final Integer batchSize) {
         this.clientSession = clientSession;
         this.mongoOperationPublisher = notNull("mongoOperationPublisher", mongoOperationPublisher);
-        this.batchSize = batchSize;
+        overridingCommandOptions = new Document();
     }
 
     abstract ReadOperationCursor<T> asReadOperation(int initialBatchSize);
@@ -88,10 +88,6 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
 
     CodecRegistry getCodecRegistry() {
         return mongoOperationPublisher.getCodecRegistry();
-    }
-
-    boolean getRetryReads() {
-        return mongoOperationPublisher.getRetryReads();
     }
 
     Class<T> getDocumentClass() {
@@ -135,6 +131,25 @@ public abstract class BatchCursorPublisher<T> implements Publisher<T> {
                                 return Mono.fromCallable(() -> results.get(0));
                             });
                 });
+    }
+
+    /**
+     * @see InternalCommonBatchCursorPublisher#commandOption(String, Object)
+     * @see #getOverridingCommandOptions()
+     */
+    Publisher<T> overridingCommandOption(final String name, final Object value) {
+        overridingCommandOptions.put(name, value);
+        return this;
+    }
+
+    /**
+     * @see #overridingCommandOption(String, Object)
+     */
+    Document getOverridingCommandOptions() {
+        // An application may mutate `overridingCommandOptions` via the `overridingCommandOption` method after subscribing to a `Publisher`.
+        // Such a mutation must not conflict with `overridingCommandOptions` being read while publishing.
+        // That is why we must return a shallow copy of `overridingCommandOptions`.
+        return new Document(overridingCommandOptions);
     }
 
     @Override
