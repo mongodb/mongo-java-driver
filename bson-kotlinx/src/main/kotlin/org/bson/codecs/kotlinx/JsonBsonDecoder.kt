@@ -31,7 +31,7 @@ import org.bson.AbstractBsonReader
 import org.bson.BsonBinarySubType
 import org.bson.BsonType
 import org.bson.UuidRepresentation
-import org.bson.codecs.kotlinx.utils.BsonCodecUtils.toJsonNamingStrategy
+import org.bson.codecs.kotlinx.utils.BsonCodecUtils.asJsonNamingStrategy
 import org.bson.internal.UuidHelper
 
 @OptIn(ExperimentalSerializationApi::class)
@@ -43,7 +43,7 @@ internal interface JsonBsonDecoder : BsonDecoder, JsonDecoder {
         explicitNulls = configuration.explicitNulls
         encodeDefaults = configuration.encodeDefaults
         classDiscriminator = configuration.classDiscriminator
-        namingStrategy = configuration.bsonNamingStrategy.toJsonNamingStrategy()
+        namingStrategy = configuration.bsonNamingStrategy.asJsonNamingStrategy()
         serializersModule = this@JsonBsonDecoder.serializersModule
     }
 
